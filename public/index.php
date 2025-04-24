@@ -23,7 +23,7 @@ $router = new Router();
 require_once __DIR__ . '/../routes/web.php';
 
 // Middleware to handle authentication
-AuthMiddleware::handle($accessMap, $publicRoutes);
+//AuthMiddleware::handle($accessMap, $publicRoutes);
 
 // Match the current request to a route
 $match = $router->match();

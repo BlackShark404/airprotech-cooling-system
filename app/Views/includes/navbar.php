@@ -3,7 +3,7 @@
     <div class="container">
         <!-- Logo and brand name on the left with colored text -->
         <a class="navbar-brand d-flex align-items-center" href="index.php">
-            <img src="/assets/images/logo/Air-TechLogo.jpg" alt="AirProtech Logo" class="me-2" width="35" height="35">
+            <img src="/assets/images/logo/Air-TechLogo.png" alt="AirProtech Logo" class="me-2" width="35" height="35">
             <span class="d-none d-md-inline">
                 <span style="color: #0d6efd; font-weight: 700; font-size: 1.3rem;">Air</span><span style="color: #dc3545; font-weight: 700; font-size: 1.3rem;">Protech</span>
             </span>
@@ -18,8 +18,9 @@
             // Define navigation based on user type
             $userType = $_SESSION['user_type'] ?? ''; // Default to user if not set
             
+            // Check if user is logged in
             if (isset($_SESSION['user_id'])) {
-                // User is logged in, show appropriate navigation based on user type
+                // If user is logged in, show appropriate navigation
                 if ($userType === 'user'): ?>
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item">
@@ -133,39 +134,39 @@
                             </a>
                         </li>
                     </ul>
-                <?php endif;
+                <?php endif; 
             } else {
-                // User is not logged in, show landing page navigation
-                ?>
+                // Not logged in - show landing page navigation
+            ?>
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="index.php">
-                            <i class="bi bi-house"></i> Home
+                            Home
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="about.php">
-                            <i class="bi bi-info-circle"></i> About Us
+                            About Us
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="services.php">
-                            <i class="bi bi-tools"></i> Services
+                            Services
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="products.php">
-                            <i class="bi bi-box"></i> Products
+                             Products
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="testimonials.php">
-                            <i class="bi bi-chat-quote"></i> Testimonials
+                            Testimonials
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="contact.php">
-                            <i class="bi bi-envelope"></i> Contact
+                            Contact Us
                         </a>
                     </li>
                 </ul>
@@ -173,8 +174,8 @@
             
             <!-- Right user profile -->
             <div class="d-flex align-items-center ms-auto">
+                <!-- User profile dropdown -->
                 <?php if (isset($_SESSION['user_id'])): ?>
-                <!-- User profile dropdown when logged in -->
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-person-circle me-1"></i>
@@ -187,9 +188,9 @@
                     </ul>
                 </div>
                 <?php else: ?>
-                <!-- Login and Register buttons when not logged in -->
-                <a href="login.php" class="btn btn-outline-primary me-2">Login</a>
-                <a href="register.php" class="btn btn-primary">Register</a>
+                <div class="d-flex">
+                    <a href="/auth/login" class="btn btn-primary">Login</a>
+                </div>
                 <?php endif; ?>
             </div>
         </div>

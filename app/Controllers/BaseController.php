@@ -38,16 +38,11 @@ class BaseController
         ob_start();
 
         // Get paths first without including any files
-        $viewPath = $this->getViewPath($view);
-        
         $headerPath = $this->getViewPath("includes/header");
-        $footerPath = $this->getViewPath("includes/footer");
-        
-        // Get sidebar path as string, not resolved path
-        $sidebarRelativePath = $this->getSidebarPath();
         $navbarPath = $this->getViewPath("includes/navbar");
+        $viewPath = $this->getViewPath($view);
+        $footerPath = $this->getViewPath("includes/footer");
         $basePath = $this->getViewPath("base");
-
 
         $data['headerPath'] = $headerPath;
         $data['navbarPath'] = $navbarPath;

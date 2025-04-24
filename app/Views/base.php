@@ -375,8 +375,13 @@ $pageDescription = $pageDescription ?? 'Comprehensive Service Booking & Inventor
     <?php endif; ?>
 </head>
 <body class="<?php echo $userType ?? 'customer'; ?>-theme">
-    <?php include_once($headerPath ?? 'path/to/header.php'); ?>
-    <?php include_once($navbarPath ?? 'path/to/navbar.php'); ?>
+    <?php if (isset($headerPath) && file_exists($headerPath)): ?>
+        <?php include_once($headerPath); ?>
+    <?php endif; ?>
+    
+    <?php if (isset($navbarPath) && file_exists($navbarPath)): ?>
+        <?php include_once($navbarPath); ?>
+    <?php endif; ?>
     
     <?php if (isset($pageHeader)): ?>
         <header class="page-header">
@@ -396,7 +401,9 @@ $pageDescription = $pageDescription ?? 'Comprehensive Service Booking & Inventor
         </div>
     </main>
     
-    <?php include_once(__DIR__. '/../Views/includes/footer.php'); ?>
+    <?php if (isset($footerPath) && file_exists($footerPath)): ?>
+        <?php include_once($footerPath); ?>
+    <?php endif; ?>
     
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -404,6 +411,10 @@ $pageDescription = $pageDescription ?? 'Comprehensive Service Booking & Inventor
     <!-- jQuery (if needed) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/assets/js/utility/toast-notifications.js"></script>
+    <script src="/assets/js/utility/form-handler.js"></script>
+
     <!-- Additional page-specific scripts -->
     <?php if (isset($pageScripts)): ?>
         <script><?php echo $pageScripts; ?></script>
@@ -419,7 +430,7 @@ $pageDescription = $pageDescription ?? 'Comprehensive Service Booking & Inventor
             
             navLinks.forEach(link => {
                 const linkPath = link.getAttribute('href');
-                if (currentLocation.includes(linkPath) && linkPath !== '#') {
+                if (linkPath && currentLocation.includes(linkPath) && linkPath !== '#') {
                     link.classList.add('active');
                 }
             });
@@ -427,10 +438,13 @@ $pageDescription = $pageDescription ?? 'Comprehensive Service Booking & Inventor
             // Add smooth scrolling to all links
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
+                    const href = this.getAttribute('href');
+                    if (href !== '#' && document.querySelector(href)) {
+                        e.preventDefault();
+                        document.querySelector(href).scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
                 });
             });
             

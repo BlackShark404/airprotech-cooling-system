@@ -51,6 +51,10 @@ $router->setBasePath(''); // Set this if your app is in a subdirectory
 // Define routes
 // Home routes
 $router->map('GET', '/', 'App\Controllers\HomeController#index', 'home');
+$router->map('GET', '/sample', 'App\Controllers\HomeController#renderSample', 'render-sample');
+
+$router->map('GET', '/services', 'App\Controllers\HomeController#service', 'service');
+$router->map('GET', '/products', 'App\Controllers\HomeController#products', 'product');
 $router->map('GET', '/about', 'App\Controllers\HomeController#about', 'about');
 $router->map('GET', '/contact-us', 'App\Controllers\HomeController#contactUs', 'contact');
 $router->map('POST', '/contact-us', 'App\Controllers\HomeController#contactUs', 'contact_post');
@@ -59,7 +63,11 @@ $router->map('GET', '/terms-of-service', 'App\Controllers\HomeController#terms',
 
 
 // Auth routes
-$router->map('GET', '/login', 'App\Controllers\AuthController#loginForm', 'login');
-$router->map('POST', '/login', 'App\Controllers\AuthController#login', 'login_post');
-$router->map('GET', '/register', 'App\Controllers\AuthController#registerForm', 'register');
-$router->map('POST', '/register', 'App\Controllers\AuthController#register', 'register_post');
+$router->map('GET', '/auth/login', 'App\Controllers\AuthController#renderLogin', 'render_login');
+$router->map('POST', '/auth/login', 'App\Controllers\AuthController#login', 'login_post');
+$router->map('GET', '/auth/register', 'App\Controllers\AuthController#renderRegister', 'render_register');
+$router->map('POST', '/auth/register', 'App\Controllers\AuthController#register', 'register_post');
+$router->map('GET', '/auth/reset-password', 'App\Controllers\AuthController#renderResetPassword', 'reset_password');
+
+// User routes
+$router->map('GET', '/user/dashboard', 'App\Controllers\UserController#renderUserDashboard', 'render_dashboard');
