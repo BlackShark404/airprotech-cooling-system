@@ -67,12 +67,13 @@ $router->map('POST', '/auth/login', 'App\Controllers\AuthController#login', 'log
 $router->map('GET', '/auth/register', 'App\Controllers\AuthController#renderRegister', 'render_register');
 $router->map('POST', '/auth/register', 'App\Controllers\AuthController#register', 'register_post');
 $router->map('GET', '/auth/reset-password', 'App\Controllers\AuthController#renderResetPassword', 'reset_password');
+$router->map('GET', '/auth/logout', 'App\Controllers\AuthController#logout', 'logout');
 
 // User routes
-$router->map('GET', '/user/dashboard', 'App\Controllers\UserController#renderUserDashboard', 'render_dashboard');
+$router->map('GET', '/user/dashboard', 'App\Controllers\UserController#renderUserDashboard', 'render_user-dashboard');
 
-
-
+// Admin routes
+$router->map('GET', '/admin/dashboard', 'App\Controllers\AdminController#renderAdminDashboard', 'render_admin-dashboard');
 
 // Test routes
 $router->map('GET', '/test', 'App\Controllers\TestController#renderTest', 'test');
