@@ -51,7 +51,6 @@ $router->setBasePath(''); // Set this if your app is in a subdirectory
 // Define routes
 // Home routes
 $router->map('GET', '/', 'App\Controllers\HomeController#index', 'home');
-$router->map('GET', '/sample', 'App\Controllers\HomeController#renderSample', 'render-sample');
 
 $router->map('GET', '/services', 'App\Controllers\HomeController#service', 'service');
 $router->map('GET', '/products', 'App\Controllers\HomeController#products', 'product');
@@ -71,3 +70,9 @@ $router->map('GET', '/auth/reset-password', 'App\Controllers\AuthController#rend
 
 // User routes
 $router->map('GET', '/user/dashboard', 'App\Controllers\UserController#renderUserDashboard', 'render_dashboard');
+
+
+
+
+// Test routes
+$router->map('GET', '/test', 'App\Controllers\TestController#renderTest', 'test');

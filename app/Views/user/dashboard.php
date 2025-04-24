@@ -1,5 +1,4 @@
 <?php
-// Start session
 
 // Set page specific variables
 $pageTitle = 'Dashboard';

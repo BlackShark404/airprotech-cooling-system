@@ -7,8 +7,8 @@ class HomeController extends BaseController{
         $this->render('home/index');
     }
 
-    public function renderSample() {
-        $this->render('home/sample');
+    public function renderTest() {
+        $this->render('home/test');
     }
 
     public function service() {
