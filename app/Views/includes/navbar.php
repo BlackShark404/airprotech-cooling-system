@@ -25,17 +25,17 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="dashboard.php">
-                                <i class="bi bi-speedometer2"></i> Dashboard
+                                Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="services.php">
-                                <i class="bi bi-tools"></i> Services
+                                Services
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="products.php">
-                                <i class="bi bi-box"></i> Products
+                                Products
                             </a>
                         </li>
                         <li class="nav-item dropdown">
@@ -50,12 +50,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="my-orders.php">
-                                <i class="bi bi-list-check"></i> My Orders
+                                My Orders
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="support.php">
-                                <i class="bi bi-headset"></i> Support
+                                Support
                             </a>
                         </li>
                     </ul>
@@ -65,12 +65,12 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="admin/dashboard.php">
-                                <i class="bi bi-speedometer2"></i> Dashboard
+                                Dashboard
                             </a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-clipboard-data"></i> Services
+                                Services
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
                                 <li><a class="dropdown-item" href="admin/service-requests.php">Service Requests</a></li>
@@ -80,12 +80,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="admin/technicians.php">
-                                <i class="bi bi-person-badge"></i> Technicians
+                                Technicians
                             </a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="inventoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-box-seam"></i> Inventory
+                                Inventory
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="inventoryDropdown">
                                 <li><a class="dropdown-item" href="admin/inventory.php">Stock Management</a></li>
@@ -95,12 +95,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="admin/customers.php">
-                                <i class="bi bi-people"></i> Customers
+                                Customers
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="admin/reports.php">
-                                <i class="bi bi-graph-up"></i> Reports
+                                Reports
                             </a>
                         </li>
                     </ul>
@@ -110,27 +110,27 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="technician/dashboard.php">
-                                <i class="bi bi-speedometer2"></i> Dashboard
+                                Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="technician/assignments.php">
-                                <i class="bi bi-calendar-check"></i> My Assignments
+                                My Assignments
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="technician/schedule.php">
-                                <i class="bi bi-calendar-week"></i> Schedule
+                                Schedule
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="technician/inventory.php">
-                                <i class="bi bi-box-seam"></i> Parts Inventory
+                                Parts Inventory
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="technician/reports.php">
-                                <i class="bi bi-file-earmark-text"></i> Reports
+                                Reports
                             </a>
                         </li>
                     </ul>
