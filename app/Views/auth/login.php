@@ -1,285 +1,207 @@
-<?php
-// Define page variables
-$pageTitle = 'Login to Your Account';
-$pageDescription = 'Access your Air-Protech account to manage service requests and more';
+<!DOCTYPE html>
+<html lang="en">
 
-// Add page-specific styles
-$pageStyles = '
-    .auth-container {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 0;
-        background-color: #f9fafb;
-        background-image: linear-gradient(135deg, #f9fafb 0%, #e9ecef 100%);
-    }
-    
-    .auth-card {
-        max-width: 480px;
-        width: 100%;
-        border-radius: 16px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .auth-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 20px rgba(0, 0, 0, 0.08);
-    }
-    
-    .auth-header {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        padding: 2.75rem 2rem;
-        text-align: center;
-        color: white;
-        position: relative;
-    }
-    
-    .auth-header::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        background: url("assets/images/pattern.png");
-        opacity: 0.1;
-        z-index: 1;
-    }
-    
-    .auth-header .logo-container {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        justify-content: center;
-        margin-bottom: 1.75rem;
-    }
-    
-    .auth-header .logo-text h1 {
-        color: white;
-        font-size: 1.85rem;
-        margin-bottom: 0.2rem;
-        letter-spacing: -0.5px;
-    }
-    
-    .auth-header .logo-text p {
-        color: rgba(255, 255, 255, 0.85);
-        font-weight: 500;
-    }
-    
-    .auth-body {
-        padding: 2.75rem 2.25rem;
-        background-color: white;
-    }
-    
-    .auth-footer {
-        text-align: center;
-        padding: 1.5rem 2rem;
-        background-color: #f8f9fa;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
-    .form-floating {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-floating > .form-control {
-        padding: 1.1rem 0.95rem;
-        border-radius: 8px;
-        border: 1.5px solid #e0e5e9;
-        height: calc(3.5rem + 2px);
-        transition: all 0.25s ease;
-    }
-    
-    .form-floating > .form-control:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 0.25rem rgba(0, 105, 217, 0.25);
-    }
-    
-    .form-floating > label {
-        padding: 1.1rem 0.95rem;
-    }
-    
-    .btn-auth {
-        width: 100%;
-        padding: 0.9rem 1rem;
-        font-weight: 600;
-        margin-top: 1.25rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 105, 217, 0.12);
-    }
-    
-    .btn-auth:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 7px 14px rgba(0, 105, 217, 0.2);
-    }
-    
-    .btn-auth:active {
-        transform: translateY(0);
-    }
-    
-    .auth-divider {
-        display: flex;
-        align-items: center;
-        margin: 1.5rem 0;
-    }
-    
-    .auth-divider::before,
-    .auth-divider::after {
-        content: "";
-        flex: 1;
-        border-bottom: 1px solid var(--gray-light);
-    }
-    
-    .auth-divider span {
-        padding: 0 1rem;
-        color: var(--gray);
-        font-size: 0.9rem;
-    }
-    
-    .auth-link {
-        color: var(--primary);
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.25s ease;
-        position: relative;
-    }
-    
-    .auth-link:hover {
-        color: var(--primary-dark);
-        text-decoration: none;
-    }
-    
-    .auth-link::after {
-        content: "";
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        width: 0;
-        height: 1px;
-        background-color: var(--primary-dark);
-        transition: width 0.25s ease;
-    }
-    
-    .auth-link:hover::after {
-        width: 100%;
-    }
-    
-    .form-check-label {
-        font-size: 0.95rem;
-    }
-    
-    .form-check-input {
-        width: 1.1em;
-        height: 1.1em;
-        margin-top: 0.25em;
-        cursor: pointer;
-        border: 1.5px solid #b0b5bb;
-    }
-    
-    .form-check-input:checked {
-        background-color: var(--primary);
-        border-color: var(--primary);
-    }
-    
-    .alert {
-        border-radius: 8px;
-        border-left: 4px solid;
-    }
-    
-    .alert-danger {
-        border-left-color: var(--danger);
-        background-color: rgba(220, 53, 69, 0.1);
-    }
-    
-    .alert-success {
-        border-left-color: var(--success);
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-';
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Air-Protech Cooling Services</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/auth.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand navbar-light bg-white px-3">
+            <div class="container-fluid">
+                <img src="/assets/images/logo/Air-TechLogo.png" alt="Logo" class="rounded-circle me-2" width="40" height="40">
+                <a class="navbar-brand" href="/">AIR<span class="brand-red">PROTECH</span></a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/">Home</a>
+                    <a class="nav-link" href="#">About</a>
+                    <a class="nav-link" href="#">Services</a>
+                    <a class="nav-link" href="#">Contact</a>
+                </div>
+            </div>
+        </nav>
+    </header>
 
-// Page content
-ob_start();
-?>
+    <div class="main-content py-4">
+        <div class="container">
+            <div class="auth-container">
+                <div class="panel login-panel">
+                    <div class="left-panel">
+                        <div>
+                            <h2 class="mb-0">APCS</h2>
+                            <p class="mb-2">Air-Protech Cooling Services</p>
+                            <p class="company-tagline">Premium HVAC solutions for homes and businesses since 1995</p>
 
-<div class="auth-container">
-    <div class="container">
-        <div class="auth-card mx-auto">
-            <div class="auth-header">
-                <div class="logo-container">
-                    <img src="/assets/images/logo/Air-TechLogo.png" alt="Air-Protech Logo">
-                    <div class="logo-text">
-                        <h1>Air-Protech</h1>
+                            <i class="fas fa-snowflake snowflake-icon"></i>
+
+                            <h1 class="mt-4">Join Our Community</h1>
+                            <p class="mb-3">Connect. Share. Grow.</p>
+
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check-circle"></i> 24/7 Technical Support</li>
+                                <li><i class="fas fa-check-circle"></i> Professional HVAC Installation</li>
+                                <li><i class="fas fa-check-circle"></i> Energy-efficient Solutions</li>
+                                <li><i class="fas fa-check-circle"></i> Preventive Maintenance Plans</li>
+                            </ul>
+                        </div>
+
+                        <div class="trusted-by">
+                            <p>TRUSTED BY</p>
+                            <div class="company-logos">
+                                <span>ACME Corp</span>
+                                <span>GlobalTech</span>
+                                <span>EcoSmart</span>
+                            </div>
+                        </div>
+
+                        <i class="fas fa-fan fan-icon fa-spin" style="--fa-animation-duration: 15s;"></i>
+                        <i class="fas fa-fan fan-icon-2 fa-spin" style="--fa-animation-duration: 10s;"></i>
+                        <i class="fas fa-fan fan-icon-3 fa-spin" style="--fa-animation-duration: 20s;"></i>
+                        
+                        <svg class="wave-shape" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                            <path fill="#ffffff" fill-opacity="1" d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,181.3C672,171,768,181,864,192C960,203,1056,213,1152,202.7C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                        </svg>
+                    </div>
+
+                    <div class="right-panel">
+                        <div class="form-content">
+                            <h2 class="text-center mb-2">Welcome Back</h2>
+                            <p class="text-center text-muted mb-4">Log in to your account</p>
+
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <div class="input-icon-wrapper">
+                                        <i class="fas fa-envelope input-icon"></i>
+                                        <input type="email" class="form-control input-with-icon" id="email" placeholder="Enter your email" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <div class="input-icon-wrapper">
+                                        <i class="fas fa-lock input-icon"></i>
+                                        <input type="password" class="form-control input-with-icon" id="password" placeholder="Enter your password" required>
+                                        <button type="button" class="password-toggle" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="remember">
+                                        <label class="form-check-label" for="remember">Remember me</label>
+                                    </div>
+                                    <a href="#" class="toggle-link">Forgot password?</a>
+                                </div>
+                                <div class="d-grid mb-3">
+                                    <button type="submit" class="btn btn-primary">Log In</button>
+                                </div>
+
+                                <div class="service-highlights">
+                                    <div class="service-highlight">
+                                        <i class="fas fa-bolt"></i>
+                                        <p>Fast Service</p>
+                                    </div>
+                                    <div class="service-highlight">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <p>Secure System</p>
+                                    </div>
+                                    <div class="service-highlight">
+                                        <i class="fas fa-headset"></i>
+                                        <p>24/7 Support</p>
+                                    </div>
+                                </div>
+
+                                <div class="text-center mt-4">
+                                    <p>Don't have an account? <a href="/auth/register" class="toggle-link">Register now</a></p>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-                <h2 class="h4 mb-0">Welcome Back</h2>
-            </div>
-            
-            <div class="auth-body">
-                <?php if (isset($_GET['error'])): ?>
-                    <div class="alert alert-danger" role="alert">
-                        <i class="bi bi-exclamation-circle me-2"></i>
-                        <?php 
-                            $error = $_GET['error'];
-                            if ($error === 'invalid') {
-                                echo 'Invalid email or password. Please try again.';
-                            } elseif ($error === 'inactive') {
-                                echo 'Your account is inactive. Please contact support.';
-                            } else {
-                                echo 'An error occurred. Please try again.';
-                            }
-                        ?>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if (isset($_GET['success']) && $_GET['success'] === 'reset'): ?>
-                    <div class="alert alert-success" role="alert">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Password reset instructions have been sent to your email.
-                    </div>
-                <?php endif; ?>
-                
-                <form action="process-login.php" method="post">
-                    <div class="form-floating">
-                        <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required autofocus>
-                        <label for="email"><i class="bi bi-envelope me-2"></i>Email address</label>
-                    </div>
-                    
-                    <div class="form-floating">
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
-                        <label for="password"><i class="bi bi-lock me-2"></i>Password</label>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                            <label class="form-check-label" for="remember">Remember me</label>
-                        </div>
-                        <a href="/auth/reset-password" class="auth-link">Forgot password?</a>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-auth">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-                    </button>
-                </form>
-            </div>
-            
-            <div class="auth-footer">
-                <p class="mb-0">Don't have an account? <a href="/auth/register" class="auth-link">Create one now</a></p>
             </div>
         </div>
     </div>
-</div>
 
-<?php
-$content = ob_get_clean();
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1055">
+        <div id="liveToast" class="toast text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage">Success</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
 
-// Include the base template but override header and footer
-$headerPath = null;
-$navbarPath = null;
-$footerPath = null;
-include $basePath;
-?>
+    <footer class="py-3">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    © 2025 AirProtech Aircon. All rights reserved.
+                </div>
+                <div class="d-flex">
+                    <a href="#" class="me-3">Privacy Policy</a>
+                    <a href="#" class="me-3">Terms of Service</a>
+                    <a href="#">Help</a>
+                </div>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function showToast(title, message, type = 'success') {
+            const toastEl = document.getElementById('liveToast');
+            const toastMsg = document.getElementById('toastMessage');
+
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning');
+            toastEl.classList.add(`bg-${type}`);
+            toastMsg.innerText = message;
+
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+
+        // Password toggle functionality
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    </script>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script src="/assets/js/utility/toast-notifications.js"></script>
+    <script src="/assets/js/utility/form-handler.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            handleFormSubmission('loginForm', '/auth/login'); 
+        });
+    </script>
+    
+</body>
+</html>

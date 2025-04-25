@@ -35,7 +35,7 @@ class AuthController extends BaseController
         $this->render('auth/reset-password');
     }
 
-    public function login() 
+    public function loginAccount() 
     {
         if (!$this->isPost() || !$this->isAjax()) {
             return $this->jsonError('Invalid request method');
@@ -49,7 +49,7 @@ class AuthController extends BaseController
 
         // Get user record but check for soft deletion
         $user = $this->userModel->findByEmail($email);
-        
+
         // Check if user exists
         if (!$user) {
             return $this->jsonError('Invalid email or password');
@@ -100,7 +100,6 @@ class AuthController extends BaseController
             Session::set("profile_route", '/admin/admin-profile');
         } else {
             Session::set("profile_route", '/user/user-profile');
-            
         }
 
         return $this->jsonSuccess(
@@ -109,7 +108,7 @@ class AuthController extends BaseController
         );
     }
 
-    public function register() 
+    public function registerAccount() 
     {
         $avatar = new AvatarGenerator();
 
@@ -119,7 +118,7 @@ class AuthController extends BaseController
         $data = $this->getJsonInput();
 
         // Validate required fields
-        $requiredFields = ['first_name', 'last_name', 'email', 'password'];
+        $requiredFields = ['first_name', 'last_name', 'email', 'password', 'confirm_password'];
 
         foreach ($requiredFields as $field) {
             if (empty($data[$field] ?? '')) {
@@ -132,6 +131,7 @@ class AuthController extends BaseController
         $last_name = $data['last_name'];
         $email = $data['email'];
         $password = $data['password'];
+        $confirmPassword = $data['confirm_password'];
 
         // Validate email format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -143,20 +143,39 @@ class AuthController extends BaseController
             return $this->jsonError('Email already exists');
         }
 
+        // Validate if passwords match
+        if ($password != $confirmPassword) {
+            return $this->jsonError('Passwords do not match');
+        }
+
+        // Password strength validation
+        if (strlen($password) < 8) {
+            return $this->jsonError('Password must be at least 8 characters long');
+        }
+        if (!preg_match('/[A-Za-z]/', $password)) {
+            return $this->jsonError('Password must contain at least one letter');
+        }
+        if (!preg_match('/[0-9]/', $password)) {
+            return $this->jsonError('Password must contain at least one number');
+        }
+        if (!preg_match('/[\W_]/', $password)) {
+            return $this->jsonError('Password must contain at least one special character');
+        }
+
         // Create the user
         $result = $this->userModel->createUser([
             'profile_url' => $profileUrl,
             'first_name' => $firstName,
             'last_name' => $last_name,
             'email' => $email,
-            'password' => $password,
+            'password' => password_hash($password, PASSWORD_BCRYPT), // Hash the password before storing
             'role_id' => '1',
             'is_active' => true
         ]);
 
         if ($result) {
             return $this->jsonSuccess(
-                ['redirect_url' => '/login'],
+                ['redirect_url' => '/auth/login'],
                 'User registered successfully'
             );
         } else {
@@ -164,6 +183,7 @@ class AuthController extends BaseController
         }
     }
 
+    
     public function logout()
     {
         // Clear "remember me" token from DB if set
@@ -173,7 +193,7 @@ class AuthController extends BaseController
 
         // Remove session data
         Session::clear();
-        Session::destroy();
+        Session::destroy(); 
 
         // Remove "remember me" cookie if it exists
         if (Cookie::has('remember_token')) {
@@ -184,7 +204,7 @@ class AuthController extends BaseController
         Session::flash("success", "Logout successful");
 
         // Redirect to login page
-        $this->redirect("/login");
+        $this->redirect("/auth/login");
     }
 
     /**

@@ -63,9 +63,9 @@ $router->map('GET', '/terms-of-service', 'App\Controllers\HomeController#terms',
 
 // Auth routes
 $router->map('GET', '/auth/login', 'App\Controllers\AuthController#renderLogin', 'render_login');
-$router->map('POST', '/auth/login', 'App\Controllers\AuthController#login', 'login_post');
+$router->map('POST', '/auth/login', 'App\Controllers\AuthController#loginAccount', 'login_post');
 $router->map('GET', '/auth/register', 'App\Controllers\AuthController#renderRegister', 'render_register');
-$router->map('POST', '/auth/register', 'App\Controllers\AuthController#register', 'register_post');
+$router->map('POST', '/auth/register', 'App\Controllers\AuthController#registerAccount', 'register_post');
 $router->map('GET', '/auth/reset-password', 'App\Controllers\AuthController#renderResetPassword', 'reset_password');
 $router->map('GET', '/auth/logout', 'App\Controllers\AuthController#logout', 'logout');
 

@@ -1,9 +1,7 @@
 <?php
 
 namespace App\Models;
-
 use App\Models\BaseModel;
-
 /**
  * User Model
  * 
@@ -12,7 +10,7 @@ use App\Models\BaseModel;
  */
 class UserModel extends BaseModel
 {
-    protected $table = 'users';
+    protected $table = 'account';
     protected $primaryKey = 'id';
 
     protected $fillable = [
@@ -34,30 +32,30 @@ class UserModel extends BaseModel
     protected $useSoftDeletes = true;
 
     public function findById($id) {
-        return $this->select('users.*, roles.name AS role_name')
-                    ->join('roles', 'users.role_id', 'roles.id')
-                    ->where('users.id = :id')
+        return $this->select('account.*, role.name AS role_name')
+                    ->join('role', 'account.role_id', 'role.id')
+                    ->where('account.id = :id')
                     ->bind(['id' => $id])
-                    ->whereSoftDeleted('users')
+                    ->whereSoftDeleted('account')
                     ->first();
     }
 
     public function findByEmail($email)
     {
-        return $this->select('users.*, roles.name AS role_name')
-                    ->join('roles', 'users.role_id', 'roles.id')
-                    ->where('users.email = :email')
+        return $this->select('account.*, role.name AS role_name')
+                    ->join('role', 'account.role_id', 'role.id')
+                    ->where('account.email = :email')
                     ->bind(['email' => $email])
                     ->first();
     }
 
     public function getByRole($roleName)
     {
-        return $this->select('users.*, roles.name AS role_name')
-                    ->join('roles', 'users.role_id', 'roles.id')
-                    ->where('roles.name = :role_name')
+        return $this->select('account.*, role.name AS role_name')
+                    ->join('role', 'account.role_id', 'role.id')
+                    ->where('role.name = :role_name')
                     ->bind(['role_name' => $roleName])
-                    ->whereSoftDeleted('users')
+                    ->whereSoftDeleted('account')
                     ->get();
     }
 
@@ -278,5 +276,4 @@ class UserModel extends BaseModel
             []
         );
     }
-
 }

@@ -301,8 +301,8 @@
     <nav class="navbar navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <i class="bi bi-tools me-2"></i>
-                AC Service Pro
+                <img src="/assets/images/logo/Air-TechLogo.png" alt="AirProtect logo" height="36" width="36">
+                AirPotect
             </a>
             <div class="d-flex">
                 <div class="me-3">
