@@ -4,9 +4,10 @@ namespace App\Controllers;
 
 use DateTime;
 
-use Core\AvatarGenerator;
-use Core\Session;
 use Core\Cookie;
+use Core\Session;
+use Core\AvatarGenerator;
+use App\Controllers\BaseController;
 
 class AuthController extends BaseController
 {
@@ -50,49 +51,56 @@ class AuthController extends BaseController
         // Get user record but check for soft deletion
         $user = $this->userModel->findByEmail($email);
 
+        // Check if password exists
+        if (empty($user['ua_email'])) {
+            return $this->jsonError('Email is empty');
+        }
+
         // Check if user exists
         if (!$user) {
             return $this->jsonError('Invalid email or password');
         }
-        
+
         // Check if account is soft deleted
-        if ($user['deleted_at'] !== null) {
+        if (isset($user['ua_deleted_at']) && $user['ua_deleted_at'] !== null) {
             return $this->jsonError('This account has been deactivated');
         }
-        
-        // Check password and active status
-        if (!$this->userModel->verifyPassword($password, $user['password'])) {
-            return $this->jsonError('Invalid email or password');
+
+        // Check if password exists
+        if (!isset($user['ua_hashed_password'])) {
+            return $this->jsonError('Authentication error');
         }
-        
-        if (!$user['is_active']) {
-            return $this->jsonError('Account is inactive');
+
+        // Check password and active status
+        if (!$this->userModel->verifyPassword($password, $user['ua_hashed_password'])) {
+            return $this->jsonError('Invalid email or password');
         }
 
         // Update last login timestamp
-        $this->userModel->updateLastLogin($user['id']);
+        $this->userModel->updateLastLogin($user['ua_id']);
 
         // Set session data
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['profile_url'] = $user['profile_url'];
-        $_SESSION['first_name'] = $user['first_name'];
-        $_SESSION['last_name'] = $user['last_name'];
-        $_SESSION['full_name'] = $user['first_name'] . ' ' . $user['last_name'];
-        $_SESSION['user_email'] = $user['email'];
-        $_SESSION['phone_number'] = $user['phone_number'];
+        $_SESSION['user_id'] = $user['ua_id'];
+        $_SESSION['profile_url'] = $user['ua_profile_url'];
+        $_SESSION['first_name'] = $user['ua_first_name'];
+        $_SESSION['last_name'] = $user['ua_last_name'];
+        $_SESSION['full_name'] = $user['ua_first_name'] . ' ' . $user['ua_last_name'];
+        $_SESSION['user_email'] = $user['ua_email'];
+        $_SESSION['phone_number'] = $user['ua_phone_number'];
         $_SESSION['user_role'] = $user['role_name'] ?? "user";
-        $_SESSION['member_since'] = (new DateTime($user['created_at']))->format('F j, Y');
+        $_SESSION['member_since'] = (new DateTime($user['ua_created_at']))->format('F j, Y');
 
         if ($remember) {
-            $token = $this->userModel->generateRememberToken($user['id'], 30);
+            $token = $this->userModel->generateRememberToken($user['ua_id'], 30);
             Cookie::set('remember_token', $token, 30);
         }
 
         $role = $user['role_name'] ?? "/";
 
         $redirectUrl = match ($role) {
+            'customer'      => '/admin/dashboard',
+            'technician'     => '/technician/dashboard',
             'admin'     => '/admin/dashboard',
-            'user'      => '/user/dashboard',
             default     => '/'
         };
 
@@ -128,7 +136,7 @@ class AuthController extends BaseController
 
         $profileUrl = $avatar->generate($data['first_name'] . ' ' . $data['last_name']);
         $firstName = $data['first_name'];
-        $last_name = $data['last_name'];
+        $lastName = $data['last_name'];
         $email = $data['email'];
         $password = $data['password'];
         $confirmPassword = $data['confirm_password'];
@@ -148,29 +156,15 @@ class AuthController extends BaseController
             return $this->jsonError('Passwords do not match');
         }
 
-        // Password strength validation
-        if (strlen($password) < 8) {
-            return $this->jsonError('Password must be at least 8 characters long');
-        }
-        if (!preg_match('/[A-Za-z]/', $password)) {
-            return $this->jsonError('Password must contain at least one letter');
-        }
-        if (!preg_match('/[0-9]/', $password)) {
-            return $this->jsonError('Password must contain at least one number');
-        }
-        if (!preg_match('/[\W_]/', $password)) {
-            return $this->jsonError('Password must contain at least one special character');
-        }
-
         // Create the user
         $result = $this->userModel->createUser([
-            'profile_url' => $profileUrl,
-            'first_name' => $firstName,
-            'last_name' => $last_name,
-            'email' => $email,
-            'password' => password_hash($password, PASSWORD_BCRYPT), // Hash the password before storing
-            'role_id' => '1',
-            'is_active' => true
+            'ua_profile_url' => $profileUrl,
+            'ua_first_name' => $firstName,
+            'ua_last_name' => $lastName,
+            'ua_email' => $email,
+            'ua_hashed_password' => password_hash($password, PASSWORD_BCRYPT),
+            'ua_role_id' => '1',
+            'ua_is_active' => true
         ]);
 
         if ($result) {
@@ -183,7 +177,6 @@ class AuthController extends BaseController
         }
     }
 
-    
     public function logout()
     {
         // Clear "remember me" token from DB if set
@@ -225,20 +218,23 @@ class AuthController extends BaseController
             
             // If valid token and user is active
             // findByRememberToken now includes expiration check
-            if ($user && $user['is_active']) {
+            if ($user && $user['ua_is_active']) {
                 // Update last login timestamp
-                $this->userModel->updateLastLogin($user['id']);
+                $this->userModel->updateLastLogin($user['ua_id']);
                 
                 // Set session data
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['user_role'] = $user['role'];
-                $_SESSION['full_name'] = $user['full_name'];
-                $_SESSION['username'] = $user['username'];
+                $_SESSION['user_id'] = $user['ua_id'];
+                $_SESSION['user_email'] = $user['ua_email'];
+                $_SESSION['user_role'] = $user['role_name'];
+                $_SESSION['full_name'] = $user['ua_first_name'] . ' ' . $user['ua_last_name'];
+                $_SESSION['profile_url'] = $user['ua_profile_url'];
+                $_SESSION['first_name'] = $user['ua_first_name'];
+                $_SESSION['last_name'] = $user['ua_last_name'];
+                $_SESSION['phone_number'] = $user['ua_phone_number'];
                 
                 // Generate a new token for security
                 // This rotates the token on each successful auto-login
-                $newToken = $this->userModel->generateRememberToken($user['id'], 30);
+                $newToken = $this->userModel->generateRememberToken($user['ua_id'], 30);
                 Cookie::set('remember_token', $newToken, 30);
             } else {
                 // Token is invalid or expired, clear cookie
@@ -280,10 +276,10 @@ class AuthController extends BaseController
         $resetToken = bin2hex(random_bytes(32));
         
         // Store the token in the database (you'd need to add this field)
-        // $this->userModel->updateUser($user['id'], ['reset_token' => $resetToken]);
+        // $this->userModel->updateUser($user['ua_id'], ['reset_token' => $resetToken]);
         
         // Send email with reset link
-        // sendResetEmail($user['email'], $resetToken);
+        // sendResetEmail($user['ua_email'], $resetToken);
         
         Session::flash("success", "Password reset instructions sent to your email");
         return $this->jsonSuccess(null, 'Reset instructions sent');

@@ -74,6 +74,8 @@ $router->map('GET', '/user/dashboard', 'App\Controllers\UserController#renderUse
 
 // Admin routes
 $router->map('GET', '/admin/dashboard', 'App\Controllers\AdminController#renderAdminDashboard', 'render_admin-dashboard');
+$router->map('GET', '/admin/service-requests', 'App\Controllers\AdminController#renderServiceRequest', 'render-service_request');
+$router->map('GET', '/admin/technicians', 'App\Controllers\AdminController#renderTechnician', 'render-technician');
 
 // Test routes
 $router->map('GET', '/test', 'App\Controllers\TestController#renderTest', 'test');

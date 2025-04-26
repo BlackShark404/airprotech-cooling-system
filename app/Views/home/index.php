@@ -1,536 +1,337 @@
-<?php
-// Define page variables
-$pageTitle = 'Welcome to Air-Protech Cooling';
-$pageDescription = 'Professional Air Conditioning Services - Installation, Maintenance & Repair';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Conditioning Solutions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-// Add page-specific styles
-$pageStyles = '
-    .hero-section {
-        background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("/assets/images/landing/aircon_background.png");
-        background-size: cover;
-        background-position: center;
-        padding: 9rem 0;
-        color: white;
-        position: relative;
-    }
-    
-    .hero-content {
-        max-width: 650px;
-        padding-left: 2rem; /* Added padding to move content right */
-    }
-    
-    /* For larger screens, add even more padding */
-    @media (min-width: 992px) {
-        .hero-content {
-            padding-left: 3rem;
-            margin-left: 2rem; /* Additional margin for larger screens */
-        }
-    }
-    
-    .hero-badge {
-        background-color: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        padding: 0.5rem 1.25rem;
-        border-radius: 50px;
-        display: inline-block;
-        margin-bottom: 1.5rem;
-        font-weight: 500;
-        font-size: 0.9rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .service-card {
-        height: 100%;
-        transition: all 0.3s ease;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    
-    .service-card:hover {
-        transform: translateY(-8px);
-    }
-    
-    .service-card .card-img-top {
-        height: 220px;
-        object-fit: cover;
-    }
-    
-    .service-card .card-body {
-        padding: 1.75rem;
-    }
-    
-    .feature-icon {
-        width: 80px;
-        height: 80px;
-        background-color: var(--primary-light);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        border-radius: 50%;
-        margin-bottom: 1.5rem;
-        transition: all 0.3s ease;
-    }
-    
-    .feature-item:hover .feature-icon {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 105, 217, 0.15);
-    }
-    
-    .testimonial-card {
-        border-radius: 16px;
-        overflow: hidden;
-        border: none;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-    }
-    
-    .testimonial-card .card-body {
-        padding: 2.25rem;
-    }
-    
-    .testimonial-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        overflow: hidden;
-        margin-right: 1rem;
-        background-color: var(--primary-light);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--primary);
-        font-weight: 600;
-        font-size: 1.2rem;
-    }
-    
-    .cta-section {
-        background: linear-gradient(135deg, var(--primary) 0%, #004080 100%);
-        padding: 6rem 0;
-        color: white;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .cta-section::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        background: url("assets/images/pattern.png");
-        opacity: 0.08;
-        z-index: 1;
-    }
-    
-    .cta-content {
-        position: relative;
-        z-index: 2;
-    }
-    
-    .stat-item {
-        text-align: center;
-        padding: 2.5rem 1.5rem;
-        border-radius: 12px;
-        background-color: white;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-        height: 100%;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(0, 0, 0, 0.03);
-    }
-    
-    .stat-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stat-number {
-        font-size: 2.75rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 0.75rem;
-        line-height: 1;
-    }
-    
-    .stat-label {
-        color: var(--gray);
-        font-weight: 500;
-        font-size: 1.05rem;
-    }
-    
-    .brands-section {
-        padding: 3.5rem 0;
-        background-color: #f8f9fa;
-    }
-    
-    .brand-logo {
-        height: 60px;
-        object-fit: contain;
-        filter: grayscale(100%);
-        opacity: 0.7;
-        transition: all 0.3s ease;
-    }
-    
-    .brand-logo:hover {
-        filter: grayscale(0%);
-        opacity: 1;
-        transform: scale(1.05);
-    }
-    
-    .section-heading {
-        position: relative;
-        display: inline-block;
-        margin-bottom: 0.5rem;
-    }
-    
-    .section-heading::after {
-        content: "";
-        position: absolute;
-        bottom: -0.75rem;
-        left: 0;
-        width: 50px;
-        height: 3px;
-        background-color: var(--primary);
-    }
-    
-    .section-intro {
-        max-width: 700px;
-        margin: 0 auto 3rem;
-    }
-    
-    .service-icon {
-        font-size: 1.5rem;
-        color: var(--primary);
-        margin-bottom: 1rem;
-    }
-    
-    @media (max-width: 767.98px) {
-        .hero-section {
-            padding: 6rem 0;
-        }
-        
-        .hero-content {
-            padding-left: 1rem; /* Less padding on mobile */
-        }
-        
-        .hero-content h1 {
-            font-size: 2.25rem;
-        }
-    }
-';
+    <!-- AOS CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
 
-// Content for the landing page
-ob_start();
-?>
-
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-8 hero-content"> <!-- Increased column width for more room -->
-                <div class="hero-badge">
-                    <i class="bi bi-check-circle-fill me-2"></i>Trusted HVAC Professionals
+    <link rel="stylesheet" href="/assets/css/home.css" >
+</head>
+  <body>
+        <!-- Top Bar -->
+        <div class="top-bar py-2">
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="contact-info">
+                    <a href="tel:+1234567890" class="me-3 text-white text-decoration-none">
+                        <i class="fas fa-phone me-2"></i>+1 234 567 890
+                    </a>
+                    <a href="mailto:contact@apcs.com" class="text-white text-decoration-none">
+                        <i class="fas fa-envelope me-2"></i>contact@apcs.com
+                    </a>
                 </div>
-                <h1 class="display-4 fw-bold mb-4">Advanced Cooling Solutions For Ultimate Comfort</h1>
-                <p class="lead mb-5">Energy-efficient, reliable air conditioning systems expertly installed and maintained for residential and commercial properties.</p>
-                <div class="d-flex flex-wrap gap-3">
-                    <a href="service-request.php" class="btn btn-primary btn-lg px-4 py-2">Schedule Service</a>
-                    <a href="services.php" class="btn btn-outline-light btn-lg px-4 py-2">View Our Services</a>
+                <div class="social-links">
+                    <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
         </div>
-    </div>
-</section>
 
-<!-- Services Section -->
-<section class="py-5 py-lg-6">
-    <div class="container">
-        <div class="text-center section-intro">
-            <h6 class="text-primary fw-semibold text-uppercase mb-3">Our Services</h6>
-            <h2 class="fw-bold mb-3">Comprehensive Air Conditioning Solutions</h2>
-            <p class="lead text-muted">Delivering professional cooling services tailored to your specific needs</p>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-4">
-                <div class="card service-card h-100 border-0">
-                    <img src="/api/placeholder/800/500" class="card-img-top" alt="Air Conditioning Installation">
+        <!-- Main Navigation -->
+        <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <img src="/assets/images/Air-TechLogo.jpg" alt="Logo" class="rounded-circle me-2" width="40" height="40">
+                    <span class="brand-text">AIR<span class="text-danger">PROTECH</span></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="#hero">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#our-services">Our Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#featured-products">Featured Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#why-choose-us">Why Choose Us</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+                    <li class="nav-item"><a class="btn btn-danger ms-2" href="/auth/login">Login</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="hero" >
+          <section class="hero-section text-white py-5" data-aos="fade-up">
+              <div class="container">
+                  <div class="row align-items-center">
+                      <div class="col-md-6 mb-4 mb-md-0" data-aos="fade-right" data-aos-delay="150">
+                          <h1 class="display-4 fw-bold mb-4">Professional Air Conditioning Solutions</h1>
+                          <p class="lead mb-4">Expert installation and maintenance services for your comfort</p>
+                          <a class="btn btn-danger btn-lg" href="/auth">Get Started Now</a>
+                      </div>
+                      <div class="col-md-6"  data-aos="fade-left" data-aos-delay="200">
+                          <img src="/assets/images/ac.png" 
+                              alt="Air Conditioning" 
+                              class="img-fluid rounded shadow">
+                      </div>
+                  </div>
+              </div>
+          </section>
+        </section>
+
+        <!-- Services Section -->
+        <section id="our-services" >
+        <section class="services-section py-5 bg-light">
+            <div class="container">
+              <h2 class="text-center mb-5 fw-bold">Our Services</h2>
+              <div class="row g-4">
+                <!-- Installation -->
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
+                  <div class="card text-center h-100 shadow-sm border-0">
                     <div class="card-body">
-                        <div class="service-icon">
-                            <i class="bi bi-tools"></i>
-                        </div>
-                        <h3 class="card-title h5 fw-bold">AC Installation & Replacement</h3>
-                        <p class="card-text text-muted">Expert installation of energy-efficient air conditioning systems with personalized recommendations for your space.</p>
-                        <a href="services.php?type=installation" class="btn btn-outline-primary mt-3">
-                            Learn More <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+                      <div class="service-icon mb-3 text-primary fs-2">
+                        <i class="fas fa-tools"></i>
+                      </div>
+                      <h5 class="card-title fw-bold">Installation</h5>
+                      <p class="card-text text-muted">Professional AC installation with expert guidance</p>
+                      <a href="/auth" class="btn btn-primary mt-2">Book Now</a>
                     </div>
+                  </div>
                 </div>
-            </div>
             
-            <div class="col-md-6 col-lg-4">
-                <div class="card service-card h-100 border-0">
-                    <img src="/api/placeholder/800/500" class="card-img-top" alt="AC Maintenance Service">
+                <!-- Maintenance -->
+                <div class="col-md-4"  data-aos="fade-up" data-aos-delay="150">
+                  <div class="card text-center h-100 shadow-sm border-0">
                     <div class="card-body">
-                        <div class="service-icon">
-                            <i class="bi bi-calendar-check"></i>
-                        </div>
-                        <h3 class="card-title h5 fw-bold">Preventive Maintenance</h3>
-                        <p class="card-text text-muted">Regular maintenance plans to optimize performance, improve efficiency, and extend the lifespan of your cooling system.</p>
-                        <a href="services.php?type=maintenance" class="btn btn-outline-primary mt-3">
-                            Learn More <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+                      <div class="service-icon mb-3 text-primary fs-2">
+                        <i class="fas fa-globe"></i>
+                      </div>
+                      <h5 class="card-title fw-bold">Maintenance</h5>
+                      <p class="card-text text-muted">Regular maintenance to ensure optimal performance</p>
+                      <a href="/auth" class="btn btn-primary mt-2">Book Now</a>
                     </div>
+                  </div>
                 </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-4">
-                <div class="card service-card h-100 border-0">
-                    <img src="/api/placeholder/800/500" class="card-img-top" alt="AC Repair Services">
+          
+                <!-- Repair -->
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                  <div class="card text-center h-100 shadow-sm border-0">
                     <div class="card-body">
-                        <div class="service-icon">
-                            <i class="bi bi-wrench"></i>
-                        </div>
-                        <h3 class="card-title h5 fw-bold">Repair & Troubleshooting</h3>
-                        <p class="card-text text-muted">Fast, reliable diagnosis and repair services for all air conditioning systems with quality replacement parts.</p>
-                        <a href="services.php?type=repair" class="btn btn-outline-primary mt-3">
-                            Learn More <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+                      <div class="service-icon mb-3 text-primary fs-2">
+                        <i class="fas fa-wrench"></i>
+                      </div>
+                      <h5 class="card-title fw-bold">Repair</h5>
+                      <p class="card-text text-muted">Quick and reliable repair services</p>
+                      <a href="/auth" class="btn btn-primary mt-2">Book Now</a>
                     </div>
+                  </div>
                 </div>
+              </div>
             </div>
-        </div>
-        
-        <div class="text-center mt-5">
-            <a href="services.php" class="btn btn-primary px-4 py-2">View All Services</a>
-        </div>
-    </div>
-</section>
+          </section>
+          </section>
 
-<!-- Features Section -->
-<section class="py-5 py-lg-6 bg-light">
-    <div class="container">
-        <div class="text-center section-intro">
-            <h6 class="text-primary fw-semibold text-uppercase mb-3">Why Choose Us</h6>
-            <h2 class="fw-bold mb-3">The Air-Protech Advantage</h2>
-            <p class="lead text-muted">Industry-leading expertise, exceptional service, and guaranteed satisfaction</p>
-        </div>
-        
-        <div class="row g-4 g-lg-5">
-            <div class="col-md-6 col-lg-3">
-                <div class="d-flex flex-column align-items-center text-center feature-item">
-                    <div class="feature-icon">
-                        <i class="bi bi-award"></i>
-                    </div>
-                    <h3 class="h5 fw-bold mb-3">Certified Technicians</h3>
-                    <p class="text-muted">NATE-certified professionals with extensive training and years of industry experience.</p>
-                </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-3">
-                <div class="d-flex flex-column align-items-center text-center feature-item">
-                    <div class="feature-icon">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <h3 class="h5 fw-bold mb-3">24/7 Emergency Service</h3>
-                    <p class="text-muted">Round-the-clock emergency support when you need immediate cooling solutions.</p>
-                </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-3">
-                <div class="d-flex flex-column align-items-center text-center feature-item">
-                    <div class="feature-icon">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <h3 class="h5 fw-bold mb-3">100% Satisfaction Guarantee</h3>
-                    <p class="text-muted">We stand behind our work with comprehensive service warranties and guarantees.</p>
-                </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-3">
-                <div class="d-flex flex-column align-items-center text-center feature-item">
-                    <div class="feature-icon">
-                        <i class="bi bi-cash-coin"></i>
-                    </div>
-                    <h3 class="h5 fw-bold mb-3">Transparent Pricing</h3>
-                    <p class="text-muted">Upfront quotes with no hidden fees and flexible financing options available.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Testimonials Section -->
-<section class="py-5 py-lg-6">
-    <div class="container">
-        <div class="text-center section-intro">
-            <h6 class="text-primary fw-semibold text-uppercase mb-3">Testimonials</h6>
-            <h2 class="fw-bold mb-3">What Our Clients Say</h2>
-            <p class="lead text-muted">Read about real experiences from our satisfied customers</p>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-4">
-                <div class="card testimonial-card h-100">
+        <!-- Products Section -->
+        <section id="featured-products" class="products-section py-5 bg-light">
+            <div class="container">
+              <h2 class="text-center fw-bold mb-5">Featured Products</h2>
+              <div class="row g-4">
+                <!-- Product 1 -->
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200" >
+                  <div class="card product-card shadow-sm border-0 h-100">
+                    <img src="path/to/product1.jpg" class="card-img-top" alt="Smart Inverter AC">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                        </div>
-                        <p class="card-text mb-4">"Air-Protech's team was professional, knowledgeable, and efficient. They completed our new system installation faster than expected and were incredibly neat. Our home has never been more comfortable!"</p>
-                        <div class="d-flex align-items-center mt-4">
-                            <div class="testimonial-avatar">
-                                MJ
-                            </div>
-                            <div>
-                                <h4 class="h6 mb-1 fw-bold">Michael Johnson</h4>
-                                <p class="small text-muted mb-0">Residential Client</p>
-                            </div>
-                        </div>
+                      <h5 class="fw-bold">Smart Inverter AC</h5>
+                      <p class="text-muted mb-2">Energy-efficient cooling with smart controls</p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="price text-danger fw-bold">$1,299</span>
+                        <a href="/auth" class="btn btn-danger btn-sm">Book Now</a>
+                      </div>
                     </div>
+                  </div>
                 </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-4">
-                <div class="card testimonial-card h-100">
+          
+                <!-- Product 2 -->
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300" >
+                  <div class="card product-card shadow-sm border-0 h-100">
+                    <img src="path/to/product2.jpg" class="card-img-top" alt="Split System Classic">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                        </div>
-                        <p class="card-text mb-4">"As a business owner, I need reliable contractors. Air-Protech has maintained our office cooling systems for 3 years with exceptional service. They're responsive, thorough, and always professional."</p>
-                        <div class="d-flex align-items-center mt-4">
-                            <div class="testimonial-avatar">
-                                SW
-                            </div>
-                            <div>
-                                <h4 class="h6 mb-1 fw-bold">Sarah Williams</h4>
-                                <p class="small text-muted mb-0">Commercial Client</p>
-                            </div>
-                        </div>
+                      <h5 class="fw-bold">Split System Classic</h5>
+                      <p class="text-muted mb-2">Reliable cooling for any room size</p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="price text-danger fw-bold">$899</span>
+                        <a href="/auth" class="btn btn-danger btn-sm">Book Now</a>
+                      </div>
                     </div>
+                  </div>
                 </div>
-            </div>
-            
-            <div class="col-md-6 col-lg-4">
-                <div class="card testimonial-card h-100">
+          
+                <!-- Product 3 -->
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+                  <div class="card product-card shadow-sm border-0 h-100">
+                    <img src="path/to/product3.jpg" class="card-img-top" alt="Portable AC Unit">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <i class="bi bi-star-half text-warning"></i>
-                        </div>
-                        <p class="card-text mb-4">"When our AC broke down during a heatwave, Air-Protech's emergency service was a lifesaver. The technician arrived within hours, diagnosed the problem quickly, and had our system running again by evening."</p>
-                        <div class="d-flex align-items-center mt-4">
-                            <div class="testimonial-avatar">
-                                DT
+                      <h5 class="fw-bold">Portable AC Unit</h5>
+                      <p class="text-muted mb-2">Flexible cooling solution for any space</p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="price text-danger fw-bold">$499</span>
+                        <a href="/auth" class="btn btn-danger btn-sm">Book Now</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+          
+                <!-- Product 4 -->
+                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+                  <div class="card product-card shadow-sm border-0 h-100">
+                    <img src="path/to/product4.jpg" class="card-img-top" alt="Commercial HVAC System">
+                    <div class="card-body">
+                      <h5 class="fw-bold">Commercial HVAC System</h5>
+                      <p class="text-muted mb-2">Professional grade cooling system</p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="price text-danger fw-bold">$2,499</span>
+                        <a href="/auth" class="btn btn-danger btn-sm">Book Now</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          
+
+    <!-- Why Choose Us Section -->
+    <section id="why-choose-us" class="py-5 bg-light text-center">
+        <div class="container">
+          <h2 class="mb-5 fw-bold">Why Choose Us</h2>
+          <div class="row">
+            <div class="col-md-3 mb-4" data-aos="fade-up" data-aos-delay="300" >
+              <div>
+                <i class="fas fa-clock fa-3x text-primary mb-3"></i>
+                <h5 class="fw-bold">24/7 Service</h5>
+                <p class="text-muted">Round-the-clock emergency support</p>
+              </div>
+            </div>
+            <div class="col-md-3 mb-4" data-aos="fade-up" data-aos-delay="300">
+              <div>
+                <i class="fas fa-user-tie fa-3x text-primary mb-3"></i>
+                <h5 class="fw-bold">Certified Technicians</h5>
+                <p class="text-muted">Experienced and qualified professionals</p>
+              </div>
+            </div>
+            <div class="col-md-3 mb-4" data-aos="fade-up" data-aos-delay="300">
+              <div>
+                <i class="fas fa-check-circle fa-3x text-primary mb-3"></i>
+                <h5 class="fw-bold">Guaranteed Satisfaction</h5>
+                <p class="text-muted">100% satisfaction guaranteed</p>
+              </div>
+            </div>
+            <div class="col-md-3 mb-4"  data-aos="fade-up" data-aos-delay="300">
+              <div>
+                <i class="fas fa-dollar-sign fa-3x text-primary mb-3"></i>
+                <h5 class="fw-bold">Competitive Pricing</h5>
+                <p class="text-muted">Best value for your money</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+        <!-- Contact Section -->
+        <section id="contact" class="contact py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6 mb-4 mb-md-0" data-aos="fade-up" data-aos-delay="300">
+                        <h2 class="section-title mb-4">Contact Us</h2>
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" data-aos="fade-up" data-aos-delay="300">
                             </div>
-                            <div>
-                                <h4 class="h6 mb-1 fw-bold">David Thompson</h4>
-                                <p class="small text-muted mb-0">Homeowner</p>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control"  data-aos="fade-up" data-aos-delay="300">
                             </div>
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label">Message</label>
+                                <textarea class="form-control" rows="4" data-aos="fade-up" data-aos-delay="300 "></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" data-aos="fade-up" data-aos-delay="300">Send Message</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6" data-aos="fade-up" data-aos-delay="300">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387193.30596073366!2d-74.25986652089843!3d40.69714941932609!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY!5e0!3m2!1sen!2sus!4v1647043435011!5m2!1sen!2sus" 
+                            class="w-100 h-100 rounded" 
+                            style="min-height: 400px; border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy">
+                        </iframe>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
+        </section>
 
-<!-- Stats Section -->
-<section class="py-5 py-lg-6 bg-light">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-6 col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">3,500+</div>
-                    <div class="stat-label">Systems Installed</div>
-                </div>
+        <!-- Updated Footer -->
+    <footer class="footer text-white py-5">
+        <div class="container">
+          <div class="row">
+            <!-- Brand & Description -->
+            <div class="col-md-3 mb-4">
+              <h3 class="h5 mb-3"><span style="color: white;">AIR</span><span class="text-danger">PROTECH</span></h3>
+              <p class="text-white-50">Your trusted partner for all air conditioning needs. Professional service guaranteed.</p>
             </div>
-            
-            <div class="col-6 col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">15+</div>
-                    <div class="stat-label">Years Experience</div>
-                </div>
+      
+            <!-- Quick Links -->
+            <div class="col-md-3 mb-4">
+              <h4 class="h6 mb-3">Quick Links</h4>
+              <ul class="list-unstyled">
+                <li><a href="#hero" class="text-white-50 text-decoration-none">Home</a></li>
+                <li><a href="#our-services" class="text-white-50 text-decoration-none">Services</a></li>
+                <li><a href="#featured-products" class="text-white-50 text-decoration-none">Products</a></li>
+                <li><a href="#why-choose-us" class="text-white-50 text-decoration-none">Why Choose Us</a></li>
+                <li><a href="#contact" class="text-white-50 text-decoration-none">Contact</a></li>
+              </ul>
             </div>
-            
-            <div class="col-6 col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">98%</div>
-                    <div class="stat-label">Client Satisfaction</div>
-                </div>
+      
+            <!-- Contact Info -->
+            <div class="col-md-3 mb-4">
+              <h4 class="h6 mb-3">Contact Info</h4>
+              <ul class="list-unstyled text-white-50">
+                <li><i class="fas fa-phone text-primary me-2"></i> 1-800-AIR-COOL</li>
+                <li><i class="fas fa-envelope text-primary me-2"></i> info@airprotech.com</li>
+                <li><i class="fas fa-map-marker-alt text-primary me-2"></i> 123 Cooling Street, AC City</li>
+              </ul>
             </div>
-            
-            <div class="col-6 col-md-3">
-                <div class="stat-item">
-                    <div class="stat-number">24/7</div>
-                    <div class="stat-label">Emergency Service</div>
-                </div>
+      
+            <!-- Newsletter -->
+            <div class="col-md-3 mb-4">
+              <h4 class="h6 mb-3">Newsletter</h4>
+              <p class="text-white-50">Subscribe for updates and special offers</p>
+              <div class="input-group">
+                <input type="email" class="form-control bg-dark text-white border-0" placeholder="Your email">
+                <button class="btn btn-primary">Subscribe</button>
+              </div>
             </div>
+          </div>
+          <div class="border-top border-white-50 mt-4 pt-4 text-center text-white-50">
+            <p class="mb-0">&copy; 2025 Air-Protech. All rights reserved.</p>
+          </div>
         </div>
-    </div>
-</section>
+      </footer>
+      
+    <!-- JS Files -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- AOS JS -->
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 
-<!-- Brands Section -->
-<section class="brands-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h6 class="text-primary fw-semibold text-uppercase mb-3">Our Partners</h6>
-            <h2 class="fw-bold mb-0">We Work With Premium Brands</h2>
-        </div>
-        
-        <div class="row align-items-center justify-content-center g-5">
-            <div class="col-4 col-md-2 text-center">
-                <img src="/api/placeholder/160/80" class="brand-logo" alt="Carrier Logo">
-            </div>
-            <div class="col-4 col-md-2 text-center">
-                <img src="/api/placeholder/160/80" class="brand-logo" alt="Trane Logo">
-            </div>
-            <div class="col-4 col-md-2 text-center">
-                <img src="/api/placeholder/160/80" class="brand-logo" alt="Lennox Logo">
-            </div>
-            <div class="col-4 col-md-2 text-center">
-                <img src="/api/placeholder/160/80" class="brand-logo" alt="Daikin Logo">
-            </div>
-            <div class="col-4 col-md-2 text-center">
-                <img src="/api/placeholder/160/80" class="brand-logo" alt="Mitsubishi Logo">
-            </div>
-            <div class="col-4 col-md-2 text-center">
-                <img src="/api/placeholder/160/80" class="brand-logo" alt="York Logo">
-            </div>
-        </div>
-    </div>
-</section>
+    <!-- Smooth scrolling script -->
+    <script src="/assets/js/home/SmoothScrolling.js"></script>
 
-<!-- Call to Action Section -->
-<section class="cta-section">
-    <div class="container cta-content">
-        <div class="row justify-content-center">
-            <div class="col-lg-8 text-center">
-                <h2 class="display-5 fw-bold mb-4">Ready for Perfect Indoor Climate Control?</h2>
-                <p class="lead mb-5">Schedule a consultation today and discover how our expert technicians can deliver the perfect cooling solution for your needs.</p>
-                <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
-                    <a href="service-request.php" class="btn btn-light btn-lg px-4 py-2">Schedule Service</a>
-                    <a href="register.php" class="btn btn-outline-light btn-lg px-4 py-2">Create Account</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<?php
-$content = ob_get_clean();
-
-// Include the base template
-include $basePath;
-?>
+    <script>
+          AOS.init({
+            duration: 1000, 
+            easing: 'ease-in-out', 
+            once: true, 
+          });
+    </script>
+  </body>
+</html>

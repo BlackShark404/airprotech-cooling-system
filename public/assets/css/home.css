@@ -1,0 +1,171 @@
+:root {
+    --primary-color: #1A237E;
+    --secondary-color: #dc3545;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+}
+
+/* Top Bar */
+.top-bar {
+    background-color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+.top-bar a {
+    transition: opacity 0.3s ease;
+}
+
+.top-bar a:hover {
+    opacity: 0.8;
+}
+
+.social-links a {
+    transition: transform 0.3s ease;
+}
+
+.social-links a:hover {
+    transform: translateY(-2px);
+}
+
+/* Navigation */
+.navbar {
+    padding: 1rem 0;
+}
+
+.navbar-brand.brand-text {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.nav-link {
+    color: var(--primary-color) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover {
+    color: #3949ab !important;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(to right, #1A237E, #0d163e);
+    padding: 60px 0;
+    min-height: 65vh;
+    /* Adjust this value as needed */
+    display: flex;
+    align-items: center;
+}
+
+
+/* Section Titles */
+.section-title {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Services */
+.services-section {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.service-icon i {
+    color: #007bff;
+    /* Match button blue */
+}
+
+.card {
+    border: none;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-title {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Products */
+.products-section {
+    background-color: #f8f9fa;
+}
+
+.product-card {
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    height: 180px;
+    object-fit: contain;
+    padding: 1rem;
+}
+
+
+/* Contact Form */
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(26, 35, 126, 0.25);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #151d69;
+    border-color: #151d69;
+}
+
+.footer {
+    background-color: #121212;
+    /* Darker footer background */
+}
+
+.footer .form-control::placeholder {
+    color: #aaa;
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 40px 0;
+    }
+
+    .display-4 {
+        font-size: 2.5rem;
+    }
+
+    .top-bar {
+        font-size: 0.8rem;
+    }
+
+    .navbar-brand.brand-text {
+        font-size: 1.2rem;
+    }
+}

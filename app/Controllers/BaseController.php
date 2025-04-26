@@ -16,49 +16,34 @@ class BaseController
         return $this->db;
     }
 
+    
     protected function getViewPath(string $relativePath): string {
         $path = __DIR__ . "/../Views/{$relativePath}.php";
-
         if (!file_exists($path)) {
             $this->renderError("View not found: {$relativePath}", 404);
         }
-
         return $path;
     }
 
-    protected function getSidebarPath(): string
+    protected function render($view, $data = []) 
     {
-        $role = $_SESSION['user_role'] ?? 'user';
-        // FIXED: Swapped admin and user sidebar paths (they were reversed)
-        return ($role === 'admin') ? 'includes/admin-sidebar' : 'includes/user-sidebar';
-    }
-
-    protected function render($view, $data = []) {
-        // Start output buffering only once
+        // Start output buffering
         ob_start();
-
-        // Get paths first without including any files
-        $headerPath = $this->getViewPath("includes/header");
-        $navbarPath = $this->getViewPath("includes/navbar");
+        
         $viewPath = $this->getViewPath($view);
-        $footerPath = $this->getViewPath("includes/footer");
-        $basePath = $this->getViewPath("base");
-
-        $data['headerPath'] = $headerPath;
-        $data['navbarPath'] = $navbarPath;
-        $data['footerPath'] = $footerPath;
-        $data['basePath'] = $basePath;
-
-
+        
+        // Extract the data variables
         extract($data);
         
-        // Include the files
-        
+        // Include the view file which will use base.php to structure the page
         include $viewPath;
-
+        
+        // Get the complete rendered content
         $content = ob_get_clean();
+
         echo $content;
     }
+    // Output the rendered content
 
     protected function renderError($message, $statusCode = 500) {
         http_response_code($statusCode);
@@ -149,76 +134,22 @@ class BaseController
     }
 
     /**
- * Check if user has the specified permission
- * 
- * @param string $permission Permission to check
- * @return bool True if user has permission, false otherwise
- */
-protected function checkPermission(string $permission): bool {
-    // Get user role from session
-    $role = $_SESSION['user_role'] ?? '';
-    
-    // Basic permission check based on role
-    if ($permission === 'admin' && $role === 'admin') {
-        return true;
+     * Check if user has the specified permission
+     * 
+     * @param string $permission Permission to check
+     * @return bool True if user has permission, false otherwise
+     */
+    protected function checkPermission(string $permission): bool {
+        // Get user role from session
+        $role = $_SESSION['user_role'] ?? '';
+        
+        // Basic permission check based on role
+        if ($permission === 'admin' && $role === 'admin') {
+            return true;
+        }
+        
+        // Add more complex permission logic here as needed
+        
+        return false;
     }
-    
-    // Add more complex permission logic here as needed
-    
-    return false;
-}
-
-/**
- * Get parameter from request (GET, POST)
- * 
- * @param string $param Parameter name
- * @param mixed $default Default value if parameter not found
- * @return mixed Parameter value or default
- */
-protected function getRequestParam(string $param, $default = null) {
-    return $this->request($param, $default);
-}
-
-/**
- * Render a view with data and custom layout paths
- * 
- * @param string $view View path
- * @param array $data Data to pass to view
- * @param array $layoutPaths Custom layout paths
- * @return void
- */
-protected function view(string $view, array $data = [], array $layoutPaths = []) {
-    // Start output buffering
-    ob_start();
-    
-    // Get view path
-    $viewPath = $this->getViewPath($view);
-    
-    // Set default layout paths if not provided
-    if (empty($layoutPaths['headerPath'])) {
-        $layoutPaths['headerPath'] = $this->getViewPath("includes/header");
-    }
-    
-    if (empty($layoutPaths['footerPath'])) {
-        $layoutPaths['footerPath'] = $this->getViewPath("includes/footer");
-    }
-    
-    if (empty($layoutPaths['sidebarPath'])) {
-        $sidebarRelativePath = $this->getSidebarPath();
-        $layoutPaths['sidebarPath'] = $this->getViewPath($sidebarRelativePath);
-    }
-    
-    // Merge layout paths with data
-    $data = array_merge($data, $layoutPaths);
-    
-    // Extract data to variables
-    extract($data);
-    
-    // Include the view file
-    include $viewPath;
-    
-    // Get and output content
-    $content = ob_get_clean();
-    echo $content;
-}
 }

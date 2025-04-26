@@ -10,67 +10,69 @@ use App\Models\BaseModel;
  */
 class UserModel extends BaseModel
 {
-    protected $table = 'account';
-    protected $primaryKey = 'id';
+    protected $table = 'user_account';
+    protected $primaryKey = 'ua_id';
 
     protected $fillable = [
-        'profile_url',
-        'first_name',
-        'last_name',
-        'email',
-        'password',
-        'role_id',
-        'is_active',
-        'remember_token',
-        'remember_token_expires_at',
-        'last_login'
+        'ua_profile_url',
+        'ua_first_name',
+        'ua_last_name',
+        'ua_email',
+        'ua_hashed_password',
+        'ua_phone_number',
+        'ua_role_id',
+        'ua_is_active',
+        'ua_remember_token',
+        'ua_remember_token_expires_at',
+        'ua_last_login'
     ];
 
-    protected $searchableFields = ['first_name', 'last_name', 'email']; // Updated from 'name' to 'first_name' and 'last_name'
+    protected $createdAtColumn = 'ua_created_at';
+    protected $updatedAtColumn = 'ua_updated_at';
+    protected $deletedAtColumn = 'ua_deleted_at';
 
     protected $timestamps = true;
     protected $useSoftDeletes = true;
 
     public function findById($id) {
-        return $this->select('account.*, role.name AS role_name')
-                    ->join('role', 'account.role_id', 'role.id')
-                    ->where('account.id = :id')
+        return $this->select('user_account.*, user_role.ur_name AS role_name')
+                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                    ->where('user_account.ua_id = :id')
                     ->bind(['id' => $id])
-                    ->whereSoftDeleted('account')
                     ->first();
     }
 
     public function findByEmail($email)
     {
-        return $this->select('account.*, role.name AS role_name')
-                    ->join('role', 'account.role_id', 'role.id')
-                    ->where('account.email = :email')
+        return $this->select('user_account.*, user_role.ur_name AS role_name')
+                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                    ->where('user_account.ua_email = :email')
                     ->bind(['email' => $email])
                     ->first();
     }
 
     public function getByRole($roleName)
     {
-        return $this->select('account.*, role.name AS role_name')
-                    ->join('role', 'account.role_id', 'role.id')
-                    ->where('role.name = :role_name')
+        return $this->select('user_account.*, user_role.ur_name AS role_name')
+                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                    ->where('user_role.ur_name = :role_name')
                     ->bind(['role_name' => $roleName])
-                    ->whereSoftDeleted('account')
+                    ->whereSoftDeleted('user_account')
                     ->get();
     }
 
     public function getNewest()
     {
-        return $this->orderBy('created_at DESC')
+        return $this->orderBy('ua_created_at DESC')
                     ->get();
     }
 
     public function search($searchTerm)
     {
-        return $this->where("first_name ILIKE :search_term OR last_name ILIKE :search_term OR email ILIKE :search_term")
+        return $this->where("ua_first_name ILIKE :search_term OR ua_last_name ILIKE :search_term OR ua_email ILIKE :search_term")
                     ->bind(['search_term' => "%$searchTerm%"])
                     ->whereSoftDeleted()
-                    ->orderBy('last_name, first_name')
+                    ->orderBy('ua_last_name, ua_first_name')
                     ->get();
     }
 
@@ -86,18 +88,15 @@ class UserModel extends BaseModel
 
     public function createUser(array $data)
     {
-        if (isset($data['password'])) {
-            $data['password'] = $this->hashPassword($data['password']);
-        }
-        
         // No need to manually set timestamps as BaseModel.insert() handles this
         return $this->insert($data);
     }
 
     public function updateUser($id, array $data)
     {
-        if (isset($data['password'])) {
-            $data['password'] = $this->hashPassword($data['password']);
+        if (isset($data['ua_hashed_password'])) {
+            $data['ua_hashed_password'] = $this->hashPassword($data['ua_hashed_password']);
+            unset($data['ua_hashed_password']);
         }
 
         // No need to manually set updated_at as BaseModel.update() handles this
@@ -127,28 +126,28 @@ class UserModel extends BaseModel
 
     public function emailExists($email)
     {
-        return $this->exists('email = :email', ['email' => $email]);
+        return $this->exists('ua_email = :email', ['email' => $email]);
     }
 
     public function getActiveUsers($days = 30)
     {
         $cutoff = date('Y-m-d H:i:s', strtotime("-$days days"));
-        return $this->where('is_active = :is_active')
-                    ->where('last_login >= :cutoff')
+        return $this->where('ua_is_active = :is_active')
+                    ->where('ua_last_login >= :cutoff')
                     ->bind([
                         'is_active' => true,
                         'cutoff' => $cutoff
                     ])
                     ->whereSoftDeleted()
-                    ->orderBy('last_login DESC')
+                    ->orderBy('ua_last_login DESC')
                     ->get();
     }
 
     public function findByRememberToken($token)
     {
         // Add check for token expiration
-        return $this->where('remember_token = :token')
-                    ->where('remember_token_expires_at > NOW()')
+        return $this->where('ua_remember_token = :token')
+                    ->where('ua_remember_token_expires_at > NOW()')
                     ->bind(['token' => $token])
                     ->first();
     }
@@ -157,7 +156,7 @@ class UserModel extends BaseModel
     {
         return $this->update(
             [
-                'last_login' => date('Y-m-d H:i:s')
+                'ua_last_login' => date('Y-m-d H:i:s')
             ],
             "{$this->primaryKey} = :id",
             ['id' => $userId]
@@ -171,8 +170,8 @@ class UserModel extends BaseModel
 
         $this->update(
             [
-                'remember_token' => $token,
-                'remember_token_expires_at' => $expiresAt
+                'ua_remember_token' => $token,
+                'ua_remember_token_expires_at' => $expiresAt
             ],
             "{$this->primaryKey} = :id",
             ['id' => $userId]
@@ -185,8 +184,8 @@ class UserModel extends BaseModel
     {
         return $this->update(
             [
-                'remember_token' => null,
-                'remember_token_expires_at' => null
+                'ua_remember_token' => null,
+                'ua_remember_token_expires_at' => null
             ],
             "{$this->primaryKey} = :id",
             ['id' => $userId]
@@ -195,13 +194,13 @@ class UserModel extends BaseModel
 
     public function getFullName($user)
     {
-        return $user['first_name'] . ' ' . $user['last_name'];
+        return $user['ua_first_name'] . ' ' . $user['ua_last_name'];
     }
 
     public function activateUser($userId)
     {
         return $this->update(
-            ['is_active' => true],
+            ['ua_is_active' => true],
             "{$this->primaryKey} = :id",
             ['id' => $userId]
         );
@@ -210,7 +209,7 @@ class UserModel extends BaseModel
     public function deactivateUser($userId)
     {
         return $this->update(
-            ['is_active' => false],
+            ['ua_is_active' => false],
             "{$this->primaryKey} = :id",
             ['id' => $userId]
         );
@@ -218,7 +217,7 @@ class UserModel extends BaseModel
 
     public function getActiveOnly()
     {
-        return $this->where('is_active = :is_active')
+        return $this->where('ua_is_active = :is_active')
                     ->bind(['is_active' => true])
                     ->get();
     }
@@ -227,35 +226,35 @@ class UserModel extends BaseModel
     {
         $cutoff = date('Y-m-d H:i:s', strtotime("-$days days"));
 
-        return $this->where('(last_login IS NULL OR last_login < :cutoff)')
+        return $this->where('(ua_last_login IS NULL OR ua_last_login < :cutoff)')
                     ->bind(['cutoff' => $cutoff])
                     ->whereSoftDeleted()
-                    ->orderBy('last_login ASC NULLS FIRST')
+                    ->orderBy('ua_last_login ASC NULLS FIRST')
                     ->get();
     }
 
     public function getAdmins()
     {
-        return $this->where('role = :role')
-                    ->bind(['role' => 'admin'])
+        return $this->select('user_account.*')
+                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                    ->where('user_role.ur_name = :user_role')
+                    ->bind(['user_role' => 'admin'])
                     ->get();
     }
 
     public function getRegularUsers()
     {
-        return $this->where('role = :role')
-                    ->bind(['role' => 'user'])
+        return $this->select('user_account.*')
+                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                    ->where('user_role.ur_name = :user_role')
+                    ->bind(['user_role' => 'customer'])
                     ->get();
     }
 
-    public function changeRole($userId, $role)
+    public function changeRole($userId, $roleId)
     {
-        if (!in_array($role, ['user', 'admin'])) {
-            return false;
-        }
-
         return $this->update(
-            ['role' => $role],
+            ['ua_role_id' => $roleId],
             "{$this->primaryKey} = :id",
             ['id' => $userId]
         );
@@ -269,10 +268,10 @@ class UserModel extends BaseModel
     {
         return $this->update(
             [
-                'remember_token' => null,
-                'remember_token_expires_at' => null
+                'ua_remember_token' => null,
+                'ua_remember_token_expires_at' => null
             ],
-            "remember_token IS NOT NULL AND remember_token_expires_at < NOW()",
+            "ua_remember_token IS NOT NULL AND ua_remember_token_expires_at < NOW()",
             []
         );
     }

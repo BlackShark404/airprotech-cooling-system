@@ -78,14 +78,14 @@
                                     <label for="email" class="form-label">Email Address</label>
                                     <div class="input-icon-wrapper">
                                         <i class="fas fa-envelope input-icon"></i>
-                                        <input type="email" class="form-control input-with-icon" id="email" placeholder="Enter your email" required>
+                                        <input type="email" class="form-control input-with-icon" id="email" name="email" placeholder="Enter your email" required>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="password" class="form-label">Password</label>
                                     <div class="input-icon-wrapper">
                                         <i class="fas fa-lock input-icon"></i>
-                                        <input type="password" class="form-control input-with-icon" id="password" placeholder="Enter your password" required>
+                                        <input type="password" class="form-control input-with-icon" id="password" name="password" placeholder="Enter your password" required>
                                         <button type="button" class="password-toggle" id="togglePassword">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -94,7 +94,7 @@
                             
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="remember">
+                                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
                                         <label class="form-check-label" for="remember">Remember me</label>
                                     </div>
                                     <a href="#" class="toggle-link">Forgot password?</a>
