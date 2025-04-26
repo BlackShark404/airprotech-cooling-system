@@ -30,7 +30,7 @@ function base_url($uri = '', $protocol = true) {
 <!-- Navbar -->
 <nav class="navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="/">
             <img src="/assets/images/logo/Air-TechLogo.png" alt="AirProtect logo" height="36" width="36">
             AirPotect
         </a>
@@ -44,7 +44,7 @@ function base_url($uri = '', $protocol = true) {
                     <span class="d-none d-sm-inline">Admin User</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> My Profile</a></li>
+                    <li><a class="dropdown-item" href="<?= $_SESSION['profile_route'] ?>"><i class="bi bi-person"></i> My Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="/auth/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>

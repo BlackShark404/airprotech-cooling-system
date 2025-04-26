@@ -95,7 +95,15 @@ class AuthController extends BaseController
             Cookie::set('remember_token', $token, 30);
         }
 
-        $role = $user['role_name'] ?? "/";
+        $role = $user['role_name'] ?? "/";  
+
+        if ($role === "admin") {
+            Session::set("profile_route", '/admin/admin-profile');
+        } else if ($role === "technician") {
+            Session::set("profile_route", '/technician/technician-profile');
+        } else {
+            Session::set("profile_route", '/user/user-profile');
+        }
 
         $redirectUrl = match ($role) {
             'customer'      => '/admin/dashboard',
@@ -103,12 +111,6 @@ class AuthController extends BaseController
             'admin'     => '/admin/dashboard',
             default     => '/'
         };
-
-        if ($role === "admin") {
-            Session::set("profile_route", '/admin/admin-profile');
-        } else {
-            Session::set("profile_route", '/user/user-profile');
-        }
 
         return $this->jsonSuccess(
             ['redirect_url' => $redirectUrl],

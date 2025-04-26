@@ -14,4 +14,8 @@ class AdminController extends BaseController {
     public function renderTechnician() {
         $this->render('admin/technician');
     }
+
+    public function renderInventory() {
+        $this->render('admin/inventory');
+    }
 }

@@ -14,8 +14,12 @@ ob_start();
 ?>
 
 <div class="container-fluid py-4">
+    <div class="col">
+        <h1 class="h3 mb-0">Admin Dashboard</h1>
+    </div>
+
     <!-- Stats Cards -->
-    <div class="row g-3">
+    <div class="row g-3 py-4">
         <div class="col-6 col-md-3">
             <div class="card p-3">
                 <div class="d-flex justify-content-between">

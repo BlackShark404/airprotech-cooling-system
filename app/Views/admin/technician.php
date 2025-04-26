@@ -5,93 +5,125 @@ $activeTab = 'technicians';
 // Add any additional styles specific to this page
 $additionalStyles = <<<HTML
 <style>
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-    .status-available {
-        background-color: #e6f7e9;
-        color: #34c759;
-    }
-    .status-busy {
-        background-color: #fff0e5;
-        color: #ff9500;
-    }
-    .status-pending {
-        background-color: #fff8e6;
-        color: #ffbb00;
-    }
-    .status-completed {
-        background-color: #e6f7e9;
-        color: #34c759;
-    }
-    .status-progress {
-        background-color: #e7f1ff;
-        color: #007bff;
-    }
-    .tech-avatar {
-        width: 48px;
-        height: 48px;
+    .technician-avatar {
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         object-fit: cover;
     }
-    .tech-stats-card {
+    .technician-status {
+        font-size: 12px;
+        padding: 4px 12px;
         border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        background-color: white;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        font-weight: 500;
     }
-    .tech-stats-icon {
-        font-size: 24px;
-        margin-bottom: 10px;
+    .technician-status-available {
+        background-color: #e6f7e9;
+        color: #34c759;
     }
-    .tech-stats-value {
-        font-size: 32px;
-        font-weight: 700;
-        margin-bottom: 5px;
+    .technician-status-busy {
+        background-color: #fff8e6;
+        color: #ffbb00;
     }
-    .tech-stats-label {
-        font-size: 14px;
+    .technician-status-offline {
+        background-color: #f1f3f5;
         color: #6c757d;
     }
     .skill-badge {
         background-color: #e7f1ff;
         color: #007bff;
-        padding: 4px 10px;
-        border-radius: 20px;
         font-size: 12px;
-        margin-right: 5px;
-        margin-bottom: 5px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        margin-right: 4px;
+        margin-bottom: 4px;
         display: inline-block;
     }
-    .assign-btn {
+    .stats-card {
+        border-radius: 12px;
+        background-color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .stats-icon {
+        font-size: 24px;
+        padding: 12px;
+        border-radius: 50%;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+    .stats-icon-blue {
+        background-color: #e7f1ff;
+        color: #007bff;
+    }
+    .stats-icon-green {
+        background-color: #e6f7e9;
+        color: #34c759;
+    }
+    .stats-icon-orange {
+        background-color: #fff8e6;
+        color: #ffbb00;
+    }
+    .stats-icon-purple {
+        background-color: #f4e7ff;
+        color: #7b68ee;
+    }
+    .filter-dropdown {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 1rem;
+        width: 100%;
+    }
+    .action-button {
         background-color: #007bff;
         color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 6px 12px;
-        font-size: 14px;
-    }
-    .assign-btn:hover {
-        background-color: #0069d9;
-    }
-    .filter-section {
-        background-color: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .filter-label {
+        border-radius: 8px;
+        padding: 8px 16px;
         font-weight: 500;
-        margin-bottom: 8px;
+        text-decoration: none;
+        display: inline-block;
     }
-    .section-heading {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 15px;
+    .action-button:hover {
+        background-color: #0069d9;
+        color: white;
+        text-decoration: none;
+    }
+    .assign-job {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .assign-job:hover {
+        color: #0069d9;
+        text-decoration: underline;
+    }
+    .status-badge {
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    .in-progress {
+        background-color: #e7f1ff;
+        color: #007bff;
+    }
+    .completed {
+        background-color: #e6f7e9;
+        color: #34c759;
+    }
+    .pending {
+        background-color: #fff8e6;
+        color: #ffbb00;
+    }
+    .filter-card {
+        border-radius: 12px;
+        background-color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 15px;
+        margin-bottom: 20px;
     }
 </style>
 HTML;
@@ -101,57 +133,25 @@ ob_start();
 ?>
 
 <div class="container-fluid py-4">
-    <!-- Technician Stats -->
-    <div class="row g-3">
-        <div class="col-md-3">
-            <div class="tech-stats-card">
-                <div class="tech-stats-icon text-primary">
-                    <i class="bi bi-people"></i>
-                </div>
-                <div class="tech-stats-value">24</div>
-                <div class="tech-stats-label">Total Technicians</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="tech-stats-card">
-                <div class="tech-stats-icon" style="color: #34c759;">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-                <div class="tech-stats-value">12</div>
-                <div class="tech-stats-label">Available Now</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="tech-stats-card">
-                <div class="tech-stats-icon" style="color: #ff9500;">
-                    <i class="bi bi-clock"></i>
-                </div>
-                <div class="tech-stats-value">8</div>
-                <div class="tech-stats-label">On Assignment</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="tech-stats-card">
-                <div class="tech-stats-icon" style="color: #8e8e93;">
-                    <i class="bi bi-moon"></i>
-                </div>
-                <div class="tech-stats-value">4</div>
-                <div class="tech-stats-label">Off Duty</div>
-            </div>
+    <div class="col">
+        <h1 class="h3 mb-0">Technician Management</h1>
+        <p class="text-muted">Manage technicians</p>
+    </div>
+
+    <!-- Action Button -->
+    <div class="row mb-4">
+        <div class="col col-12 d-flex justify-content-end">
+            <button class="btn btn-blue d-flex align-items-center">
+                <i class="bi bi-person-plus me-2"></i>
+                Add New Technician
+            </button>
         </div>
     </div>
 
-    <!-- Add Technician Button -->
-    <div class="mt-4">
-        <button class="btn btn-blue">
-            <i class="bi bi-person-plus me-2"></i>Add New Technician
-        </button>
-    </div>
-
-    <!-- Main Content -->
-    <div class="row mt-4">
+    <!-- Main Content Area -->
+    <div class="row">
         <!-- Technician List -->
-        <div class="col-lg-8">
+        <div class="col-lg-9 mb-4">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">Technicians</h5>
@@ -173,14 +173,14 @@ ob_start();
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="/api/placeholder/48/48" alt="Mike Wilson" class="tech-avatar me-3">
+                                            <img src="/assets/images/avatars/mike-wilson.jpg" class="technician-avatar me-3" alt="Mike Wilson">
                                             <div>
-                                                <h6 class="mb-0">Mike Wilson</h6>
-                                                <small class="text-muted">TECH001</small>
+                                                <div class="fw-bold">Mike Wilson</div>
+                                                <div class="text-muted small">TECH001</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td><span class="status-badge status-available">Available</span></td>
+                                    <td><span class="technician-status technician-status-available">Available</span></td>
                                     <td>Downtown</td>
                                     <td>
                                         <span class="skill-badge">HVAC</span>
@@ -188,57 +188,56 @@ ob_start();
                                         <span class="skill-badge">Repair</span>
                                     </td>
                                     <td>9 AM - 5 PM</td>
-                                    <td><button class="assign-btn">Assign Job</button></td>
+                                    <td><a href="#" class="assign-job">Assign Job</a></td>
                                 </tr>
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="/api/placeholder/48/48" alt="Tom Davis" class="tech-avatar me-3">
+                                            <img src="/assets/images/avatars/tom-davis.jpg" class="technician-avatar me-3" alt="Tom Davis">
                                             <div>
-                                                <h6 class="mb-0">Tom Davis</h6>
-                                                <small class="text-muted">TECH002</small>
+                                                <div class="fw-bold">Tom Davis</div>
+                                                <div class="text-muted small">TECH002</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td><span class="status-badge status-busy">Busy</span></td>
+                                    <td><span class="technician-status technician-status-busy">Busy</span></td>
                                     <td>North Side</td>
                                     <td>
                                         <span class="skill-badge">Maintenance</span>
                                         <span class="skill-badge">Emergency</span>
                                     </td>
                                     <td>10 AM - 6 PM</td>
-                                    <td><button class="assign-btn">Assign Job</button></td>
+                                    <td><a href="#" class="assign-job">Assign Job</a></td>
                                 </tr>
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="/api/placeholder/48/48" alt="Lisa Chen" class="tech-avatar me-3">
+                                            <img src="/assets/images/avatars/lisa-chen.jpg" class="technician-avatar me-3" alt="Lisa Chen">
                                             <div>
-                                                <h6 class="mb-0">Lisa Chen</h6>
-                                                <small class="text-muted">TECH003</small>
+                                                <div class="fw-bold">Lisa Chen</div>
+                                                <div class="text-muted small">TECH003</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td><span class="status-badge status-available">Available</span></td>
+                                    <td><span class="technician-status technician-status-available">Available</span></td>
                                     <td>West End</td>
                                     <td>
                                         <span class="skill-badge">Installation</span>
                                         <span class="skill-badge">HVAC</span>
                                     </td>
                                     <td>8 AM - 4 PM</td>
-                                    <td><button class="assign-btn">Assign Job</button></td>
+                                    <td><a href="#" class="assign-job">Assign Job</a></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
+            
             <!-- Recent Assignments -->
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="mb-0">Recent Assignments</h5>
-                    <a href="#" class="view-all">View all <i class="bi bi-chevron-right"></i></a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -257,21 +256,21 @@ ob_start();
                                     <td>SR001</td>
                                     <td>Mike Wilson</td>
                                     <td>2024-01-20</td>
-                                    <td><span class="status-badge status-progress">In Progress</span></td>
+                                    <td><span class="status-badge in-progress">In Progress</span></td>
                                     <td>123 Main St</td>
                                 </tr>
                                 <tr>
                                     <td>SR002</td>
                                     <td>Tom Davis</td>
                                     <td>2024-01-19</td>
-                                    <td><span class="status-badge status-completed">Completed</span></td>
+                                    <td><span class="status-badge completed">Completed</span></td>
                                     <td>456 Oak Ave</td>
                                 </tr>
                                 <tr>
                                     <td>SR003</td>
                                     <td>Lisa Chen</td>
                                     <td>2024-01-19</td>
-                                    <td><span class="status-badge status-pending">Pending</span></td>
+                                    <td><span class="status-badge pending">Pending</span></td>
                                     <td>789 Pine Rd</td>
                                 </tr>
                             </tbody>
@@ -280,58 +279,54 @@ ob_start();
                 </div>
             </div>
         </div>
-
-        <!-- Filters Section -->
-        <div class="col-lg-4 mt-4 mt-lg-0">
-            <div class="filter-section">
-                <h5 class="section-heading">Quick Filters</h5>
+        
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3">
+            <div class="filter-card">
+                <h6 class="mb-3">Quick Filters</h6>
                 
-                <!-- Availability Status Filter -->
                 <div class="mb-3">
-                    <label class="filter-label">Availability Status</label>
-                    <select class="form-select">
-                        <option>All Statuses</option>
-                        <option>Available</option>
-                        <option>Busy</option>
-                        <option>Off Duty</option>
+                    <label class="form-label">Availability Status</label>
+                    <select class="form-select filter-dropdown">
+                        <option value="">All Statuses</option>
+                        <option value="available">Available</option>
+                        <option value="busy">Busy</option>
+                        <option value="offline">Off Duty</option>
                     </select>
                 </div>
                 
-                <!-- Skills Filter -->
                 <div class="mb-3">
-                    <label class="filter-label">Skills</label>
-                    <select class="form-select">
-                        <option>All Skills</option>
-                        <option>HVAC</option>
-                        <option>Installation</option>
-                        <option>Repair</option>
-                        <option>Maintenance</option>
-                        <option>Emergency</option>
+                    <label class="form-label">Skills</label>
+                    <select class="form-select filter-dropdown">
+                        <option value="">All Skills</option>
+                        <option value="hvac">HVAC</option>
+                        <option value="installation">Installation</option>
+                        <option value="repair">Repair</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="emergency">Emergency</option>
                     </select>
                 </div>
                 
-                <!-- Location Filter -->
                 <div class="mb-3">
-                    <label class="filter-label">Location</label>
-                    <select class="form-select">
-                        <option>All Locations</option>
-                        <option>Downtown</option>
-                        <option>North Side</option>
-                        <option>West End</option>
-                        <option>East Side</option>
-                        <option>South District</option>
+                    <label class="form-label">Location</label>
+                    <select class="form-select filter-dropdown">
+                        <option value="">All Locations</option>
+                        <option value="downtown">Downtown</option>
+                        <option value="north">North Side</option>
+                        <option value="west">West End</option>
+                        <option value="east">East Side</option>
+                        <option value="south">South Area</option>
                     </select>
                 </div>
                 
-                <!-- Experience Level Filter -->
                 <div class="mb-3">
-                    <label class="filter-label">Experience Level</label>
-                    <select class="form-select">
-                        <option>All Levels</option>
-                        <option>Junior</option>
-                        <option>Mid-level</option>
-                        <option>Senior</option>
-                        <option>Expert</option>
+                    <label class="form-label">Experience Level</label>
+                    <select class="form-select filter-dropdown">
+                        <option value="">All Levels</option>
+                        <option value="junior">Junior</option>
+                        <option value="mid">Mid-Level</option>
+                        <option value="senior">Senior</option>
+                        <option value="expert">Expert</option>
                     </select>
                 </div>
             </div>
@@ -345,14 +340,28 @@ $content = ob_get_clean();
 // Additional scripts specific to this page
 $additionalScripts = <<<HTML
 <script>
-    // Any technician page specific JavaScript would go here
     document.addEventListener('DOMContentLoaded', function() {
-        // Example: Add event listener for assign job buttons
-        const assignButtons = document.querySelectorAll('.assign-btn');
+        // Example functionality for the assign job buttons
+        const assignButtons = document.querySelectorAll('.assign-job');
         assignButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Would normally open a modal or redirect to assignment page
-                alert('Assignment functionality would open here');
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                // In a real app, this could open a modal or redirect to an assignment page
+                alert('Assign job functionality would go here');
+            });
+        });
+        
+        // Filter functionality
+        document.querySelector('.btn-blue.w-100').addEventListener('click', function() {
+            // In a real app, this would filter the technician list
+            alert('Filter functionality would be implemented here');
+        });
+        
+        // Reset filters
+        document.querySelector('.btn-outline-secondary.w-100').addEventListener('click', function() {
+            const selects = document.querySelectorAll('.filter-dropdown');
+            selects.forEach(select => {
+                select.value = '';
             });
         });
     });

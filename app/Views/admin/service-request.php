@@ -86,14 +86,19 @@ ob_start();
 ?>
 
 <div class="container-fluid py-4">
+    <div class="col">
+        <h1 class="h3 mb-0">Service Request Management</h1>
+        <p class="text-muted">Manage service requests</p>
+    </div>
+
     <!-- Action Buttons -->
     <div class="row mb-4">
-<div class="col d-flex justify-content-end">
-    <button class="btn btn-red d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#newRequestModal">
-      <i class="bi bi-plus me-2"></i>
-      New Service Request
-    </button>
-  </div>
+        <div class="col d-flex justify-content-end">
+            <button class="btn btn-red d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+            <i class="bi bi-plus me-2"></i>
+            New Service Request
+            </button>
+        </div>
     </div>
 
     <!-- Service Requests Card -->
