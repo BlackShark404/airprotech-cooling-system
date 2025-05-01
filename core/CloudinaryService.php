@@ -90,6 +90,44 @@ class CloudinaryService
     }
     
     /**
+     * Upload a DOC file (Microsoft Word Document)
+     * 
+     * @param string $docPath Path to the DOC file
+     * @param string|null $folder Optional folder name
+     * @param array $options Additional options
+     * @return ApiResponse Response from Cloudinary
+     */
+    public function uploadDoc(string $docPath, ?string $folder = null, array $options = []): ApiResponse
+    {
+        // Set DOC-specific options
+        $docOptions = [
+            'resource_type' => 'raw',
+            'format' => 'doc',
+        ];
+        
+        return $this->upload($docPath, $folder, array_merge($docOptions, $options));
+    }
+    
+    /**
+     * Upload a DOCX file (Microsoft Word Open XML Document)
+     * 
+     * @param string $docxPath Path to the DOCX file
+     * @param string|null $folder Optional folder name
+     * @param array $options Additional options
+     * @return ApiResponse Response from Cloudinary
+     */
+    public function uploadDocx(string $docxPath, ?string $folder = null, array $options = []): ApiResponse
+    {
+        // Set DOCX-specific options
+        $docxOptions = [
+            'resource_type' => 'raw',
+            'format' => 'docx',
+        ];
+        
+        return $this->upload($docxPath, $folder, array_merge($docxOptions, $options));
+    }
+    
+    /**
      * Delete a file from Cloudinary
      * 
      * @param string $publicId Public ID of the file to delete
