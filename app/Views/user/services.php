@@ -93,7 +93,7 @@
                                 <i class="fas fa-tools fa-2x text-primary"></i>
                             </div>
                             <h5 class="fw-bold">Installation</h5>
-                            <p class="text-muted mb-0">24/7 Professional Service</p>
+                            <p class="text-muted mb-0">Professional AC Installation</p>
                         </div>
                     </div>
                 </div>
@@ -105,7 +105,7 @@
                                 <i class="fas fa-wrench fa-2x text-primary"></i>
                             </div>
                             <h5 class="fw-bold">Repair</h5>
-                            <p class="text-muted mb-0">24/7 Professional Service</p>
+                            <p class="text-muted mb-0">Expert Check-up & Repair</p>
                         </div>
                     </div>
                 </div>
@@ -114,10 +114,10 @@
                     <div class="card shadow-sm h-100">
                         <div class="card-body text-center p-4">
                             <div class="mb-3">
-                                <i class="fas fa-tools fa-2x text-primary"></i>
+                                <i class="fas fa-broom fa-2x text-primary"></i>
                             </div>
                             <h5 class="fw-bold">Maintenance</h5>
-                            <p class="text-muted mb-0">24/7 Professional Service</p>
+                            <p class="text-muted mb-0">General Cleaning & PMS</p>
                         </div>
                     </div>
                 </div>
@@ -126,10 +126,10 @@
                     <div class="card shadow-sm h-100">
                         <div class="card-body text-center p-4">
                             <div class="mb-3">
-                                <i class="fas fa-user-md fa-2x text-primary"></i>
+                                <i class="fas fa-calculator fa-2x text-primary"></i>
                             </div>
-                            <h5 class="fw-bold">Emergency Service</h5>
-                            <p class="text-muted mb-0">24/7 Professional Service</p>
+                            <h5 class="fw-bold">Survey & Quotation</h5>
+                            <p class="text-muted mb-0">Free Site Estimation</p>
                         </div>
                     </div>
                 </div>
@@ -143,15 +143,15 @@
             <h2 class="text-center fw-bold mb-5">Our Services</h2>
             
             <div class="row g-4">
-                <!-- AC Installation -->
+                <!-- AC Check-up & Repair -->
                 <div class="col-md-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
                                 <i class="fas fa-tools fa-2x text-primary"></i>
                             </div>
-                            <h5 class="fw-bold">AC Installation</h5>
-                            <p class="text-muted mb-3">Professional installation of all AC brands</p>
+                            <h5 class="fw-bold">Aircon Check-up & Repair</h5>
+                            <p class="text-muted mb-3">Professional diagnostics and repair for all AC brands</p>
                             <div>
                                 <a href="#" class="btn btn-primary">Book Now</a>
                             </div>
@@ -159,15 +159,15 @@
                     </div>
                 </div>
                 
-                <!-- Repair & Maintenance -->
+                <!-- Installation of Units -->
                 <div class="col-md-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-wrench fa-2x text-primary"></i>
+                                <i class="fas fa-plug fa-2x text-primary"></i>
                             </div>
-                            <h5 class="fw-bold">Repair & Maintenance</h5>
-                            <p class="text-muted mb-3">Expert repair and regular maintenance services</p>
+                            <h5 class="fw-bold">Installation of Units</h5>
+                            <p class="text-muted mb-3">Expert installation of all types of air conditioning units</p>
                             <div>
                                 <a href="#" class="btn btn-primary">Book Now</a>
                             </div>
@@ -175,15 +175,15 @@
                     </div>
                 </div>
                 
-                <!-- Emergency Services -->
+                <!-- Ducting Works -->
                 <div class="col-md-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-exclamation-circle fa-2x text-primary"></i>
+                                <i class="fas fa-wind fa-2x text-primary"></i>
                             </div>
-                            <h5 class="fw-bold">Emergency Services</h5>
-                            <p class="text-muted mb-3">24/7 emergency repair and support</p>
+                            <h5 class="fw-bold">Ducting Works</h5>
+                            <p class="text-muted mb-3">Professional ducting installation and maintenance</p>
                             <div>
                                 <a href="#" class="btn btn-primary">Book Now</a>
                             </div>
@@ -191,15 +191,15 @@
                     </div>
                 </div>
                 
-                <!-- Parts Replacement -->
+                <!-- General Cleaning & PMS -->
                 <div class="col-md-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-cog fa-2x text-primary"></i>
+                                <i class="fas fa-broom fa-2x text-primary"></i>
                             </div>
-                            <h5 class="fw-bold">Parts Replacement</h5>
-                            <p class="text-muted mb-3">Genuine spare parts replacement</p>
+                            <h5 class="fw-bold">General Cleaning & PMS</h5>
+                            <p class="text-muted mb-3">Preventive maintenance service and thorough cleaning</p>
                             <div>
                                 <a href="#" class="btn btn-primary">Book Now</a>
                             </div>
@@ -207,15 +207,15 @@
                     </div>
                 </div>
                 
-                <!-- System Upgrade -->
+                <!-- Supply of Brand New Aircon Units -->
                 <div class="col-md-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-arrow-circle-up fa-2x text-primary"></i>
+                                <i class="fas fa-box-open fa-2x text-primary"></i>
                             </div>
-                            <h5 class="fw-bold">System Upgrade</h5>
-                            <p class="text-muted mb-3">Upgrade your AC system for better efficiency</p>
+                            <h5 class="fw-bold">Supply of Brand New Units</h5>
+                            <p class="text-muted mb-3">Wide range of brand new aircon units available</p>
                             <div>
                                 <a href="#" class="btn btn-primary">Book Now</a>
                             </div>
@@ -223,17 +223,65 @@
                     </div>
                 </div>
                 
-                <!-- Regular Checkup -->
+                <!-- Survey & Estimation -->
                 <div class="col-md-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-clipboard-check fa-2x text-primary"></i>
+                                <i class="fas fa-search fa-2x text-primary"></i>
                             </div>
-                            <h5 class="fw-bold">Regular Checkup</h5>
-                            <p class="text-muted mb-3">Scheduled maintenance and inspection</p>
+                            <h5 class="fw-bold">Survey & Estimation</h5>
+                            <p class="text-muted mb-3">On-site assessment and professional recommendations</p>
                             <div>
                                 <a href="#" class="btn btn-primary">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project Quotations -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-file-invoice-dollar fa-2x text-primary"></i>
+                            </div>
+                            <h5 class="fw-bold">Project Quotations</h5>
+                            <p class="text-muted mb-3">Detailed cost estimates for your aircon projects</p>
+                            <div>
+                                <a href="#" class="btn btn-primary">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project Biddings -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-handshake fa-2x text-primary"></i>
+                            </div>
+                            <h5 class="fw-bold">Project Biddings</h5>
+                            <p class="text-muted mb-3">Competitive proposals for commercial and residential projects</p>
+                            <div>
+                                <a href="#" class="btn btn-primary">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Service Card (Optional) -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body p-4 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-phone-alt fa-2x text-primary"></i>
+                            </div>
+                            <h5 class="fw-bold">Need Other Services?</h5>
+                            <p class="text-muted mb-3">Contact our team for custom solutions tailored to your needs</p>
+                            <div>
+                                <a href="#contact" class="btn btn-outline-primary">Contact Us</a>
                             </div>
                         </div>
                     </div>
@@ -344,14 +392,17 @@
           <div class="mb-3">
             <label for="serviceSelect" class="form-label">Select Service <span class="text-danger">*</span></label>
             <select class="form-select" id="serviceSelect" required>
-              <option value="" selected disabled>Choose a service</option>
-              <option value="installation">AC Installation</option>
-              <option value="repair">Repair & Maintenance</option>
-              <option value="emergency">Emergency Services</option>
-              <option value="parts">Parts Replacement</option>
-              <option value="upgrade">System Upgrade</option>
-              <option value="checkup">Regular Checkup</option>
+                <option value="" selected disabled>Choose a service</option>
+                <option value="checkup-repair">Aircon Check-up & Repair</option>
+                <option value="installation">Installation of Units</option>
+                <option value="ducting">Ducting Works</option>
+                <option value="cleaning-pms">General Cleaning & PMS</option>
+                <option value="supply-units">Supply of Brand New Aircon Units</option>
+                <option value="survey-estimation">Survey & Estimation</option>
+                <option value="quotations">Project Quotations</option>
+                <option value="biddings">Project Biddings</option>
             </select>
+
           </div>
           
           <!-- Date and Time Selection -->
