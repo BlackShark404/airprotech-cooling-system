@@ -534,45 +534,6 @@
             // Sample product data for testing without API
             const sampleProducts = [
                 {
-                    id: 1,
-                    title: "Smart Inverter AC",
-                    description: "Energy-efficient cooling with smart controls",
-                    price: "1299",
-                    image: "/assets/images/smart-inverter-ac.jpg",
-                    inStock: true,
-                    stock: 15,
-                    category: "split-system",
-                    code: "SI-1001",
-                    specifications: [
-                        "Energy Rating: 5 Star",
-                        "Cooling Capacity: 12,000 BTU",
-                        "Smart Features: WiFi Control",
-                        "Warranty: 5 Years"
-                    ]
-                },
-                {
-                    id: 2,
-                    title: "Split System Classic",
-                    description: "Reliable cooling for any room size",
-                    price: "899",
-                    image: "/assets/images/split-system-classic.jpg",
-                    inStock: true,
-                    stock: 23,
-                    category: "split-system",
-                    code: "SSC-2002"
-                },
-                {
-                    id: 3,
-                    title: "Portable AC Unit",
-                    description: "Flexible cooling solution for any space",
-                    price: "499",
-                    image: "/assets/images/portable-ac.jpg",
-                    inStock: true,
-                    stock: 8,
-                    category: "portable",
-                    code: "PAC-3003"
-                },
-                {
                     id: 4,
                     title: "Commercial HVAC System",
                     description: "Professional grade cooling system",
