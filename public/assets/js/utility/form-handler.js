@@ -12,14 +12,31 @@ function handleFormSubmission(formId, actionUrl, refreshPage = false) {
     form.addEventListener('submit', function(event) {
         event.preventDefault();  // Prevent the default form submission
 
-        // Get form data
-        const formData = new FormData(form);
-
-        // Convert form data to a plain object
+        // Create an object to store form data
         const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
-        });
+        
+        // Get all form elements
+        const formElements = form.elements;
+        
+        // Loop through form elements and collect their values
+        for (let i = 0; i < formElements.length; i++) {
+            const element = formElements[i];
+            
+            // Skip buttons and elements without a name
+            if (element.name && element.type !== 'button' && element.type !== 'submit') {
+                // Handle select elements properly
+                if (element.type === 'select-one' || element.type === 'select-multiple') {
+                    if (element.value) {
+                        data[element.name] = element.value;
+                    }
+                } else {
+                    data[element.name] = element.value;
+                }
+            }
+        }
+        
+        // Log the data to be sent (for debugging)
+        console.log('Sending data:', data);
 
         // Make a POST request to the backend PHP script with custom headers
         axios.post(actionUrl, data, {

@@ -72,6 +72,7 @@ $router->map('GET', '/logout', 'App\Controllers\AuthController#logout', 'logout'
 $router->map('GET', '/user/dashboard', 'App\Controllers\UserController#renderUserDashboard', 'render_user-dashboard');
 $router->map('GET', '/user/services', 'App\Controllers\UserController#renderUserServices', 'render_user-products');
 $router->map('GET', '/user/products', 'App\Controllers\UserController#renderUserProducts', 'render_user-services');
+$router->map('POST', '/user/service/request', 'App\Controllers\ServiceController#bookService', 'render_user-book_services');
 
 // Admin routes
 $router->map('GET', '/technician/dashboard', 'App\Controllers\TechnicianController#renderTechnicianDashboard', 'render_technician-dashboard');

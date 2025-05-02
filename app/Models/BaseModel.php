@@ -38,11 +38,6 @@ class BaseModel
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function getSearchableFields()
-    {
-        return $this->searchableFields;
-    }
-
     // -----------------------------------------
     // Basic CRUD Operations
     // -----------------------------------------
