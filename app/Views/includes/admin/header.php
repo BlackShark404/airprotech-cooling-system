@@ -40,13 +40,13 @@ function base_url($uri = '', $protocol = true) {
             </div>
             <div class="dropdown profile-dropdown">
                 <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-circle me-2"></i>
+                    <img src="<?= $_SESSION['profile_url'] ?>" alt="User Profile" width="30" height="30">
                     <span class="d-none d-sm-inline">Admin User</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                     <li><a class="dropdown-item" href="<?= $_SESSION['profile_route'] ?>"><i class="bi bi-person"></i> My Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="/auth/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>
         </div>

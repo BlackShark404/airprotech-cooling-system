@@ -51,11 +51,6 @@ class AuthController extends BaseController
         // Get user record but check for soft deletion
         $user = $this->userModel->findByEmail($email);
 
-        // Check if password exists
-        if (empty($user['ua_email'])) {
-            return $this->jsonError('Email is empty');
-        }
-
         // Check if user exists
         if (!$user) {
             return $this->jsonError('Invalid email or password');
@@ -106,7 +101,7 @@ class AuthController extends BaseController
         }
 
         $redirectUrl = match ($role) {
-            'customer'      => '/admin/dashboard',
+            'customer'      => '/user/dashboard',
             'technician'     => '/technician/dashboard',
             'admin'     => '/admin/dashboard',
             default     => '/'
@@ -171,7 +166,7 @@ class AuthController extends BaseController
 
         if ($result) {
             return $this->jsonSuccess(
-                ['redirect_url' => '/auth/login'],
+                ['redirect_url' => '/login'],
                 'User registered successfully'
             );
         } else {
@@ -199,7 +194,7 @@ class AuthController extends BaseController
         Session::flash("success", "Logout successful");
 
         // Redirect to login page
-        $this->redirect("/auth/login");
+        $this->redirect("/");
     }
 
     /**

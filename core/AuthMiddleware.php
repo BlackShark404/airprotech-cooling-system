@@ -25,7 +25,6 @@ class AuthMiddleware
         // Clear flash messages from previous request
         unset($_SESSION['_flash']);
     }
-
     
     public static function requireLogin(string $redirectTo = '/login'): void
     {

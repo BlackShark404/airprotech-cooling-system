@@ -34,9 +34,9 @@
         </div>
 
         <!-- Main Navigation -->
-        <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+        <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
             <div class="container">
-                <a class="navbar-brand d-flex align-items-center" href="#">
+                <a class="navbar-brand d-flex align-items-center" href="/">
                     <img src="/assets/images/landing/aircon_background.png" alt="Logo" class="rounded-circle me-2" width="40" height="40">
                     <span class="brand-text">AIR<span class="text-danger">PROTECH</span></span>
                 </a>
@@ -50,7 +50,7 @@
                     <li class="nav-item"><a class="nav-link" href="#featured-products">Featured Products</a></li>
                     <li class="nav-item"><a class="nav-link" href="#why-choose-us">Why Choose Us</a></li>
                     <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-                    <li class="nav-item"><a class="btn btn-danger ms-2" href="/auth/login">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-danger ms-2" href="/login">Login</a></li>
                     </ul>
                 </div>
             </div>

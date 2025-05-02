@@ -18,4 +18,16 @@ class AdminController extends BaseController {
     public function renderInventory() {
         $this->render('admin/inventory');
     }
+
+    public function renderProfile() {
+        $this->render('admin/profile');
+    }
+
+    public function renderReports() {
+        $this->render('admin/reports');
+    }
+
+    public function renderAddProduct() {
+        $this->render('admin/add-product');
+    }
 }

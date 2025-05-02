@@ -119,7 +119,7 @@
                                 </div>
 
                                 <div class="text-center mt-4">
-                                    <p>Don't have an account? <a href="/auth/register" class="toggle-link">Register now</a></p>
+                                    <p>Don't have an account? <a href="/register" class="toggle-link">Register now</a></p>
                                 </div>
                             </form>
                         </div>
@@ -199,7 +199,7 @@
     
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            handleFormSubmission('loginForm', '/auth/login'); 
+            handleFormSubmission('loginForm', '/login'); 
         });
     </script>
     

@@ -16,6 +16,7 @@ ob_start();
 <div class="container-fluid py-4">
     <div class="col">
         <h1 class="h3 mb-0">Admin Dashboard</h1>
+        <p>Welcome <?= $_SESSION['full_name'] ?></p>
     </div>
 
     <!-- Stats Cards -->

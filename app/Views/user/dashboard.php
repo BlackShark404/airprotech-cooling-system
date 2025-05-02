@@ -1,203 +1,330 @@
-<?php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Conditioning Solutions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-// Set page specific variables
-$pageTitle = 'Dashboard';
-$pageDescription = 'Air-Protech Customer Dashboard';
-$pageHeader = 'My Dashboard';
-$pageSubheader = 'Welcome to your Air-Protech Cooling Services Dashboard';
+    <!-- AOS CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
 
-// Additional page-specific styles
-$pageStyles = '
-    .stats-card {
-        border-left: 4px solid var(--primary);
-    }
-    .upcoming-service {
-        border-left: 4px solid var(--secondary);
-    }
-    .service-history-item:hover {
-        background-color: rgba(0, 102, 204, 0.1);
-    }
-';
+    <link rel="stylesheet" href="/assets/css/home.css" >
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar py-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="contact-info">
+                <a href="tel:+1234567890" class="me-3 text-white text-decoration-none">
+                    <i class="fas fa-phone me-2"></i>+1 234 567 890
+                </a>
+                <a href="mailto:contact@apcs.com" class="text-white text-decoration-none">
+                    <i class="fas fa-envelope me-2"></i>contact@apcs.com
+                </a>
+            </div>
+            <div class="social-links">
+                <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </div>
 
-// Start output buffering to capture content
-ob_start();
-?>
+    <!-- Main Navigation -->
+    <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="/assets/images/Air-TechLogo.jpg" alt="Logo" class="rounded-circle me-2" width="40" height="40">
+                <span class="brand-text">AIR<span class="text-danger">PROTECH</span></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="/user/dashboard">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
+                    <!-- User Profile -->
+                    <li class="nav-item dropdown ms-3">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="/assets/images/Profile.jpg" alt="Online Image" class="rounded-circle me-2" width="36" height="36">
+                            <div class="d-flex flex-column lh-sm">
+                                <span class="fw-semibold small text-dark">Arlon Rondina</span>
+                                <small class="text-success">● Online</small>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
+                            <li><a class="dropdown-item" href="/user/settings">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-<div class="row">
-    <!-- Dashboard Stats -->
-    <div class="col-md-4 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Active Services</h5>
-                    <i class="bi bi-tools fs-1 text-primary"></i>
-                </div>
-                <h2 class="mt-3 mb-0">3</h2>
-                <p class="text-muted">Services in progress</p>
-                <a href="my-services.php" class="btn btn-sm btn-outline-primary mt-3">View Details</a>
+    <!-- User Dashboard Area -->
+    <div class="dashboard-area py-4">
+        <div class="container">
+            <div class="dashboard-header mb-4">
+                <h2 class="fw-bold text-navy">Welcome back, <?=$_SESSION['first_name'] ?></h2>
+                <p class="text-muted">Manage your services and bookings</p>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Product Orders</h5>
-                    <i class="bi bi-box-seam fs-1 text-primary"></i>
-                </div>
-                <h2 class="mt-3 mb-0">2</h2>
-                <p class="text-muted">Orders pending delivery</p>
-                <a href="my-orders.php" class="btn btn-sm btn-outline-primary mt-3">Track Orders</a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Next Service Date</h5>
-                    <i class="bi bi-calendar-event fs-1 text-primary"></i>
-                </div>
-                <h2 class="mt-3 mb-0">Jun 15</h2>
-                <p class="text-muted">Annual maintenance</p>
-                <a href="service-details.php?id=123" class="btn btn-sm btn-outline-primary mt-3">View Details</a>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Upcoming Service -->
-    <div class="col-md-6 mb-4">
-        <div class="card upcoming-service">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Upcoming Service</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-secondary text-white rounded p-3 me-3">
-                        <i class="bi bi-calendar2-check fs-3"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Annual AC Maintenance</h5>
-                        <p class="mb-0 text-muted">June 15, 2025 • 10:00 AM - 12:00 PM</p>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center mb-3">
-                    <div class="me-3">
-                        <img src="assets/images/technician-avatar.jpg" class="rounded-circle" width="50" height="50" alt="Technician" onerror="this.src='https://via.placeholder.com/50?text=Tech'">
-                    </div>
-                    <div>
-                        <h6 class="mb-1">Technician: John Smith</h6>
-                        <p class="mb-0"><i class="bi bi-star-fill text-warning"></i> 4.9 (120 reviews)</p>
-                    </div>
-                </div>
-                <div class="d-flex mt-4">
-                    <a href="reschedule.php?id=123" class="btn btn-outline-primary me-2">Reschedule</a>
-                    <a href="service-details.php?id=123" class="btn btn-primary">View Details</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Quick Actions -->
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <a href="service-request.php" class="btn btn-outline-primary w-100 p-3">
-                            <i class="bi bi-calendar-plus fs-3 d-block mb-2"></i>
-                            Schedule Service
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="product-order.php" class="btn btn-outline-secondary w-100 p-3">
-                            <i class="bi bi-cart-plus fs-3 d-block mb-2"></i>
-                            Order Products
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="emergency-service.php" class="btn btn-outline-danger w-100 p-3">
-                            <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
-                            Emergency Service
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="support.php" class="btn btn-outline-info w-100 p-3">
-                            <i class="bi bi-headset fs-3 d-block mb-2"></i>
-                            Contact Support
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Service History -->
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Service History</h5>
-                <a href="service-history.php" class="btn btn-sm btn-outline-primary">View All</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    <a href="service-details.php?id=122" class="list-group-item list-group-item-action service-history-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">AC Repair - Cooling Fan Replacement</h6>
-                            <small class="text-muted">May 10, 2025</small>
+
+            <!-- Stats Cards -->
+            <div class="row g-4 mb-5">
+                <div class="col-md-3">
+                    <div class="card dashboard-card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4 text-center">
+                            <div class="icon-circle bg-light-blue mb-3">
+                                <i class="fas fa-calendar-check text-blue"></i>
+                            </div>
+                            <h3 class="display-4 fw-bold text-blue">3</h3>
+                            <p class="text-muted mb-0">Active Bookings</p>
                         </div>
-                        <p class="mb-1">Technician: Michael Johnson</p>
-                        <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Completed</small>
-                    </a>
-                    <a href="service-details.php?id=121" class="list-group-item list-group-item-action service-history-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">Refrigerant Refill</h6>
-                            <small class="text-muted">April 23, 2025</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4 text-center">
+                            <div class="icon-circle bg-light-orange mb-3">
+                                <i class="fas fa-tools text-orange"></i>
+                            </div>
+                            <h3 class="display-4 fw-bold text-orange">2</h3>
+                            <p class="text-muted mb-0">Pending Services</p>
                         </div>
-                        <p class="mb-1">Technician: Sarah Williams</p>
-                        <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Completed</small>
-                    </a>
-                    <a href="service-details.php?id=120" class="list-group-item list-group-item-action service-history-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">AC System Regular Maintenance</h6>
-                            <small class="text-muted">March 15, 2025</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4 text-center">
+                            <div class="icon-circle bg-light-green mb-3">
+                                <i class="fas fa-check-circle text-green"></i>
+                            </div>
+                            <h3 class="display-4 fw-bold text-green">12</h3>
+                            <p class="text-muted mb-0">Completed Services</p>
                         </div>
-                        <p class="mb-1">Technician: John Smith</p>
-                        <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Completed</small>
-                    </a>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4 text-center">
+                            <div class="icon-circle bg-light-purple mb-3">
+                                <i class="fas fa-shopping-cart text-purple"></i>
+                            </div>
+                            <h3 class="display-4 fw-bold text-purple">5</h3>
+                            <p class="text-muted mb-0">Product Orders</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Info and Current Bookings -->
+            <div class="row g-4 mb-5">
+                <!-- Personal Information -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="fw-bold mb-0">Personal Information</h5>
+                                <a href="#" class="edit-link"><i class="fas fa-pencil-alt"></i></a>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Full Name</label>
+                                <p class="mb-0 fw-medium"><?=$_SESSION['full_name'] ?></p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Phone Number</label>
+                                <p class="mb-0 fw-medium">+1 234 567 890</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Email</label>
+                                <p class="mb-0 fw-medium">alex.mitchell@email.com</p>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label small text-muted">Service Address</label>
+                                <p class="mb-0 fw-medium">123 Cooling Street, AC City</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Current Bookings -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="fw-bold">Current Bookings</h5>
+                                <a href="#" class="text-primary text-decoration-none small fw-medium">View All</a>
+                            </div>
+                            
+                            <!-- Booking Item -->
+                            <div class="booking-item p-3 mb-3 border rounded-3 bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">AC Maintenance</h6>
+                                        <div class="d-flex align-items-center">
+                                            <i class="far fa-clock text-muted me-2"></i>
+                                            <span class="small text-muted">Jan 15, 2024 at 10:00 AM</span>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-success rounded-pill px-3 py-2">Confirmed</span>
+                                </div>
+                                <div class="mt-3 d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm">Reschedule</button>
+                                    <button class="btn btn-outline-danger btn-sm">Cancel</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Booking Item -->
+                            <div class="booking-item p-3 border rounded-3 bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">Filter Replacement</h6>
+                                        <div class="d-flex align-items-center">
+                                            <i class="far fa-clock text-muted me-2"></i>
+                                            <span class="small text-muted">Jan 18, 2024 at 2:30 PM</span>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-warning rounded-pill px-3 py-2">Pending</span>
+                                </div>
+                                <div class="mt-3 d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm">Reschedule</button>
+                                    <button class="btn btn-outline-danger btn-sm">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Service History -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="fw-bold">Service History</h5>
+                                <a href="#" class="text-primary text-decoration-none small fw-medium">View All <i class="fas fa-chevron-right ms-1 small"></i></a>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="text-muted small">
+                                        <tr>
+                                            <th>Service</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>AC Installation</td>
+                                            <td>Dec 28, 2023</td>
+                                            <td><span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Completed</span></td>
+                                            <td>$299.99</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Annual Maintenance</td>
+                                            <td>Nov 15, 2023</td>
+                                            <td><span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Completed</span></td>
+                                            <td>$149.99</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-danger px-4 py-2">Book New Service</button>
+                        <button class="btn btn-outline-dark px-4 py-2">View All Services</button>
+                        <button class="btn btn-outline-dark px-4 py-2">Manage Orders</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<?php
-// Capture the content
-$content = ob_get_clean();
-
-// Additional page-specific scripts
-$pageScripts = '
-    // Chart.js implementation could go here
-    // This would be for displaying any analytics like service history, etc.
-    console.log("Dashboard page loaded");
+    <!-- Footer -->
+    <footer class="footer text-white py-5">
+        <div class="container">
+            <div class="row">
+                <!-- Brand & Description -->
+                <div class="col-md-3 mb-4">
+                    <h3 class="h5 mb-3"><span style="color: white;">AIR</span><span class="text-danger">PROTECH</span></h3>
+                    <p class="text-white-50">Your trusted partner for all air conditioning needs. Professional service guaranteed.</p>
+                </div>
+        
+                <!-- Quick Links -->
+                <div class="col-md-3 mb-4">
+                    <h4 class="h6 mb-3">Quick Links</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="#hero" class="text-white-50 text-decoration-none">Home</a></li>
+                        <li><a href="#our-services" class="text-white-50 text-decoration-none">Services</a></li>
+                        <li><a href="#featured-products" class="text-white-50 text-decoration-none">Products</a></li>
+                        <li><a href="#why-choose-us" class="text-white-50 text-decoration-none">Why Choose Us</a></li>
+                        <li><a href="#contact" class="text-white-50 text-decoration-none">Contact</a></li>
+                    </ul>
+                </div>
+        
+                <!-- Contact Info -->
+                <div class="col-md-3 mb-4">
+                    <h4 class="h6 mb-3">Contact Info</h4>
+                    <ul class="list-unstyled text-white-50">
+                        <li><i class="fas fa-phone text-primary me-2"></i> 1-800-AIR-COOL</li>
+                        <li><i class="fas fa-envelope text-primary me-2"></i> info@airprotech.com</li>
+                        <li><i class="fas fa-map-marker-alt text-primary me-2"></i> 123 Cooling Street, AC City</li>
+                    </ul>
+                </div>
+        
+                <!-- Newsletter -->
+                <div class="col-md-3 mb-4">
+                    <h4 class="h6 mb-3">Newsletter</h4>
+                    <p class="text-white-50">Subscribe for updates and special offers</p>
+                    <div class="input-group">
+                        <input type="email" class="form-control bg-dark text-white border-0" placeholder="Your email">
+                        <button class="btn btn-primary">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-top border-white-50 mt-4 pt-4 text-center text-white-50">
+                <p class="mb-0">&copy; 2025 Air-Protech. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+        
+    <!-- JS Files -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    // Example of dashboard-specific JavaScript
-    document.addEventListener("DOMContentLoaded", function() {
-        // Notification handling
-        const notificationBtns = document.querySelectorAll(".notification-dismiss");
-        notificationBtns.forEach(btn => {
-            btn.addEventListener("click", function() {
-                this.closest(".notification-item").style.display = "none";
-            });
+    <!-- AOS JS -->
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+    <!-- Smooth scrolling script -->
+    <script src="/assets/js/home.js"></script>
+
+    <script>
+        AOS.init({
+            duration: 1000, 
+            easing: 'ease-in-out', 
+            once: true, 
         });
-    });
-';
-
-// Include the base layout
-include $basePath;
-?>
+    </script>
+</body>
+</html>

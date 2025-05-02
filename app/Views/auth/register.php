@@ -121,7 +121,7 @@
                                 </div>
 
                                 <div class="text-center mt-3">
-                                    <p>Already have an account? <a href="/auth/login" class="toggle-link">Log in</a></p>
+                                    <p>Already have an account? <a href="/login" class="toggle-link">Log in</a></p>
                                 </div>
                             </form>
                         </div>
@@ -201,7 +201,7 @@
     
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            handleFormSubmission('registerForm', '/auth/register'); 
+            handleFormSubmission('registerForm', '/register'); 
         });
     </script>
     
