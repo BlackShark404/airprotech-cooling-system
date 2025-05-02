@@ -24,7 +24,6 @@ class BaseModel
     
     // Model configuration properties
     protected $fillable = [];
-    protected $searchableFields = [];
     protected $useSoftDeletes = false;
     protected $timestamps = false;
     protected $createdAtColumn = 'created_at';
