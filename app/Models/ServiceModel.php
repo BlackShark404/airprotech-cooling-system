@@ -14,14 +14,8 @@ class ServiceModel extends BaseModel
         'sb_requested_time',
         'sb_address',
         'sb_description',
-        'sb_status'
-    ];
-
-    protected $searchableFields = [
-        'sb_customer_id',
-        'sb_service_type_id',
-        'sb_requested_date',
-        'sb_status'
+        'sb_status',
+        'sb_priority'
     ];
 
     protected $useSoftDeletes = true;
@@ -123,7 +117,15 @@ class ServiceModel extends BaseModel
             "sb_id = :bookingId",
             ['bookingId' => $bookingId]
         );  
+    }
 
+    public function updateBookingPriority($bookingId, $priority)
+    {
+        return $this->update(
+            ['sb_priority' => $priority],
+            "sb_id = :bookingId",
+            ['bookingId' => $bookingId]
+        );  
     }
     
     /**

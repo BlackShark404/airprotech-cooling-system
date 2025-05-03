@@ -91,16 +91,6 @@ ob_start();
         <p class="text-muted">Manage service requests</p>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="row mb-4">
-        <div class="col d-flex justify-content-end">
-            <button class="btn btn-red d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#newRequestModal">
-            <i class="bi bi-plus me-2"></i>
-            New Service Request
-            </button>
-        </div>
-    </div>
-
     <!-- Service Requests Card -->
     <div class="card">
         <div class="card-header">
@@ -124,9 +114,9 @@ ob_start();
                         <tr>
                             <th>ID</th>
                             <th>Customer</th>
-                            <th>Contact</th>
                             <th>Type</th>
                             <th>Date</th>
+                            <th>Time</th>
                             <th>Technician</th>
                             <th>Status</th>
                             <th>Priority</th>
@@ -137,12 +127,12 @@ ob_start();
                         <tr>
                             <td>SR001</td>
                             <td>John Smith</td>
-                            <td>(555) 123-4567</td>
                             <td>Installation</td>
                             <td>20-Apr-2025</td>
+                            <td>09:00 AM</td>
                             <td>Mike Wilson</td>
                             <td><span class="badge badge-progress rounded-pill px-3 py-2">In Progress</span></td>
-                            <td><span class="badge badge-high rounded-pill px-3 py-2">High</span></td>
+                            <td><span class="badge badge-high rounded-pill px-3 py-2">Urgent</span></td>
                             <td>
                                 <div class="action-icon action-icon-view"><i class="bi bi-eye"></i></div>
                                 <div class="action-icon action-icon-edit"><i class="bi bi-pencil"></i></div>
@@ -152,27 +142,28 @@ ob_start();
                         <tr>
                             <td>SR002</td>
                             <td>Sarah Johnson</td>
-                            <td>(555) 987-6543</td>
                             <td>Repair</td>
                             <td>22-Apr-2025</td>
+                            <td>11:30 AM</td>
                             <td>Unassigned</td>
                             <td><span class="badge badge-pending rounded-pill px-3 py-2">Pending</span></td>
-                            <td><span class="badge badge-medium rounded-pill px-3 py-2">Medium</span></td>
+                            <td><span class="badge badge-medium rounded-pill px-3 py-2">Moderate</span></td>
                             <td>
                                 <div class="action-icon action-icon-view"><i class="bi bi-eye"></i></div>
                                 <div class="action-icon action-icon-edit"><i class="bi bi-pencil"></i></div>
-                                <div class="action-icon action-icon-assign"><i class="bi bi-person-plus"></i></div>
+                                <div class="action-icon action-icon-delete"><i class="bi bi-trash"></i></div>
+
                             </td>
                         </tr>
                         <tr>
                             <td>SR003</td>
                             <td>David Brown</td>
-                            <td>(555) 456-7890</td>
                             <td>Maintenance</td>
                             <td>19-Apr-2025</td>
+                            <td>02:00 PM</td>
                             <td>Tom Davis</td>
                             <td><span class="badge badge-completed rounded-pill px-3 py-2">Completed</span></td>
-                            <td><span class="badge badge-low rounded-pill px-3 py-2">Low</span></td>
+                            <td><span class="badge badge-low rounded-pill px-3 py-2">Normal</span></td>
                             <td>
                                 <div class="action-icon action-icon-view"><i class="bi bi-eye"></i></div>
                                 <div class="action-icon action-icon-edit"><i class="bi bi-pencil"></i></div>
@@ -182,12 +173,12 @@ ob_start();
                         <tr>
                             <td>SR004</td>
                             <td>Amanda Wilson</td>
-                            <td>(555) 234-5678</td>
                             <td>Repair</td>
                             <td>23-Apr-2025</td>
+                            <td>10:15 AM</td>
                             <td>Lisa Chen</td>
                             <td><span class="badge badge-progress rounded-pill px-3 py-2">In Progress</span></td>
-                            <td><span class="badge badge-high rounded-pill px-3 py-2">High</span></td>
+                            <td><span class="badge badge-high rounded-pill px-3 py-2">Urgent</span></td>
                             <td>
                                 <div class="action-icon action-icon-view"><i class="bi bi-eye"></i></div>
                                 <div class="action-icon action-icon-edit"><i class="bi bi-pencil"></i></div>
@@ -197,20 +188,22 @@ ob_start();
                         <tr>
                             <td>SR005</td>
                             <td>Michael Andrews</td>
-                            <td>(555) 876-5432</td>
                             <td>Installation</td>
                             <td>25-Apr-2025</td>
+                            <td>01:00 PM</td>
                             <td>Unassigned</td>
                             <td><span class="badge badge-pending rounded-pill px-3 py-2">Pending</span></td>
-                            <td><span class="badge badge-medium rounded-pill px-3 py-2">Medium</span></td>
+                            <td><span class="badge badge-medium rounded-pill px-3 py-2">Moderate</span></td>
                             <td>
                                 <div class="action-icon action-icon-view"><i class="bi bi-eye"></i></div>
                                 <div class="action-icon action-icon-edit"><i class="bi bi-pencil"></i></div>
-                                <div class="action-icon action-icon-assign"><i class="bi bi-person-plus"></i></div>
+                                <div class="action-icon action-icon-delete"><i class="bi bi-trash"></i></div>
+
                             </td>
                         </tr>
                     </tbody>
                 </table>
+
             </div>
             
             <!-- Pagination -->
@@ -232,182 +225,8 @@ ob_start();
     </div>
 </div>
 
-<!-- New Service Request Modal -->
-<div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newRequestModalLabel">Create New Service Request</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="row g-3">
-                        <!-- Customer Information -->
-                        <div class="col-12">
-                            <h6 class="text-muted fw-bold mb-3">Customer Information</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="customerName" class="form-label">Customer Name</label>
-                            <input type="text" class="form-control" id="customerName" placeholder="Enter full name">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="customerPhone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="customerPhone" placeholder="(123) 456-7890">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="customerEmail" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="customerEmail" placeholder="email@example.com">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="customerType" class="form-label">Customer Type</label>
-                            <select class="form-select" id="customerType">
-                                <option value="residential">Residential</option>
-                                <option value="commercial">Commercial</option>
-                            </select>
-                        </div>
-
-                        <!-- Service Location -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-muted fw-bold mb-3">Service Location</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="serviceAddress" class="form-label">Address</label>
-                            <input type="text" class="form-control" id="serviceAddress" placeholder="Street address">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="serviceUnit" class="form-label">Unit/Apartment #</label>
-                            <input type="text" class="form-control" id="serviceUnit" placeholder="Apt/Unit number">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="serviceCity" class="form-label">City</label>
-                            <input type="text" class="form-control" id="serviceCity">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="serviceState" class="form-label">State</label>
-                            <select class="form-select" id="serviceState">
-                                <option value="">Select State</option>
-                                <option value="AL">Alabama</option>
-                                <option value="AK">Alaska</option>
-                                <option value="AZ">Arizona</option>
-                                <!-- More states would go here -->
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="serviceZip" class="form-label">ZIP Code</label>
-                            <input type="text" class="form-control" id="serviceZip">
-                        </div>
-
-                        <!-- Service Details -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-muted fw-bold mb-3">Service Details</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="serviceType" class="form-label">Service Type</label>
-                            <select class="form-select" id="serviceType">
-                                <option value="installation">Installation</option>
-                                <option value="repair">Repair</option>
-                                <option value="maintenance">Maintenance</option>
-                                <option value="inspection">Inspection</option>
-                                <option value="emergency">Emergency Service</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="servicePriority" class="form-label">Priority</label>
-                            <select class="form-select" id="servicePriority">
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="serviceDate" class="form-label">Preferred Date</label>
-                            <input type="date" class="form-control" id="serviceDate">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="serviceTime" class="form-label">Preferred Time</label>
-                            <select class="form-select" id="serviceTime">
-                                <option value="morning">Morning (8AM - 12PM)</option>
-                                <option value="afternoon">Afternoon (12PM - 4PM)</option>
-                                <option value="evening">Evening (4PM - 8PM)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="unitType" class="form-label">AC Unit Type</label>
-                            <select class="form-select" id="unitType">
-                                <option value="central">Central AC</option>
-                                <option value="split">Split System</option>
-                                <option value="window">Window Unit</option>
-                                <option value="portable">Portable AC</option>
-                                <option value="heatpump">Heat Pump</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="unitModel" class="form-label">Model/Make (if known)</label>
-                            <input type="text" class="form-control" id="unitModel" placeholder="e.g. Carrier, Trane, etc.">
-                        </div>
-                        <div class="col-12">
-                            <label for="serviceDescription" class="form-label">Description of Issue/Request</label>
-                            <textarea class="form-control" id="serviceDescription" rows="3" placeholder="Please describe the service needed or issue experienced"></textarea>
-                        </div>
-
-                        <!-- Technician Assignment -->
-                        <div class="col-12 mt-4">
-                            <h6 class="text-muted fw-bold mb-3">Technician Assignment</h6>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="technicianAssignment" class="form-label">Assign Technician</label>
-                            <select class="form-select" id="technicianAssignment">
-                                <option value="">Unassigned</option>
-                                <option value="tech1">Mike Wilson</option>
-                                <option value="tech2">Tom Davis</option>
-                                <option value="tech3">Lisa Chen</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="estimatedHours" class="form-label">Estimated Hours</label>
-                            <input type="number" class="form-control" id="estimatedHours" placeholder="Enter estimated hours">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success">Create Request</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?php
 $content = ob_get_clean();
-
-// Additional scripts specific to this page
-$additionalScripts = <<<HTML
-<script>
-    // Initialize any JavaScript functionality for the service requests page
-    document.addEventListener('DOMContentLoaded', function() {
-        // Example: Add confirmation dialog for delete actions
-        const deleteButtons = document.querySelectorAll('.action-icon-delete');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (!confirm('Are you sure you want to delete this service request?')) {
-                    e.preventDefault();
-                }
-            });
-        });
-        
-        // Example: Add assignment modal functionality
-        const assignButtons = document.querySelectorAll('.action-icon-assign');
-        assignButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Code to show assignment modal would go here
-                alert('Assign technician modal would appear here');
-            });
-        });
-    });
-</script>
-HTML;
 
 // Include the base template
 include __DIR__ . '/../includes/admin/base.php';

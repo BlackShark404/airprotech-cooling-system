@@ -15,12 +15,6 @@ class ServiceTypeModel extends BaseModel
         'st_is_active'
     ];
 
-    // Define searchable fields for queries
-    protected $searchableFields = [
-        'st_code',
-        'st_name'
-    ];
-
     // Enable timestamps
     protected $timestamps = true;
     protected $createdAtColumn = 'st_created_at';
