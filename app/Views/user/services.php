@@ -243,7 +243,7 @@
                                 <i class="fas fa-calculator fa-lg"></i>
                             </div>
                             <h5 class="fw-bold">Survey & Quote</h5>
-                            <p class="text-muted mb-0">Free Site Estimation</p>
+                            <p class="text-muted mb-0">Site Estimation & Quotation</p>
                         </div>
                     </div>
                 </div>
@@ -322,42 +322,39 @@
                     </div>
                 </div>
                 
-                <!-- Supply of Brand New Aircon Units -->
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card service-card shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="service-icon">
-                                <i class="fas fa-box-open fa-lg"></i>
-                            </div>
-                            <h5 class="fw-bold">Supply of Brand New Units</h5>
-                            <p class="text-muted">Wide range of brand new, energy-efficient aircon units from leading manufacturers.</p>
-                            <div class="mt-3">
-                                <button class="btn btn-outline-primary service-select-btn" data-service="supply-units">Select Service</button>
-                            </div>
+                <!-- Survey & Estimation -->
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="card service-card shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="service-icon">
+                            <i class="fas fa-search fa-lg"></i>
+                        </div>
+                        <h5 class="fw-bold">Survey & Estimation</h5>
+                        <p class="text-muted">On-site assessment and professional recommendations tailored to your specific requirements.</p>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary service-select-btn" data-service="survey-estimation">Select Service</button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Survey & Estimation -->
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                    <div class="card service-card shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="service-icon">
-                                <i class="fas fa-search fa-lg"></i>
-                            </div>
-                            <h5 class="fw-bold">Survey & Estimation</h5>
-                            <p class="text-muted">On-site assessment and professional recommendations tailored to your specific requirements.</p>
-                            <div class="mt-3">
-                                <button class="btn btn-outline-primary service-select-btn" data-service="survey-estimation">Select Service</button>
-                            </div>
+            </div>
+
+            <!-- Project Quotations -->
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="card service-card shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="service-icon">
+                            <i class="fas fa-file-invoice-dollar fa-lg"></i>
+                        </div>
+                        <h5 class="fw-bold">Project Quotations</h5>
+                        <p class="text-muted">Get detailed and accurate project quotations tailored to your air conditioning needs and budget.</p>
+
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary service-select-btn" data-service="quotations">Select Service</button>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="text-center mt-5">
-                <button class="btn btn-danger cta-button px-4 py-2" data-bs-toggle="modal" data-bs-target="#bookServiceModal">Request Custom Service</button>
-            </div>
         </div>
     </section>
 
@@ -422,10 +419,8 @@
                                 <option value="installation">Installation of Units</option>
                                 <option value="ducting">Ducting Works</option>
                                 <option value="cleaning-pms">General Cleaning & PMS</option>
-                                <option value="supply-units">Supply of Brand New Aircon Units</option>
                                 <option value="survey-estimation">Survey & Estimation</option>
                                 <option value="quotations">Project Quotations</option>
-                                <option value="biddings">Project Biddings</option>
                             </select>
                         </div>
                         
