@@ -159,6 +159,7 @@
                     <li class="nav-item"><a class="nav-link" href="/user/dashboard">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/orders-services">My Orders & Service Requests</a></li>
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">

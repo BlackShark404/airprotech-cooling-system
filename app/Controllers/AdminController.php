@@ -30,4 +30,8 @@ class AdminController extends BaseController {
     public function renderAddProduct() {
         $this->render('admin/add-product');
     }
+
+    public function renderUserManagement() {
+        $this->render('admin/user-management');
+    }
 }

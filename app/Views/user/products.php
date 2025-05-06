@@ -238,7 +238,7 @@
     </div>
 
     <!-- Main Navigation -->
-    <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+    <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <img src="/assets/images/Air-TechLogo.jpg" alt="Logo" class="rounded-circle me-2" width="40" height="40">
@@ -251,7 +251,8 @@
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/user/dashboard">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/user/products">Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/orders-services">My Orders & Service Requests</a></li>
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">

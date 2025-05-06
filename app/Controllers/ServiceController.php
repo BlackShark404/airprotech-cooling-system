@@ -103,10 +103,6 @@ class ServiceController extends BaseController
     {
         // Check if user is logged in
         $userId = $_SESSION['user_id'] ?? null;
-        if (!$userId) {
-            $this->redirect('/login');
-            return;
-        }
         
         // Get user's bookings
         $bookings = $this->serviceModel->getCustomerBookings($userId);
@@ -124,15 +120,7 @@ class ServiceController extends BaseController
     {
         // Check if user is logged in
         $userId = $_SESSION['user_id'] ?? null;
-        if (!$userId) {
-            if ($this->isAjax()) {
-                $this->jsonError("You need to be logged in to cancel a booking", 401);
-            } else {
-                $this->redirect('/login');
-            }
-            return;
-        }
-        
+ 
         // Validate booking ID
         if (!$id) {
             if ($this->isAjax()) {
@@ -182,33 +170,6 @@ class ServiceController extends BaseController
             // Redirect back to bookings page
             $this->redirect('/user/bookings');
         }
-    }
-    
-    /**
-     * Admin: Display all bookings with pagination
-     */
-    public function adminBookings()
-    {
-        // Check if user is admin
-        if (!$this->checkPermission('admin')) {
-            $this->redirect('/dashboard');
-            return;
-        }
-        
-        // Get pagination parameters
-        $page = (int) ($this->request('page', 1));
-        $limit = (int) ($this->request('limit', 10));
-        $status = $this->request('status');
-        
-        // Get bookings with pagination
-        $result = $this->serviceModel->getBookingsWithPagination($page, $limit, $status);
-        
-        // Render the admin bookings view
-        $this->render('admin/bookings', [
-            'bookings' => $result['bookings'],
-            'pagination' => $result['pagination'],
-            'currentStatus' => $status
-        ]);
     }
     
     /**
