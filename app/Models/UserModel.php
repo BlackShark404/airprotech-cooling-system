@@ -34,6 +34,50 @@ class UserModel extends BaseModel
     protected $timestamps = true;
     protected $useSoftDeletes = true;
 
+    /**
+     * Get all users with role information
+     * 
+     * @return array Array of user records with role information
+     */
+    public function getAllUsers()
+    {
+        return $this->select('user_account.*, user_role.ur_name AS role_name')
+                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                    ->whereSoftDeleted('user_account')
+                    ->orderBy('user_account.ua_last_name, user_account.ua_first_name')
+                    ->get();
+    }
+
+    /**
+     * Get users filtered by role and/or status
+     * 
+     * @param string $role Role name
+     * @param string $status Status ('active' or 'inactive')
+     * @return array Filtered user records
+     */
+    public function getFilteredUsers($role = '', $status = '')
+    {
+        $query = $this->select('user_account.*, user_role.ur_name AS role_name')
+                       ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                       ->whereSoftDeleted('user_account');
+        
+        // Apply role filter
+        if (!empty($role)) {
+            $query->where('user_role.ur_name = :role')
+                  ->bind(['role' => $role]);
+        }
+        
+        // Apply status filter
+        if (!empty($status)) {
+            $isActive = ($status === 'active') ? 1 : 0;
+            $query->where('user_account.ua_is_active = :is_active')
+                  ->bind(['is_active' => $isActive]);
+        }
+        
+        return $query->orderBy('user_account.ua_last_name, user_account.ua_first_name')
+                     ->get();
+    }
+
     public function findById($id) {
         return $this->select('user_account.*, user_role.ur_name AS role_name')
                     ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
@@ -94,21 +138,12 @@ class UserModel extends BaseModel
 
     public function updateUser($id, array $data)
     {
-        if (isset($data['ua_hashed_password'])) {
-            $data['ua_hashed_password'] = $this->hashPassword($data['ua_hashed_password']);
-            unset($data['ua_hashed_password']);
-        }
-
         // No need to manually set updated_at as BaseModel.update() handles this
         return $this->update($data, "{$this->primaryKey} = :id", ['id' => $id]);
     }
 
-    /**
-     * Delete a user by ID
-     * 
-     * @param int $id The user ID to delete
-     * @param bool $permanent Whether to permanently delete the user or use soft delete
-     * @return bool Success status
+    /*
+     Delete a user by ID
      */
     public function deleteUser($id, $permanent = false)
     {
@@ -274,5 +309,113 @@ class UserModel extends BaseModel
             "ua_remember_token IS NOT NULL AND ua_remember_token_expires_at < NOW()",
             []
         );
+    }
+
+    /**
+     * Get user statistics by ID
+     * 
+     * @param int $userId User ID
+     * @return array User statistics
+     */
+    public function getUserStats($userId)
+    {
+        // Sample implementation - in a real system, you would query related tables
+        return [
+            'services' => rand(0, 10),
+            'active_services' => rand(0, 5),
+            'logins' => rand(1, 50),
+            'last_activity' => date('Y-m-d H:i:s', rand(
+                strtotime('-30 days'), 
+                strtotime('now')
+            ))
+        ];
+    }
+
+    /**
+     * Bulk activate users
+     * 
+     * @param array $userIds Array of user IDs
+     * @return int Number of updated users
+     */
+    public function bulkActivate(array $userIds)
+    {
+        if (empty($userIds)) {
+            return 0;
+        }
+
+        $placeholders = [];
+        $params = [];
+        
+        foreach ($userIds as $index => $id) {
+            $placeholders[] = ":id{$index}";
+            $params["id{$index}"] = $id;
+        }
+        
+        $sql = "UPDATE {$this->table} SET ua_is_active = TRUE, {$this->updatedAtColumn} = NOW() 
+                WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
+        
+        $this->execute($sql, $params);
+        return count($userIds);
+    }
+    
+    /**
+     * Bulk deactivate users
+     * 
+     * @param array $userIds Array of user IDs
+     * @return int Number of updated users
+     */
+    public function bulkDeactivate(array $userIds)
+    {
+        if (empty($userIds)) {
+            return 0;
+        }
+
+        $placeholders = [];
+        $params = [];
+        
+        foreach ($userIds as $index => $id) {
+            $placeholders[] = ":id{$index}";
+            $params["id{$index}"] = $id;
+        }
+        
+        $sql = "UPDATE {$this->table} SET ua_is_active = FALSE, {$this->updatedAtColumn} = NOW() 
+                WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
+        
+        $this->execute($sql, $params);
+        return count($userIds);
+    }
+    
+    /**
+     * Bulk delete users
+     * 
+     * @param array $userIds Array of user IDs
+     * @param bool $permanent Whether to permanently delete or soft delete
+     * @return int Number of deleted users
+     */
+    public function bulkDelete(array $userIds, $permanent = false)
+    {
+        if (empty($userIds)) {
+            return 0;
+        }
+
+        $placeholders = [];
+        $params = [];
+        
+        foreach ($userIds as $index => $id) {
+            $placeholders[] = ":id{$index}";
+            $params["id{$index}"] = $id;
+        }
+        
+        if ($permanent) {
+            // Permanent delete
+            $sql = "DELETE FROM {$this->table} WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
+        } else {
+            // Soft delete
+            $sql = "UPDATE {$this->table} SET {$this->deletedAtColumn} = NOW(), {$this->updatedAtColumn} = NOW() 
+                    WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
+        }
+        
+        $this->execute($sql, $params);
+        return count($userIds);
     }
 }

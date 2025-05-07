@@ -1,90 +1,66 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Initialize DataTablesManager with improved configuration
+  // Initialize DataTablesManager with enhanced configuration
   const userTableManager = new DataTablesManager("usersTable", {
     ajaxUrl: "/api/users",
-    responsive: true,
-    dom: "Bfrtip", // Properly display buttons
-    autoWidth: false, // Disable auto width calculation
-    buttons: [
-      {
-        extend: "copy",
-        className: "btn btn-sm btn-light me-1",
-      },
-      {
-        extend: "csv",
-        className: "btn btn-sm btn-light me-1",
-      },
-      {
-        extend: "excel",
-        className: "btn btn-sm btn-light me-1",
-      },
-      {
-        extend: "pdf",
-        className: "btn btn-sm btn-light me-1",
-      },
-    ],
-
-
-    //This is for add  customer
     columns: [
       { data: "id", title: "ID" },
       {
-        // Combined name column
+        // Combined name column with avatar placeholder
         data: null,
         title: "Name",
         render: function (data, type, row) {
+          // For sorting and filtering, use raw data
+          if (type === 'sort' || type === 'filter') {
+            return row.first_name + ' ' + row.last_name;
+          }
+          
           return `<div class="d-flex align-items-center">
-                        <div class="avatar-placeholder d-flex align-items-center justify-content-center me-2 rounded-circle bg-light text-primary" 
-                            style="width: 36px; height: 36px; font-size: 14px;">
-                            ${row.first_name.charAt(0)}${row.last_name.charAt(
-            0
-          )}
-                        </div>
-                        <div>
-                            <p class="mb-0 fw-medium">${row.first_name} ${
-            row.last_name
-          }</p>
-                        </div>
-                    </div>`;
+                    <div class="avatar-placeholder d-flex align-items-center justify-content-center me-2 rounded-circle bg-light text-primary" 
+                        style="width: 36px; height: 36px; font-size: 14px;">
+                        ${row.first_name.charAt(0)}${row.last_name.charAt(0)}
+                    </div>
+                    <div>
+                        <p class="mb-0 fw-medium">${row.first_name} ${row.last_name}</p>
+                    </div>
+                </div>`;
         },
       },
       { data: "email", title: "Email" },
       {
         data: "role",
         title: "Role",
-        render: function (data, type, row) {
-          let badgeClass = " ";
-          if (data === "admin") {
-            badgeClass = "badge-admin";
-          } else if (data === "technician") {
-            badgeClass = "badge-technician";
-          } else if (data === "customer") {
-            badgeClass = "badge-customer";
+        // Using the new badge configuration
+        badge: {
+          type: 'primary',
+          pill: true,
+          valueMap: {
+            'admin': { type: 'danger', display: 'Admin' },
+            'technician': { type: 'primary', display: 'Technician' },
+            'customer': { type: 'success', display: 'Customer' }
           }
-
-          return `<span class="badge ${badgeClass}">${
-            data.charAt(0).toUpperCase() + data.slice(1)
-          }</span>`;
-        },
+        }
       },
       {
         data: "status",
         title: "Status",
-        render: function (data, type, row) {
-          const isActive = data === "active";
-          const indicatorClass = isActive ? "status-active" : "status-inactive";
-          const badgeClass = isActive ? "badge-active" : "badge-inactive";
-
-          return `<span class="badge ${badgeClass}">
-                        <span class="status-indicator ${indicatorClass}"></span>
-                        ${data.charAt(0).toUpperCase() + data.slice(1)}
-                    </span>`;
-        },
+        // Using the new badge configuration
+        badge: {
+          type: 'secondary',
+          pill: true,
+          valueMap: {
+            'active': { type: 'success', display: 'Active' },
+            'inactive': { type: 'danger', display: 'Inactive' }
+          }
+        }
       },
       {
         data: "registered",
         title: "Registered",
         render: function (data, type, row) {
+          // For sorting and filtering, use raw data
+          if (type === 'sort' || type === 'filter') {
+            return data;
+          }
           return `<span class="text-nowrap"><i class="bi bi-calendar3 me-1 text-muted"></i>${data}</span>`;
         },
       },
@@ -92,6 +68,11 @@ document.addEventListener("DOMContentLoaded", function () {
         data: "last_login",
         title: "Last Login",
         render: function (data, type, row) {
+          // For sorting and filtering, use raw data
+          if (type === 'sort' || type === 'filter') {
+            return data || '';
+          }
+          
           if (!data) {
             return '<span class="text-muted">Never</span>';
           }
@@ -99,11 +80,20 @@ document.addEventListener("DOMContentLoaded", function () {
         },
       },
     ],
+    // Improved toast options
+    toastOptions: {
+      position: 'bottom-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      enableIcons: true
+    },
     // View user callback
     viewRowCallback: function (rowData, tableManager) {
       // Set user initials
-      const initials =
-        rowData.first_name.charAt(0) + rowData.last_name.charAt(0);
+      const initials = rowData.first_name.charAt(0) + rowData.last_name.charAt(0);
       $("#userInitials").text(initials);
 
       // Populate the view modal with user data
@@ -126,8 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
       );
 
       // Set status with badge
-      const statusBadgeClass =
-        rowData.status === "active" ? "bg-success" : "bg-danger";
+      const statusBadgeClass = rowData.status === "active" ? "bg-success" : "bg-danger";
       $("#viewUserStatus").html(
         `<span class="badge ${statusBadgeClass} rounded-pill">${
           rowData.status.charAt(0).toUpperCase() + rowData.status.slice(1)
@@ -141,44 +130,29 @@ document.addEventListener("DOMContentLoaded", function () {
       $("#viewUserLogins").text(rowData.logins || "0");
       $("#viewUserServices").text(rowData.services || "0");
       $("#viewUserActiveServices").text(rowData.active_services || "0");
-      $("#viewUserLastActivity").text(
-        rowData.last_activity || "No recent activity"
-      );
+      $("#viewUserLastActivity").text(rowData.last_activity || "No recent activity");
 
       // Update progress bars based on data
       const loginPercent = Math.min(100, (rowData.logins || 0) * 3);
       const servicesPercent = Math.min(100, (rowData.services || 0) * 10);
-      const activeServicesPercent = Math.min(
-        100,
-        (rowData.active_services || 0) * 20
-      );
+      const activeServicesPercent = Math.min(100, (rowData.active_services || 0) * 20);
 
-      $(".progress-bar")
-        .eq(0)
-        .css("width", loginPercent + "%");
-      $(".progress-bar")
-        .eq(1)
-        .css("width", servicesPercent + "%");
-      $(".progress-bar")
-        .eq(2)
-        .css("width", activeServicesPercent + "%");
+      $(".progress-bar").eq(0).css("width", loginPercent + "%");
+      $(".progress-bar").eq(1).css("width", servicesPercent + "%");
+      $(".progress-bar").eq(2).css("width", activeServicesPercent + "%");
 
       // Show the modal
-      const viewModal = new bootstrap.Modal(
-        document.getElementById("viewUserModal")
-      );
+      const viewModal = new bootstrap.Modal(document.getElementById("viewUserModal"));
       viewModal.show();
 
       // Setup edit button in view modal
-      $("#viewUserEditBtn")
-        .off("click")
-        .on("click", function () {
-          // Hide view modal
-          viewModal.hide();
+      $("#viewUserEditBtn").off("click").on("click", function () {
+        // Hide view modal
+        viewModal.hide();
 
-          // Setup and show edit modal
-          setupEditUserModal(rowData, tableManager);
-        });
+        // Setup and show edit modal
+        setupEditUserModal(rowData, tableManager);
+      });
     },
 
     // Edit user callback
@@ -186,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
       setupEditUserModal(rowData, tableManager);
     },
 
-    // Delete user callback
+    // Delete user callback - uses improved delete confirmation modal
     deleteRowCallback: function (rowData, tableManager) {
       // Set user info in delete confirmation modal
       $("#deleteUserName").text(rowData.first_name + " " + rowData.last_name);
@@ -196,76 +170,61 @@ document.addEventListener("DOMContentLoaded", function () {
       $("#confirmDeleteBtn").prop("disabled", true);
 
       // Show delete confirmation modal
-      const deleteModal = new bootstrap.Modal(
-        document.getElementById("deleteConfirmModal")
-      );
+      const deleteModal = new bootstrap.Modal(document.getElementById("deleteConfirmModal"));
       deleteModal.show();
 
       // Setup confirm delete button
-      $("#confirmDeleteBtn")
-        .off("click")
-        .on("click", function () {
-          // Call delete API
-          $.ajax({
-            url: `/api/users/${rowData.id}`,
-            method: "DELETE",
-            contentType: "application/json",
-            success: function (response) {
-              if (response.success) {
-                // Delete succeeded
-                tableManager.deleteRow(rowData.id);
-                deleteModal.hide();
-
-                // Show success message
-                tableManager.showSuccessToast("User Deleted", response.message);
-
-                // Update user count
-                updateUserCount();
-              } else {
-                // Delete failed
-                tableManager.showErrorToast("Error", response.message);
-              }
-            },
-            error: function (xhr) {
-              const response = xhr.responseJSON || { message: "Server error" };
+      $("#confirmDeleteBtn").off("click").on("click", function () {
+        // Call delete API
+        $.ajax({
+          url: `/api/users/${rowData.id}`,
+          method: "DELETE",
+          contentType: "application/json",
+          success: function (response) {
+            if (response.success) {
+              // Delete succeeded - use the deleteRow method of the manager
+              tableManager.deleteRow(rowData.id);
+              deleteModal.hide();
+              
+              // User count will be updated automatically in the next step
+            } else {
+              // Delete failed
               tableManager.showErrorToast("Error", response.message);
-            },
-          });
+            }
+          },
+          error: function (xhr) {
+            const response = xhr.responseJSON || { message: "Server error" };
+            tableManager.showErrorToast("Error", response.message);
+          },
         });
+      });
     },
 
-    // After data loaded callback to update user count
-    afterDataLoadedCallback: function (data) {
-      updateUserCount();
-    },
-  });
-
-  // FAILSAFE: Fix duplicate Actions headers after table initialization
-  setTimeout(function () {
-    // Find all column headers with the text "Actions"
-    const actionHeaders = $("#usersTable thead th").filter(function () {
-      return $(this).text().trim() === "Actions";
-    });
-
-    // If there are duplicate Actions headers, remove all but the first one
-    if (actionHeaders.length > 1) {
-      console.log("Fixing duplicate Actions headers...");
-      actionHeaders.not(":first").remove();
-
-      // Force DataTables to redraw the table
-      try {
-        $("#usersTable").DataTable().columns.adjust().draw();
-      } catch (e) {
-        console.error("Error redrawing table:", e);
+    // Custom buttons
+    customButtons: {
+      export: {
+        text: '<i class="bi bi-download"></i> Export',
+        className: 'btn btn-sm btn-outline-primary',
+        action: function (e, dt, node, config) {
+          // Show export format dropdown
+          // Implementation depends on your UI
+          $('#exportDropdown').toggle();
+        }
       }
     }
-  }, 500);
+  });
+
   // Function to update user count
   function updateUserCount() {
     const table = $("#usersTable").DataTable();
     const filteredData = table.rows({ search: "applied" }).data();
     $("#userCount").text(filteredData.length + " Users");
   }
+
+  // Update count when data is loaded or filtered
+  $("#usersTable").on('draw.dt', function() {
+    updateUserCount();
+  });
 
   // Apply filters functionality
   $("#applyFilters").on("click", function () {
@@ -278,7 +237,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const statusFilter = $("#statusFilter").val();
     const searchQuery = $("#searchInput").val();
 
-    // Apply filters
+    // Apply filters using the applyFilters method
     const filters = {};
     if (roleFilter) filters.role = roleFilter;
     if (statusFilter) filters.status = statusFilter;
@@ -289,14 +248,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const table = $("#usersTable").DataTable();
     table.search(searchQuery).draw();
 
-    // Show info toast
-    userTableManager.showInfoToast(
-      "Filters Applied",
-      "Table has been filtered"
-    );
-
-    // Update user count
-    updateUserCount();
+    // Show info toast with the new toast system
+    userTableManager.showInfoToast("Filters Applied", "Table has been filtered");
   }
 
   // Reset filters
@@ -306,7 +259,7 @@ document.addEventListener("DOMContentLoaded", function () {
     $("#statusFilter").val("");
     $("#searchInput").val("");
 
-    // Clear filters
+    // Clear filters using the manager
     userTableManager.applyFilters({});
 
     // Clear search
@@ -314,13 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
     table.search("").draw();
 
     // Show info toast
-    userTableManager.showInfoToast(
-      "Filters Reset",
-      "All filters have been cleared"
-    );
-
-    // Update user count
-    updateUserCount();
+    userTableManager.showInfoToast("Filters Reset", "All filters have been cleared");
   });
 
   // Search input keyup event
@@ -338,34 +285,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const email = $("#email").val();
     const password = $("#password").val();
     const confirmPassword = $("#confirm_password").val();
-    const roleId = parseInt($("#role_id").val()); // Ensure roleId is an integer
-    const isActive = parseInt($("#is_active").val()); // Ensure isActive is an integer
+    const roleId = parseInt($("#role_id").val());
+    const isActive = parseInt($("#is_active").val());
 
     // Simple validation
     if (!firstName || !lastName || !email || !password || !roleId) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please fill all required fields"
-      );
+      userTableManager.showErrorToast("Validation Error", "Please fill all required fields");
       return;
     }
 
     // Check passwords match
     if (password !== confirmPassword) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Passwords do not match"
-      );
+      userTableManager.showErrorToast("Validation Error", "Passwords do not match");
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please enter a valid email address"
-      );
+      userTableManager.showErrorToast("Validation Error", "Please enter a valid email address");
       return;
     }
 
@@ -374,8 +312,8 @@ document.addEventListener("DOMContentLoaded", function () {
       last_name: lastName,
       email: email,
       password: password,
-      role_id: roleId, // Now correctly as a number
-      is_active: isActive, // Now correctly as a number
+      role_id: roleId,
+      is_active: isActive
     };
 
     // Submit form via AJAX
@@ -387,18 +325,16 @@ document.addEventListener("DOMContentLoaded", function () {
       success: function (response) {
         if (response.success) {
           // Close modal
-          const addModal = bootstrap.Modal.getInstance(
-            document.getElementById("addUserModal")
-          );
+          const addModal = bootstrap.Modal.getInstance(document.getElementById("addUserModal"));
           addModal.hide();
 
           // Reset form
           $("#addUserForm")[0].reset();
 
-          // Refresh table
+          // Refresh table using the manager's refresh method
           userTableManager.refresh();
 
-          // Show success message
+          // Show success message using the manager's toast system
           userTableManager.showSuccessToast("User Added", response.message);
         } else {
           userTableManager.showErrorToast("Error", response.message);
@@ -419,25 +355,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const lastName = $("#edit_last_name").val();
     const email = $("#edit_email").val();
     const password = $("#edit_password").val();
-    const roleId = parseInt($("#edit_role_id").val()); // Ensure roleId is an integer
-    const isActive = parseInt($("#edit_is_active").val()); // Ensure isActive is an integer
+    const roleId = parseInt($("#edit_role_id").val());
+    const isActive = parseInt($("#edit_is_active").val());
 
     // Simple validation
-    if (!firstName || !lastName || !email || !roleId) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please fill all required fields"
-      );
+    if (!firstName || !lastName || !email || !roleId === NaN) {
+      userTableManager.showErrorToast("Validation Error", "Please fill all required fields");
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please enter a valid email address"
-      );
+      userTableManager.showErrorToast("Validation Error", "Please enter a valid email address");
       return;
     }
 
@@ -446,8 +376,8 @@ document.addEventListener("DOMContentLoaded", function () {
       first_name: firstName,
       last_name: lastName,
       email: email,
-      role_id: roleId, // Now correctly as a number
-      is_active: isActive, // Now correctly as a number
+      role_id: roleId,
+      is_active: isActive
     };
 
     // Add password only if provided
@@ -464,15 +394,13 @@ document.addEventListener("DOMContentLoaded", function () {
       success: function (response) {
         if (response.success) {
           // Close modal
-          const editModal = bootstrap.Modal.getInstance(
-            document.getElementById("editUserModal")
-          );
+          const editModal = bootstrap.Modal.getInstance(document.getElementById("editUserModal"));
           editModal.hide();
 
-          // Refresh table
+          // Refresh table using the manager's method
           userTableManager.refresh();
 
-          // Show success message
+          // Show success message using the manager's toast system
           userTableManager.showSuccessToast("User Updated", response.message);
         } else {
           userTableManager.showErrorToast("Error", response.message);
@@ -493,20 +421,15 @@ document.addEventListener("DOMContentLoaded", function () {
     $("#edit_last_name").val(rowData.last_name);
     $("#edit_email").val(rowData.email);
 
-    // FIXED: Properly map role_id based on the actual database values
-    // Make sure these match your actual database values in USER_ROLE table
+    // Map role to role_id
     let roleId;
     if (rowData.role === "admin") {
       roleId = "3"; // ID for admin in your database
     } else if (rowData.role === "technician") {
       roleId = "2"; // ID for technician in your database
-    } else if (rowData.role === "customer") {
-      roleId = "1"; // ID for customer in your database
     } else {
       roleId = "1"; // Default to customer
     }
-
-    console.log("Setting role dropdown for: " + rowData.role + " with value: " + roleId);
 
     // Set the dropdown value
     $("#edit_role_id").val(roleId);
@@ -518,39 +441,28 @@ document.addEventListener("DOMContentLoaded", function () {
     $("#edit_password").val("");
 
     // Show the edit modal
-    const editModal = new bootstrap.Modal(
-      document.getElementById("editUserModal")
-    );
+    const editModal = new bootstrap.Modal(document.getElementById("editUserModal"));
     editModal.show();
-
-    // Diagnostic check after modal is shown
-    setTimeout(function() {
-      console.log("After modal shown, role value is: " + $("#edit_role_id").val());
-      console.log("Selected option text: " + $("#edit_role_id option:selected").text());
-    }, 100);
   }
 
   // Toggle password visibility
   $("#togglePassword").on("click", function () {
     const passwordField = $("#password");
-    const type =
-      passwordField.attr("type") === "password" ? "text" : "password";
+    const type = passwordField.attr("type") === "password" ? "text" : "password";
     passwordField.attr("type", type);
     $(this).find("i").toggleClass("bi-eye bi-eye-slash");
   });
 
   $("#toggleConfirmPassword").on("click", function () {
     const passwordField = $("#confirm_password");
-    const type =
-      passwordField.attr("type") === "password" ? "text" : "password";
+    const type = passwordField.attr("type") === "password" ? "text" : "password";
     passwordField.attr("type", type);
     $(this).find("i").toggleClass("bi-eye bi-eye-slash");
   });
 
   $("#toggleEditPassword").on("click", function () {
     const passwordField = $("#edit_password");
-    const type =
-      passwordField.attr("type") === "password" ? "text" : "password";
+    const type = passwordField.attr("type") === "password" ? "text" : "password";
     passwordField.attr("type", type);
     $(this).find("i").toggleClass("bi-eye bi-eye-slash");
   });
@@ -574,10 +486,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Redirect to export API with format
     window.location.href = `/api/users/export${queryString}`;
 
-    // Show info toast
-    userTableManager.showInfoToast(
-      "Export Started",
-      `Exporting users as ${format.toUpperCase()}`
-    );
+    // Show info toast using the manager's toast system
+    userTableManager.showInfoToast("Export Started", `Exporting users as ${format.toUpperCase()}`);
   };
+  
+  // Clean up function to handle page unload
+  window.addEventListener('beforeunload', function() {
+    // Destroy the DataTablesManager to prevent memory leaks
+    if (userTableManager) {
+      userTableManager.destroy();
+    }
+  });
 });
