@@ -44,7 +44,7 @@ function base_url($uri = '', $protocol = true) {
                     <span class="d-none d-sm-inline">Admin User</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" href="<?= $_SESSION['profile_route'] ?>"><i class="bi bi-person"></i> My Profile</a></li>
+                    <li><a class="dropdown-item href="<?= base_url('/admin/admin-profile') ?>"><i class="bi bi-person"></i> My Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>

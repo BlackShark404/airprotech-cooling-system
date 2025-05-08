@@ -93,7 +93,7 @@ class AuthController extends BaseController
         $role = $user['role_name'] ?? "/";  
 
         if ($role === "admin") {
-            Session::set("profile_route", '/admin/admin-profile');
+            Session::set("profile_route", '/admin/profile');
         } else if ($role === "technician") {
             Session::set("profile_route", '/technician/technician-profile');
         } else {

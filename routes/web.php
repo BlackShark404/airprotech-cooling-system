@@ -74,8 +74,6 @@ $router->map('GET', '/user/services', 'App\Controllers\UserController#renderUser
 $router->map('GET', '/user/products', 'App\Controllers\UserController#renderUserProducts', 'render_user-services');
 $router->map('POST', '/user/service/request', 'App\Controllers\ServiceController#bookService', 'render_user-book_services');
 
-// Admin routes
-$router->map('GET', '/technician/dashboard', 'App\Controllers\TechnicianController#renderTechnicianDashboard', 'render_technician-dashboard');
 
 // Admin routes
 $router->map('GET', '/admin/dashboard', 'App\Controllers\AdminController#renderAdminDashboard', 'render_admin-dashboard');
@@ -86,6 +84,13 @@ $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#rende
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
 $router->map('GET', '/admin/admin-profile', 'App\Controllers\AdminController#renderProfile', 'render-admin-profile');
 $router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#index', 'render-User_management');
+$router->map('GET', '/admin/profile', 'App\Controllers\AdminController#renderAdminProfile', 'render-admin_profile');
+
+// Technician Management Routes (Admin Access)
+$router->map('POST', '/admin/technicians/api', 'App\Controllers\TechnicianController#api', 'admin_technicians_api');
+
+// Technician Dashboard Route (Technician Access)
+$router->map('GET', '/technician/dashboard', 'App\Controllers\TechnicianController#renderTechnicianDashboard', 'technician_dashboard');
 
 // User Management API Routes
 $router->map('GET', '/api/users', 'App\Controllers\UserManagementController#getUsers', 'api_get_users');
