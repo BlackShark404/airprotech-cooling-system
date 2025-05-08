@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Models\ServiceModel;
+use App\Models\ServiceTypeModel;
+
 class ServiceController extends BaseController
 {
     private $serviceModel;
@@ -10,8 +13,9 @@ class ServiceController extends BaseController
     public function __construct()
     {
         parent::__construct();
-        $this->serviceModel = $this->loadModel('ServiceModel');
-        $this->serviceTypeModel = $this->loadModel('ServiceTypeModel');
+        // Direct instantiation instead of using loadModel method
+        $this->serviceModel = new ServiceModel();
+        $this->serviceTypeModel = new ServiceTypeModel();
     }
     
     /**
@@ -42,7 +46,6 @@ class ServiceController extends BaseController
      */
     public function bookService()
     {
-        
         // Get JSON input from request body
         $input = $this->getJsonInput();
         
@@ -131,8 +134,8 @@ class ServiceController extends BaseController
             return;
         }
         
-        // Get the booking
-        $booking = $this->serviceModel->find($id);
+        // Get the booking - using a custom method since find() isn't in our updated model
+        $booking = $this->getBookingById($id);
         
         // Check if booking exists and belongs to the user
         if (!$booking || $booking['sb_customer_id'] != $userId) {
@@ -170,6 +173,21 @@ class ServiceController extends BaseController
             // Redirect back to bookings page
             $this->redirect('/user/bookings');
         }
+    }
+    
+    /**
+     * Get a booking by ID
+     * 
+     * @param int $id The booking ID
+     * @return array|null The booking or null if not found
+     */
+    private function getBookingById($id)
+    {
+        $sql = "SELECT * FROM service_booking 
+                WHERE sb_id = :id 
+                AND sb_deleted_at IS NULL";
+                
+        return $this->serviceModel->queryOne($sql, ['id' => $id]);
     }
     
     /**
@@ -233,13 +251,24 @@ class ServiceController extends BaseController
             return;
         }
         
-        // Get all service types
-        $serviceTypes = $this->serviceTypeModel->all();
+        // Get all service types - replacing all() with a custom query
+        $serviceTypes = $this->getAllServiceTypes();
         
         // Render the service types management view
         $this->render('admin/service-types', [
             'serviceTypes' => $serviceTypes
         ]);
+    }
+    
+    /**
+     * Get all service types
+     * 
+     * @return array All service types
+     */
+    private function getAllServiceTypes()
+    {
+        $sql = "SELECT * FROM service_type ORDER BY st_name ASC";
+        return $this->serviceTypeModel->query($sql);
     }
     
     /**
@@ -274,10 +303,10 @@ class ServiceController extends BaseController
         
         // Prepare service type data
         $serviceTypeData = [
-            'ST_CODE' => $input['code'],
-            'ST_NAME' => $input['name'],
-            'ST_DESCRIPTION' => $input['description'] ?? '',
-            'ST_IS_ACTIVE' => isset($input['isActive']) ? (bool) $input['isActive'] : true
+            'st_code' => $input['code'],
+            'st_name' => $input['name'],
+            'st_description' => $input['description'] ?? '',
+            'st_is_active' => isset($input['isActive']) ? (bool) $input['isActive'] : true
         ];
         
         // Check if updating or creating

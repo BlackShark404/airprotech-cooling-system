@@ -5,21 +5,7 @@ namespace App\Models;
 class ServiceTypeModel extends BaseModel
 {
     protected $table = 'service_type';
-    protected $primaryKey = 'st_id';
-
-    // Define which fields can be mass-assigned
-    protected $fillable = [
-        'st_code',
-        'st_name',
-        'st_description',
-        'st_is_active'
-    ];
-
-    // Enable timestamps
-    protected $timestamps = true;
-    protected $createdAtColumn = 'st_created_at';
-    protected $updatedAtColumn = 'st_updated_at';
-
+    
     /**
      * Get all active service types
      * 
@@ -27,11 +13,11 @@ class ServiceTypeModel extends BaseModel
      */
     public function getActiveServiceTypes()
     {
-        return $this->where("st_is_active = :isActive")
-                ->orderBy("st_name ASC")
-                ->bind(['isActive' => true])
-                ->get();
-
+        $sql = "SELECT * FROM {$this->table} 
+                WHERE st_is_active = :isActive 
+                ORDER BY st_name ASC";
+                
+        return $this->query($sql, ['isActive' => true]);
     }
     
     /**
@@ -42,10 +28,10 @@ class ServiceTypeModel extends BaseModel
      */
     public function getServiceTypeByCode($code)
     {
-        return $this->where("st_code = :code")
-                ->bind(['code' => $code])
-                ->first();
-
+        $sql = "SELECT * FROM {$this->table} 
+                WHERE st_code = :code";
+                
+        return $this->queryOne($sql, ['code' => $code]);
     }
     
     /**
@@ -56,7 +42,13 @@ class ServiceTypeModel extends BaseModel
      */
     public function createServiceType($data)
     {
-        return $this->insert($data);
+        $columns = implode(', ', array_keys($data));
+        $placeholders = ':' . implode(', :', array_keys($data));
+        
+        $sql = "INSERT INTO {$this->table} ($columns) 
+                VALUES ($placeholders)";
+                
+        return $this->execute($sql, $data) > 0;
     }
     
     /**
@@ -68,12 +60,19 @@ class ServiceTypeModel extends BaseModel
      */
     public function updateServiceType($typeId, $data)
     {
-        return $this->update(
-            $data,
-            "st_id = :typeId",
-            ['typeId' => $typeId]
-        );
-
+        $updates = [];
+        foreach (array_keys($data) as $column) {
+            $updates[] = "$column = :$column";
+        }
+        $setClause = implode(', ', $updates);
+        
+        $sql = "UPDATE {$this->table} 
+                SET $setClause 
+                WHERE st_id = :typeId";
+                
+        $params = array_merge($data, ['typeId' => $typeId]);
+        
+        return $this->execute($sql, $params) > 0;
     }
     
     /**
@@ -85,10 +84,13 @@ class ServiceTypeModel extends BaseModel
      */
     public function toggleServiceTypeStatus($typeId, $isActive)
     {
-        return $this->update(
-            ['st_is_active' => $isActive],
-            "st_id = :typeId",
-            ['typeId' => $typeId]
-        );
+        $sql = "UPDATE {$this->table} 
+                SET st_is_active = :isActive 
+                WHERE st_id = :typeId";
+                
+        return $this->execute($sql, [
+            'isActive' => $isActive,
+            'typeId' => $typeId
+        ]) > 0;
     }
 }
