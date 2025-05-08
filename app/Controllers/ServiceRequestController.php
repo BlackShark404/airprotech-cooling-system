@@ -6,7 +6,6 @@ use App\Models\BookAssignmentModel;
 use App\Models\ServiceRequestModel;
 use App\Models\ServiceRequestTypeModel;
 use App\Models\TechnicianModel;
-use App\Models\BookingAssignmentModel;
 
 class ServiceRequestController extends BaseController
 {
@@ -128,7 +127,7 @@ class ServiceRequestController extends BaseController
         if (!empty($booking['technician_id'])) {
             $assignment = $this->assignmentModel->getBookingAssignment($id);
             $booking['assignment_notes'] = $assignment['ba_notes'] ?? '';
-            $booking['assignment_date'] = $assignment['ba_created_at'] ?? '';
+            $booking['assignment_date'] = $assignment['ba_assigned_at'] ?? '';
         }
         
         $this->jsonSuccess($booking);
@@ -159,7 +158,7 @@ class ServiceRequestController extends BaseController
         
         // Update status if provided
         if (isset($input['status'])) {
-            $validStatuses = ['pending', 'in-progress', 'completed', 'cancelled'];
+            $validStatuses = ['pending', 'confirmed', 'in-progress', 'completed', 'cancelled'];
             if (!in_array($input['status'], $validStatuses)) {
                 $this->jsonError('Invalid status value', 400);
                 return;
@@ -169,7 +168,7 @@ class ServiceRequestController extends BaseController
         
         // Update priority if provided
         if (isset($input['priority'])) {
-            $validPriorities = ['high', 'medium', 'low'];
+            $validPriorities = ['normal', 'moderate', 'urgent'];
             if (!in_array($input['priority'], $validPriorities)) {
                 $this->jsonError('Invalid priority value', 400);
                 return;
@@ -243,16 +242,16 @@ class ServiceRequestController extends BaseController
         $notes = $input['notes'] ?? '';
         $success = $this->assignmentModel->assignBooking($input['bookingId'], $input['technicianId'], $notes);
         
-        // If we're assigning a technician, update the status to in-progress if it's pending
+        // If we're assigning a technician, update the status to confirmed if it's pending
         if ($success && $booking['sb_status'] === 'pending') {
-            $this->serviceModel->updateBookingStatus($input['bookingId'], 'in-progress');
+            $this->serviceModel->updateBookingStatus($input['bookingId'], 'confirmed');
         }
         
         if ($success) {
             $this->jsonSuccess(
                 [
-                    'technicianName' => $technician['tech_first_name'] . ' ' . $technician['tech_last_name'],
-                    'technicianId' => $technician['tech_id']
+                    'technicianName' => $technician['ua_first_name'] . ' ' . $technician['ua_last_name'],
+                    'technicianId' => $technician['te_account_id']
                 ],
                 'Technician assigned successfully'
             );
@@ -411,7 +410,7 @@ class ServiceRequestController extends BaseController
             'sb_address' => $input['address'],
             'sb_description' => $input['serviceDescription'],
             'sb_status' => 'pending',
-            'sb_priority' => 'medium' // Default priority
+            'sb_priority' => 'moderate' // Default priority
         ];
 
         $exclude = [
@@ -470,7 +469,7 @@ class ServiceRequestController extends BaseController
             return;
         }
  
-        // Get the booking - using a custom method since find() isn't in our updated model
+        // Get the booking
         $booking = $this->serviceModel->getBookingWithDetails($id);
         
         // Check if booking exists and belongs to the user
