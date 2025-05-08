@@ -31,42 +31,6 @@ class UserModel extends BaseModel
         return $this->query($sql);
     }
 
-    /**
-     * Get users filtered by role and/or status
-     * 
-     * @param string $role Role name
-     * @param string $status Status ('active' or 'inactive')
-     * @return array Filtered user records
-     */
-    public function getFilteredUsers($role = '', $status = '')
-    {
-        $sql = "
-            SELECT user_account.*, user_role.ur_name AS role_name
-            FROM {$this->table}
-            JOIN user_role ON user_account.ua_role_id = user_role.ur_id
-            WHERE user_account.ua_deleted_at IS NULL
-        ";
-        
-        $params = [];
-        
-        // Apply role filter
-        if (!empty($role)) {
-            $sql .= " AND user_role.ur_name = :role";
-            $params['role'] = $role;
-        }
-        
-        // Apply status filter
-        if (!empty($status)) {
-            $isActive = ($status === 'active') ? 1 : 0;
-            $sql .= " AND user_account.ua_is_active = :is_active";
-            $params['is_active'] = $isActive;
-        }
-        
-        $sql .= " ORDER BY user_account.ua_last_name, user_account.ua_first_name";
-        
-        return $this->query($sql, $params);
-    }
-
     public function findById($id) {
         $sql = "
             SELECT user_account.*, user_role.ur_name AS role_name
@@ -112,21 +76,6 @@ class UserModel extends BaseModel
         ";
         
         return $this->query($sql);
-    }
-
-    public function search($searchTerm)
-    {
-        $sql = "
-            SELECT *
-            FROM {$this->table}
-            WHERE (ua_first_name ILIKE :search_term 
-                OR ua_last_name ILIKE :search_term 
-                OR ua_email ILIKE :search_term)
-            AND ua_deleted_at IS NULL
-            ORDER BY ua_last_name, ua_first_name
-        ";
-        
-        return $this->query($sql, ['search_term' => "%$searchTerm%"]);
     }
 
     public function hashPassword($password)

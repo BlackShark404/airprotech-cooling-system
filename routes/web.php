@@ -93,15 +93,6 @@ $router->map('POST', '/admin/technicians/api', 'App\Controllers\TechnicianContro
 $router->map('GET', '/technician/dashboard', 'App\Controllers\TechnicianController#renderTechnicianDashboard', 'technician_dashboard');
 
 // User Management API Routes
-$router->map('GET', '/api/users', 'App\Controllers\UserManagementController#getUsers', 'api_get_users');
-$router->map('GET', '/api/users/data', 'App\Controllers\UserManagementController#getUsersData', 'api_get_users_data');
-$router->map('GET', '/api/users/[i:id]', 'App\Controllers\UserManagementController#getUser', 'api_get_user');
-$router->map('POST', '/api/users', 'App\Controllers\UserManagementController#createUser', 'api_create_user');
-$router->map('PUT', '/api/users/[i:id]', 'App\Controllers\UserManagementController#updateUser', 'api_update_user');
-$router->map('DELETE', '/api/users/[i:id]', 'App\Controllers\UserManagementController#deleteUser', 'api_delete_user');
-$router->map('POST', '/api/users/reset-password/[i:id]', 'App\Controllers\UserManagementController#resetPassword', 'api_reset_password');
-$router->map('GET', '/api/users/export', 'App\Controllers\UserManagementController#exportUsers', 'api_export_users');
-$router->map('POST', '/api/users/bulk-action', 'App\Controllers\UserManagementController#bulkAction', 'api_bulk_action');
 
 // --- Add these lines for Product Management ---
 

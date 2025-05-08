@@ -251,4 +251,70 @@ class BaseModel
     {
         return $this->pdo->rollBack();
     }
+
+    /**
+     * Format columns and placeholders for INSERT statements
+     * 
+     * @param array $data Associative array of column => value pairs
+     * @param array $exclude Array of column names to exclude
+     * @param array $expressions Associative array of column => sql expression pairs
+     * @return array Associative array with 'columns' and 'placeholders' keys
+     */
+    protected function formatInsertData(array $data, array $exclude = [], array $expressions = [])
+    {
+        // Filter out excluded columns
+        $filteredData = array_diff_key($data, array_flip($exclude));
+        
+        $columns = [];
+        $placeholders = [];
+        
+        // Process regular column/value pairs
+        foreach ($filteredData as $column => $value) {
+            $columns[] = $column;
+            $placeholders[] = ":$column";
+        }
+        
+        // Add custom SQL expressions
+        foreach ($expressions as $column => $expression) {
+            $columns[] = $column;
+            $placeholders[] = $expression;
+        }
+        
+        return [
+            'columns' => implode(', ', $columns),
+            'placeholders' => implode(', ', $placeholders),
+            'filteredData' => $filteredData
+        ];
+    }
+
+    /**
+     * Format SET clause for UPDATE statements
+     * 
+     * @param array $data Associative array of column => value pairs
+     * @param array $exclude Array of column names to exclude
+     * @param array $expressions Associative array of column => sql expression pairs
+     * @return array Associative array with 'updateClause' and 'filteredData' keys
+     */
+    protected function formatUpdateData(array $data, array $exclude = [], array $expressions = [])
+    {
+        // Filter out excluded columns
+        $filteredData = array_diff_key($data, array_flip($exclude));
+        
+        $updateParts = [];
+        
+        // Process regular column/value pairs
+        foreach ($filteredData as $column => $value) {
+            $updateParts[] = "$column = :$column";
+        }
+        
+        // Add custom SQL expressions
+        foreach ($expressions as $column => $expression) {
+            $updateParts[] = "$column = $expression";
+        }
+        
+        return [
+            'updateClause' => implode(', ', $updateParts),
+            'filteredData' => $filteredData
+        ];
+    }
 }
