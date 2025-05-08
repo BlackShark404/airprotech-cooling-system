@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class ServiceTypeModel extends BaseModel
+class ServiceRequestTypeModel extends BaseModel
 {
     protected $table = 'service_type';
     
@@ -42,13 +42,12 @@ class ServiceTypeModel extends BaseModel
      */
     public function createServiceType($data)
     {
-        $columns = implode(', ', array_keys($data));
-        $placeholders = ':' . implode(', :', array_keys($data));
+        $formatted = $this->formatInsertData($data);
         
-        $sql = "INSERT INTO {$this->table} ($columns) 
-                VALUES ($placeholders)";
+        $sql = "INSERT INTO {$this->table} ({$formatted['columns']}) 
+                VALUES ({$formatted['placeholders']})";
                 
-        return $this->execute($sql, $data) > 0;
+        return $this->execute($sql, $formatted['filteredData']) > 0;
     }
     
     /**
@@ -60,17 +59,13 @@ class ServiceTypeModel extends BaseModel
      */
     public function updateServiceType($typeId, $data)
     {
-        $updates = [];
-        foreach (array_keys($data) as $column) {
-            $updates[] = "$column = :$column";
-        }
-        $setClause = implode(', ', $updates);
+        $formatted = $this->formatUpdateData($data);
         
         $sql = "UPDATE {$this->table} 
-                SET $setClause 
+                SET {$formatted['updateClause']}
                 WHERE st_id = :typeId";
                 
-        $params = array_merge($data, ['typeId' => $typeId]);
+        $params = array_merge($formatted['filteredData'], ['typeId' => $typeId]);
         
         return $this->execute($sql, $params) > 0;
     }

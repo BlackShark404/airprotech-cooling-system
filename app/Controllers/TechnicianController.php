@@ -4,9 +4,9 @@ namespace App\Controllers;
 
 use App\Models\TechnicianModel;
 use App\Models\UserModel;
-use App\Models\ServiceModel;
+use App\Models\ServiceRequestModel;
 use App\Models\BookingAssignmentModal;
-use App\Models\ServiceTypeModel;
+use App\Models\ServiceRequestTypeModel;
 
 class TechnicianController extends BaseController
 {
@@ -21,9 +21,9 @@ class TechnicianController extends BaseController
         parent::__construct();
         $this->technicianModel = $this->loadModel('TechnicianModel');
         $this->userModel = $this->loadModel('UserModel');
-        $this->serviceModel = $this->loadModel('ServiceModel');
+        $this->serviceModel = $this->loadModel('ServiceRequestModel');
         $this->bookingAssignmentModel = $this->loadModel('BookingAssignmentModal');
-        $this->serviceTypeModel = $this->loadModel('ServiceTypeModel');
+        $this->serviceTypeModel = $this->loadModel('ServiceRequestTypeModel');
     }
 
     /**

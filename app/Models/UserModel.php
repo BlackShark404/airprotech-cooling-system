@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use App\Models\BaseModel;
 /**
  * User Model
@@ -29,6 +30,85 @@ class UserModel extends BaseModel
         ";
         
         return $this->query($sql);
+    }
+
+    public function createUser(array $data, array $exclude = [], array $expressions = [])
+    {
+        // Add timestamps
+        $now = date('Y-m-d H:i:s');
+        if (!isset($data['ua_created_at'])) {
+            $data['ua_created_at'] = $now;
+        }
+        if (!isset($data['ua_updated_at'])) {
+            $data['ua_updated_at'] = $now;
+        }
+        
+        // Rename password field to match database schema
+        if (isset($data['ua_password'])) {
+            $data['ua_hashed_password'] = $this->hashPassword($data['ua_password']);
+            unset($data['ua_password']);
+        }
+        
+        // Format the columns and values for the SQL query using BaseModel helper
+        $formattedData = $this->formatInsertData($data, $exclude, $expressions);
+        
+        $sql = "
+            INSERT INTO {$this->table} ({$formattedData['columns']})
+            VALUES ({$formattedData['placeholders']})
+            RETURNING {$this->primaryKey}
+        ";
+        
+        try {
+            $this->execute($sql, $formattedData['filteredData']);
+            return $this->lastInsertId();
+        } catch (\Exception $e) {
+            error_log("Error creating user: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function updateUser($id, array $data, array $exclude = [], array $expressions = [])
+    {
+        // Rename password field to match database schema
+        if (isset($data['ua_password'])) {
+            $data['ua_hashed_password'] = $this->hashPassword($data['ua_password']);
+            unset($data['ua_password']);
+        }
+        
+        // Add updated_at timestamp
+        if (!isset($data['ua_updated_at'])) {
+            $data['ua_updated_at'] = date('Y-m-d H:i:s');
+        }
+        
+        // Use BaseModel helper to format the update data
+        $formattedData = $this->formatUpdateData($data, $exclude, $expressions);
+        
+        $sql = "
+            UPDATE {$this->table}
+            SET {$formattedData['updateClause']}
+            WHERE {$this->primaryKey} = :id
+        ";
+        
+        // Add the ID to the parameter list
+        $params = $formattedData['filteredData'];
+        $params['id'] = $id;
+        
+        try {
+            return $this->execute($sql, $params);
+        } catch (\Exception $e) {
+            error_log("Error updating user: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function hashPassword($password)
+    {
+        return password_hash($password, PASSWORD_BCRYPT);
+    }
+
+    public function verifyPassword($password, $hash)
+    {
+        return password_verify($password, $hash);
     }
 
     public function findById($id) {
@@ -78,67 +158,12 @@ class UserModel extends BaseModel
         return $this->query($sql);
     }
 
-    public function hashPassword($password)
-    {
-        return password_hash($password, PASSWORD_BCRYPT);
-    }
-
-    public function verifyPassword($password, $hash)
-    {
-        return password_verify($password, $hash);
-    }
-
-    public function createUser(array $data)
-    {
-        // Format the columns and values for the SQL query
-        $columns = implode(', ', array_keys($data));
-        $placeholders = ':' . implode(', :', array_keys($data));
-        
-        // Add timestamps
-        $now = date('Y-m-d H:i:s');
-        $data['ua_created_at'] = $now;
-        $data['ua_updated_at'] = $now;
-        
-        $columns .= ", ua_created_at, ua_updated_at";
-        $placeholders .= ", :ua_created_at, :ua_updated_at";
-        
-        $sql = "
-            INSERT INTO {$this->table} ($columns)
-            VALUES ($placeholders)
-            RETURNING {$this->primaryKey}
-        ";
-        
-        $this->execute($sql, $data);
-        
-        return $this->lastInsertId();
-    }
-
-    public function updateUser($id, array $data)
-    {
-        // Add timestamp for update
-        $data['ua_updated_at'] = date('Y-m-d H:i:s');
-        
-        // Format the update sections
-        $updateParts = [];
-        foreach (array_keys($data) as $column) {
-            $updateParts[] = "$column = :$column";
-        }
-        $updateClause = implode(', ', $updateParts);
-        
-        $sql = "
-            UPDATE {$this->table}
-            SET $updateClause
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        // Add the ID to the parameter list
-        $data['id'] = $id;
-        
-        return $this->execute($sql, $data);
-    }
-
     /**
      * Delete a user by ID
+     * 
+     * @param int $id User ID
+     * @param bool $permanent Whether to permanently delete
+     * @return bool Success status
      */
     public function deleteUser($id, $permanent = false)
     {
@@ -150,17 +175,11 @@ class UserModel extends BaseModel
         
         // Use soft delete by setting the deleted_at timestamp
         $data = [
-            'ua_deleted_at' => date('Y-m-d H:i:s'),
-            'id' => $id
+            'ua_deleted_at' => date('Y-m-d H:i:s')
         ];
         
-        $sql = "
-            UPDATE {$this->table} 
-            SET ua_deleted_at = :ua_deleted_at
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        return $this->execute($sql, $data);
+        // Use the updateUser method which now supports formatUpdateData
+        return $this->updateUser($id, $data);
     }
 
     public function emailExists($email)
@@ -208,15 +227,8 @@ class UserModel extends BaseModel
 
     public function updateLastLogin($userId)
     {
-        $sql = "
-            UPDATE {$this->table}
-            SET ua_last_login = :now
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        return $this->execute($sql, [
-            'now' => date('Y-m-d H:i:s'),
-            'id' => $userId
+        return $this->updateUser($userId, [
+            'ua_last_login' => date('Y-m-d H:i:s')
         ]);
     }
 
@@ -225,17 +237,9 @@ class UserModel extends BaseModel
         $token = bin2hex(random_bytes(32));
         $expiresAt = date('Y-m-d H:i:s', strtotime("+$days days"));
 
-        $sql = "
-            UPDATE {$this->table}
-            SET ua_remember_token = :token,
-                ua_remember_token_expires_at = :expires_at
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        $this->execute($sql, [
-            'token' => $token,
-            'expires_at' => $expiresAt,
-            'id' => $userId
+        $this->updateUser($userId, [
+            'ua_remember_token' => $token,
+            'ua_remember_token_expires_at' => $expiresAt
         ]);
 
         return $token;
@@ -243,14 +247,10 @@ class UserModel extends BaseModel
 
     public function clearRememberToken($userId)
     {
-        $sql = "
-            UPDATE {$this->table}
-            SET ua_remember_token = NULL,
-                ua_remember_token_expires_at = NULL
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        return $this->execute($sql, ['id' => $userId]);
+        return $this->updateUser($userId, [
+            'ua_remember_token' => null,
+            'ua_remember_token_expires_at' => null
+        ]);
     }
 
     public function getFullName($user)
@@ -260,29 +260,15 @@ class UserModel extends BaseModel
 
     public function activateUser($userId)
     {
-        $sql = "
-            UPDATE {$this->table}
-            SET ua_is_active = :is_active
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        return $this->execute($sql, [
-            'is_active' => true,
-            'id' => $userId
+        return $this->updateUser($userId, [
+            'ua_is_active' => true
         ]);
     }
 
     public function deactivateUser($userId)
     {
-        $sql = "
-            UPDATE {$this->table}
-            SET ua_is_active = :is_active
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        return $this->execute($sql, [
-            'is_active' => false,
-            'id' => $userId
+        return $this->updateUser($userId, [
+            'ua_is_active' => false
         ]);
     }
 
@@ -292,6 +278,7 @@ class UserModel extends BaseModel
             SELECT *
             FROM {$this->table}
             WHERE ua_is_active = :is_active
+            AND ua_deleted_at IS NULL
         ";
         
         return $this->query($sql, ['is_active' => true]);
@@ -314,39 +301,23 @@ class UserModel extends BaseModel
 
     public function getAdmins()
     {
-        $sql = "
-            SELECT user_account.*
-            FROM {$this->table}
-            JOIN user_role ON user_account.ua_role_id = user_role.ur_id
-            WHERE user_role.ur_name = :user_role
-        ";
-        
-        return $this->query($sql, ['user_role' => 'admin']);
+        return $this->getByRole('admin');
     }
 
     public function getRegularUsers()
     {
-        $sql = "
-            SELECT user_account.*
-            FROM {$this->table}
-            JOIN user_role ON user_account.ua_role_id = user_role.ur_id
-            WHERE user_role.ur_name = :user_role
-        ";
-        
-        return $this->query($sql, ['user_role' => 'customer']);
+        return $this->getByRole('customer');
+    }
+
+    public function getTechnicians()
+    {
+        return $this->getByRole('technician');
     }
 
     public function changeRole($userId, $roleId)
     {
-        $sql = "
-            UPDATE {$this->table}
-            SET ua_role_id = :role_id
-            WHERE {$this->primaryKey} = :id
-        ";
-        
-        return $this->execute($sql, [
-            'role_id' => $roleId,
-            'id' => $userId
+        return $this->updateUser($userId, [
+            'ua_role_id' => $roleId
         ]);
     }
     
@@ -365,5 +336,342 @@ class UserModel extends BaseModel
         ";
         
         return $this->execute($sql) > 0;
+    }
+    
+    /**
+     * Create a new customer user with appropriate role
+     *
+     * @param array $userData Base user data
+     * @param array $customerData Customer-specific data
+     * @param array $exclude Fields to exclude
+     * @param array $expressions Custom SQL expressions
+     * @return int|bool New user ID or false on failure
+     */
+    public function createCustomer(array $userData, array $customerData = [], array $exclude = [], array $expressions = []) 
+    {
+        // Ensure customer role
+        if (!isset($userData['ua_role_id'])) {
+            $userData['ua_role_id'] = $this->getRoleIdByName('customer');
+        }
+        
+        $this->beginTransaction();
+        
+        try {
+            // Create base user account
+            $userId = $this->createUser($userData, $exclude, $expressions);
+            
+            if (!$userId) {
+                $this->rollback();
+                return false;
+            }
+            
+            // Create customer record
+            $customerData['cu_account_id'] = $userId;
+            
+            $formattedData = $this->formatInsertData($customerData);
+            
+            $sql = "
+                INSERT INTO customer ({$formattedData['columns']})
+                VALUES ({$formattedData['placeholders']})
+            ";
+            
+            $this->execute($sql, $formattedData['filteredData']);
+            
+            $this->commit();
+            return $userId;
+        } catch (\Exception $e) {
+            $this->rollback();
+            error_log("Error creating customer: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Create a new technician user with appropriate role
+     *
+     * @param array $userData Base user data
+     * @param array $technicianData Technician-specific data
+     * @param array $exclude Fields to exclude
+     * @param array $expressions Custom SQL expressions
+     * @return int|bool New user ID or false on failure
+     */
+    public function createTechnician(array $userData, array $technicianData = [], array $exclude = [], array $expressions = []) 
+    {
+        // Ensure technician role
+        if (!isset($userData['ua_role_id'])) {
+            $userData['ua_role_id'] = $this->getRoleIdByName('technician');
+        }
+        
+        $this->beginTransaction();
+        
+        try {
+            // Create base user account
+            $userId = $this->createUser($userData, $exclude, $expressions);
+            
+            if (!$userId) {
+                $this->rollback();
+                return false;
+            }
+            
+            // Create technician record
+            $technicianData['te_account_id'] = $userId;
+            
+            $formattedData = $this->formatInsertData($technicianData);
+            
+            $sql = "
+                INSERT INTO technician ({$formattedData['columns']})
+                VALUES ({$formattedData['placeholders']})
+            ";
+            
+            $this->execute($sql, $formattedData['filteredData']);
+            
+            $this->commit();
+            return $userId;
+        } catch (\Exception $e) {
+            $this->rollback();
+            error_log("Error creating technician: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Create a new admin user with appropriate role
+     *
+     * @param array $userData Base user data
+     * @param array $adminData Admin-specific data
+     * @param array $exclude Fields to exclude
+     * @param array $expressions Custom SQL expressions
+     * @return int|bool New user ID or false on failure
+     */
+    public function createAdmin(array $userData, array $adminData = [], array $exclude = [], array $expressions = []) 
+    {
+        // Ensure admin role
+        if (!isset($userData['ua_role_id'])) {
+            $userData['ua_role_id'] = $this->getRoleIdByName('admin');
+        }
+        
+        $this->beginTransaction();
+        
+        try {
+            // Create base user account
+            $userId = $this->createUser($userData, $exclude, $expressions);
+            
+            if (!$userId) {
+                $this->rollback();
+                return false;
+            }
+            
+            // Create admin record
+            $adminData['ad_account_id'] = $userId;
+            
+            $formattedData = $this->formatInsertData($adminData);
+            
+            $sql = "
+                INSERT INTO admin ({$formattedData['columns']})
+                VALUES ({$formattedData['placeholders']})
+            ";
+            
+            $this->execute($sql, $formattedData['filteredData']);
+            
+            $this->commit();
+            return $userId;
+        } catch (\Exception $e) {
+            $this->rollback();
+            error_log("Error creating admin: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Get role ID by role name
+     *
+     * @param string $roleName Role name to lookup
+     * @return int|null Role ID or null if not found
+     */
+    public function getRoleIdByName($roleName) 
+    {
+        $sql = "SELECT ur_id FROM user_role WHERE ur_name = :role_name";
+        return $this->queryScalar($sql, ['role_name' => $roleName]);
+    }
+    
+    /**
+     * Get customer details including user account information
+     *
+     * @param int $userId User ID
+     * @return array|null Customer data or null if not found
+     */
+    public function getCustomerDetails($userId) 
+    {
+        $sql = "
+            SELECT user_account.*, customer.*, user_role.ur_name AS role_name
+            FROM {$this->table}
+            JOIN customer ON user_account.ua_id = customer.cu_account_id
+            JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+            WHERE user_account.ua_id = :id
+        ";
+        
+        return $this->queryOne($sql, ['id' => $userId]);
+    }
+    
+    /**
+     * Get technician details including user account information
+     *
+     * @param int $userId User ID
+     * @return array|null Technician data or null if not found
+     */
+    public function getTechnicianDetails($userId) 
+    {
+        $sql = "
+            SELECT user_account.*, technician.*, user_role.ur_name AS role_name
+            FROM {$this->table}
+            JOIN technician ON user_account.ua_id = technician.te_account_id
+            JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+            WHERE user_account.ua_id = :id
+        ";
+        
+        return $this->queryOne($sql, ['id' => $userId]);
+    }
+    
+    /**
+     * Get admin details including user account information
+     *
+     * @param int $userId User ID
+     * @return array|null Admin data or null if not found
+     */
+    public function getAdminDetails($userId) 
+    {
+        $sql = "
+            SELECT user_account.*, admin.*, user_role.ur_name AS role_name
+            FROM {$this->table}
+            JOIN admin ON user_account.ua_id = admin.ad_account_id
+            JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+            WHERE user_account.ua_id = :id
+        ";
+        
+        return $this->queryOne($sql, ['id' => $userId]);
+    }
+    
+    /**
+     * Update customer-specific details
+     *
+     * @param int $userId User ID
+     * @param array $customerData Customer data to update
+     * @param array $exclude Fields to exclude
+     * @param array $expressions Custom SQL expressions
+     * @return bool Success status
+     */
+    public function updateCustomerDetails($userId, array $customerData, array $exclude = [], array $expressions = []) 
+    {
+        $formattedData = $this->formatUpdateData($customerData, $exclude, $expressions);
+        
+        $sql = "
+            UPDATE customer
+            SET {$formattedData['updateClause']}
+            WHERE cu_account_id = :id
+        ";
+        
+        $params = $formattedData['filteredData'];
+        $params['id'] = $userId;
+        
+        try {
+            return $this->execute($sql, $params) > 0;
+        } catch (\Exception $e) {
+            error_log("Error updating customer details: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Update technician-specific details
+     *
+     * @param int $userId User ID
+     * @param array $technicianData Technician data to update
+     * @param array $exclude Fields to exclude
+     * @param array $expressions Custom SQL expressions
+     * @return bool Success status
+     */
+    public function updateTechnicianDetails($userId, array $technicianData, array $exclude = [], array $expressions = []) 
+    {
+        $formattedData = $this->formatUpdateData($technicianData, $exclude, $expressions);
+        
+        $sql = "
+            UPDATE technician
+            SET {$formattedData['updateClause']}
+            WHERE te_account_id = :id
+        ";
+        
+        $params = $formattedData['filteredData'];
+        $params['id'] = $userId;
+        
+        try {
+            return $this->execute($sql, $params) > 0;
+        } catch (\Exception $e) {
+            error_log("Error updating technician details: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Update admin-specific details
+     *
+     * @param int $userId User ID
+     * @param array $adminData Admin data to update
+     * @param array $exclude Fields to exclude
+     * @param array $expressions Custom SQL expressions
+     * @return bool Success status
+     */
+    public function updateAdminDetails($userId, array $adminData, array $exclude = [], array $expressions = []) 
+    {
+        $formattedData = $this->formatUpdateData($adminData, $exclude, $expressions);
+        
+        $sql = "
+            UPDATE admin
+            SET {$formattedData['updateClause']}
+            WHERE ad_account_id = :id
+        ";
+        
+        $params = $formattedData['filteredData'];
+        $params['id'] = $userId;
+        
+        try {
+            return $this->execute($sql, $params) > 0;
+        } catch (\Exception $e) {
+            error_log("Error updating admin details: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Get available technicians
+     *
+     * @return array Available technicians
+     */
+    public function getAvailableTechnicians() 
+    {
+        $sql = "
+            SELECT user_account.*, technician.*, user_role.ur_name AS role_name
+            FROM {$this->table}
+            JOIN technician ON user_account.ua_id = technician.te_account_id
+            JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+            WHERE technician.te_is_available = true
+            AND user_account.ua_is_active = true
+            AND user_account.ua_deleted_at IS NULL
+        ";
+        
+        return $this->query($sql);
+    }
+    
+    /**
+     * Update technician availability
+     *
+     * @param int $userId Technician user ID
+     * @param bool $isAvailable Availability status
+     * @return bool Success status
+     */
+    public function updateTechnicianAvailability($userId, $isAvailable) 
+    {
+        return $this->updateTechnicianDetails($userId, [
+            'te_is_available' => (bool) $isAvailable
+        ]);
     }
 }
