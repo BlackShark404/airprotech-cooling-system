@@ -70,7 +70,6 @@ $router->map('POST', '/user/service/request', 'App\Controllers\ServiceRequestCon
 $router->map('GET', '/user/bookings', 'App\Controllers\ServiceRequestController#myBookings', 'user_bookings');
 $router->map('POST', '/user/bookings/cancel/[i:id]', 'App\Controllers\ServiceRequestController#cancelBooking', 'user_cancel_booking');
 
-
 // Admin routes
 $router->map('GET', '/admin/dashboard', 'App\Controllers\AdminController#renderAdminDashboard', 'render_admin-dashboard');
 $router->map('GET', '/admin/technicians', 'App\Controllers\AdminController#renderTechnician', 'render-technician');
@@ -79,6 +78,17 @@ $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#rende
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
 $router->map('GET', '/admin/admin-profile', 'App\Controllers\AdminController#renderProfile', 'render-admin-profile');
 $router->map('GET', '/admin/profile', 'App\Controllers\AdminController#renderAdminProfile', 'render-admin_profile');
+
+// User Management Routes - Adding these new routes
+$router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#index', 'admin_user_management');
+$router->map('POST', '/admin/users/data', 'App\Controllers\UserManagementController#getUsersData', 'admin_users_data');
+$router->map('GET', '/admin/users/get/[i:id]', 'App\Controllers\UserManagementController#getUser', 'admin_user_get');
+$router->map('POST', '/admin/users/create', 'App\Controllers\UserManagementController#createUser', 'admin_user_create');
+$router->map('POST', '/admin/users/update/[i:id]', 'App\Controllers\UserManagementController#updateUser', 'admin_user_update');
+$router->map('POST', '/admin/users/delete/[i:id]', 'App\Controllers\UserManagementController#deleteUser', 'admin_user_delete');
+$router->map('POST', '/admin/users/activate/[i:id]', 'App\Controllers\UserManagementController#activateUser', 'admin_user_activate');
+$router->map('POST', '/admin/users/deactivate/[i:id]', 'App\Controllers\UserManagementController#deactivateUser', 'admin_user_deactivate');
+$router->map('GET', '/admin/users/roles', 'App\Controllers\UserManagementController#getRoles', 'admin_user_roles');
 
 // Service Request Management Routes
 $router->map('GET', '/admin/service-requests', 'App\Controllers\ServiceRequestController#adminServiceRequests', 'admin_service_requests');
@@ -90,29 +100,3 @@ $router->map('POST', '/admin/service-requests/assign', 'App\Controllers\ServiceR
 $router->map('POST', '/admin/service-requests/unassign', 'App\Controllers\ServiceRequestController#unassignTechnician', 'admin_service_request_unassign');
 $router->map('GET', '/admin/service-types/get-active', 'App\Controllers\ServiceRequestController#getActiveServiceTypes', 'admin_service_types_get_active');
 $router->map('GET', '/admin/technicians/get-active', 'App\Controllers\ServiceRequestController#getActiveTechnicians', 'admin_technicians_get_active');
-
-// User Management Routes
-$router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#renderUserManagement', 'admin_user_management');
-$router->map('POST', '/admin/users/data', 'App\Controllers\UserManagementController#getData', 'admin_users_data');
-$router->map('GET', '/admin/users/get/[i:id]', 'App\Controllers\UserManagementController#getUser', 'admin_users_get');
-$router->map('POST', '/admin/users/create', 'App\Controllers\UserManagementController#createUser', 'admin_users_create');
-$router->map('POST', '/admin/users/update/[i:id]', 'App\Controllers\UserManagementController#updateUser', 'admin_users_update');
-$router->map('POST', '/admin/users/delete/[i:id]', 'App\Controllers\UserManagementController#deleteUser', 'admin_users_delete');
-$router->map('POST', '/admin/users/activate/[i:id]', 'App\Controllers\UserManagementController#activateUser', 'admin_users_activate');
-$router->map('POST', '/admin/users/deactivate/[i:id]', 'App\Controllers\UserManagementController#deactivateUser', 'admin_users_deactivate');
-
-// --- Add these lines for Product Management ---
-
-// Product Management Routes (Assuming Admin Access)
-$router->map('GET', '/admin/product-management', 'App\Controllers\ProductController#renderProductManagement', 'admin_product_management');
-$router->map('POST', '/admin/products/data', 'App\Controllers\ProductController#getData', 'admin_products_data'); // DataTables data endpoint
-$router->map('POST', '/admin/products/create', 'App\Controllers\ProductController#create', 'admin_products_create'); // Create product endpoint
-$router->map('GET', '/admin/products/[i:id]', 'App\Controllers\ProductController#get', 'admin_products_get');       // Get single product for view/edit
-$router->map('POST', '/admin/products/update/[i:id]', 'App\Controllers\ProductController#update', 'admin_products_update'); // Update product endpoint
-$router->map('POST', '/admin/products/delete/[i:id]', 'App\Controllers\ProductController#delete', 'admin_products_delete'); // Delete product endpoint
-
-// --- End of Product Management Routes ---
-
-
-// Test routes
-$router->map('GET', '/test', 'App\Controllers\TestController#renderTest', 'test');

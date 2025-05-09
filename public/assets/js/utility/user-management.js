@@ -1,583 +1,452 @@
-document.addEventListener("DOMContentLoaded", function () {
-  // Initialize DataTablesManager with improved configuration
-  const userTableManager = new DataTablesManager("usersTable", {
-    ajaxUrl: "/api/users",
-    responsive: true,
-    dom: "Bfrtip", // Properly display buttons
-    autoWidth: false, // Disable auto width calculation
-    buttons: [
-      {
-        extend: "copy",
-        className: "btn btn-sm btn-light me-1",
+/**
+ * User Management JavaScript
+ * Handles user management functionality with DataTablesManager
+ */
+$(document).ready(function() {
+  // Initialize toast manager for notifications
+  const toastManager = {
+      showSuccess: function(title, message) {
+          toastr.success(message, title);
       },
-      {
-        extend: "csv",
-        className: "btn btn-sm btn-light me-1",
+      showError: function(title, message) {
+          toastr.error(message, title);
       },
-      {
-        extend: "excel",
-        className: "btn btn-sm btn-light me-1",
+      showWarning: function(title, message) {
+          toastr.warning(message, title);
       },
-      {
-        extend: "pdf",
-        className: "btn btn-sm btn-light me-1",
-      },
-    ],
-
-
-    //This is for add  customer
-    columns: [
-      { data: "id", title: "ID" },
-      {
-        // Combined name column
-        data: null,
-        title: "Name",
-        render: function (data, type, row) {
-          return `<div class="d-flex align-items-center">
-                        <div class="avatar-placeholder d-flex align-items-center justify-content-center me-2 rounded-circle bg-light text-primary" 
-                            style="width: 36px; height: 36px; font-size: 14px;">
-                            ${row.first_name.charAt(0)}${row.last_name.charAt(
-            0
-          )}
-                        </div>
-                        <div>
-                            <p class="mb-0 fw-medium">${row.first_name} ${
-            row.last_name
-          }</p>
-                        </div>
-                    </div>`;
-        },
-      },
-      { data: "email", title: "Email" },
-      {
-        data: "role",
-        title: "Role",
-        render: function (data, type, row) {
-          let badgeClass = " ";
-          if (data === "admin") {
-            badgeClass = "badge-admin";
-          } else if (data === "technician") {
-            badgeClass = "badge-technician";
-          } else if (data === "customer") {
-            badgeClass = "badge-customer";
-          }
-
-          return `<span class="badge ${badgeClass}">${
-            data.charAt(0).toUpperCase() + data.slice(1)
-          }</span>`;
-        },
-      },
-      {
-        data: "status",
-        title: "Status",
-        render: function (data, type, row) {
-          const isActive = data === "active";
-          const indicatorClass = isActive ? "status-active" : "status-inactive";
-          const badgeClass = isActive ? "badge-active" : "badge-inactive";
-
-          return `<span class="badge ${badgeClass}">
-                        <span class="status-indicator ${indicatorClass}"></span>
-                        ${data.charAt(0).toUpperCase() + data.slice(1)}
-                    </span>`;
-        },
-      },
-      {
-        data: "registered",
-        title: "Registered",
-        render: function (data, type, row) {
-          return `<span class="text-nowrap"><i class="bi bi-calendar3 me-1 text-muted"></i>${data}</span>`;
-        },
-      },
-      {
-        data: "last_login",
-        title: "Last Login",
-        render: function (data, type, row) {
-          if (!data) {
-            return '<span class="text-muted">Never</span>';
-          }
-          return `<span class="text-nowrap"><i class="bi bi-clock me-1 text-muted"></i>${data}</span>`;
-        },
-      },
-    ],
-    // View user callback
-    viewRowCallback: function (rowData, tableManager) {
-      // Set user initials
-      const initials =
-        rowData.first_name.charAt(0) + rowData.last_name.charAt(0);
-      $("#userInitials").text(initials);
-
-      // Populate the view modal with user data
-      $("#viewUserId").text(rowData.id);
-      $("#viewUserName").text(rowData.first_name + " " + rowData.last_name);
-      $("#viewUserEmail").text(rowData.email);
-
-      // Set role with badge
-      let roleBadgeClass = "bg-success";
-      if (rowData.role === "admin") {
-        roleBadgeClass = "bg-danger";
-      } else if (rowData.role === "technician") {
-        roleBadgeClass = "bg-primary";
+      showInfo: function(title, message) {
+          toastr.info(message, title);
       }
-
-      $("#viewUserRole").html(
-        `<span class="badge ${roleBadgeClass} rounded-pill">${
-          rowData.role.charAt(0).toUpperCase() + rowData.role.slice(1)
-        }</span>`
-      );
-
-      // Set status with badge
-      const statusBadgeClass =
-        rowData.status === "active" ? "bg-success" : "bg-danger";
-      $("#viewUserStatus").html(
-        `<span class="badge ${statusBadgeClass} rounded-pill">${
-          rowData.status.charAt(0).toUpperCase() + rowData.status.slice(1)
-        }</span>`
-      );
-
-      $("#viewUserRegistered").text(rowData.registered);
-      $("#viewUserLastLogin").text(rowData.last_login || "Never");
-
-      // Set activity statistics
-      $("#viewUserLogins").text(rowData.logins || "0");
-      $("#viewUserServices").text(rowData.services || "0");
-      $("#viewUserActiveServices").text(rowData.active_services || "0");
-      $("#viewUserLastActivity").text(
-        rowData.last_activity || "No recent activity"
-      );
-
-      // Update progress bars based on data
-      const loginPercent = Math.min(100, (rowData.logins || 0) * 3);
-      const servicesPercent = Math.min(100, (rowData.services || 0) * 10);
-      const activeServicesPercent = Math.min(
-        100,
-        (rowData.active_services || 0) * 20
-      );
-
-      $(".progress-bar")
-        .eq(0)
-        .css("width", loginPercent + "%");
-      $(".progress-bar")
-        .eq(1)
-        .css("width", servicesPercent + "%");
-      $(".progress-bar")
-        .eq(2)
-        .css("width", activeServicesPercent + "%");
-
-      // Show the modal
-      const viewModal = new bootstrap.Modal(
-        document.getElementById("viewUserModal")
-      );
-      viewModal.show();
-
-      // Setup edit button in view modal
-      $("#viewUserEditBtn")
-        .off("click")
-        .on("click", function () {
-          // Hide view modal
-          viewModal.hide();
-
-          // Setup and show edit modal
-          setupEditUserModal(rowData, tableManager);
-        });
-    },
-
-    // Edit user callback
-    editRowCallback: function (rowData, tableManager) {
-      setupEditUserModal(rowData, tableManager);
-    },
-
-    // Delete user callback
-    deleteRowCallback: function (rowData, tableManager) {
-      // Set user info in delete confirmation modal
-      $("#deleteUserName").text(rowData.first_name + " " + rowData.last_name);
-
-      // Reset checkbox
-      $("#confirmDeleteCheck").prop("checked", false);
-      $("#confirmDeleteBtn").prop("disabled", true);
-
-      // Show delete confirmation modal
-      const deleteModal = new bootstrap.Modal(
-        document.getElementById("deleteConfirmModal")
-      );
-      deleteModal.show();
-
-      // Setup confirm delete button
-      $("#confirmDeleteBtn")
-        .off("click")
-        .on("click", function () {
-          // Call delete API
-          $.ajax({
-            url: `/api/users/${rowData.id}`,
-            method: "DELETE",
-            contentType: "application/json",
-            success: function (response) {
-              if (response.success) {
-                // Delete succeeded
-                tableManager.deleteRow(rowData.id);
-                deleteModal.hide();
-
-                // Show success message
-                tableManager.showSuccessToast("User Deleted", response.message);
-
-                // Update user count
-                updateUserCount();
-              } else {
-                // Delete failed
-                tableManager.showErrorToast("Error", response.message);
-              }
-            },
-            error: function (xhr) {
-              const response = xhr.responseJSON || { message: "Server error" };
-              tableManager.showErrorToast("Error", response.message);
-            },
-          });
-        });
-    },
-
-    // After data loaded callback to update user count
-    afterDataLoadedCallback: function (data) {
-      updateUserCount();
-    },
-  });
-
-  // FAILSAFE: Fix duplicate Actions headers after table initialization
-  setTimeout(function () {
-    // Find all column headers with the text "Actions"
-    const actionHeaders = $("#usersTable thead th").filter(function () {
-      return $(this).text().trim() === "Actions";
-    });
-
-    // If there are duplicate Actions headers, remove all but the first one
-    if (actionHeaders.length > 1) {
-      console.log("Fixing duplicate Actions headers...");
-      actionHeaders.not(":first").remove();
-
-      // Force DataTables to redraw the table
-      try {
-        $("#usersTable").DataTable().columns.adjust().draw();
-      } catch (e) {
-        console.error("Error redrawing table:", e);
-      }
-    }
-  }, 500);
-  // Function to update user count
-  function updateUserCount() {
-    const table = $("#usersTable").DataTable();
-    const filteredData = table.rows({ search: "applied" }).data();
-    $("#userCount").text(filteredData.length + " Users");
-  }
-
-  // Apply filters functionality
-  $("#applyFilters").on("click", function () {
-    applyTableFilters();
-  });
-
-  // Apply filters to table
-  function applyTableFilters() {
-    const roleFilter = $("#roleFilter").val();
-    const statusFilter = $("#statusFilter").val();
-    const searchQuery = $("#searchInput").val();
-
-    // Apply filters
-    const filters = {};
-    if (roleFilter) filters.role = roleFilter;
-    if (statusFilter) filters.status = statusFilter;
-
-    userTableManager.applyFilters(filters);
-
-    // Apply search if provided
-    const table = $("#usersTable").DataTable();
-    table.search(searchQuery).draw();
-
-    // Show info toast
-    userTableManager.showInfoToast(
-      "Filters Applied",
-      "Table has been filtered"
-    );
-
-    // Update user count
-    updateUserCount();
-  }
-
-  // Reset filters
-  $("#resetFilters").on("click", function () {
-    // Reset filter selects
-    $("#roleFilter").val("");
-    $("#statusFilter").val("");
-    $("#searchInput").val("");
-
-    // Clear filters
-    userTableManager.applyFilters({});
-
-    // Clear search
-    const table = $("#usersTable").DataTable();
-    table.search("").draw();
-
-    // Show info toast
-    userTableManager.showInfoToast(
-      "Filters Reset",
-      "All filters have been cleared"
-    );
-
-    // Update user count
-    updateUserCount();
-  });
-
-  // Search input keyup event
-  $("#searchInput").on("keyup", function (e) {
-    if (e.key === "Enter") {
-      applyTableFilters();
-    }
-  });
-
-  // Handle add user form submission
-  $("#saveUserBtn").on("click", function () {
-    // Validate form
-    const firstName = $("#first_name").val();
-    const lastName = $("#last_name").val();
-    const email = $("#email").val();
-    const password = $("#password").val();
-    const confirmPassword = $("#confirm_password").val();
-    const roleId = parseInt($("#role_id").val()); // Ensure roleId is an integer
-    const isActive = parseInt($("#is_active").val()); // Ensure isActive is an integer
-
-    // Simple validation
-    if (!firstName || !lastName || !email || !password || !roleId) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please fill all required fields"
-      );
-      return;
-    }
-
-    // Check passwords match
-    if (password !== confirmPassword) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Passwords do not match"
-      );
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please enter a valid email address"
-      );
-      return;
-    }
-
-    const formData = {
-      first_name: firstName,
-      last_name: lastName,
-      email: email,
-      password: password,
-      role_id: roleId, // Now correctly as a number
-      is_active: isActive, // Now correctly as a number
-    };
-
-    // Submit form via AJAX
-    $.ajax({
-      url: "/api/users",
-      method: "POST",
-      data: JSON.stringify(formData),
-      contentType: "application/json",
-      success: function (response) {
-        if (response.success) {
-          // Close modal
-          const addModal = bootstrap.Modal.getInstance(
-            document.getElementById("addUserModal")
-          );
-          addModal.hide();
-
-          // Reset form
-          $("#addUserForm")[0].reset();
-
-          // Refresh table
-          userTableManager.refresh();
-
-          // Show success message
-          userTableManager.showSuccessToast("User Added", response.message);
-        } else {
-          userTableManager.showErrorToast("Error", response.message);
-        }
-      },
-      error: function (xhr) {
-        const response = xhr.responseJSON || { message: "Server error" };
-        userTableManager.showErrorToast("Error", response.message);
-      },
-    });
-  });
-
-  // Handle edit user form submission
-  $("#updateUserBtn").on("click", function () {
-    // Get form data
-    const userId = $("#edit_user_id").val();
-    const firstName = $("#edit_first_name").val();
-    const lastName = $("#edit_last_name").val();
-    const email = $("#edit_email").val();
-    const password = $("#edit_password").val();
-    const roleId = parseInt($("#edit_role_id").val()); // Ensure roleId is an integer
-    const isActive = parseInt($("#edit_is_active").val()); // Ensure isActive is an integer
-
-    // Simple validation
-    if (!firstName || !lastName || !email || !roleId) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please fill all required fields"
-      );
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      userTableManager.showErrorToast(
-        "Validation Error",
-        "Please enter a valid email address"
-      );
-      return;
-    }
-
-    // Prepare form data
-    const formData = {
-      first_name: firstName,
-      last_name: lastName,
-      email: email,
-      role_id: roleId, // Now correctly as a number
-      is_active: isActive, // Now correctly as a number
-    };
-
-    // Add password only if provided
-    if (password) {
-      formData.password = password;
-    }
-
-    // Submit form via AJAX
-    $.ajax({
-      url: `/api/users/${userId}`,
-      method: "PUT",
-      data: JSON.stringify(formData),
-      contentType: "application/json",
-      success: function (response) {
-        if (response.success) {
-          // Close modal
-          const editModal = bootstrap.Modal.getInstance(
-            document.getElementById("editUserModal")
-          );
-          editModal.hide();
-
-          // Refresh table
-          userTableManager.refresh();
-
-          // Show success message
-          userTableManager.showSuccessToast("User Updated", response.message);
-        } else {
-          userTableManager.showErrorToast("Error", response.message);
-        }
-      },
-      error: function (xhr) {
-        const response = xhr.responseJSON || { message: "Server error" };
-        userTableManager.showErrorToast("Error", response.message);
-      },
-    });
-  });
-
-  // Function to setup edit user modal 
-  function setupEditUserModal(rowData, tableManager) {
-    // Set form values
-    $("#edit_user_id").val(rowData.id);
-    $("#edit_first_name").val(rowData.first_name);
-    $("#edit_last_name").val(rowData.last_name);
-    $("#edit_email").val(rowData.email);
-
-    // FIXED: Properly map role_id based on the actual database values
-    // Make sure these match your actual database values in USER_ROLE table
-    let roleId;
-    if (rowData.role === "admin") {
-      roleId = "3"; // ID for admin in your database
-    } else if (rowData.role === "technician") {
-      roleId = "2"; // ID for technician in your database
-    } else if (rowData.role === "customer") {
-      roleId = "1"; // ID for customer in your database
-    } else {
-      roleId = "1"; // Default to customer
-    }
-
-    console.log("Setting role dropdown for: " + rowData.role + " with value: " + roleId);
-
-    // Set the dropdown value
-    $("#edit_role_id").val(roleId);
-
-    // Set status
-    $("#edit_is_active").val(rowData.status === "active" ? "1" : "0");
-
-    // Clear password field (for security)
-    $("#edit_password").val("");
-
-    // Show the edit modal
-    const editModal = new bootstrap.Modal(
-      document.getElementById("editUserModal")
-    );
-    editModal.show();
-
-    // Diagnostic check after modal is shown
-    setTimeout(function() {
-      console.log("After modal shown, role value is: " + $("#edit_role_id").val());
-      console.log("Selected option text: " + $("#edit_role_id option:selected").text());
-    }, 100);
-  }
-
-  // Toggle password visibility
-  $("#togglePassword").on("click", function () {
-    const passwordField = $("#password");
-    const type =
-      passwordField.attr("type") === "password" ? "text" : "password";
-    passwordField.attr("type", type);
-    $(this).find("i").toggleClass("bi-eye bi-eye-slash");
-  });
-
-  $("#toggleConfirmPassword").on("click", function () {
-    const passwordField = $("#confirm_password");
-    const type =
-      passwordField.attr("type") === "password" ? "text" : "password";
-    passwordField.attr("type", type);
-    $(this).find("i").toggleClass("bi-eye bi-eye-slash");
-  });
-
-  $("#toggleEditPassword").on("click", function () {
-    const passwordField = $("#edit_password");
-    const type =
-      passwordField.attr("type") === "password" ? "text" : "password";
-    passwordField.attr("type", type);
-    $(this).find("i").toggleClass("bi-eye bi-eye-slash");
-  });
-
-  // Handle confirm delete checkbox
-  $("#confirmDeleteCheck").on("change", function () {
-    $("#confirmDeleteBtn").prop("disabled", !$(this).is(":checked"));
-  });
-
-  // Function to export users
-  window.exportUsers = function (format) {
-    // Get current filters
-    const roleFilter = $("#roleFilter").val();
-    const statusFilter = $("#statusFilter").val();
-
-    // Build query with filters
-    let queryString = `?format=${format}`;
-    if (roleFilter) queryString += `&role=${roleFilter}`;
-    if (statusFilter) queryString += `&status=${statusFilter}`;
-
-    // Redirect to export API with format
-    window.location.href = `/api/users/export${queryString}`;
-
-    // Show info toast
-    userTableManager.showInfoToast(
-      "Export Started",
-      `Exporting users as ${format.toUpperCase()}`
-    );
   };
-});
+
+  // Initialize DataTablesManager
+  const userTableManager = new DataTablesManager('usersTable', {
+      ajaxUrl: '/admin/users/data',
+      columns: [
+          { data: 'id', title: 'ID' },
+          { data: 'name', title: 'Name' },
+          { data: 'email', title: 'Email' },
+          { 
+              data: 'role', 
+              title: 'Role',
+              badge: {
+                  valueMap: {
+                      'admin': { type: 'danger', display: 'Admin' },
+                      'technician': { type: 'warning', display: 'Technician' },
+                      'customer': { type: 'info', display: 'Customer' }
+                  }
+              }
+          },
+          { 
+              data: 'status', 
+              title: 'Status',
+              badge: {
+                  valueMap: {
+                      'Active': { type: 'success', display: 'Active' },
+                      'Inactive': { type: 'secondary', display: 'Inactive' }
+                  }
+              }
+          },
+          { data: 'last_login', title: 'Last Login' }
+      ],
+      viewRowCallback: viewUser,
+      editRowCallback: editUser,
+      deleteRowCallback: confirmDeleteUser
+  });
+
+  // Apply filters button click handler
+  $('#applyFilters').on('click', function() {
+      applyFilters();
+  });
+
+  // Reset filters button click handler
+  $('#resetFilters').on('click', function() {
+      $('#roleFilter').val('');
+      $('#statusFilter').val('');
+      applyFilters();
+  });
+
+  // Save user button click handler
+  $('#saveUserBtn').on('click', function() {
+      saveUser();
+  });
+
+  // Apply filters function
+  function applyFilters() {
+      const roleFilter = $('#roleFilter').val();
+      const statusFilter = $('#statusFilter').val();
+      
+      // Reload table with filters
+      userTableManager.dataTable.ajax.reload(null, false);
+      
+      // Pass filters to the server via AJAX
+      $.fn.dataTable.ext.ajax.data = function(data) {
+          data.role = roleFilter;
+          data.status = statusFilter;
+          return data;
+      };
+  }
+
+  // View user function
+  function viewUser(userData) {
+      // Create view user modal if it doesn't exist
+      if ($('#viewUserModal').length === 0) {
+          const modalHtml = `
+              <div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                          <div class="modal-header">
+                              <h5 class="modal-title" id="viewUserModalLabel">User Details</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                              <div class="row mb-3">
+                                  <div class="col-md-6">
+                                      <p class="mb-1 text-muted">User ID</p>
+                                      <p class="fw-bold" id="viewUserId"></p>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <p class="mb-1 text-muted">Status</p>
+                                      <p id="viewUserStatus"></p>
+                                  </div>
+                              </div>
+                              <div class="row mb-3">
+                                  <div class="col-md-6">
+                                      <p class="mb-1 text-muted">First Name</p>
+                                      <p class="fw-bold" id="viewUserFirstName"></p>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <p class="mb-1 text-muted">Last Name</p>
+                                      <p class="fw-bold" id="viewUserLastName"></p>
+                                  </div>
+                              </div>
+                              <div class="mb-3">
+                                  <p class="mb-1 text-muted">Email</p>
+                                  <p class="fw-bold" id="viewUserEmail"></p>
+                              </div>
+                              <div class="mb-3">
+                                  <p class="mb-1 text-muted">Phone</p>
+                                  <p class="fw-bold" id="viewUserPhone"></p>
+                              </div>
+                              <div class="mb-3">
+                                  <p class="mb-1 text-muted">Address</p>
+                                  <p class="fw-bold" id="viewUserAddress"></p>
+                              </div>
+                              <div class="mb-3">
+                                  <p class="mb-1 text-muted">Role</p>
+                                  <p class="fw-bold" id="viewUserRole"></p>
+                              </div>
+                              <div class="row mb-3">
+                                  <div class="col-md-6">
+                                      <p class="mb-1 text-muted">Last Login</p>
+                                      <p class="fw-bold" id="viewUserLastLogin"></p>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <p class="mb-1 text-muted">Created At</p>
+                                      <p class="fw-bold" id="viewUserCreatedAt"></p>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                              <button type="button" class="btn btn-primary" id="editUserFromViewBtn">Edit User</button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+          
+          $('body').append(modalHtml);
+          
+          // Edit user from view modal button click handler
+          $('#editUserFromViewBtn').on('click', function() {
+              $('#viewUserModal').modal('hide');
+              editUser(userData);
+          });
+      }
+      
+      // Get full user details from server
+      $.ajax({
+          url: `/admin/users/get/${userData.id}`,
+          type: 'GET',
+          dataType: 'json',
+          success: function(response) {
+              const user = response.data;
+              
+              // Populate user details in the modal
+              $('#viewUserId').text(user.id);
+              $('#viewUserFirstName').text(user.first_name);
+              $('#viewUserLastName').text(user.last_name);
+              $('#viewUserEmail').text(user.email);
+              $('#viewUserPhone').text(user.phone || 'Not specified');
+              $('#viewUserAddress').text(user.address || 'Not specified');
+              $('#viewUserRole').text(user.role);
+              $('#viewUserStatus').html(user.status === 'Active' 
+                  ? '<span class="badge bg-success">Active</span>' 
+                  : '<span class="badge bg-secondary">Inactive</span>');
+              $('#viewUserLastLogin').text(user.last_login);
+              $('#viewUserCreatedAt').text(user.created_at);
+              
+              // Store user data for edit button
+              $('#editUserFromViewBtn').data('user', user);
+              
+              // Show the modal
+              $('#viewUserModal').modal('show');
+          },
+          error: function(xhr) {
+              const response = xhr.responseJSON || {};
+              toastManager.showError('Error', response.message || 'Failed to load user details');
+          }
+      });
+  }
+
+  // Edit user function
+  function editUser(userData) {
+      // Create edit user modal if it doesn't exist
+      if ($('#editUserModal').length === 0) {
+          const modalHtml = `
+              <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                          <div class="modal-header">
+                              <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                              <form id="editUserForm">
+                                  <input type="hidden" id="editUserId" name="id">
+                                  <div class="row">
+                                      <div class="col-md-6 mb-3">
+                                          <label for="editFirstName" class="form-label">First Name</label>
+                                          <input type="text" class="form-control" id="editFirstName" name="first_name" required>
+                                      </div>
+                                      <div class="col-md-6 mb-3">
+                                          <label for="editLastName" class="form-label">Last Name</label>
+                                          <input type="text" class="form-control" id="editLastName" name="last_name" required>
+                                      </div>
+                                  </div>
+                                  <div class="mb-3">
+                                      <label for="editEmail" class="form-label">Email</label>
+                                      <input type="email" class="form-control" id="editEmail" name="email" required>
+                                  </div>
+                                  <div class="mb-3">
+                                      <label for="editPhone" class="form-label">Phone</label>
+                                      <input type="text" class="form-control" id="editPhone" name="phone">
+                                  </div>
+                                  <div class="mb-3">
+                                      <label for="editAddress" class="form-label">Address</label>
+                                      <textarea class="form-control" id="editAddress" name="address" rows="2"></textarea>
+                                  </div>
+                                  <div class="mb-3">
+                                      <label for="editPassword" class="form-label">Password</label>
+                                      <input type="password" class="form-control" id="editPassword" name="password" placeholder="Leave blank to keep current password">
+                                      <small class="form-text text-muted">Leave blank to keep the current password.</small>
+                                  </div>
+                                  <div class="mb-3">
+                                      <label for="editRole" class="form-label">Role</label>
+                                      <select class="form-select" id="editRole" name="role" required>
+                                          <option value="" selected disabled>Select Role</option>
+                                          <option value="admin">Admin</option>
+                                          <option value="technician">Technician</option>
+                                          <option value="customer">Customer</option>
+                                      </select>
+                                  </div>
+                                  <div class="form-check form-switch mb-3">
+                                      <input class="form-check-input" type="checkbox" id="editIsActive" name="is_active">
+                                      <label class="form-check-label" for="editIsActive">Active Account</label>
+                                  </div>
+                              </form>
+                          </div>
+                          <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <button type="button" class="btn btn-primary" id="updateUserBtn">Update User</button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          `;
+          
+          $('body').append(modalHtml);
+          
+          // Update user button click handler
+          $('#updateUserBtn').on('click', function() {
+              updateUser();
+          });
+      }
+      
+      // Get full user details from server
+      $.ajax({
+          url: `/admin/users/get/${userData.id}`,
+          type: 'GET',
+          dataType: 'json',
+          success: function(response) {
+              const user = response.data;
+              
+              // Populate user details in the form
+              $('#editUserId').val(user.id);
+              $('#editFirstName').val(user.first_name);
+              $('#editLastName').val(user.last_name);
+              $('#editEmail').val(user.email);
+              $('#editPhone').val(user.phone || '');
+              $('#editAddress').val(user.address || '');
+              $('#editPassword').val(''); // Clear password field
+              $('#editRole').val(user.role);
+              $('#editIsActive').prop('checked', user.is_active);
+              
+              // Show the modal
+              $('#editUserModal').modal('show');
+          },
+          error: function(xhr) {
+              const response = xhr.responseJSON || {};
+              toastManager.showError('Error', response.message || 'Failed to load user details');
+          }
+      });
+  }
+
+  // Update user function
+  function updateUser() {
+      // Get form data
+      const userId = $('#editUserId').val();
+      const formData = {
+          first_name: $('#editFirstName').val(),
+          last_name: $('#editLastName').val(),
+          email: $('#editEmail').val(),
+          phone: $('#editPhone').val(),
+          address: $('#editAddress').val(),
+          password: $('#editPassword').val(),
+          role: $('#editRole').val(),
+          is_active: $('#editIsActive').is(':checked')
+      };
+      
+      // Remove empty password field
+      if (!formData.password) {
+          delete formData.password;
+      }
+      
+      // Validate form data
+      if (!formData.first_name || !formData.last_name || !formData.email || !formData.role) {
+          toastManager.showError('Validation Error', 'Please fill in all required fields');
+          return;
+      }
+      
+      // Update user
+      $.ajax({
+          url: `/admin/users/update/${userId}`,
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(formData),
+          dataType: 'json',
+          success: function(response) {
+              // Close modal
+              $('#editUserModal').modal('hide');
+              
+              // Show success message
+              toastManager.showSuccess('Success', 'User updated successfully');
+              
+              // Refresh the table
+              userTableManager.refresh();
+          },
+          error: function(xhr) {
+              const response = xhr.responseJSON || {};
+              
+              if (response.data && response.data.errors) {
+                  // Show validation errors
+                  let errorMessage = '<ul class="mb-0">';
+                  for (const field in response.data.errors) {
+                      errorMessage += `<li>${response.data.errors[field]}</li>`;
+                  }
+                  errorMessage += '</ul>';
+                  
+                  toastManager.showError('Validation Error', errorMessage);
+              } else {
+                  toastManager.showError('Error', response.message || 'Failed to update user');
+              }
+          }
+      });
+  }
+
+  // Save new user function
+  function saveUser() {
+      // Get form data
+      const formData = {
+          first_name: $('#firstName').val(),
+          last_name: $('#lastName').val(),
+          email: $('#email').val(),
+          password: $('#password').val(),
+          role: $('#role').val(),
+          is_active: $('#isActive').is(':checked')
+      };
+      
+      // Validate form data
+      if (!formData.first_name || !formData.last_name || !formData.email || !formData.password || !formData.role) {
+          toastManager.showError('Validation Error', 'Please fill in all required fields');
+          return;
+      }
+      
+      // Create user
+      $.ajax({
+          url: '/admin/users/create',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(formData),
+          dataType: 'json',
+          success: function(response) {
+              // Clear form
+              $('#addUserForm')[0].reset();
+              
+              // Close modal
+              $('#addUserModal').modal('hide');
+              
+              // Show success message
+              toastManager.showSuccess('Success', 'User created successfully');
+              
+              // Refresh the table
+              userTableManager.refresh();
+          },
+          error: function(xhr) {
+              const response = xhr.responseJSON || {};
+              
+              if (response.data && response.data.errors) {
+                  // Show validation errors
+                  let errorMessage = '<ul class="mb-0">';
+                  for (const field in response.data.errors) {
+                      errorMessage += `<li>${response.data.errors[field]}</li>`;
+                  }
+                  errorMessage += '</ul>';
+                  
+                  toastManager.showError('Validation Error', errorMessage);
+              } else {
+                  toastManager.showError('Error', response.message || 'Failed to create user');
+              }
+          }
+      });
+  }
+
+  // Confirm delete user function
+  function confirmDeleteUser(userData) {
+      // Create a confirmation dialog
+      if (confirm(`Are you sure you want to delete user "${userData.name}" (ID: ${userData.id})?`)) {
+          deleteUser(userData.id);
+      }
+  }
+
+  // Delete user function
+  function deleteUser(userId) {
+      $.ajax({
+          url: `/admin/users/delete/${userId}`,
+          type: 'POST',
+          dataType: 'json',
+          success: function(response) {
+              // Show success message
+              toastManager.showSuccess('Success', 'User deleted successfully');
+              
+              // Refresh the table
+              userTableManager.refresh();
+          },
+          error: function(xhr) {
+              const response = xhr.responseJSON || {};
+              toastManager.showError('Error', response.message || 'Failed to delete user');
+          }
+      });
+
+    }

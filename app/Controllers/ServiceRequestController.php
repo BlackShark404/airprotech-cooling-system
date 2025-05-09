@@ -265,12 +265,6 @@ class ServiceRequestController extends BaseController
      */
     public function unassignTechnician()
     {
-        // Check if user has admin permission
-        if (!$this->checkPermission('admin')) {
-            $this->jsonError('Permission denied', 403);
-            return;
-        }
-        
         // Check if the request is AJAX
         if (!$this->isAjax()) {
             $this->redirect('/admin/service-requests');
@@ -306,12 +300,6 @@ class ServiceRequestController extends BaseController
      */
     public function deleteServiceRequest($id = null)
     {
-        // Check if user has admin permission
-        if (!$this->checkPermission('admin')) {
-            $this->jsonError('Permission denied', 403);
-            return;
-        }
-        
         // Check if the request is AJAX
         if (!$this->isAjax()) {
             $this->redirect('/admin/service-requests');

@@ -5,148 +5,240 @@ namespace App\Models;
 class TechnicianModel extends BaseModel
 {
     protected $table = 'technician';
-    
+    protected $primaryKey = 'te_account_id';
+
+    protected $fillable = [
+        'te_account_id',
+        'te_is_available'
+    ];
+
     /**
-     * Get all active technicians
+     * Get all technicians with account details
      * 
-     * @return array Array of active technicians
+     * @return array Array of technician records with account details
      */
-    public function getActiveTechnicians()
+    public function getAllTechnicians()
     {
-        $sql = "SELECT t.*, ua.ua_first_name, ua.ua_last_name, ua.ua_email, ua.ua_phone_number
-                FROM {$this->table} t
-                JOIN user_account ua ON t.te_account_id = ua.ua_id
-                WHERE t.te_is_available = true
-                AND ua.ua_is_active = true
-                AND ua.ua_deleted_at IS NULL
-                ORDER BY ua.ua_first_name ASC, ua.ua_last_name ASC";
-                
-        return $this->query($sql);
+        return $this->select('
+            technician.*, 
+            user_account.ua_first_name, 
+            user_account.ua_last_name, 
+            user_account.ua_email, 
+            user_account.ua_phone_number,
+            user_account.ua_profile_url,
+            user_account.ua_address,
+            user_account.ua_is_active
+        ')
+        ->join('user_account', 'technician.te_account_id', 'user_account.ua_id')
+        ->orderBy('user_account.ua_last_name, user_account.ua_first_name')
+        ->get();
     }
-    
+
     /**
-     * Get a technician by ID
+     * Get technician by account ID
      * 
-     * @param int $techId The technician ID (account_id)
-     * @return array|null The technician or null if not found
+     * @param int $accountId Account ID
+     * @return array|null Technician record or null if not found
      */
-    public function getTechnicianById($techId)
+    public function getTechnicianByAccountId($accountId)
     {
-        $sql = "SELECT t.*, ua.ua_first_name, ua.ua_last_name, ua.ua_email, ua.ua_phone_number
-                FROM {$this->table} t
-                JOIN user_account ua ON t.te_account_id = ua.ua_id
-                WHERE t.te_account_id = :techId
-                AND ua.ua_deleted_at IS NULL";
-                
-        return $this->queryOne($sql, ['techId' => $techId]);
+        return $this->select('
+            technician.*, 
+            user_account.ua_first_name, 
+            user_account.ua_last_name, 
+            user_account.ua_email, 
+            user_account.ua_phone_number,
+            user_account.ua_profile_url,
+            user_account.ua_address,
+            user_account.ua_is_active
+        ')
+        ->join('user_account', 'technician.te_account_id', 'user_account.ua_id')
+        ->where('technician.te_account_id = :account_id')
+        ->bind(['account_id' => $accountId])
+        ->first();
     }
-    
+
     /**
-     * Get technicians with their assignment counts
+     * Get all available technicians
      * 
-     * @return array Array of technicians with assignment counts
+     * @return array Array of available technician records
      */
-    public function getTechniciansWithAssignmentCounts()
+    public function getAvailableTechnicians()
     {
-        $sql = "SELECT t.*, 
-                ua.ua_first_name, 
-                ua.ua_last_name, 
-                ua.ua_email, 
-                ua.ua_phone_number,
-                COUNT(ba.ba_id) as assignment_count 
-                FROM {$this->table} t
-                JOIN user_account ua ON t.te_account_id = ua.ua_id
-                LEFT JOIN booking_assignment ba ON t.te_account_id = ba.ba_technician_id
-                AND ba.ba_status != 'unassigned'
-                AND ba.ba_completed_at IS NULL
-                WHERE ua.ua_deleted_at IS NULL
-                GROUP BY t.te_account_id, ua.ua_id
-                ORDER BY ua.ua_first_name ASC, ua.ua_last_name ASC";
-                
-        return $this->query($sql);
+        return $this->select('
+            technician.*, 
+            user_account.ua_first_name, 
+            user_account.ua_last_name, 
+            user_account.ua_email, 
+            user_account.ua_phone_number,
+            user_account.ua_profile_url,
+            user_account.ua_address
+        ')
+        ->join('user_account', 'technician.te_account_id', 'user_account.ua_id')
+        ->where('technician.te_is_available = :is_available')
+        ->where('user_account.ua_is_active = :is_active')
+        ->bind([
+            'is_available' => true,
+            'is_active' => true
+        ])
+        ->orderBy('user_account.ua_last_name, user_account.ua_first_name')
+        ->get();
     }
-    
-    /**
-     * Get available technicians for a given date
-     * 
-     * @param string $date The date to check availability (YYYY-MM-DD)
-     * @return array Array of available technicians
-     */
-    public function getAvailableTechnicians($date)
-    {
-        $sql = "SELECT t.*, ua.ua_first_name, ua.ua_last_name, ua.ua_email, ua.ua_phone_number
-                FROM {$this->table} t
-                JOIN user_account ua ON t.te_account_id = ua.ua_id
-                WHERE t.te_is_available = true
-                AND ua.ua_is_active = true
-                AND ua.ua_deleted_at IS NULL
-                AND t.te_account_id NOT IN (
-                    SELECT ba.ba_technician_id
-                    FROM booking_assignment ba
-                    JOIN service_booking sb ON ba.ba_booking_id = sb.sb_id
-                    WHERE ba.ba_status != 'unassigned'
-                    AND sb.sb_requested_date = :date
-                    AND sb.sb_status NOT IN ('completed', 'cancelled')
-                    AND sb.sb_deleted_at IS NULL
-                    AND ba.ba_completed_at IS NULL
-                )
-                ORDER BY ua.ua_first_name ASC, ua.ua_last_name ASC";
-                
-        return $this->query($sql, ['date' => $date]);
-    }
-    
+
     /**
      * Create a new technician
      * 
-     * @param array $data Technician data
+     * @param int $accountId Account ID
+     * @param bool $isAvailable Availability status
      * @return bool Success status
      */
-    public function createTechnician($data)
+    public function createTechnician($accountId, $isAvailable = true)
     {
-        $formatted = $this->formatInsertData($data);
-        
-        $sql = "INSERT INTO {$this->table} ({$formatted['columns']}) 
-                VALUES ({$formatted['placeholders']})";
-                
-        return $this->execute($sql, $formatted['filteredData']) > 0;
+        return $this->insert([
+            'te_account_id' => $accountId,
+            'te_is_available' => $isAvailable
+        ]);
     }
-    
+
     /**
-     * Update a technician
+     * Update technician availability
      * 
-     * @param int $techId The technician account ID
-     * @param array $data Updated technician data
-     * @return bool Success status
-     */
-    public function updateTechnician($techId, $data)
-    {
-        $formatted = $this->formatUpdateData($data);
-        
-        $sql = "UPDATE {$this->table} 
-                SET {$formatted['updateClause']} 
-                WHERE te_account_id = :techId";
-                
-        $params = array_merge($formatted['filteredData'], ['techId' => $techId]);
-        
-        return $this->execute($sql, $params) > 0;
-    }
-    
-    /**
-     * Toggle the availability status of a technician
-     * 
-     * @param int $techId The technician account ID
+     * @param int $accountId Account ID
      * @param bool $isAvailable New availability status
      * @return bool Success status
      */
-    public function toggleTechnicianAvailability($techId, $isAvailable)
+    public function updateAvailability($accountId, $isAvailable)
     {
-        $sql = "UPDATE {$this->table} 
-                SET te_is_available = :isAvailable 
-                WHERE te_account_id = :techId";
-                
-        return $this->execute($sql, [
-            'isAvailable' => $isAvailable,
-            'techId' => $techId
-        ]) > 0;
+        return $this->update(
+            ['te_is_available' => $isAvailable],
+            "te_account_id = :account_id",
+            ['account_id' => $accountId]
+        );
+    }
+
+    /**
+     * Get technician's current assignments
+     * 
+     * @param int $technicianId Technician ID
+     * @return array Array of service bookings assigned to the technician
+     */
+    public function getCurrentAssignments($technicianId)
+    {
+        return $this->db->query("
+            SELECT 
+                ba.*,
+                sb.sb_requested_date,
+                sb.sb_requested_time,
+                sb.sb_address,
+                sb.sb_description,
+                sb.sb_status as booking_status,
+                sb.sb_priority,
+                st.st_name as service_type_name,
+                CONCAT(ua.ua_first_name, ' ', ua.ua_last_name) as customer_name,
+                ua.ua_phone_number as customer_phone
+            FROM booking_assignment ba
+            JOIN service_booking sb ON ba.ba_booking_id = sb.sb_id
+            JOIN service_type st ON sb.sb_service_type_id = st.st_id
+            JOIN user_account ua ON sb.sb_customer_id = ua.ua_id
+            WHERE ba.ba_technician_id = :technician_id
+            AND ba.ba_status IN ('assigned', 'in-progress')
+            ORDER BY sb.sb_requested_date, sb.sb_requested_time
+        ", ['technician_id' => $technicianId])->fetchAll();
+    }
+
+    /**
+     * Delete a technician
+     * 
+     * @param int $technicianId Technician ID
+     * @return bool Success status
+     */
+    public function deleteTechnician($technicianId)
+    {
+        // First check if technician has any active assignments
+        $activeAssignments = $this->db->query("
+            SELECT COUNT(*) FROM booking_assignment 
+            WHERE ba_technician_id = :technician_id 
+            AND ba_status IN ('assigned', 'in-progress')
+        ", ['technician_id' => $technicianId])->fetchColumn();
+
+        if ($activeAssignments > 0) {
+            // Technician has active assignments, cannot delete
+            return false;
+        }
+
+        // Delete the technician
+        return $this->delete("te_account_id = :technician_id", ['technician_id' => $technicianId]);
+    }
+    
+    /**
+     * Get technician performance statistics
+     * 
+     * @param int $technicianId Technician ID
+     * @return array Technician statistics
+     */
+    public function getTechnicianStats($technicianId)
+    {
+        $stats = [];
+        
+        // Total assignments
+        $stats['total_assignments'] = $this->db->query("
+            SELECT COUNT(*) FROM booking_assignment 
+            WHERE ba_technician_id = :technician_id
+        ", ['technician_id' => $technicianId])->fetchColumn();
+        
+        // Completed assignments
+        $stats['completed_assignments'] = $this->db->query("
+            SELECT COUNT(*) FROM booking_assignment 
+            WHERE ba_technician_id = :technician_id 
+            AND ba_status = 'completed'
+        ", ['technician_id' => $technicianId])->fetchColumn();
+        
+        // In-progress assignments
+        $stats['in_progress_assignments'] = $this->db->query("
+            SELECT COUNT(*) FROM booking_assignment 
+            WHERE ba_technician_id = :technician_id 
+            AND ba_status = 'in-progress'
+        ", ['technician_id' => $technicianId])->fetchColumn();
+        
+        // Current workload
+        $stats['current_workload'] = $this->db->query("
+            SELECT COUNT(*) FROM booking_assignment 
+            WHERE ba_technician_id = :technician_id 
+            AND ba_status IN ('assigned', 'in-progress')
+        ", ['technician_id' => $technicianId])->fetchColumn();
+        
+        // Completion rate
+        if ($stats['total_assignments'] > 0) {
+            $stats['completion_rate'] = round(($stats['completed_assignments'] / $stats['total_assignments']) * 100, 2);
+        } else {
+            $stats['completion_rate'] = 0;
+        }
+        
+        return $stats;
+    }
+    
+    /**
+     * Get technicians with the lowest current workload
+     * 
+     * @param int $limit Maximum number of technicians to return
+     * @return array Array of technicians with workload information
+     */
+    public function getTechniciansWithLowestWorkload($limit = 5)
+    {
+        return $this->db->query("
+            SELECT 
+                t.te_account_id,
+                ua.ua_first_name,
+                ua.ua_last_name,
+                t.te_is_available,
+                COUNT(ba.ba_id) as current_workload
+            FROM technician t
+            JOIN user_account ua ON t.te_account_id = ua.ua_id
+            LEFT JOIN booking_assignment ba ON t.te_account_id = ba.ba_technician_id AND ba.ba_status IN ('assigned', 'in-progress')
+            WHERE t.te_is_available = TRUE AND ua.ua_is_active = TRUE
+            GROUP BY t.te_account_id, ua.ua_first_name, ua.ua_last_name, t.te_is_available
+            ORDER BY current_workload ASC, ua.ua_last_name, ua.ua_first_name
+            LIMIT :limit
+        ", ['limit' => $limit])->fetchAll();
     }
 }

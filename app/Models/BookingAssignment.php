@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class BookAssignmentModel extends BaseModel
+class BookingAssignmentModel extends BaseModel
 {
     protected $table = 'booking_assignment';
     protected $primaryKey = 'ba_id';

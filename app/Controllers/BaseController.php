@@ -5,18 +5,14 @@ namespace App\Controllers;
 use Config\Database;
 
 class BaseController
-{
-    protected $db;
-
-    public function __construct() {
-        $this->db = Database::getInstance()->getConnection();
-    }
-
-    public function getDb() {
-        return $this->db;
-    }
-
+{   protected $pdo;
     
+    public function __construct()
+    {
+        // Get the PDO connection from the Database singleton
+        $this->pdo = Database::getInstance()->getConnection();
+    }
+
     protected function getViewPath(string $relativePath): string {
         $path = __DIR__ . "/../Views/{$relativePath}.php";
         if (!file_exists($path)) {
@@ -131,25 +127,5 @@ class BaseController
 
     protected function isGet() {
         return $_SERVER['REQUEST_METHOD'] === 'GET';
-    }
-
-    /**
-     * Check if user has the specified permission
-     * 
-     * @param string $permission Permission to check
-     * @return bool True if user has permission, false otherwise
-     */
-    protected function checkPermission(string $permission): bool {
-        // Get user role from session
-        $role = $_SESSION['user_role'] ?? '';
-        
-        // Basic permission check based on role
-        if ($permission === 'admin' && $role === 'admin') {
-            return true;
-        }
-        
-        // Add more complex permission logic here as needed
-        
-        return false;
     }
 }

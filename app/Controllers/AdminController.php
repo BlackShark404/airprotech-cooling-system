@@ -34,8 +34,4 @@ class AdminController extends BaseController {
     public function renderUserManagement() {
         $this->render('admin/user-management');
     }
-
-    public function renderAdminProfile() {
-        $this->render('admin/profile');
-    }
 }
