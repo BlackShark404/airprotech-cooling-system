@@ -4,7 +4,6 @@
 <?php
 function base_url($uri = '', $protocol = true) {
 
-
     // Get the protocol
     $base_protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
     
