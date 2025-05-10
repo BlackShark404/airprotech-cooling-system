@@ -14,4 +14,8 @@ class UserController extends BaseController{
     public function renderUserProducts() {
         $this->render("user/products");
     }
+
+    public function renderMyOrders() {
+        $this->render("user/my-orders");
+    }
 }
