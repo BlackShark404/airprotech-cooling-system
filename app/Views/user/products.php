@@ -1,3 +1,5 @@
+<?php use Core\Session;?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -237,7 +239,7 @@
         </div>
     </div>
 
-    <!-- Main Navigation -->
+   <!-- Main Navigation -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
@@ -254,11 +256,10 @@
                     <li class="nav-item"><a class="nav-link" href="/user/orders-services">My Orders & Service Requests</a></li>
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
-                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="/assets/images/Profile.jpg" alt="Online Image" class="rounded-circle me-2" width="36" height="36">
-                            <div class="d-flex flex-column lh-sm">
-                                <span class="fw-semibold small text-dark">Arlon Rondina</span>
-                                <small class="text-success">● Online</small>
+                        <a href="#" class="d-flex align-items-center text-decoration-none" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="position-relative">
+                                <img src="<?=Session::get('profile_url')?>" alt="Profile Image" class="rounded-circle" width="30" height="30">
+                                <span class="position-absolute bottom-0 end-0 translate-middle-y bg-success rounded-circle border border-white" style="width: 8px; height: 8px;"></span>
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -272,6 +273,15 @@
             </div>
         </div>
     </nav>
+
+<!-- Optional CSS for hover effect -->
+<style>
+    #userDropdown:hover img {
+        opacity: 0.8;
+        transform: scale(1.1);
+        transition: all 0.2s ease-in-out;
+    }
+</style>
 
     <!-- Hero Section -->
     <section class="hero-section">

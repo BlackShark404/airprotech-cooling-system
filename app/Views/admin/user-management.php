@@ -5,8 +5,6 @@ $activeTab = 'user_management';
 
 // Include base template
 ob_start();
-include __DIR__ . '/../includes/admin/base.php';
-
 ?>
 <link rel="stylesheet" href="/assets/css/user-management.css">
 
@@ -426,6 +424,7 @@ let table = new DataTable('#myTable');
 <?php
 // Close the output buffer and include footer
 $content = ob_get_clean();
-echo $content;
+
+include __DIR__ . '/../includes/admin/base.php';
 
 ?>                    

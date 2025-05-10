@@ -1,3 +1,5 @@
+<?php use Core\Session;?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,7 +55,7 @@
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="/assets/images/Profile.jpg" alt="Online Image" class="rounded-circle me-2" width="36" height="36">
+                            <img src=<?=Session::get('profile_url')?> alt="Profile" class="rounded-circle me-2" width="36" height="36">
                             <div class="d-flex flex-column lh-sm">
                                 <span class="fw-semibold small text-dark">Arlon Rondina</span>
                                 <small class="text-success">● Online</small>

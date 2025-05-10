@@ -1,3 +1,5 @@
+<?php use Core\Session;?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -135,7 +137,7 @@
     </div>
 
     <!-- Main Navigation -->
-    <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+    <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
                 <img src="/assets/images/logo/Air-TechLogo.png" alt="Logo" class="rounded-circle me-2" width="40" height="40">
@@ -151,11 +153,10 @@
                     <li class="nav-item"><a class="nav-link" href="/user/orders-services">My Orders & Service Requests</a></li>
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
-                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="/assets/images/Profile.jpg" alt="Online Image" class="rounded-circle me-2" width="36" height="36">
-                            <div class="d-flex flex-column lh-sm">
-                                <span class="fw-semibold small text-dark">Arlon Rondina</span>
-                                <small class="text-success">● Online</small>
+                        <a href="#" class="d-flex align-items-center text-decoration-none" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="position-relative">
+                                <img src="<?=Session::get('profile_url')?>" alt="Profile Image" class="rounded-circle" width="30" height="30">
+                                <span class="position-absolute bottom-0 end-0 translate-middle-y bg-success rounded-circle border border-white" style="width: 8px; height: 8px;"></span>
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -171,17 +172,19 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section text-white py-5" style="background: url('/assets/images/backgroundhero.jpg') no-repeat center center; background-size: cover;">
-        <div class="container hero-content">
-            <div class="row">
-                <div class="col-lg-8 col-md-10">
-                    <h1 class="fw-bold mb-3 display-4">Professional AC Services & Solutions</h1>
-                    <p class="mb-4 lead">Expert installation, maintenance, and repair services for all your air conditioning needs</p>
-                    <button class="btn btn-danger cta-button px-4 py-2" data-bs-toggle="modal" data-bs-target="#bookServiceModal">Request Service</button>
-                </div>
+<section class="hero-section text-white py-5">
+    <div class="container hero-content">
+        <div class="row">
+            <div class="col-lg-8 col-md-10">
+                <h1 class="fw-bold mb-3 display-4">Professional AC Services & Solutions</h1>
+                <p class="mb-4 lead">Expert installation, maintenance, and repair services for all your air conditioning needs</p>
+                <button class="btn btn-danger cta-button px-4 py-2" data-bs-toggle="modal" data-bs-target="#bookServiceModal">Request Service</button>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
+    
 
     <!-- Service Categories -->
     <section class="py-5 bg-light">

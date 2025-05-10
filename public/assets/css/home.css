@@ -69,12 +69,27 @@ body {
 
 /* Hero Section */
 .hero-section {
-    background: linear-gradient(to right, #1A237E, #0d163e);
+    background: linear-gradient(rgba(26, 35, 126, 0.4), rgba(13, 22, 62, 0.4)), url('/assets/images/backgroundhero.jpg') no-repeat center center;
+    background-size: cover;
     padding: 60px 0;
     min-height: 65vh;
-    /* Adjust this value as needed */
     display: flex;
     align-items: center;
+    position: relative;
+}
+
+/* Optional: Add brightness to the background image */
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    filter: brightness(1.2);
+    /* Adjust this value (1.0 is normal, >1.0 brightens, <1.0 darkens) */
+    z-index: -1;
 }
 
 /* Hero Carousel Styles */
@@ -387,6 +402,53 @@ body {
 .footer .form-control::placeholder {
     color: #aaa;
 }
+
+/* Image Popup Modal Styles */
+.modal-lg {
+    max-width: 800px;
+  }
+  
+  .modal-body {
+    padding: 0;
+    position: relative;
+  }
+  
+  .btn-close {
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    padding: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  .btn-close:hover {
+    opacity: 1;
+  }
+  
+  .modal-content {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Image zoom animation */
+  .modal.fade .modal-dialog {
+    transform: scale(0.8);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .modal.show .modal-dialog {
+    transform: scale(1);
+  }
+  
+  /* Improve modal backdrop */
+  .modal-backdrop.show {
+    opacity: 0.7;
+  }
+
 
 /* Container adjustments for larger screens */
 @media (min-width: 1400px) {
