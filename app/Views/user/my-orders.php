@@ -73,37 +73,37 @@
             <h2 class="fw-bold mb-2">My Orders & Service Requests</h2>
             <p class="text-muted mb-4">View and track your orders and service history</p>
 
-            <!-- Tabs and Filters -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <ul class="nav nav-tabs" id="ordersTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="true">Orders</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="false">Service Requests</button>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <select class="form-select me-2" style="width: 150px;">
-                        <option>Last 30 days</option>
-                        <option>Last 60 days</option>
-                        <option>Last 90 days</option>
-                        <option>All time</option>
-                    </select>
-                    <select class="form-select me-2" style="width: 150px;">
-                        <option>All Status</option>
-                        <option>Pending</option>
-                        <option>Completed</option>
-                        <option>Cancelled</option>
-                    </select>
-                    <input type="text" class="form-control" placeholder="Search orders..." style="width: 200px;">
-                </div>
-            </div>
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" id="ordersTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="true">Orders</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="false">Service Requests</button>
+                </li>
+            </ul>
 
             <!-- Tab Content -->
             <div class="tab-content" id="ordersTabContent">
                 <!-- Orders Tab -->
                 <div class="tab-pane fade show active" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                    <!-- Filters for Orders -->
+                    <div class="d-flex justify-content-end align-items-center mb-4 py-4">
+                        <select class="form-select me-2" style="width: 150px;">
+                            <option>Last 30 days</option>
+                            <option>Last 60 days</option>
+                            <option>Last 90 days</option>
+                            <option>All time</option>
+                        </select>
+                        <select class="form-select me-2" style="width: 150px;">
+                            <option>All Status</option>
+                            <option>Pending</option>
+                            <option>Completed</option>
+                            <option>Cancelled</option>
+                        </select>
+                        <input type="text" class="form-control" placeholder="Search orders..." style="width: 200px;">
+                    </div>
+
                     <!-- Order Items -->
                     <div class="booking-item card shadow-sm mb-3">
                         <div class="card-body d-flex align-items-center p-4">
@@ -199,6 +199,23 @@
 
                 <!-- Service Requests Tab -->
                 <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+                    <!-- Filters for Service Requests -->
+                    <div class="d-flex justify-content-end align-items-center mb-4 py-4">
+                        <select class="form-select me-2" style="width: 150px;">
+                            <option>Last 30 days</option>
+                            <option>Last 60 days</option>
+                            <option>Last 90 days</option>
+                            <option>All time</option>
+                        </select>
+                        <select class="form-select me-2" style="width: 150px;">
+                            <option>All Status</option>
+                            <option>Pending</option>
+                            <option>Completed</option>
+                            <option>Cancelled</option>
+                        </select>
+                        <input type="text" class="form-control" placeholder="Search service requests..." style="width: 200px;">
+                    </div>
+
                     <!-- Service Request Items -->
                     <div class="booking-item card shadow-sm mb-3">
                         <div class="card-body d-flex align-items-center p-4">
@@ -290,7 +307,7 @@
                             <ul class="pagination">
                                 <li class="page-item"><a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a></li>
                                 <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class "page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
                                 <li class="page-item"><a class="page-link" href="#">3</a></li>
                                 <li class="page-item"><a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a></li>
                             </ul>

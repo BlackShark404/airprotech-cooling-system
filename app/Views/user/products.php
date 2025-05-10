@@ -529,7 +529,7 @@
     <script src="/assets/js/home/home.js"></script>
     
     <!-- Product Manager Script -->
-    <script src="/assets/js/utility/ProductManger.js"></script>
+    <script src="/assets/js/utility/ProductManager.js"></script>
     
     <script>
         // Initialize AOS animation
@@ -538,7 +538,9 @@
             easing: 'ease-in-out', 
             once: true, 
         });
-        
+    </script>
+
+    <script>
         // Initialize Product Manager when the document is ready
         document.addEventListener('DOMContentLoaded', function() {
             // Sample product data for testing without API
@@ -549,7 +551,7 @@
                     description: "Professional grade cooling system",
                     price: "2499",
                     image: "/assets/images/commercial-hvac.jpg",
-                    inStock: false,
+                      inStock: false,
                     stock: 0,
                     category: "commercial",
                     code: "CHVAC-4004"

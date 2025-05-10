@@ -1,11 +1,11 @@
 /**
  * ProductManager Class
  * Handles creating product cards, managing the product details modal,
- * and filtering/searching products
+ * filtering/searching products, and client-side pagination
  */
 class ProductManager {
     constructor(options = {}) {
-        // Default configuration
+        // Default configuration with pagination settings
         this.config = {
             productsEndpoint: '/api/products',
             containerSelector: '#products-container',
@@ -13,6 +13,8 @@ class ProductManager {
             filterFormId: 'product-filters',
             searchInputId: 'product-search',
             cardTemplate: this.getDefaultCardTemplate(),
+            itemsPerPage: 9,
+            paginationContainerSelector: '#pagination-container',
             ...options
         };
         
@@ -38,6 +40,10 @@ class ProductManager {
         
         // Store all products for filtering
         this.allProducts = [];
+        
+        // Pagination state
+        this.currentPage = 1;
+        this.itemsPerPage = this.config.itemsPerPage;
         
         // Initialize modal quantity controls
         this.initModalControls();
@@ -180,7 +186,10 @@ class ProductManager {
             );
         }
         
-        // Render filtered products
+        // Reset to first page when filters change
+        this.currentPage = 1;
+        
+        // Render filtered products with pagination
         this.renderProducts(filteredProducts);
         
         // Update results count if element exists
@@ -215,14 +224,17 @@ class ProductManager {
                 // Populate category filter if it exists
                 this.populateCategoryFilter(products);
                 
+                // Render first page of products
                 this.renderProducts(products);
             } else {
                 console.error('No products found or invalid data format');
                 this.container.innerHTML = '<div class="col-12"><p class="text-center">No products available.</p></div>';
+                this.renderPagination(0);
             }
         } catch (error) {
             console.error('Error fetching products:', error);
             this.container.innerHTML = '<div class="col-12"><p class="text-center text-danger">Failed to load products. Please try again later.</p></div>';
+            this.renderPagination(0);
         }
     }
     
@@ -265,22 +277,107 @@ class ProductManager {
     }
     
     /**
-     * Render product cards in the container
+     * Render product cards in the container with pagination
      * @param {Array} products - Array of product objects
      */
     renderProducts(products) {
         if (products.length === 0) {
             this.container.innerHTML = '<div class="col-12"><p class="text-center">No products match your filters. Try different criteria.</p></div>';
+            this.renderPagination(0);
             return;
         }
         
-        let html = '';
+        // Calculate pagination
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const paginatedProducts = products.slice(startIndex, endIndex);
         
-        products.forEach(product => {
+        // Render product cards
+        let html = '';
+        paginatedProducts.forEach(product => {
             html += this.config.cardTemplate(product);
         });
         
         this.container.innerHTML = html;
+        
+        // Render pagination controls
+        this.renderPagination(products.length);
+    }
+    
+    /**
+     * Render pagination controls
+     * @param {number} totalItems - Total number of products
+     */
+    renderPagination(totalItems) {
+        const paginationContainer = document.querySelector(this.config.paginationContainerSelector);
+        if (!paginationContainer) return;
+        
+        const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+        let paginationHTML = `
+            <nav aria-label="Product pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="prev">Previous</a>
+                    </li>
+        `;
+        
+        // Generate page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHTML += `
+                <li class="page-item ${this.currentPage === i ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+        
+        paginationHTML += `
+                    <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="next">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        `;
+        
+        paginationContainer.innerHTML = paginationHTML;
+        
+        // Add event listeners to pagination links
+        this.initPaginationControls();
+    }
+    
+    /**
+     * Initialize pagination controls
+     */
+    initPaginationControls() {
+        const paginationLinks = document.querySelectorAll(`${this.config.paginationContainerSelector} .page-link`);
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageAction = e.target.getAttribute('data-page');
+                this.handlePageChange(pageAction);
+            });
+        });
+    }
+    
+    /**
+     * Handle page change
+     * @param {string|number} pageAction - Page number or 'prev'/'next'
+     */
+    handlePageChange(pageAction) {
+        const totalPages = Math.ceil(this.allProducts.length / this.itemsPerPage);
+        
+        if (pageAction === 'prev' && this.currentPage > 1) {
+            this.currentPage--;
+        } else if (pageAction === 'next' && this.currentPage < totalPages) {
+            this.currentPage++;
+        } else if (!isNaN(pageAction)) {
+            const pageNum = parseInt(pageAction);
+            if (pageNum >= 1 && pageNum <= totalPages) {
+                this.currentPage = pageNum;
+            }
+        }
+        
+        // Re-apply filters to render the new page
+        this.applyFilters();
     }
     
     /**
