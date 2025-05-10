@@ -1,370 +1,187 @@
 <?php
 
 namespace App\Models;
+use App\Models\BaseModel;
 
-use App\Models\Model
-
-class UserManagementModel extends Model
+/**
+ * User Role Model
+ * 
+ * This model represents user roles in the system.
+ */
+class UserRoleModel extends BaseModel
 {
-    protected $table = 'USER_ACCOUNT';
-    
+    protected $table = 'user_role';
+    protected $primaryKey = 'ur_id';
+
     /**
-     * Get all users with pagination and filtering
+     * Get all roles
      * 
-     * @param int $start Start index for pagination
-     * @param int $length Number of records per page
-     * @param string $search Search keyword
-     * @param array $filters Additional filters (role, status)
-     * @param string $orderColumn Column to order by
-     * @param string $orderDirection Order direction (asc, desc)
-     * @return array Array with 'data', 'recordsTotal', and 'recordsFiltered'
+     * @return array Array of role records
      */
-    public function getUsers($start = 0, $length = 10, $search = '', $filters = [], $orderColumn = 'UA_ID', $orderDirection = 'asc')
-    {
-        // Base query - join with roles table
-        $baseQuery = "
-            SELECT 
-                UA_ID as id,
-                UA_FIRST_NAME as first_name,
-                UA_LAST_NAME as last_name,
-                CONCAT(UA_FIRST_NAME, ' ', UA_LAST_NAME) as name,
-                UA_EMAIL as email,
-                UR_NAME as role,
-                CASE WHEN UA_IS_ACTIVE = TRUE THEN 'Active' ELSE 'Inactive' END as status,
-                UA_LAST_LOGIN as last_login
-            FROM {$this->table}
-            JOIN USER_ROLE ON USER_ROLE.UR_ID = {$this->table}.UA_ROLE_ID
-            WHERE UA_DELETED_AT IS NULL
-        ";
-        
-        // Add search condition if search term provided
-        $searchCondition = '';
-        $searchParams = [];
-        
-        if (!empty($search)) {
-            $searchCondition = " AND (
-                UA_FIRST_NAME ILIKE :search OR
-                UA_LAST_NAME ILIKE :search OR
-                UA_EMAIL ILIKE :search
-            )";
-            $searchParams['search'] = "%{$search}%";
-        }
-        
-        // Add filter conditions
-        $filterCondition = '';
-        $filterParams = [];
-        
-        if (!empty($filters['role'])) {
-            $filterCondition .= " AND UR_NAME = :role";
-            $filterParams['role'] = $filters['role'];
-        }
-        
-        if (isset($filters['status'])) {
-            $isActive = $filters['status'] === 'Active' ? 'TRUE' : 'FALSE';
-            $filterCondition .= " AND UA_IS_ACTIVE = {$isActive}";
-        }
-        
-        // Count total records (without filtering)
-        $totalQuery = "SELECT COUNT(*) FROM {$this->table} WHERE UA_DELETED_AT IS NULL";
-        $recordsTotal = $this->queryScalar($totalQuery);
-        
-        // Count filtered records
-        $filteredQuery = $baseQuery . $searchCondition . $filterCondition;
-        $countQuery = "SELECT COUNT(*) FROM ({$filteredQuery}) AS filtered_data";
-        $recordsFiltered = $this->queryScalar($countQuery, array_merge($searchParams, $filterParams));
-        
-        // Add pagination and ordering
-        $orderBy = '';
-        
-        // Map front-end column names to DB column names
-        $columnMap = [
-            'id' => 'UA_ID',
-            'name' => 'UA_FIRST_NAME', // Order by first name
-            'email' => 'UA_EMAIL',
-            'role' => 'UR_NAME',
-            'status' => 'UA_IS_ACTIVE',
-            'last_login' => 'UA_LAST_LOGIN'
-        ];
-        
-        if (array_key_exists($orderColumn, $columnMap)) {
-            $dbColumn = $columnMap[$orderColumn];
-            $orderBy = " ORDER BY {$dbColumn} {$orderDirection}";
-        } else {
-            $orderBy = " ORDER BY UA_ID ASC"; // Default ordering
-        }
-        
-        $paginationQuery = $baseQuery . $searchCondition . $filterCondition . $orderBy . " LIMIT {$length} OFFSET {$start}";
-        $data = $this->query($paginationQuery, array_merge($searchParams, $filterParams));
-        
-        return [
-            'data' => $data,
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsFiltered
-        ];
-    }
-    
-    /**
-     * Get user by ID
-     * 
-     * @param int $id User ID
-     * @return array|null User data or null if not found
-     */
-    public function getUserById($id)
+    public function getAllRoles()
     {
         $sql = "
-            SELECT 
-                UA_ID as id,
-                UA_FIRST_NAME as first_name,
-                UA_LAST_NAME as last_name,
-                UA_EMAIL as email,
-                UA_PHONE_NUMBER as phone,
-                UA_ADDRESS as address,
-                UA_ROLE_ID as role_id,
-                UR_NAME as role,
-                UA_IS_ACTIVE as is_active,
-                CASE WHEN UA_IS_ACTIVE = TRUE THEN 'Active' ELSE 'Inactive' END as status,
-                UA_LAST_LOGIN as last_login,
-                UA_CREATED_AT as created_at,
-                UA_UPDATED_AT as updated_at
+            SELECT *
             FROM {$this->table}
-            JOIN USER_ROLE ON USER_ROLE.UR_ID = {$this->table}.UA_ROLE_ID
-            WHERE UA_ID = :id AND UA_DELETED_AT IS NULL
+            ORDER BY ur_name
+        ";
+        
+        return $this->query($sql);
+    }
+
+    /**
+     * Get role by ID
+     * 
+     * @param int $id Role ID
+     * @return array|null Role record or null if not found
+     */
+    public function getRoleById($id)
+    {
+        $sql = "
+            SELECT *
+            FROM {$this->table}
+            WHERE {$this->primaryKey} = :id
         ";
         
         return $this->queryOne($sql, ['id' => $id]);
     }
-    
+
     /**
-     * Create a new user
+     * Get role by name
      * 
-     * @param array $userData User data
-     * @return int|bool New user ID or false on failure
+     * @param string $name Role name
+     * @return array|null Role record or null if not found
      */
-    public function createUser($userData)
-    {
-        try {
-            // Begin transaction
-            $this->beginTransaction();
-            
-            // Hash the password
-            $hashedPassword = password_hash($userData['password'], PASSWORD_DEFAULT);
-            
-            // Get role ID from role name
-            $roleId = $this->getRoleIdByName($userData['role']);
-            
-            if (!$roleId) {
-                throw new \Exception("Invalid role specified");
-            }
-            
-            // Insert new user
-            $sql = "
-                INSERT INTO {$this->table} (
-                    UA_FIRST_NAME,
-                    UA_LAST_NAME,
-                    UA_EMAIL,
-                    UA_HASHED_PASSWORD,
-                    UA_ROLE_ID,
-                    UA_IS_ACTIVE
-                ) VALUES (
-                    :first_name,
-                    :last_name,
-                    :email,
-                    :password,
-                    :role_id,
-                    :is_active
-                ) RETURNING UA_ID
-            ";
-            
-            $params = [
-                'first_name' => $userData['first_name'],
-                'last_name' => $userData['last_name'],
-                'email' => $userData['email'],
-                'password' => $hashedPassword,
-                'role_id' => $roleId,
-                'is_active' => isset($userData['is_active']) ? $userData['is_active'] : true
-            ];
-            
-            $newUserId = $this->queryScalar($sql, $params);
-            
-            // Commit transaction
-            $this->commit();
-            
-            return $newUserId;
-        } catch (\Exception $e) {
-            // Rollback transaction
-            $this->rollback();
-            throw $e;
-        }
-    }
-    
-    /**
-     * Update an existing user
-     * 
-     * @param int $id User ID
-     * @param array $userData User data
-     * @return bool True on success, false on failure
-     */
-    public function updateUser($id, $userData)
-    {
-        try {
-            // Begin transaction
-            $this->beginTransaction();
-            
-            // Build the update query
-            $setClause = [];
-            $params = ['id' => $id];
-            
-            if (isset($userData['first_name'])) {
-                $setClause[] = "UA_FIRST_NAME = :first_name";
-                $params['first_name'] = $userData['first_name'];
-            }
-            
-            if (isset($userData['last_name'])) {
-                $setClause[] = "UA_LAST_NAME = :last_name";
-                $params['last_name'] = $userData['last_name'];
-            }
-            
-            if (isset($userData['email'])) {
-                $setClause[] = "UA_EMAIL = :email";
-                $params['email'] = $userData['email'];
-            }
-            
-            if (isset($userData['phone'])) {
-                $setClause[] = "UA_PHONE_NUMBER = :phone";
-                $params['phone'] = $userData['phone'];
-            }
-            
-            if (isset($userData['address'])) {
-                $setClause[] = "UA_ADDRESS = :address";
-                $params['address'] = $userData['address'];
-            }
-            
-            if (isset($userData['password']) && !empty($userData['password'])) {
-                $setClause[] = "UA_HASHED_PASSWORD = :password";
-                $params['password'] = password_hash($userData['password'], PASSWORD_DEFAULT);
-            }
-            
-            if (isset($userData['role'])) {
-                $roleId = $this->getRoleIdByName($userData['role']);
-                if ($roleId) {
-                    $setClause[] = "UA_ROLE_ID = :role_id";
-                    $params['role_id'] = $roleId;
-                }
-            }
-            
-            if (isset($userData['is_active'])) {
-                $setClause[] = "UA_IS_ACTIVE = :is_active";
-                $params['is_active'] = $userData['is_active'];
-            }
-            
-            // Always update UA_UPDATED_AT
-            $setClause[] = "UA_UPDATED_AT = CURRENT_TIMESTAMP";
-            
-            // Construct and execute the query if we have something to update
-            if (!empty($setClause)) {
-                $sql = "
-                    UPDATE {$this->table}
-                    SET " . implode(", ", $setClause) . "
-                    WHERE UA_ID = :id AND UA_DELETED_AT IS NULL
-                ";
-                
-                $result = $this->execute($sql, $params);
-                
-                // Commit transaction
-                $this->commit();
-                
-                return $result > 0;
-            }
-            
-            // Nothing to update
-            $this->commit();
-            return true;
-        } catch (\Exception $e) {
-            // Rollback transaction
-            $this->rollback();
-            throw $e;
-        }
-    }
-    
-    /**
-     * Soft delete a user by setting the deleted_at timestamp
-     * 
-     * @param int $id User ID
-     * @return bool True on success, false on failure
-     */
-    public function deleteUser($id)
+    public function getRoleByName($name)
     {
         $sql = "
-            UPDATE {$this->table}
-            SET UA_DELETED_AT = CURRENT_TIMESTAMP
-            WHERE UA_ID = :id AND UA_DELETED_AT IS NULL
+            SELECT *
+            FROM {$this->table}
+            WHERE ur_name = :name
         ";
         
-        return $this->execute($sql, ['id' => $id]) > 0;
+        return $this->queryOne($sql, ['name' => $name]);
     }
-    
+
     /**
-     * Activate a user
+     * Create a new role
      * 
-     * @param int $id User ID
-     * @return bool True on success, false on failure
+     * @param array $data Role data
+     * @return int|false ID of created role or false on failure
      */
-    public function activateUser($id)
+    public function createRole(array $data)
     {
-        return $this->updateUser($id, ['is_active' => true]);
-    }
-    
-    /**
-     * Deactivate a user
-     * 
-     * @param int $id User ID
-     * @return bool True on success, false on failure
-     */
-    public function deactivateUser($id)
-    {
-        return $this->updateUser($id, ['is_active' => false]);
-    }
-    
-    /**
-     * Get role ID by role name
-     * 
-     * @param string $roleName Role name
-     * @return int|null Role ID or null if not found
-     */
-    private function getRoleIdByName($roleName)
-    {
-        $sql = "SELECT UR_ID FROM USER_ROLE WHERE UR_NAME = :role_name";
-        return $this->queryScalar($sql, ['role_name' => $roleName]);
-    }
-    
-    /**
-     * Get all roles
-     * 
-     * @return array All roles
-     */
-    public function getAllRoles()
-    {
-        $sql = "SELECT UR_ID as id, UR_NAME as name FROM USER_ROLE ORDER BY UR_ID ASC";
-        return $this->query($sql);
-    }
-    
-    /**
-     * Check if email already exists (for a different user)
-     * 
-     * @param string $email Email to check
-     * @param int $excludeUserId User ID to exclude (for updates)
-     * @return bool True if email exists, false otherwise
-     */
-    public function emailExists($email, $excludeUserId = null)
-    {
-        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE UA_EMAIL = :email AND UA_DELETED_AT IS NULL";
-        $params = ['email' => $email];
+        // Format the columns and values for the SQL query
+        $columns = implode(', ', array_keys($data));
+        $placeholders = ':' . implode(', :', array_keys($data));
         
-        if ($excludeUserId) {
-            $sql .= " AND UA_ID != :exclude_id";
-            $params['exclude_id'] = $excludeUserId;
+        // Add timestamps
+        $now = date('Y-m-d H:i:s');
+        $data['ur_created_at'] = $now;
+        $data['ur_updated_at'] = $now;
+        
+        $sql = "
+            INSERT INTO {$this->table} ($columns)
+            VALUES ($placeholders)
+            RETURNING {$this->primaryKey}
+        ";
+        
+        try {
+            $this->execute($sql, $data);
+            return $this->lastInsertId();
+        } catch (\Exception $e) {
+            error_log("Error creating role: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Update an existing role
+     * 
+     * @param int $id Role ID
+     * @param array $data Role data
+     * @return bool Success status
+     */
+    public function updateRole($id, array $data)
+    {
+        // Add updated_at timestamp
+        $data['ur_updated_at'] = date('Y-m-d H:i:s');
+        
+        // Build the SET part of the query
+        $setClauses = [];
+        foreach ($data as $key => $value) {
+            if ($key !== 'ur_id' && $key !== 'ur_created_at') {
+                $setClauses[] = "$key = :$key";
+            }
         }
         
-        return $this->queryScalar($sql, $params) > 0;
+        $setClause = implode(', ', $setClauses);
+        
+        $sql = "
+            UPDATE {$this->table}
+            SET $setClause
+            WHERE {$this->primaryKey} = :id
+        ";
+        
+        // Add the ID to the parameter list
+        $data['id'] = $id;
+        
+        try {
+            return $this->execute($sql, $data);
+        } catch (\Exception $e) {
+            error_log("Error updating role: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Delete a role
+     * 
+     * @param int $id Role ID
+     * @return bool Success status
+     */
+    public function deleteRole($id)
+    {
+        $sql = "
+            DELETE FROM {$this->table}
+            WHERE {$this->primaryKey} = :id
+        ";
+        
+        try {
+            return $this->execute($sql, ['id' => $id]);
+        } catch (\Exception $e) {
+            error_log("Error deleting role: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Check if role name exists
+     * 
+     * @param string $name Role name
+     * @return bool True if exists, false otherwise
+     */
+    public function roleNameExists($name)
+    {
+        $sql = "
+            SELECT COUNT(*) as count
+            FROM {$this->table}
+            WHERE ur_name = :name
+        ";
+        
+        $result = $this->queryScalar($sql, ['name' => $name], 0);
+        return $result > 0;
+    }
+
+    /**
+     * Get default role ID (usually for new users)
+     * 
+     * @return int|null Default role ID or null if not found
+     */
+    public function getDefaultRoleId()
+    {
+        // Assuming 'customer' is the default role
+        $role = $this->getRoleByName('customer');
+        return $role ? $role[$this->primaryKey] : null;
     }
 }

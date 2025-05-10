@@ -12,29 +12,6 @@ $publicRoutes = [
 
 // Define the access control map for routes
 $accessMap = [
-    // Admin-only routes
-    '/admin/dashboard' => ['admin'],
-    '/admin/user-management' => ['admin'],
-    '/admin/users/data' => ['admin'],
-    '/admin/users/create' => ['admin'],
-    '/admin/users/update' => ['admin'],
-    '/admin/users/delete' => ['admin'],
-    '/admin/users/activate' => ['admin'],
-    '/admin/users/deactivate' => ['admin'],
-    '/admin/users/get' => ['admin'],
-    '/admin/profile' => ['admin'],
-    
-    // Service requests management (admin-only)
-    '/admin/service-requests' => ['admin'],
-    '/admin/service-requests/data' => ['admin'],
-    '/admin/service-requests/get' => ['admin'],
-    '/admin/service-requests/update' => ['admin'],
-    '/admin/service-requests/delete' => ['admin'],
-    '/admin/service-requests/assign' => ['admin'],
-    '/admin/service-requests/unassign' => ['admin'],
-    '/admin/service-types/get-active' => ['admin'],
-    '/admin/technicians/get-active' => ['admin'],
-
     // Shared (admin and user)
     '/logout' => ['customer', 'technician', 'admin'],
 ];
@@ -71,32 +48,23 @@ $router->map('GET', '/user/bookings', 'App\Controllers\ServiceRequestController#
 $router->map('POST', '/user/bookings/cancel/[i:id]', 'App\Controllers\ServiceRequestController#cancelBooking', 'user_cancel_booking');
 
 // Admin routes
-$router->map('GET', '/admin/dashboard', 'App\Controllers\AdminController#renderAdminDashboard', 'render_admin-dashboard');
-$router->map('GET', '/admin/technicians', 'App\Controllers\AdminController#renderTechnician', 'render-technician');
+$router->map('GET', '/admin/service-request', 'App\Controllers\AdminController#renderServiceRequest', 'render-service-request');
 $router->map('GET', '/admin/inventory', 'App\Controllers\AdminController#renderInventory', 'render-inventory');
 $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#renderAddProduct', 'render-add-product');
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
-$router->map('GET', '/admin/admin-profile', 'App\Controllers\AdminController#renderProfile', 'render-admin-profile');
-$router->map('GET', '/admin/profile', 'App\Controllers\AdminController#renderAdminProfile', 'render-admin_profile');
 
-// User Management Routes - Adding these new routes
-$router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#index', 'admin_user_management');
-$router->map('POST', '/admin/users/data', 'App\Controllers\UserManagementController#getUsersData', 'admin_users_data');
-$router->map('GET', '/admin/users/get/[i:id]', 'App\Controllers\UserManagementController#getUser', 'admin_user_get');
-$router->map('POST', '/admin/users/create', 'App\Controllers\UserManagementController#createUser', 'admin_user_create');
-$router->map('POST', '/admin/users/update/[i:id]', 'App\Controllers\UserManagementController#updateUser', 'admin_user_update');
-$router->map('POST', '/admin/users/delete/[i:id]', 'App\Controllers\UserManagementController#deleteUser', 'admin_user_delete');
-$router->map('POST', '/admin/users/activate/[i:id]', 'App\Controllers\UserManagementController#activateUser', 'admin_user_activate');
-$router->map('POST', '/admin/users/deactivate/[i:id]', 'App\Controllers\UserManagementController#deactivateUser', 'admin_user_deactivate');
-$router->map('GET', '/admin/users/roles', 'App\Controllers\UserManagementController#getRoles', 'admin_user_roles');
+// User Management Routes 
+$router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#index', 'render-user-management');
+$router->map('GET', '/api/users', 'App\Controllers\UserManagementController#getUsers', 'api_get_users');
+$router->map('GET', '/api/users/data', 'App\Controllers\UserManagementController#getUsersData', 'api_get_users_data');
+$router->map('GET', '/api/users/[i:id]', 'App\Controllers\UserManagementController#getUser', 'api_get_user');
+$router->map('POST', '/api/users', 'App\Controllers\UserManagementController#createUser', 'api_create_user');
+$router->map('PUT', '/api/users/[i:id]', 'App\Controllers\UserManagementController#updateUser', 'api_update_user');
+$router->map('DELETE', '/api/users/[i:id]', 'App\Controllers\UserManagementController#deleteUser', 'api_delete_user');
+$router->map('POST', '/api/users/reset-password/[i:id]', 'App\Controllers\UserManagementController#resetPassword', 'api_reset_password');
+$router->map('GET', '/api/users/export', 'App\Controllers\UserManagementController#exportUsers', 'api_export_users');
+$router->map('POST', '/api/users/bulk-action', 'App\Controllers\UserManagementController#bulkAction', 'api_bulk_action');
 
 // Service Request Management Routes
 $router->map('GET', '/admin/service-requests', 'App\Controllers\ServiceRequestController#adminServiceRequests', 'admin_service_requests');
 $router->map('POST', '/admin/service-requests/data', 'App\Controllers\ServiceRequestController#getServiceRequestsData', 'admin_service_requests_data');
-$router->map('GET', '/admin/service-requests/get/[i:id]', 'App\Controllers\ServiceRequestController#getServiceRequest', 'admin_service_request_get');
-$router->map('POST', '/admin/service-requests/update', 'App\Controllers\ServiceRequestController#updateServiceRequest', 'admin_service_request_update');
-$router->map('POST', '/admin/service-requests/delete/[i:id]', 'App\Controllers\ServiceRequestController#deleteServiceRequest', 'admin_service_request_delete');
-$router->map('POST', '/admin/service-requests/assign', 'App\Controllers\ServiceRequestController#assignTechnician', 'admin_service_request_assign');
-$router->map('POST', '/admin/service-requests/unassign', 'App\Controllers\ServiceRequestController#unassignTechnician', 'admin_service_request_unassign');
-$router->map('GET', '/admin/service-types/get-active', 'App\Controllers\ServiceRequestController#getActiveServiceTypes', 'admin_service_types_get_active');
-$router->map('GET', '/admin/technicians/get-active', 'App\Controllers\ServiceRequestController#getActiveTechnicians', 'admin_technicians_get_active');

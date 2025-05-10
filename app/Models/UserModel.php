@@ -34,11 +34,7 @@ class UserModel extends BaseModel
     protected $timestamps = true;
     protected $useSoftDeletes = true;
 
-    /**
-     * Get all users with role information
-     * 
-     * @return array Array of user records with role information
-     */
+
     public function getAllUsers()
     {
         return $this->select('user_account.*, user_role.ur_name AS role_name')
@@ -48,26 +44,19 @@ class UserModel extends BaseModel
                     ->get();
     }
 
-    /**
-     * Get users filtered by role and/or status
-     * 
-     * @param string $role Role name
-     * @param string $status Status ('active' or 'inactive')
-     * @return array Filtered user records
-     */
+
     public function getFilteredUsers($role = '', $status = '')
     {
         $query = $this->select('user_account.*, user_role.ur_name AS role_name')
                        ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
                        ->whereSoftDeleted('user_account');
-        
-        // Apply role filter
+    
         if (!empty($role)) {
             $query->where('user_role.ur_name = :role')
                   ->bind(['role' => $role]);
         }
         
-        // Apply status filter
+        
         if (!empty($status)) {
             $isActive = ($status === 'active') ? 1 : 0;
             $query->where('user_account.ua_is_active = :is_active')
@@ -142,9 +131,7 @@ class UserModel extends BaseModel
         return $this->update($data, "{$this->primaryKey} = :id", ['id' => $id]);
     }
 
-    /*
-     Delete a user by ID
-     */
+
     public function deleteUser($id, $permanent = false)
     {
         if ($permanent && $this->useSoftDeletes) {
@@ -295,10 +282,7 @@ class UserModel extends BaseModel
         );
     }
     
-    /**
-     * Cleanup expired remember tokens
-     * @return bool Success status
-     */
+
     public function cleanupExpiredTokens()
     {
         return $this->update(
@@ -311,12 +295,7 @@ class UserModel extends BaseModel
         );
     }
 
-    /**
-     * Get user statistics by ID
-     * 
-     * @param int $userId User ID
-     * @return array User statistics
-     */
+
     public function getUserStats($userId)
     {
         // Sample implementation - in a real system, you would query related tables

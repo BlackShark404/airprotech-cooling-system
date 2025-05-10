@@ -4,414 +4,559 @@ namespace App\Controllers;
 
 class UserManagementController extends BaseController
 {
-    private $userModel;
-    
-    public function __construct()
+    protected $userModel;
+
+    public function __construct() 
     {
         parent::__construct();
-        $this->userModel = $this->loadModel('UserManagementModel');
+        $this->userModel = $this->loadModel('UserModel');
     }
     
-    /**
-     * Render the user management page
-     */
+
+    //Display the user management page
     public function index()
     {
+        // Check if user has admin permissions
+        if (!$this->checkPermission('admin')) {
+            $this->redirect('/dashboard');
+        }
+        
         $this->render('admin/user-management');
     }
     
     /**
-     * Get users data for DataTables
+     * API Endpoint: Get all users
      */
-    public function getUsersData()
+    public function getUsers()
     {
-        // Check if request is AJAX
         if (!$this->isAjax()) {
             $this->jsonError('Invalid request', 400);
         }
         
         try {
-            // Get request parameters from DataTables
-            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 1;
-            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
-            $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
-            $search = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            // Get all users
+            $users = $this->userModel->getAllUsers();
             
-            // Order column
-            $orderColumn = 'id'; // Default order column
-            $orderDirection = 'asc'; // Default order direction
-            
-            if (isset($_POST['order'][0]['column'])) {
-                $columnIndex = $_POST['order'][0]['column'];
-                
-                // Map column index to column name
-                $columns = ['id', 'name', 'email', 'role', 'status', 'last_login'];
-                
-                if (isset($columns[$columnIndex])) {
-                    $orderColumn = $columns[$columnIndex];
-                    $orderDirection = $_POST['order'][0]['dir'] ?? 'asc';
-                }
+            // Format user data
+            $formattedUsers = [];
+            foreach ($users as $user) {
+                $formattedUsers[] = [
+                    'id' => $user['ua_id'],
+                    'first_name' => $user['ua_first_name'],
+                    'last_name' => $user['ua_last_name'],
+                    'email' => $user['ua_email'],
+                    'role' => $user['role_name'],
+                    'status' => $user['ua_is_active'] ? 'active' : 'inactive',
+                    'registered' => date('M d, Y', strtotime($user['ua_created_at'])),
+                    'last_login' => $user['ua_last_login'] 
+                    //A sample data
+                        ? date('M d, Y H:i', strtotime($user['ua_last_login'])) 
+                        : 'Never',
+                    'logins' => rand(1, 100), // Sample data
+                    'purchases' => rand(0, 10), // Sample data
+                    'sessions' => rand(1, 50), // Sample data
+                    'hours' => rand(1, 200), // Sample data
+                    'comments' => rand(0, 30), // Sample data
+                    'ratings' => rand(0, 20) // Sample data
+                ];
             }
             
-            // Get filters
-            $filters = [];
-            
-            if (isset($_POST['role']) && !empty($_POST['role'])) {
-                $filters['role'] = $_POST['role'];
-            }
-            
-            if (isset($_POST['status']) && !empty($_POST['status'])) {
-                $filters['status'] = $_POST['status'];
-            }
-            
-            // Get users with pagination and filtering
-            $result = $this->userModel->getUsers($start, $length, $search, $filters, $orderColumn, $orderDirection);
-            
-            // Format dates for display
-            foreach ($result['data'] as &$user) {
-                if (isset($user['last_login']) && $user['last_login']) {
-                    $user['last_login'] = date('M d, Y h:i A', strtotime($user['last_login']));
-                } else {
-                    $user['last_login'] = 'Never';
-                }
-            }
-            
-            // Prepare response for DataTables
-            $response = [
-                'draw' => $draw,
-                'recordsTotal' => $result['recordsTotal'],
-                'recordsFiltered' => $result['recordsFiltered'],
-                'data' => $result['data']
-            ];
-            
-            $this->json($response);
+            $this->jsonSuccess($formattedUsers);
         } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
+            $this->jsonError('Error fetching user data: ' . $e->getMessage(), 500);
         }
     }
     
     /**
-     * Get a single user by ID
+     * API Endpoint: Get user data for DataTables
      */
-    public function getUser($id)
+    public function getUsersData()
     {
-        // Check if request is AJAX
         if (!$this->isAjax()) {
             $this->jsonError('Invalid request', 400);
         }
         
         try {
-            $user = $this->userModel->getUserById($id);
+            // Get all users with role information
+            $users = $this->userModel->select('user_account.*, user_role.ur_name AS role_name')
+                          ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                          ->get();
+            
+            $this->jsonSuccess($users);
+        } catch (\Exception $e) {
+            $this->jsonError('Error fetching user data: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * API Endpoint: Get a specific user
+     */
+    public function getUser($id)
+    {
+        try {
+            $user = $this->userModel->findById($id);
             
             if (!$user) {
                 $this->jsonError('User not found', 404);
             }
             
-            // Format dates for display
-            if (isset($user['last_login']) && $user['last_login']) {
-                $user['last_login'] = date('M d, Y h:i A', strtotime($user['last_login']));
-            } else {
-                $user['last_login'] = 'Never';
-            }
+            $userData = [
+                'id' => $user['ua_id'],
+                'first_name' => $user['ua_first_name'],
+                'last_name' => $user['ua_last_name'],
+                'email' => $user['ua_email'],
+                'role' => $user['role_name'],
+                'role_id' => $user['ua_role_id'],
+                'status' => $user['ua_is_active'] ? 'active' : 'inactive',
+                'is_active' => $user['ua_is_active'],
+                'registered' => date('M d, Y', strtotime($user['ua_created_at'])),
+                'last_login' => $user['ua_last_login'] 
+                    ? date('M d, Y H:i', strtotime($user['ua_last_login'])) 
+                    : 'Never'
+            ];
             
-            if (isset($user['created_at']) && $user['created_at']) {
-                $user['created_at'] = date('M d, Y h:i A', strtotime($user['created_at']));
-            }
-            
-            if (isset($user['updated_at']) && $user['updated_at']) {
-                $user['updated_at'] = date('M d, Y h:i A', strtotime($user['updated_at']));
-            }
-            
-            $this->jsonSuccess($user);
+            $this->jsonSuccess($userData);
         } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
+            $this->jsonError('Error fetching user: ' . $e->getMessage(), 500);
         }
     }
     
-    /**
-     * Create a new user
-     */
+
+    // API Endpoint: Create a new user
+
     public function createUser()
     {
         // Check if request is AJAX and POST
         if (!$this->isAjax() || !$this->isPost()) {
-            $this->jsonError('Invalid request', 400);
+            $this->jsonError('Invalid request method', 400);
+        }
+        
+        // Get form data
+        $data = $this->getJsonInput();
+        
+        // Validate required fields
+        $requiredFields = ['first_name', 'last_name', 'email', 'password', 'role_id', 'is_active'];
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || empty($data[$field])) {
+                $this->jsonError("Missing required field: $field", 400);
+            }
+        }
+        
+        // Check if email already exists
+        if ($this->userModel->emailExists($data['email'])) {
+            $this->jsonError('Email address already in use', 400);
         }
         
         try {
-            // Get user data from request
-            $userData = $this->getJsonInput();
+            // Map input data to user model fields
+            $userData = [
+                'ua_first_name' => $data['first_name'],
+                'ua_last_name' => $data['last_name'],
+                'ua_email' => $data['email'],
+                'ua_hashed_password' => $this->userModel->hashPassword($data['password']),
+                'ua_role_id' => $data['role_id'],
+                'ua_is_active' => $data['is_active']
+            ];
             
-            // Validate user data
-            $errors = $this->validateUserData($userData);
+            // Create user
+            $result = $this->userModel->createUser($userData);
             
-            if (!empty($errors)) {
-                $this->jsonError('Validation failed', 422, ['errors' => $errors]);
-            }
-            
-            // Check if email already exists
-            if ($this->userModel->emailExists($userData['email'])) {
-                $this->jsonError('Email already exists', 422, ['errors' => ['email' => 'This email is already in use']]);
-            }
-            
-            // Create new user
-            $newUserId = $this->userModel->createUser($userData);
-            
-            if (!$newUserId) {
+            if ($result) {
+                $this->jsonSuccess([], 'User created successfully');
+            } else {
                 $this->jsonError('Failed to create user', 500);
             }
-            
-            // Get created user data
-            $newUser = $this->userModel->getUserById($newUserId);
-            
-            $this->jsonSuccess($newUser, 'User created successfully');
         } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
+            $this->jsonError('Error creating user: ' . $e->getMessage(), 500);
         }
     }
     
-    /**
-     * Update an existing user
-     */
+
     public function updateUser($id)
-    {
-        // Check if request is AJAX and POST
-        if (!$this->isAjax() || !$this->isPost()) {
-            $this->jsonError('Invalid request', 400);
-        }
-        
-        try {
-            // Check if user exists
-            $existingUser = $this->userModel->getUserById($id);
-            
-            if (!$existingUser) {
-                $this->jsonError('User not found', 404);
-            }
-            
-            // Get user data from request
-            $userData = $this->getJsonInput();
-            
-            // Validate user data (partial update)
-            $errors = $this->validateUserData($userData, true);
-            
-            if (!empty($errors)) {
-                $this->jsonError('Validation failed', 422, ['errors' => $errors]);
-            }
-            
-            // Check if email already exists (for a different user)
-            if (isset($userData['email']) && $userData['email'] !== $existingUser['email']) {
-                if ($this->userModel->emailExists($userData['email'], $id)) {
-                    $this->jsonError('Email already exists', 422, ['errors' => ['email' => 'This email is already in use']]);
-                }
-            }
-            
-            // Update user
-            $success = $this->userModel->updateUser($id, $userData);
-            
-            if (!$success) {
-                $this->jsonError('Failed to update user', 500);
-            }
-            
-            // Get updated user data
-            $updatedUser = $this->userModel->getUserById($id);
-            
-            $this->jsonSuccess($updatedUser, 'User updated successfully');
-        } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
-        }
-    }
-    
-    /**
-     * Delete a user
-     */
-    public function deleteUser($id)
-    {
-        // Check if request is AJAX and POST
-        if (!$this->isAjax() || !$this->isPost()) {
-            $this->jsonError('Invalid request', 400);
-        }
-        
-        try {
-            // Check if user exists
-            $user = $this->userModel->getUserById($id);
-            
-            if (!$user) {
-                $this->jsonError('User not found', 404);
-            }
-            
-            // Delete user
-            $success = $this->userModel->deleteUser($id);
-            
-            if (!$success) {
-                $this->jsonError('Failed to delete user', 500);
-            }
-            
-            $this->jsonSuccess(null, 'User deleted successfully');
-        } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
-        }
-    }
-    
-    /**
-     * Activate a user
-     */
-    public function activateUser($id)
-    {
-        // Check if request is AJAX and POST
-        if (!$this->isAjax() || !$this->isPost()) {
-            $this->jsonError('Invalid request', 400);
-        }
-        
-        try {
-            // Check if user exists
-            $user = $this->userModel->getUserById($id);
-            
-            if (!$user) {
-                $this->jsonError('User not found', 404);
-            }
-            
-            // Activate user
-            $success = $this->userModel->activateUser($id);
-            
-            if (!$success) {
-                $this->jsonError('Failed to activate user', 500);
-            }
-            
-            $this->jsonSuccess(null, 'User activated successfully');
-        } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
-        }
-    }
-    
-    /**
-     * Deactivate a user
-     */
-    public function deactivateUser($id)
-    {
-        // Check if request is AJAX and POST
-        if (!$this->isAjax() || !$this->isPost()) {
-            $this->jsonError('Invalid request', 400);
-        }
-        
-        try {
-            // Check if user exists
-            $user = $this->userModel->getUserById($id);
-            
-            if (!$user) {
-                $this->jsonError('User not found', 404);
-            }
-            
-            // Deactivate user
-            $success = $this->userModel->deactivateUser($id);
-            
-            if (!$success) {
-                $this->jsonError('Failed to deactivate user', 500);
-            }
-            
-            $this->jsonSuccess(null, 'User deactivated successfully');
-        } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
-        }
-    }
-    
-    /**
-     * Get all roles
-     */
-    public function getRoles()
     {
         // Check if request is AJAX
         if (!$this->isAjax()) {
             $this->jsonError('Invalid request', 400);
         }
         
+        // Get JSON input data
+        $data = $this->getJsonInput();
+        
+        // Check if user exists
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            $this->jsonError('User not found', 404);
+        }
+        
+        // Validate required fields
+        $requiredFields = ['first_name', 'last_name', 'email', 'role_id', 'is_active'];
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || $data[$field] === '') {
+                $this->jsonError("Missing required field: $field", 400);
+            }
+        }
+        
+        // Check email uniqueness (if changed)
+        if ($data['email'] !== $user['ua_email'] && $this->userModel->emailExists($data['email'])) {
+            $this->jsonError('Email address already in use', 400);
+        }
+        
         try {
-            $roles = $this->userModel->getAllRoles();
-            $this->jsonSuccess($roles);
+            // Map input data to user model fields
+            $userData = [
+                'ua_first_name' => $data['first_name'],
+                'ua_last_name' => $data['last_name'],
+                'ua_email' => $data['email'],
+                'ua_role_id' => $data['role_id'],
+                'ua_is_active' => $data['is_active']
+            ];
+            
+            // Add password if provided
+            if (isset($data['password']) && !empty($data['password'])) {
+                $userData['ua_hashed_password'] = $this->userModel->hashPassword($data['password']);
+            }
+            
+            $result = $this->userModel->updateUser($id, $userData);
+            
+            if ($result) {
+                $this->jsonSuccess([], 'User updated successfully');
+            } else {
+                $this->jsonError('Failed to update user', 500);
+            }
         } catch (\Exception $e) {
-            $this->jsonError($e->getMessage(), 500);
+            $this->jsonError('Error updating user: ' . $e->getMessage(), 500);
         }
     }
     
     /**
-     * Validate user data
-     * 
-     * @param array $userData User data
-     * @param bool $isUpdate Is this a partial update (some fields may be missing)
-     * @return array Validation errors
+     * API Endpoint: Delete a user
      */
-    private function validateUserData($userData, $isUpdate = false)
+    public function deleteUser($id)
     {
-        $errors = [];
-        
-        // First name validation
-        if (isset($userData['first_name'])) {
-            if (empty($userData['first_name'])) {
-                $errors['first_name'] = 'First name is required';
-            } elseif (strlen($userData['first_name']) > 255) {
-                $errors['first_name'] = 'First name cannot exceed 255 characters';
-            }
-        } elseif (!$isUpdate) {
-            $errors['first_name'] = 'First name is required';
+        // Check if request is AJAX
+        if (!$this->isAjax()) {
+            $this->jsonError('Invalid request', 400);
         }
         
-        // Last name validation
-        if (isset($userData['last_name'])) {
-            if (empty($userData['last_name'])) {
-                $errors['last_name'] = 'Last name is required';
-            } elseif (strlen($userData['last_name']) > 255) {
-                $errors['last_name'] = 'Last name cannot exceed 255 characters';
-            }
-        } elseif (!$isUpdate) {
-            $errors['last_name'] = 'Last name is required';
+        // Check if user exists
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            $this->jsonError('User not found', 404);
         }
         
-        // Email validation
-        if (isset($userData['email'])) {
-            if (empty($userData['email'])) {
-                $errors['email'] = 'Email is required';
-            } elseif (!filter_var($userData['email'], FILTER_VALIDATE_EMAIL)) {
-                $errors['email'] = 'Invalid email format';
-            } elseif (strlen($userData['email']) > 255) {
-                $errors['email'] = 'Email cannot exceed 255 characters';
+        try {
+            // Use soft delete by default
+            $permanent = $this->request('permanent', false);
+            $result = $this->userModel->deleteUser($id, $permanent);
+            
+            if ($result) {
+                $this->jsonSuccess([], 'User deleted successfully');
+            } else {
+                $this->jsonError('Failed to delete user', 500);
             }
-        } elseif (!$isUpdate) {
-            $errors['email'] = 'Email is required';
+        } catch (\Exception $e) {
+            $this->jsonError('Error deleting user: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * API Endpoint: Reset user password
+     */
+    public function resetPassword($id)
+    {
+        // Check if request is AJAX
+        if (!$this->isAjax()) {
+            $this->jsonError('Invalid request', 400);
         }
         
-        // Password validation (required for new users, optional for updates)
-        if (isset($userData['password'])) {
-            if (!$isUpdate && empty($userData['password'])) {
-                $errors['password'] = 'Password is required';
-            } elseif (!empty($userData['password']) && strlen($userData['password']) < 6) {
-                $errors['password'] = 'Password must be at least 6 characters long';
-            }
-        } elseif (!$isUpdate) {
-            $errors['password'] = 'Password is required';
+        // Check if user exists
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            $this->jsonError('User not found', 404);
         }
         
-        // Role validation
-        if (isset($userData['role'])) {
-            if (empty($userData['role'])) {
-                $errors['role'] = 'Role is required';
+        // Get input data
+        $data = $this->getJsonInput();
+        
+        try {
+            // Generate a random password if none provided
+            $newPassword = isset($data['password']) && !empty($data['password']) 
+                ? $data['password'] 
+                : $this->generateRandomPassword();
+            
+            // Update the user's password
+            $result = $this->userModel->updateUser($id, [
+                'ua_hashed_password' => $this->userModel->hashPassword($newPassword)
+            ]);
+            
+            if ($result) {
+                $responseData = [];
+                
+                // Include the generated password in the response if it was auto-generated
+                if (!isset($data['password']) || empty($data['password'])) {
+                    $responseData['generated_password'] = $newPassword;
+                }
+                
+                $this->jsonSuccess($responseData, 'Password reset successfully');
+            } else {
+                $this->jsonError('Failed to reset password', 500);
             }
-        } elseif (!$isUpdate) {
-            $errors['role'] = 'Role is required';
+        } catch (\Exception $e) {
+            $this->jsonError('Error resetting password: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * API Endpoint: Export users
+     */
+    public function exportUsers()
+    {
+        // Get export parameters
+        $format = $this->request('format', 'csv');
+        
+        try {
+            // Get all users
+            $users = $this->userModel->select('user_account.*, user_role.ur_name AS role_name')
+                          ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                          ->get();
+            
+            // Prepare data for export
+            $exportData = [];
+            foreach ($users as $user) {
+                $exportData[] = [
+                    'ID' => $user['ua_id'],
+                    'First Name' => $user['ua_first_name'],
+                    'Last Name' => $user['ua_last_name'],
+                    'Email' => $user['ua_email'],
+                    'Role' => $user['role_name'],
+                    'Status' => $user['ua_is_active'] ? 'Active' : 'Inactive',
+                    'Registered' => date('Y-m-d', strtotime($user['ua_created_at'])),
+                    'Last Login' => $user['ua_last_login'] 
+                        ? date('Y-m-d H:i', strtotime($user['ua_last_login'])) 
+                        : 'Never'
+                ];
+            }
+            
+            // Generate filename
+            $filename = 'users_export_' . date('Y-m-d_H-i-s');
+            
+            // Export based on requested format
+            switch ($format) {
+                case 'csv':
+                    $this->exportToCsv($exportData, $filename);
+                    break;
+                case 'excel':
+                    $this->exportToExcel($exportData, $filename);
+                    break;
+                case 'pdf':
+                    $this->exportToPdf($exportData, $filename);
+                    break;
+                default:
+                    $this->jsonError('Invalid export format', 400);
+            }
+        } catch (\Exception $e) {
+            $this->jsonError('Error exporting users: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * API Endpoint: Perform bulk action on users
+     */
+    public function bulkAction()
+    {
+        // Check if request is AJAX and POST
+        if (!$this->isAjax() || !$this->isPost()) {
+            $this->jsonError('Invalid request method', 400);
         }
         
-        // Phone validation (optional)
-        if (isset($userData['phone']) && !empty($userData['phone'])) {
-            if (strlen($userData['phone']) > 20) {
-                $errors['phone'] = 'Phone number cannot exceed 20 characters';
+        // Get input data
+        $data = $this->getJsonInput();
+        
+        // Validate required fields
+        if (!isset($data['action']) || !isset($data['user_ids']) || empty($data['user_ids'])) {
+            $this->jsonError('Missing required parameters', 400);
+        }
+        
+        $action = $data['action'];
+        $userIds = $data['user_ids'];
+        
+        // Validate action
+        $validActions = ['activate', 'deactivate', 'delete'];
+        if (!in_array($action, $validActions)) {
+            $this->jsonError('Invalid action', 400);
+        }
+        
+        try {
+            $successCount = 0;
+            
+            foreach ($userIds as $userId) {
+                switch ($action) {
+                    case 'activate':
+                        if ($this->userModel->activateUser($userId)) {
+                            $successCount++;
+                        }
+                        break;
+                    case 'deactivate':
+                        if ($this->userModel->deactivateUser($userId)) {
+                            $successCount++;
+                        }
+                        break;
+                    case 'delete':
+                        if ($this->userModel->deleteUser($userId)) {
+                            $successCount++;
+                        }
+                        break;
+                }
+            }
+            
+            $actionVerb = $action . 'd'; // activate -> activated, etc.
+            $this->jsonSuccess(
+                ['count' => $successCount],
+                "Successfully {$actionVerb} {$successCount} users"
+            );
+        } catch (\Exception $e) {
+            $this->jsonError('Error performing bulk action: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * Generate a random password
+     * 
+     * @param int $length Password length
+     * @return string Generated password
+     */
+    private function generateRandomPassword($length = 12)
+    {
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_';
+        $password = '';
+        
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $chars[rand(0, strlen($chars) - 1)];
+        }
+        
+        return $password;
+    }
+    
+    /**
+     * Export data to CSV
+     */
+    private function exportToCsv($data, $filename)
+    {
+        // Set headers for CSV download
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
+        
+        // Create output stream
+        $output = fopen('php://output', 'w');
+        
+        // Add headers
+        if (!empty($data)) {
+            fputcsv($output, array_keys($data[0]));
+        }
+        
+        // Add data rows
+        foreach ($data as $row) {
+            fputcsv($output, $row);
+        }
+        
+        fclose($output);
+        exit;
+    }
+    
+    /**
+     * Export data to Excel
+     */
+    private function exportToExcel($data, $filename)
+    {
+        // In a real implementation, you would use a library like PhpSpreadsheet
+        // For this example, we'll use CSV with Excel headers
+        header('Content-Type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment; filename="' . $filename . '.xls"');
+        
+        echo '<table border="1">';
+        
+        // Add headers
+        if (!empty($data)) {
+            echo '<tr>';
+            foreach (array_keys($data[0]) as $header) {
+                echo '<th>' . htmlspecialchars($header) . '</th>';
+            }
+            echo '</tr>';
+        }
+        
+        // Add data rows
+        foreach ($data as $row) {
+            echo '<tr>';
+            foreach ($row as $cell) {
+                echo '<td>' . htmlspecialchars($cell) . '</td>';
+            }
+            echo '</tr>';
+        }
+        
+        echo '</table>';
+        exit;
+    }
+    
+    /**
+     * Export data to PDF
+     */
+    private function exportToPdf($data, $filename)
+    {
+        // In a real implementation, you would use a library like TCPDF or mPDF
+        // For this example, we'll return a simple HTML document with PDF headers
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '.pdf"');
+        
+        // Note: This is just a placeholder. In a real implementation,
+        // you would convert HTML to PDF using a PDF library
+        echo '<!DOCTYPE html>
+        <html>
+        <head>
+            <title>User Export</title>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <h1>User Export</h1>
+            <table>
+                <tr>';
+        
+        // Add headers
+        if (!empty($data)) {
+            foreach (array_keys($data[0]) as $header) {
+                echo '<th>' . htmlspecialchars($header) . '</th>';
             }
         }
         
-        // Address validation (optional)
-        if (isset($userData['address']) && !empty($userData['address'])) {
-            if (strlen($userData['address']) > 1000) {
-                $errors['address'] = 'Address cannot exceed 1000 characters';
+        echo '</tr>';
+        
+        // Add data rows
+        foreach ($data as $row) {
+            echo '<tr>';
+            foreach ($row as $cell) {
+                echo '<td>' . htmlspecialchars($cell) . '</td>';
             }
+            echo '</tr>';
         }
         
-        return $errors;
+        echo '</table>
+        </body>
+        </html>';
+        
+        exit;
+    }
+    
+    /**
+     * Helper method to get all users
+     */
+    private function getAllUsers()
+    {
+        return $this->userModel->select('user_account.*, user_role.ur_name AS role_name')
+                      ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
+                      ->get();
     }
 }
