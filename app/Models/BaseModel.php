@@ -16,7 +16,6 @@ class BaseModel
     protected $joins = [];
     protected $wheres = [];
     protected $groupBy = '';
-    protected $having = '';
     protected $orderBy = '';
     protected $limit;
     protected $offset;
@@ -24,6 +23,7 @@ class BaseModel
     
     // Model configuration properties
     protected $fillable = [];
+    protected $searchableFields = ['name'];
     protected $useSoftDeletes = false;
     protected $timestamps = false;
     protected $createdAtColumn = 'created_at';
@@ -37,10 +37,6 @@ class BaseModel
     {
         $this->db = Database::getInstance()->getConnection();
     }
-
-    // -----------------------------------------
-    // Basic CRUD Operations
-    // -----------------------------------------
     
     /**
      * Get all records
@@ -62,6 +58,20 @@ class BaseModel
 
         $result = $this->limit(1)->get();
         return $result[0] ?? null;
+    }
+    
+    /**
+     * Find a record by primary key or throw exception
+     */
+    public function findOrFail($id)
+    {
+        $result = $this->find($id);
+        
+        if (!$result) {
+            throw new \Exception("Record not found with ID: $id");
+        }
+        
+        return $result;
     }
 
     /**
@@ -88,9 +98,19 @@ class BaseModel
             $data[$this->updatedAtColumn] = $now;
         }
 
+        // Remove null values if not explicitly set
+        $data = array_filter($data, function($value) {
+            return $value !== null;
+        });
+
+        if (empty($data)) {
+            throw new \Exception("No valid data provided for insert");
+        }
+
         $columns = implode(',', array_keys($data));
         $placeholders = ':' . implode(', :', array_keys($data));
         $sql = "INSERT INTO {$this->table} ($columns) VALUES ($placeholders)";
+        
         return $this->execute($sql, $data);
     }
 
@@ -107,8 +127,18 @@ class BaseModel
             $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
         }
 
+        // Remove null values if not explicitly set
+        $data = array_filter($data, function($value) {
+            return $value !== null;
+        });
+
+        if (empty($data)) {
+            throw new \Exception("No valid data provided for update");
+        }
+
         $set = implode(', ', array_map(fn($k) => "$k = :$k", array_keys($data)));
         $sql = "UPDATE {$this->table} SET $set WHERE $where";
+        
         return $this->execute($sql, array_merge($data, $whereParams));
     }
 
@@ -122,6 +152,7 @@ class BaseModel
         } else {
             $sql = "DELETE FROM {$this->table} WHERE $where";
         }
+        
         return $this->execute($sql, $params);
     }
 
@@ -133,6 +164,7 @@ class BaseModel
         if (!$this->useSoftDeletes) return false;
         
         $sql = "UPDATE {$this->table} SET {$this->deletedAtColumn} = NULL WHERE $where";
+        
         return $this->execute($sql, $params);
     }
 
@@ -142,6 +174,60 @@ class BaseModel
     public function truncate()
     {
         return $this->db->exec("TRUNCATE TABLE {$this->table}");
+    }
+    
+    /**
+     * Begin a transaction
+     */
+    public function beginTransaction()
+    {
+        return $this->db->beginTransaction();
+    }
+    
+    /**
+     * Commit a transaction
+     */
+    public function commit()
+    {
+        return $this->db->commit();
+    }
+    
+    /**
+     * Rollback a transaction
+     */
+    public function rollback()
+    {
+        return $this->db->rollBack();
+    }
+    
+    /**
+     * Check if a transaction is active
+     */
+    public function inTransaction()
+    {
+        return $this->db->inTransaction();
+    }
+    
+    /**
+     * Execute a callback within a transaction
+     * 
+     * @param callable $callback Function to execute within transaction
+     * @return mixed Result of the callback
+     * @throws \Exception Rethrows exceptions after rollback
+     */
+    public function transaction(callable $callback)
+    {
+        try {
+            $this->beginTransaction();
+            $result = $callback($this);
+            $this->commit();
+            return $result;
+        } catch (\Exception $e) {
+            if ($this->inTransaction()) {
+                $this->rollback();
+            }
+            throw $e;
+        }
     }
 
     // -----------------------------------------
@@ -180,6 +266,10 @@ class BaseModel
 
     /**
      * Add a basic where equality condition
+     * 
+     * @param string $column The column to compare
+     * @param mixed $value The value to compare against
+     * @return $this
      */
     public function whereEqual($column, $value)
     {
@@ -191,6 +281,10 @@ class BaseModel
 
     /**
      * Add a where not equal condition
+     * 
+     * @param string $column The column to compare
+     * @param mixed $value The value to compare against
+     * @return $this
      */
     public function whereNotEqual($column, $value)
     {
@@ -202,6 +296,10 @@ class BaseModel
 
     /**
      * Add a where greater than condition
+     * 
+     * @param string $column The column to compare
+     * @param mixed $value The value to compare against
+     * @return $this
      */
     public function whereGreaterThan($column, $value)
     {
@@ -213,6 +311,10 @@ class BaseModel
 
     /**
      * Add a where greater than or equal condition
+     * 
+     * @param string $column The column to compare
+     * @param mixed $value The value to compare against
+     * @return $this
      */
     public function whereGreaterThanOrEqual($column, $value)
     {
@@ -224,6 +326,10 @@ class BaseModel
 
     /**
      * Add a where less than condition
+     * 
+     * @param string $column The column to compare
+     * @param mixed $value The value to compare against
+     * @return $this
      */
     public function whereLessThan($column, $value)
     {
@@ -235,6 +341,10 @@ class BaseModel
 
     /**
      * Add a where less than or equal condition
+     * 
+     * @param string $column The column to compare
+     * @param mixed $value The value to compare against
+     * @return $this
      */
     public function whereLessThanOrEqual($column, $value)
     {
@@ -246,6 +356,10 @@ class BaseModel
 
     /**
      * Add a LIKE condition
+     * 
+     * @param string $column The column to compare
+     * @param string $value The pattern to match against (use % for wildcards)
+     * @return $this
      */
     public function whereLike($column, $value)
     {
@@ -257,6 +371,10 @@ class BaseModel
 
     /**
      * Add a NOT LIKE condition
+     * 
+     * @param string $column The column to compare
+     * @param string $value The pattern to not match against (use % for wildcards)
+     * @return $this
      */
     public function whereNotLike($column, $value)
     {
@@ -268,6 +386,11 @@ class BaseModel
 
     /**
      * Add a BETWEEN condition
+     * 
+     * @param string $column The column to check
+     * @param mixed $min The minimum value
+     * @param mixed $max The maximum value
+     * @return $this
      */
     public function whereBetween($column, $min, $max)
     {
@@ -281,6 +404,11 @@ class BaseModel
 
     /**
      * Add a NOT BETWEEN condition
+     * 
+     * @param string $column The column to check
+     * @param mixed $min The minimum value
+     * @param mixed $max The maximum value
+     * @return $this
      */
     public function whereNotBetween($column, $min, $max)
     {
@@ -294,6 +422,10 @@ class BaseModel
 
     /**
      * Add an IN condition
+     * 
+     * @param string $column The column to check
+     * @param array $values Array of values to check against
+     * @return $this
      */
     public function whereIn($column, array $values)
     {
@@ -319,6 +451,10 @@ class BaseModel
 
     /**
      * Add a NOT IN condition
+     * 
+     * @param string $column The column to check
+     * @param array $values Array of values to check against
+     * @return $this
      */
     public function whereNotIn($column, array $values)
     {
@@ -344,6 +480,9 @@ class BaseModel
 
     /**
      * Add an IS NULL condition
+     * 
+     * @param string $column The column to check
+     * @return $this
      */
     public function whereNull($column)
     {
@@ -353,6 +492,9 @@ class BaseModel
 
     /**
      * Add an IS NOT NULL condition
+     * 
+     * @param string $column The column to check
+     * @return $this
      */
     public function whereNotNull($column)
     {
@@ -362,6 +504,8 @@ class BaseModel
 
     /**
      * Start a where group with opening parenthesis
+     * 
+     * @return $this
      */
     public function whereGroup()
     {
@@ -371,6 +515,8 @@ class BaseModel
 
     /**
      * End a where group with closing parenthesis
+     * 
+     * @return $this
      */
     public function endWhereGroup()
     {
@@ -380,6 +526,8 @@ class BaseModel
 
     /**
      * Add an OR condition
+     * 
+     * @return $this
      */
     public function orWhere()
     {
@@ -429,18 +577,6 @@ class BaseModel
     }
 
     /**
-     * Add a having clause for filtering grouped results
-     */
-    public function having($condition, array $params = [])
-    {
-        $this->having = "HAVING $condition";
-        if (!empty($params)) {
-            $this->bind($params);
-        }
-        return $this;
-    }
-
-    /**
      * Add an order by clause
      */
     public function orderBy($columns)
@@ -467,20 +603,6 @@ class BaseModel
         return $this;
     }
 
-    /**
-     * Execute a raw SQL query and return the results
-     */
-    public function raw($sql, array $params = [], $fetch = true)
-    {
-        if ($fetch) {
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchAll();
-        } else {
-            return $this->execute($sql, $params);
-        }
-    }
-
     // -----------------------------------------
     // Aggregation Methods
     // -----------------------------------------
@@ -495,6 +617,9 @@ class BaseModel
 
     /**
      * Calculate the sum of a column
+     * 
+     * @param string $column The column to calculate sum
+     * @return int|float The sum result
      */
     public function sum($column)
     {
@@ -503,6 +628,9 @@ class BaseModel
 
     /**
      * Calculate the average of a column
+     * 
+     * @param string $column The column to calculate average
+     * @return int|float The average result
      */
     public function avg($column)
     {
@@ -511,6 +639,9 @@ class BaseModel
 
     /**
      * Get the minimum value of a column
+     * 
+     * @param string $column The column to get minimum value
+     * @return mixed The minimum value
      */
     public function min($column)
     {
@@ -529,28 +660,18 @@ class BaseModel
      * Perform an aggregate function
      */
     public function aggregate($function, $column, $alias = null)
-{
-    $column = $column === '*' ? '*' : "`$column`";
-    $alias = $alias ?: strtolower($function);
-    
-    $originalSelect = $this->select;
-    $originalOrderBy = $this->orderBy;
-    
-    // When doing aggregates, we should not order by columns not in GROUP BY
-    if ($function == 'COUNT' && !$this->groupBy && $this->orderBy) {
-        $this->orderBy = ''; // Clear the ORDER BY clause for aggregates without GROUP BY
+    {
+        $column = $column === '*' ? '*' : "`$column`";
+        $alias = $alias ?: strtolower($function);
+        
+        $originalSelect = $this->select;
+        $this->select = "$function($column) as $alias";
+        
+        $result = $this->get();
+        $this->select = $originalSelect;
+        
+        return isset($result[0][$alias]) ? $result[0][$alias] : 0;
     }
-    
-    $this->select = "$function($column) as $alias";
-    
-    $result = $this->get();
-    
-    // Restore original values
-    $this->select = $originalSelect;
-    $this->orderBy = $originalOrderBy;
-    
-    return isset($result[0][$alias]) ? $result[0][$alias] : 0;
-}
 
     /**
      * Perform multiple aggregate functions
@@ -611,10 +732,6 @@ class BaseModel
             $sql .= ' ' . $this->groupBy;
         }
 
-        if ($this->having) {
-            $sql .= ' ' . $this->having;
-        }
-
         if ($this->orderBy) {
             $sql .= ' ' . $this->orderBy;
         }
@@ -647,6 +764,9 @@ class BaseModel
     
     /**
      * Generate a unique parameter name for prepared statements
+     * 
+     * @param string $base Base name for the parameter
+     * @return string Sanitized unique parameter name
      */
     protected function generateParamName($base) 
     {
@@ -666,6 +786,8 @@ class BaseModel
 
     /**
      * Process where conditions to create a valid SQL WHERE clause
+     * 
+     * @return string Processed WHERE clause
      */
     protected function processWheres()
     {
@@ -710,11 +832,19 @@ class BaseModel
      */
     protected function rawQuery($query, $params = [])
     {
-        $stmt = $this->db->prepare($query);
-        $stmt->execute($params);
-        $result = $stmt->fetchAll();
-        $this->reset(); // Reset after fetching
-        return $result;
+        try {
+            $stmt = $this->db->prepare($query);
+            $stmt->execute($params);
+            $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $this->reset(); // Reset after fetching
+            return $result;
+        } catch (\PDOException $e) {
+            // Log the error with query and parameters for debugging
+            error_log("Database query error: " . $e->getMessage());
+            error_log("Query: $query");
+            error_log("Parameters: " . json_encode($params));
+            throw $e; // Rethrow for handling at higher levels
+        }
     }
 
     /**
@@ -722,10 +852,18 @@ class BaseModel
      */
     protected function execute($query, $params = [])
     {
-        $stmt = $this->db->prepare($query);
-        $result = $stmt->execute($params);
-        $this->reset(); // Reset after execution
-        return $result;
+        try {
+            $stmt = $this->db->prepare($query);
+            $result = $stmt->execute($params);
+            $this->reset(); // Reset after execution
+            return $result;
+        } catch (\PDOException $e) {
+            // Log the error with query and parameters for debugging
+            error_log("Database execution error: " . $e->getMessage());
+            error_log("Query: $query");
+            error_log("Parameters: " . json_encode($params));
+            throw $e; // Rethrow for handling at higher levels
+        }
     }
 
     /**
@@ -737,7 +875,6 @@ class BaseModel
         $this->joins = [];
         $this->wheres = [];
         $this->groupBy = '';
-        $this->having = '';
         $this->orderBy = '';
         $this->limit = null;
         $this->offset = null;

@@ -1,14 +1,16 @@
 <?php
 
 namespace App\Models;
-use App\Models\BaseModel;
+
+use PDO;
+
 /**
  * User Model
  * 
- * This model represents a user in the system and demonstrates how to
- * extend the BaseModel class with specific functionality.
+ * This model represents a user in the system and extends the Model class
+ * with specific functionality.
  */
-class UserModel extends BaseModel
+class UserModel extends Model
 {
     protected $table = 'user_account';
     protected $primaryKey = 'ua_id';
@@ -34,79 +36,93 @@ class UserModel extends BaseModel
     protected $timestamps = true;
     protected $useSoftDeletes = true;
 
-
     public function getAllUsers()
     {
-        return $this->select('user_account.*, user_role.ur_name AS role_name')
-                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
-                    ->whereSoftDeleted('user_account')
-                    ->orderBy('user_account.ua_last_name, user_account.ua_first_name')
-                    ->get();
+        $sql = "SELECT user_account.*, user_role.ur_name AS role_name
+                FROM user_account
+                INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+                WHERE user_account.ua_deleted_at IS NULL
+                ORDER BY user_account.ua_last_name, user_account.ua_first_name";
+        
+        return $this->query($sql);
     }
-
 
     public function getFilteredUsers($role = '', $status = '')
     {
-        $query = $this->select('user_account.*, user_role.ur_name AS role_name')
-                       ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
-                       ->whereSoftDeleted('user_account');
-    
-        if (!empty($role)) {
-            $query->where('user_role.ur_name = :role')
-                  ->bind(['role' => $role]);
-        }
+        $sql = "SELECT user_account.*, user_role.ur_name AS role_name
+                FROM user_account
+                INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+                WHERE user_account.ua_deleted_at IS NULL";
         
+        $params = [];
+        
+        if (!empty($role)) {
+            $sql .= " AND user_role.ur_name = :role";
+            $params['role'] = $role;
+        }
         
         if (!empty($status)) {
-            $isActive = ($status === 'active') ? 1 : 0;
-            $query->where('user_account.ua_is_active = :is_active')
-                  ->bind(['is_active' => $isActive]);
+            $sql .= " AND user_account.ua_is_active = :is_active";
+            $params['is_active'] = ($status === 'active') ? 1 : 0;
         }
         
-        return $query->orderBy('user_account.ua_last_name, user_account.ua_first_name')
-                     ->get();
+        $sql .= " ORDER BY user_account.ua_last_name, user_account.ua_first_name";
+        
+        return $this->query($sql, $params);
     }
 
-    public function findById($id) {
-        return $this->select('user_account.*, user_role.ur_name AS role_name')
-                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
-                    ->where('user_account.ua_id = :id')
-                    ->bind(['id' => $id])
-                    ->first();
+    public function findById($id)
+    {
+        $sql = "SELECT user_account.*, user_role.ur_name AS role_name
+                FROM user_account
+                INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+                WHERE user_account.ua_id = :id";
+        
+        return $this->queryOne($sql, ['id' => $id]);
     }
 
     public function findByEmail($email)
     {
-        return $this->select('user_account.*, user_role.ur_name AS role_name')
-                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
-                    ->where('user_account.ua_email = :email')
-                    ->bind(['email' => $email])
-                    ->first();
+        $sql = "SELECT user_account.*, user_role.ur_name AS role_name
+                FROM user_account
+                INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+                WHERE user_account.ua_email = :email";
+        
+        return $this->queryOne($sql, ['email' => $email]);
     }
 
     public function getByRole($roleName)
     {
-        return $this->select('user_account.*, user_role.ur_name AS role_name')
-                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
-                    ->where('user_role.ur_name = :role_name')
-                    ->bind(['role_name' => $roleName])
-                    ->whereSoftDeleted('user_account')
-                    ->get();
+        $sql = "SELECT user_account.*, user_role.ur_name AS role_name
+                FROM user_account
+                INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+                WHERE user_role.ur_name = :role_name
+                AND user_account.ua_deleted_at IS NULL";
+        
+        return $this->query($sql, ['role_name' => $roleName]);
     }
 
     public function getNewest()
     {
-        return $this->orderBy('ua_created_at DESC')
-                    ->get();
+        $sql = "SELECT *
+                FROM user_account
+                WHERE ua_deleted_at IS NULL
+                ORDER BY ua_created_at DESC";
+        
+        return $this->query($sql);
     }
 
     public function search($searchTerm)
     {
-        return $this->where("ua_first_name ILIKE :search_term OR ua_last_name ILIKE :search_term OR ua_email ILIKE :search_term")
-                    ->bind(['search_term' => "%$searchTerm%"])
-                    ->whereSoftDeleted()
-                    ->orderBy('ua_last_name, ua_first_name')
-                    ->get();
+        $sql = "SELECT *
+                FROM user_account
+                WHERE (ua_first_name ILIKE :search_term
+                    OR ua_last_name ILIKE :search_term
+                    OR ua_email ILIKE :search_term)
+                AND ua_deleted_at IS NULL
+                ORDER BY ua_last_name, ua_first_name";
+        
+        return $this->query($sql, ['search_term' => "%$searchTerm%"]);
     }
 
     public function hashPassword($password)
@@ -121,97 +137,144 @@ class UserModel extends BaseModel
 
     public function createUser(array $data)
     {
-        // No need to manually set timestamps as BaseModel.insert() handles this
-        return $this->insert($data);
+        if ($this->timestamps) {
+            $data[$this->createdAtColumn] = date('Y-m-d H:i:s');
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+
+        $insertData = $this->formatInsertData($data);
+        $sql = "INSERT INTO {$this->table} ({$insertData['columns']})
+                VALUES ({$insertData['placeholders']})";
+        
+        $this->execute($sql, $insertData['filteredData']);
+        return $this->lastInsertId();
     }
 
     public function updateUser($id, array $data)
     {
-        // No need to manually set updated_at as BaseModel.update() handles this
-        return $this->update($data, "{$this->primaryKey} = :id", ['id' => $id]);
-    }
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
 
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        $params = array_merge($updateData['filteredData'], ['id' => $id]);
+        return $this->execute($sql, $params);
+    }
 
     public function deleteUser($id, $permanent = false)
     {
         if ($permanent && $this->useSoftDeletes) {
-            // Permanently delete the user from the database
-            return $this->execute(
-                "DELETE FROM {$this->table} WHERE {$this->primaryKey} = :id",
-                ['id' => $id]
-            );
+            $sql = "DELETE FROM {$this->table}
+                    WHERE {$this->primaryKey} = :id";
+            return $this->execute($sql, ['id' => $id]);
         }
         
-        // Use the standard delete method which respects soft deletes
-        return $this->delete("{$this->primaryKey} = :id", ['id' => $id]);
+        $data = [
+            $this->deletedAtColumn => date('Y-m-d H:i:s'),
+            $this->updatedAtColumn => date('Y-m-d H:i:s')
+        ];
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $id]));
     }
 
     public function emailExists($email)
     {
-        return $this->exists('ua_email = :email', ['email' => $email]);
+        $sql = "SELECT EXISTS (
+                    SELECT 1 FROM {$this->table}
+                    WHERE ua_email = :email
+                )";
+        
+        return $this->queryScalar($sql, ['email' => $email], false);
     }
 
     public function getActiveUsers($days = 30)
     {
         $cutoff = date('Y-m-d H:i:s', strtotime("-$days days"));
-        return $this->where('ua_is_active = :is_active')
-                    ->where('ua_last_login >= :cutoff')
-                    ->bind([
-                        'is_active' => true,
-                        'cutoff' => $cutoff
-                    ])
-                    ->whereSoftDeleted()
-                    ->orderBy('ua_last_login DESC')
-                    ->get();
+        $sql = "SELECT *
+                FROM user_account
+                WHERE ua_is_active = :is_active
+                AND ua_last_login >= :cutoff
+                AND ua_deleted_at IS NULL
+                ORDER BY ua_last_login DESC";
+        
+        return $this->query($sql, [
+            'is_active' => true,
+            'cutoff' => $cutoff
+        ]);
     }
 
     public function findByRememberToken($token)
     {
-        // Add check for token expiration
-        return $this->where('ua_remember_token = :token')
-                    ->where('ua_remember_token_expires_at > NOW()')
-                    ->bind(['token' => $token])
-                    ->first();
+        $sql = "SELECT *
+                FROM user_account
+                WHERE ua_remember_token = :token
+                AND ua_remember_token_expires_at > NOW()";
+        
+        return $this->queryOne($sql, ['token' => $token]);
     }
 
     public function updateLastLogin($userId)
     {
-        return $this->update(
-            [
-                'ua_last_login' => date('Y-m-d H:i:s')
-            ],
-            "{$this->primaryKey} = :id",
-            ['id' => $userId]
-        );
+        $data = ['ua_last_login' => date('Y-m-d H:i:s')];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $userId]));
     }
 
     public function generateRememberToken($userId, $days = 30)
     {
         $token = bin2hex(random_bytes(32));
         $expiresAt = date('Y-m-d H:i:s', strtotime("+$days days"));
-
-        $this->update(
-            [
-                'ua_remember_token' => $token,
-                'ua_remember_token_expires_at' => $expiresAt
-            ],
-            "{$this->primaryKey} = :id",
-            ['id' => $userId]
-        );
-
+        
+        $data = [
+            'ua_remember_token' => $token,
+            'ua_remember_token_expires_at' => $expiresAt
+        ];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $userId]));
         return $token;
     }
 
     public function clearRememberToken($userId)
     {
-        return $this->update(
-            [
-                'ua_remember_token' => null,
-                'ua_remember_token_expires_at' => null
-            ],
-            "{$this->primaryKey} = :id",
-            ['id' => $userId]
-        );
+        $data = [
+            'ua_remember_token' => null,
+            'ua_remember_token_expires_at' => null
+        ];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $userId]));
     }
 
     public function getFullName($user)
@@ -221,84 +284,114 @@ class UserModel extends BaseModel
 
     public function activateUser($userId)
     {
-        return $this->update(
-            ['ua_is_active' => true],
-            "{$this->primaryKey} = :id",
-            ['id' => $userId]
-        );
+        $data = ['ua_is_active' => true];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $userId]));
     }
 
     public function deactivateUser($userId)
     {
-        return $this->update(
-            ['ua_is_active' => false],
-            "{$this->primaryKey} = :id",
-            ['id' => $userId]
-        );
+        $data = ['ua_is_active' => false];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $userId]));
     }
 
     public function getActiveOnly()
     {
-        return $this->where('ua_is_active = :is_active')
-                    ->bind(['is_active' => true])
-                    ->get();
+        $sql = "SELECT *
+                FROM user_account
+                WHERE ua_is_active = :is_active
+                AND ua_deleted_at IS NULL";
+        
+        return $this->query($sql, ['is_active' => true]);
     }
 
     public function getInactiveUsers($days = 90)
     {
         $cutoff = date('Y-m-d H:i:s', strtotime("-$days days"));
-
-        return $this->where('(ua_last_login IS NULL OR ua_last_login < :cutoff)')
-                    ->bind(['cutoff' => $cutoff])
-                    ->whereSoftDeleted()
-                    ->orderBy('ua_last_login ASC NULLS FIRST')
-                    ->get();
+        $sql = "SELECT *
+                FROM user_account
+                WHERE (ua_last_login IS NULL OR ua_last_login < :cutoff)
+                AND ua_deleted_at IS NULL
+                ORDER BY ua_last_login ASC NULLS FIRST";
+        
+        return $this->query($sql, ['cutoff' => $cutoff]);
     }
 
     public function getAdmins()
     {
-        return $this->select('user_account.*')
-                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
-                    ->where('user_role.ur_name = :user_role')
-                    ->bind(['user_role' => 'admin'])
-                    ->get();
+        $sql = "SELECT user_account.*
+                FROM user_account
+                INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+                WHERE user_role.ur_name = :user_role
+                AND user_account.ua_deleted_at IS NULL";
+        
+        return $this->query($sql, ['user_role' => 'admin']);
     }
 
     public function getRegularUsers()
     {
-        return $this->select('user_account.*')
-                    ->join('user_role', 'user_account.ua_role_id', 'user_role.ur_id')
-                    ->where('user_role.ur_name = :user_role')
-                    ->bind(['user_role' => 'customer'])
-                    ->get();
+        $sql = "SELECT user_account.*
+                FROM user_account
+                INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
+                WHERE user_role.ur_name = :user_role
+                AND user_account.ua_deleted_at IS NULL";
+        
+        return $this->query($sql, ['user_role' => 'customer']);
     }
 
     public function changeRole($userId, $roleId)
     {
-        return $this->update(
-            ['ua_role_id' => $roleId],
-            "{$this->primaryKey} = :id",
-            ['id' => $userId]
-        );
+        $data = ['ua_role_id' => $roleId];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE {$this->primaryKey} = :id";
+        
+        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $userId]));
     }
-    
 
     public function cleanupExpiredTokens()
     {
-        return $this->update(
-            [
-                'ua_remember_token' => null,
-                'ua_remember_token_expires_at' => null
-            ],
-            "ua_remember_token IS NOT NULL AND ua_remember_token_expires_at < NOW()",
-            []
-        );
+        $data = [
+            'ua_remember_token' => null,
+            'ua_remember_token_expires_at' => null
+        ];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+        }
+        
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
+                WHERE ua_remember_token IS NOT NULL
+                AND ua_remember_token_expires_at < NOW()";
+        
+        return $this->execute($sql, $updateData['filteredData']);
     }
-
 
     public function getUserStats($userId)
     {
-        // Sample implementation - in a real system, you would query related tables
         return [
             'services' => rand(0, 10),
             'active_services' => rand(0, 5),
@@ -310,12 +403,6 @@ class UserModel extends BaseModel
         ];
     }
 
-    /**
-     * Bulk activate users
-     * 
-     * @param array $userIds Array of user IDs
-     * @return int Number of updated users
-     */
     public function bulkActivate(array $userIds)
     {
         if (empty($userIds)) {
@@ -324,25 +411,24 @@ class UserModel extends BaseModel
 
         $placeholders = [];
         $params = [];
-        
         foreach ($userIds as $index => $id) {
             $placeholders[] = ":id{$index}";
             $params["id{$index}"] = $id;
         }
+
+        $data = ['ua_is_active' => true];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = 'NOW()';
+        }
         
-        $sql = "UPDATE {$this->table} SET ua_is_active = TRUE, {$this->updatedAtColumn} = NOW() 
+        $updateData = $this->formatUpdateData($data, [], $this->timestamps ? [$this->updatedAtColumn => 'NOW()'] : []);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
         
-        $this->execute($sql, $params);
-        return count($userIds);
+        return $this->execute($sql, array_merge($updateData['filteredData'], $params));
     }
-    
-    /**
-     * Bulk deactivate users
-     * 
-     * @param array $userIds Array of user IDs
-     * @return int Number of updated users
-     */
+
     public function bulkDeactivate(array $userIds)
     {
         if (empty($userIds)) {
@@ -351,26 +437,24 @@ class UserModel extends BaseModel
 
         $placeholders = [];
         $params = [];
-        
         foreach ($userIds as $index => $id) {
             $placeholders[] = ":id{$index}";
             $params["id{$index}"] = $id;
         }
+
+        $data = ['ua_is_active' => false];
+        if ($this->timestamps) {
+            $data[$this->updatedAtColumn] = 'NOW()';
+        }
         
-        $sql = "UPDATE {$this->table} SET ua_is_active = FALSE, {$this->updatedAtColumn} = NOW() 
+        $updateData = $this->formatUpdateData($data, [], $this->timestamps ? [$this->updatedAtColumn => 'NOW()'] : []);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
         
-        $this->execute($sql, $params);
-        return count($userIds);
+        return $this->execute($sql, array_merge($updateData['filteredData'], $params));
     }
-    
-    /**
-     * Bulk delete users
-     * 
-     * @param array $userIds Array of user IDs
-     * @param bool $permanent Whether to permanently delete or soft delete
-     * @return int Number of deleted users
-     */
+
     public function bulkDelete(array $userIds, $permanent = false)
     {
         if (empty($userIds)) {
@@ -379,22 +463,27 @@ class UserModel extends BaseModel
 
         $placeholders = [];
         $params = [];
-        
         foreach ($userIds as $index => $id) {
             $placeholders[] = ":id{$index}";
             $params["id{$index}"] = $id;
         }
-        
+
         if ($permanent) {
-            // Permanent delete
-            $sql = "DELETE FROM {$this->table} WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
-        } else {
-            // Soft delete
-            $sql = "UPDATE {$this->table} SET {$this->deletedAtColumn} = NOW(), {$this->updatedAtColumn} = NOW() 
+            $sql = "DELETE FROM {$this->table}
                     WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
+            return $this->execute($sql, $params);
         }
+
+        $data = [
+            $this->deletedAtColumn => date('Y-m-d H:i:s'),
+            $this->updatedAtColumn => date('Y-m-d H:i:s')
+        ];
         
-        $this->execute($sql, $params);
-        return count($userIds);
+        $updateData = $this->formatUpdateData($data);
+        $sql = "UPDATE {$this->table}
+                SET {$updateData['updateClause']}m
+                WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
+        
+        return $this->execute($sql, array_merge($updateData['filteredData'], $params));
     }
 }
