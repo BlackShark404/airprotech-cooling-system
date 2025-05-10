@@ -8,16 +8,18 @@
             <div class="col-md-3 mb-4">
                 <h4 class="h6 mb-3">Quick Links</h4>
                 <ul class="list-unstyled">
-                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                        <li><a href="/admin/services" class="text-white-50 text-decoration-none">Services</a></li>
-                        <li><a href="/admin/products" class="text-white-50 text-decoration-none">Products</a></li>
-                        <li><a href="/admin/my-order-services" class="text-white-50 text-decoration-none">My Orders and Services Request</a></li>
-                    <?php else: ?>
+                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'customer'): ?>
                         <li><a href="#hero" class="text-white-50 text-decoration-none">Home</a></li>
                         <li><a href="#our-services" class="text-white-50 text-decoration-none">Services</a></li>
                         <li><a href="#featured-products" class="text-white-50 text-decoration-none">Products</a></li>
                         <li><a href="#why-choose-us" class="text-white-50 text-decoration-none">Why Choose Us</a></li>
                         <li><a href="#contact" class="text-white-50 text-decoration-none">Contact</a></li>
+
+                        
+                    <?php else: ?>
+                        <li><a href="/user/services" class="text-white-50 text-decoration-none">Services</a></li>
+                        <li><a href="/user/products" class="text-white-50 text-decoration-none">Products</a></li>
+                        <li><a href="/user/my-order-services" class="text-white-50 text-decoration-none">My Orders and Services Request</a></li>
                     <?php endif; ?>
                 </ul>
             </div>

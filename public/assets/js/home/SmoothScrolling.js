@@ -17,3 +17,15 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const heroCarousel = document.getElementById('heroCarousel');
+    if (heroCarousel) {
+      const carousel = new bootstrap.Carousel(heroCarousel, {
+        interval: 3000,  // Change slides every 3 seconds
+        ride: 'carousel',
+        wrap: true,
+        pause: 'hover'
+      });
+    }
+  });

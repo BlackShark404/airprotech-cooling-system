@@ -2,8 +2,6 @@
 
 namespace App\Controllers;
 
-use DateTime;
-
 use Core\Cookie;
 use Core\Session;
 use Core\AvatarGenerator;

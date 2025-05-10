@@ -37,7 +37,7 @@ class Session
     public static function flash(string $key, mixed $message = null): mixed
     {
         if ($message !== null) {
-            $_SESSION['_flash'][$key][] = $message; // allow stacking
+            $_SESSION['_flash'][$key][] = $message; 
             return null;
         }
 
