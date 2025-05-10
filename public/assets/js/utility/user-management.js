@@ -5,26 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
       responsive: true,
       dom: "Bfrtip", // Properly display buttons
       autoWidth: false, // Disable auto width calculation
-      buttons: [
-        {
-          extend: "copy",
-          className: "btn btn-sm btn-light me-1",
-        },
-        {
-          extend: "csv",
-          className: "btn btn-sm btn-light me-1",
-        },
-        {
-          extend: "excel",
-          className: "btn btn-sm btn-light me-1",
-        },
-        {
-          extend: "pdf",
-          className: "btn btn-sm btn-light me-1",
-        },
-      ],
-  
-  
+     
       //This is for add  customer
       columns: [
         { data: "id", title: "ID" },
@@ -285,15 +266,6 @@ document.addEventListener("DOMContentLoaded", function () {
   
       userTableManager.applyFilters(filters);
   
-      // Apply search if provided
-      const table = $("#usersTable").DataTable();
-      table.search(searchQuery).draw();
-  
-      // Show info toast
-      userTableManager.showInfoToast(
-        "Filters Applied",
-        "Table has been filtered"
-      );
   
       // Update user count
       updateUserCount();
@@ -313,11 +285,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const table = $("#usersTable").DataTable();
       table.search("").draw();
   
-      // Show info toast
-      userTableManager.showInfoToast(
-        "Filters Reset",
-        "All filters have been cleared"
-      );
   
       // Update user count
       updateUserCount();

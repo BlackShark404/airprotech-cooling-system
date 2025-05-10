@@ -9,17 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/home.css">
     <style>
-        :root {
-            --primary-color: #0d6efd;
-            --secondary-color: #6c757d;
-            --accent-color: #dc3545;
-            --light-bg: #f8f9fa;
-        }
-        
-        .top-bar {
-            background-color: var(--primary-color);
-        }
-        
+      
         .footer {
             background-color: #212529;
         }
@@ -147,8 +137,8 @@
     <!-- Main Navigation -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="/assets/images/Air-TechLogo.jpg" alt="Logo" class="rounded-circle me-2" width="40" height="40">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/assets/images/logo/Air-TechLogo.png" alt="Logo" class="rounded-circle me-2" width="40" height="40">
                 <span class="brand-text">AIR<span class="text-danger">PROTECH</span></span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -156,7 +146,6 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="/user/dashboard">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/orders-services">My Orders & Service Requests</a></li>

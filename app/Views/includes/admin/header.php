@@ -58,9 +58,6 @@ function base_url($uri = '', $protocol = true) {
     <div class="nav-scroll">
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link <?= $activeTab === 'dashboard' ? 'active' : '' ?>" href="<?= base_url('/admin/dashboard') ?>">Dashboard</a>
-            </li>
-            <li class="nav-item">
                 <a class="nav-link <?= $activeTab === 'service_requests' ? 'active' : '' ?>" href="<?= base_url('/admin/service-requests') ?>">Service Requests</a>
             </li>
             <li class="nav-item">

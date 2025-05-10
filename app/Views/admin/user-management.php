@@ -25,7 +25,7 @@ include __DIR__ . '/../includes/admin/base.php';
         </div>
     </div>
     
-    <!-- Filters & Search Row -->
+    <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3 align-items-end">
@@ -52,12 +52,7 @@ include __DIR__ . '/../includes/admin/base.php';
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="search-box w-100">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search users...">
-                    </div>
-                </div>
+ 
                 <div class="col-md-3">
                     <div class="d-flex gap-2">
                         <button id="applyFilters" class="btn btn-primary w-100">
@@ -74,10 +69,7 @@ include __DIR__ . '/../includes/admin/base.php';
     
     <!-- Users Table -->
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center py-3">
-            <h5 class="card-title mb-0">Users</h5>
-            <span class="badge bg-light text-dark" id="userCount">Loading...</span>
-        </div>
+        
         <div class="card-body table-container">
             <!-- Using empty thead to let DataTables build it properly -->
             <table id="usersTable" class="table align-middle table-hover display nowrap" style="width:100%">
@@ -413,9 +405,9 @@ include __DIR__ . '/../includes/admin/base.php';
 </div>
 
 <!-- Required JavaScript -->
+<script src="/assets/js/javascript-query/jquery-3.7.1.js"></script>
 <link rel="stylesheet" href="//cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>    
-<script src="/assets/js/javascript-query/jquery-3.7.1.js"></script>
 <script src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
 <script src="//cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
@@ -425,7 +417,7 @@ include __DIR__ . '/../includes/admin/base.php';
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
 
 <!-- DataTablesManager -->
-<script src="/assets/js/utility/DataTableManager.js"></script>
+<script src="/assets/js/utility/DataTablesManager.js"></script>
 <script src="/assets/js/utility/user-management.js"></script>
 <script>  	
 let table = new DataTable('#myTable');

@@ -63,7 +63,6 @@ $router->map('PUT', '/api/users/[i:id]', 'App\Controllers\UserManagementControll
 $router->map('DELETE', '/api/users/[i:id]', 'App\Controllers\UserManagementController#deleteUser', 'api_delete_user');
 $router->map('POST', '/api/users/reset-password/[i:id]', 'App\Controllers\UserManagementController#resetPassword', 'api_reset_password');
 $router->map('GET', '/api/users/export', 'App\Controllers\UserManagementController#exportUsers', 'api_export_users');
-$router->map('POST', '/api/users/bulk-action', 'App\Controllers\UserManagementController#bulkAction', 'api_bulk_action');
 
 // Service Request Management Routes
 $router->map('GET', '/admin/service-requests', 'App\Controllers\ServiceRequestController#adminServiceRequests', 'admin_service_requests');

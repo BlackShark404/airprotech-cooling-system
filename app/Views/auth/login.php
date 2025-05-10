@@ -18,10 +18,6 @@
                 <img src="/assets/images/logo/Air-TechLogo.png" alt="Logo" class="rounded-circle me-2" width="40" height="40">
                 <a class="navbar-brand" href="/">AIR<span class="brand-red">PROTECH</span></a>
                 <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="/">Home</a>
-                    <a class="nav-link" href="#">About</a>
-                    <a class="nav-link" href="#">Services</a>
-                    <a class="nav-link" href="#">Contact</a>
                 </div>
             </div>
         </nav>
@@ -43,20 +39,10 @@
                             <p class="mb-3">Connect. Share. Grow.</p>
 
                             <ul class="feature-list">
-                                <li><i class="fas fa-check-circle"></i> 24/7 Technical Support</li>
                                 <li><i class="fas fa-check-circle"></i> Professional HVAC Installation</li>
                                 <li><i class="fas fa-check-circle"></i> Energy-efficient Solutions</li>
                                 <li><i class="fas fa-check-circle"></i> Preventive Maintenance Plans</li>
                             </ul>
-                        </div>
-
-                        <div class="trusted-by">
-                            <p>TRUSTED BY</p>
-                            <div class="company-logos">
-                                <span>ACME Corp</span>
-                                <span>GlobalTech</span>
-                                <span>EcoSmart</span>
-                            </div>
                         </div>
 
                         <i class="fas fa-fan fan-icon fa-spin" style="--fa-animation-duration: 15s;"></i>
@@ -97,7 +83,6 @@
                                         <input class="form-check-input" type="checkbox" id="remember" name="remember">
                                         <label class="form-check-label" for="remember">Remember me</label>
                                     </div>
-                                    <a href="#" class="toggle-link">Forgot password?</a>
                                 </div>
                                 <div class="d-grid mb-3">
                                     <button type="submit" class="btn btn-primary">Log In</button>
