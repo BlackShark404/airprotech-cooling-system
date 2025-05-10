@@ -8,7 +8,7 @@ use PDO;
  * User Model
  * 
  * This model represents a user in the system and extends the Model class
- * with specific functionality.
+ * with specific functionality, using PostgreSQL NOW() for timestamps.
  */
 class UserModel extends Model
 {
@@ -137,12 +137,13 @@ class UserModel extends Model
 
     public function createUser(array $data)
     {
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->createdAtColumn] = date('Y-m-d H:i:s');
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->createdAtColumn] = 'NOW()';
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
 
-        $insertData = $this->formatInsertData($data);
+        $insertData = $this->formatInsertData($data, [], $expressions);
         $sql = "INSERT INTO {$this->table} ({$insertData['columns']})
                 VALUES ({$insertData['placeholders']})";
         
@@ -152,11 +153,12 @@ class UserModel extends Model
 
     public function updateUser($id, array $data)
     {
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
 
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
@@ -173,17 +175,18 @@ class UserModel extends Model
             return $this->execute($sql, ['id' => $id]);
         }
         
-        $data = [
-            $this->deletedAtColumn => date('Y-m-d H:i:s'),
-            $this->updatedAtColumn => date('Y-m-d H:i:s')
-        ];
+        $expressions = [];
+        if ($this->timestamps) {
+            $expressions[$this->deletedAtColumn] = 'NOW()';
+            $expressions[$this->updatedAtColumn] = 'NOW()';
+        }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData([], [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
         
-        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $id]));
+        return $this->execute($sql, ['id' => $id]);
     }
 
     public function emailExists($email)
@@ -224,17 +227,19 @@ class UserModel extends Model
 
     public function updateLastLogin($userId)
     {
-        $data = ['ua_last_login' => date('Y-m-d H:i:s')];
+        $expressions = [
+            'ua_last_login' => 'NOW()'
+        ];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData([], [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
         
-        return $this->execute($sql, array_merge($updateData['filteredData'], ['id' => $userId]));
+        return $this->execute($sql, ['id' => $userId]);
     }
 
     public function generateRememberToken($userId, $days = 30)
@@ -246,11 +251,12 @@ class UserModel extends Model
             'ua_remember_token' => $token,
             'ua_remember_token_expires_at' => $expiresAt
         ];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
@@ -265,11 +271,12 @@ class UserModel extends Model
             'ua_remember_token' => null,
             'ua_remember_token_expires_at' => null
         ];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
@@ -285,11 +292,12 @@ class UserModel extends Model
     public function activateUser($userId)
     {
         $data = ['ua_is_active' => true];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
@@ -300,11 +308,12 @@ class UserModel extends Model
     public function deactivateUser($userId)
     {
         $data = ['ua_is_active' => false];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
@@ -359,11 +368,12 @@ class UserModel extends Model
     public function changeRole($userId, $roleId)
     {
         $data = ['ua_role_id' => $roleId];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} = :id";
@@ -377,11 +387,12 @@ class UserModel extends Model
             'ua_remember_token' => null,
             'ua_remember_token_expires_at' => null
         ];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = date('Y-m-d H:i:s');
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE ua_remember_token IS NOT NULL
@@ -417,11 +428,12 @@ class UserModel extends Model
         }
 
         $data = ['ua_is_active' => true];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = 'NOW()';
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data, [], $this->timestamps ? [$this->updatedAtColumn => 'NOW()'] : []);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
@@ -443,11 +455,12 @@ class UserModel extends Model
         }
 
         $data = ['ua_is_active' => false];
+        $expressions = [];
         if ($this->timestamps) {
-            $data[$this->updatedAtColumn] = 'NOW()';
+            $expressions[$this->updatedAtColumn] = 'NOW()';
         }
         
-        $updateData = $this->formatUpdateData($data, [], $this->timestamps ? [$this->updatedAtColumn => 'NOW()'] : []);
+        $updateData = $this->formatUpdateData($data, [], $expressions);
         $sql = "UPDATE {$this->table}
                 SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
@@ -474,14 +487,15 @@ class UserModel extends Model
             return $this->execute($sql, $params);
         }
 
-        $data = [
-            $this->deletedAtColumn => date('Y-m-d H:i:s'),
-            $this->updatedAtColumn => date('Y-m-d H:i:s')
-        ];
+        $expressions = [];
+        if ($this->timestamps) {
+            $expressions[$this->deletedAtColumn] = 'NOW()';
+            $expressions[$this->updatedAtColumn] = 'NOW()';
+        }
         
-        $updateData = $this->formatUpdateData($data);
+        $updateData = $this->formatUpdateData([], [], $expressions);
         $sql = "UPDATE {$this->table}
-                SET {$updateData['updateClause']}m
+                SET {$updateData['updateClause']}
                 WHERE {$this->primaryKey} IN (" . implode(',', $placeholders) . ")";
         
         return $this->execute($sql, array_merge($updateData['filteredData'], $params));
