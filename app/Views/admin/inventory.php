@@ -2,646 +2,731 @@
 $title = 'Inventory Management - AirProtect';
 $activeTab = 'inventory';
 
-// Add any additional styles specific to this page
-$additionalStyles = <<<HTML
-<style>
-    .filter-card {
-        border-radius: 12px;
-        background-color: white;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-    }
-    .filter-dropdown {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        padding: 0.5rem 1rem;
-        width: 100%;
-    }
-    .action-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: #6c757d;
-        background-color: #f8f9fa;
-        margin-right: 5px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .action-icon:hover {
-        background-color: #e9ecef;
-    }
-    .pagination-container {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        margin-top: 1rem;
-    }
-    .pagination-button {
-        width: 36px;
-        height: 36px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 2px;
-        cursor: pointer;
-        color: #6c757d;
-        background-color: #fff;
-        border: 1px solid #dee2e6;
-    }
-    .pagination-button.active {
-        background-color: #007bff;
-        color: white;
-        border-color: #007bff;
-    }
-    .pagination-button:hover:not(.active) {
-        background-color: #f8f9fa;
-    }
-    .inventory-tab {
-        padding: 10px 20px;
-        border-radius: 8px;
-        margin-right: 10px;
-        cursor: pointer;
-        font-weight: 500;
-    }
-    .inventory-tab.active {
-        background-color: #007bff;
-        color: white;
-    }
-    .inventory-tab:not(.active) {
-        background-color: #f8f9fa;
-        color: #6c757d;
-        border: 1px solid #dee2e6;
-    }
-</style>
-HTML;
-
-// Start output buffering for content
 ob_start();
 ?>
-
 <div class="container-fluid py-4">
     <!-- Page Heading and Add Product Button -->
     <div class="row mb-4">
         <div class="col">
             <h1 class="h3 mb-0">Inventory Management</h1>
-            <p class="text-muted">Manage your product inventory</p>
+            <p class="text-muted">Manage your product inventory and product information</p>
         </div>
-        
     </div>
 
-    <!-- Inventory Tabs -->
+    <!-- Dashboard Stats -->
     <div class="row mb-4">
-        <div class="col d-flex">
-            <div class="inventory-tab active">Inventory 1</div>
-            <div class="inventory-tab">Inventory 2</div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon products">
+                    <i class="bi bi-box"></i>
+                </div>
+                <div class="stats-info">
+                    <h3 id="totalProducts">0</h3>
+                    <p>Total Products</p>
+                </div>
+            </div>
         </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon variants">
+                    <i class="bi bi-layers"></i>
+                </div>
+                <div class="stats-info">
+                    <h3 id="totalVariants">0</h3>
+                    <p>Product Variants</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon warehouses">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stats-info">
+                    <h3 id="totalWarehouses">0</h3>
+                    <p>Warehouses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon low-stock">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stats-info">
+                    <h3 id="lowStockItems">0</h3>
+                    <p>Low Stock Items</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <div class="col d-flex justify-content-end">
-            <button class="btn btn-red d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addProductModal">
+    <!-- View Selector and Add Product Button -->
+    <div class="row mb-4">
+        <div class="col-md-8 d-flex align-items-center">
+            <div class="view-selector">
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary active" data-view="inventory">Inventory View</button>
+                    <button class="btn btn-outline-primary" data-view="products">Products View</button>
+                    <button class="btn btn-outline-primary" data-view="warehouses">Warehouses View</button>
+                </div>
+            </div>
+            <div class="filter-selector ms-3">
+                <select class="form-select" id="stockTypeFilter">
+                    <option value="all">All Stock Types</option>
+                    <option value="Regular">Regular</option>
+                    <option value="Display">Display</option>
+                    <option value="Reserve">Reserve</option>
+                    <option value="Damaged">Damaged</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Quarantine">Quarantine</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4 d-flex justify-content-end">
+            <div class="btn-group">
+                <button class="btn btn-outline-primary d-flex align-items-center" id="importBtn">
+                    <i class="bi bi-upload me-2"></i>
+                    Import
+                </button>
+                <button class="btn btn-outline-primary d-flex align-items-center" id="exportBtn">
+                    <i class="bi bi-download me-2"></i>
+                    Export
+                </button>
+                <button class="btn btn-outline-primary d-flex align-items-center" id="warehouseBtn" data-bs-toggle="modal" data-bs-target="#warehouseModal">
+                    <i class="bi bi-building me-2"></i>
+                    Warehouses
+                </button>
+            </div>
+            <button class="btn btn-red d-flex align-items-center ms-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
                 <i class="bi bi-plus me-2"></i>
                 Add Product
             </button>
         </div>
     </div>
 
-    <!-- Inventory Table Card -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Product List</h5>
-            <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <select class="form-select form-select-sm">
-                        <option value="10">10 per page</option>
-                        <option value="25">25 per page</option>
-                        <option value="50">50 per page</option>
-                        <option value="100">100 per page</option>
-                    </select>
-                </div>
-                <input type="text" class="form-control form-control-sm" placeholder="Search products...">
+    <!-- Main Content Cards -->
+    <div class="card view-card" id="inventoryView">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Inventory Dashboard</h5>
+            <div class="input-group w-25">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="inventorySearch" placeholder="Search inventory">
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Inventory ID</th>
-                            <th>Product ID</th>
-                            <th>Product name</th>
-                            <th>Stock</th>
-                            <th>Price</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>IVN1001</td>
-                            <td>PRD001</td>
-                            <td>Smart Inventer Ac</td>
-                            <td>150</td>
-                            <td>$299.99</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i> Update</button>
-                                <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>IVN1002</td>
-                            <td>PRD002</td>
-                            <td>Split System Classic</td>
-                            <td>75</td>
-                            <td>$599.99</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i> Update</button>
-                                <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>IVN1003</td>
-                            <td>PRD003</td>
-                            <td>Portable Ac Unit</td>
-                            <td>200</td>
-                            <td>$49.99</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i> Update</button>
-                                <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Delete</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            <div class="d-flex justify-content-between align-items-center p-3">
-                <div>
-                    Showing 1 to 8 of 24 entries
-                </div>
-                <div class="pagination-container">
-                    <div class="pagination-button"><i class="bi bi-chevron-left"></i></div>
-                    <div class="pagination-button active">1</div>
-                    <div class="pagination-button">2</div>
-                    <div class="pagination-button">3</div>
-                    <div class="pagination-button"><i class="bi bi-chevron-right"></i></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Product Modal -->
-    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-            <form id="addProductForm">
-            <!-- Basic Information Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Basic Information</h6>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="productName" class="form-label">Product Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="productName" name="productName" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="skuCode" class="form-label">SKU/Product Code <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="skuCode" name="skuCode" required>
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
-                    <select class="form-select" id="category" name="category" required>
-                    <option value="" selected disabled>Select category</option>
-                    <option value="air-conditioners">Air Conditioners</option>
-                    <option value="parts">Parts & Accessories</option>
-                    <option value="tools">Tools & Equipment</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="brand" class="form-label">Brand <span class="text-danger">*</span></label>
-                    <select class="form-select" id="brand" name="brand" required>
-                    <option value="" selected disabled>Select brand</option>
-                    <option value="daikin">Daikin</option>
-                    <option value="carrier">Carrier</option>
-                    <option value="trane">Trane</option>
-                    <option value="lg">LG</option>
-                    </select>
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-12">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="4"></textarea>
-                </div>
-                </div>
-            </div>
-
-            <!-- Pricing & Inventory Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Pricing & Inventory</h6>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="purchasePrice" class="form-label">Purchase Price <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" id="purchasePrice" name="purchasePrice" step="0.01" min="0" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label for="sellingPrice" class="form-label">Selling Price <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" id="sellingPrice" name="sellingPrice" step="0.01" min="0" required>
-                    </div>
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="currentStock" class="form-label">Current Stock <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="currentStock" name="currentStock" min="0" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="lowStockThreshold" class="form-label">Low Stock Alert Threshold</label>
-                    <input type="number" class="form-control" id="lowStockThreshold" name="lowStockThreshold" min="0">
-                </div>
-                </div>
-            </div>
-
-            <!-- Technical Specifications Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Technical Specifications</h6>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="coolingCapacity" class="form-label">Cooling Capacity (BTU)</label>
-                    <input type="number" class="form-control" id="coolingCapacity" name="coolingCapacity" min="0">
-                </div>
-                <div class="col-md-6">
-                    <label for="energyRating" class="form-label">Energy Efficiency Rating</label>
-                    <input type="text" class="form-control" id="energyRating" name="energyRating">
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="inventoryType" class="form-label">Inventory Type</label>
-                    <select class="form-select" id="inventoryType" name="inventoryType">
-                    <option value="" selected disabled>Select type</option>
-                    <option value="finished-good">Finished Good</option>
-                    <option value="raw-material">Raw Material</option>
-                    <option value="component">Component/Part</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="warrantyPeriod" class="form-label">Warranty Period</label>
-                    <input type="text" class="form-control" id="warrantyPeriod" name="warrantyPeriod" placeholder="e.g., 1 year">
-                </div>
-                </div>
-            </div>
-
-            <!-- Product Images Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Product Images</h6>
-                <div class="row">
-                <div class="col-12">
-                    <div class="border rounded p-3 text-center position-relative" style="min-height: 180px;">
-                    <div class="image-upload-area d-flex flex-column align-items-center justify-content-center">
-                        <i class="bi bi-cloud-arrow-up fs-2 mb-2"></i>
-                        <p class="mb-1">Drag and drop images here or click to upload</p>
-                        <p class="text-muted small">Supported formats: JPG, PNG. Max file size: 5MB</p>
-                        <input type="file" id="productImages" name="productImages[]" class="position-absolute inset-0 opacity-0 w-100 h-100 cursor-pointer" multiple accept=".jpg,.jpeg,.png">
-                    </div>
-                    <div id="imagePreviewContainer" class="d-flex flex-wrap gap-2 mt-3" style="display: none !important;"></div>
-                    </div>
-                </div>
-                </div>
-            </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary">Save Product</button>
-        </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- View Product Modal -->
-    <div class="modal fade" id="viewProductModal" tabindex="-1" aria-labelledby="viewProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="viewProductModalLabel">Product Details</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-            <div class="row">
-            <!-- Product Image Column -->
-            <div class="col-md-4 text-center mb-4 mb-md-0">
-                <div class="border rounded p-2 mb-3">
-                <img src="/api/placeholder/400/400" alt="Product image" class="img-fluid">
-                </div>
-                <div class="d-flex justify-content-center gap-2">
-                <span class="badge bg-primary">In Stock: 150</span>
-                <span class="badge bg-success">Active</span>
-                </div>
-            </div>
-            
-            <!-- Product Details Column -->
-            <div class="col-md-8">
-                <h4 class="mb-1" id="viewProductName">Smart Inverter AC</h4>
-                <p class="text-muted mb-3" id="viewProductSKU">SKU: PRD001</p>
-                
-                <div class="mb-4">
-                <h6 class="fw-bold mb-2">Product Information</h6>
-                <table class="table table-sm">
-                    <tbody>
+        <div class="card-body">
+            <table id="inventoryTable" class="table table-striped">
+                <thead>
                     <tr>
-                        <td width="30%" class="fw-medium">Category:</td>
-                        <td id="viewProductCategory">Air Conditioners</td>
+                        <th>Product</th>
+                        <th>Variant</th>
+                        <th>Warehouse</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
                     </tr>
-                    <tr>
-                        <td class="fw-medium">Brand:</td>
-                        <td id="viewProductBrand">Carrier</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-medium">Price:</td>
-                        <td id="viewProductPrice">$299.99</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-medium">Inventory Type:</td>
-                        <td id="viewProductInventoryType">Finished Good</td>
-                    </tr>
-                    </tbody>
-                </table>
-                </div>
-                
-                <div class="mb-4">
-                <h6 class="fw-bold mb-2">Technical Specifications</h6>
-                <table class="table table-sm">
-                    <tbody>
-                    <tr>
-                        <td width="30%" class="fw-medium">Cooling Capacity:</td>
-                        <td id="viewProductCoolingCapacity">12,000 BTU</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-medium">Energy Rating:</td>
-                        <td id="viewProductEnergyRating">4.5 Star</td>
-                    </tr>
-                    <tr>
-                        <td class="fw-medium">Warranty:</td>
-                        <td id="viewProductWarranty">2 Years</td>
-                    </tr>
-                    </tbody>
-                </table>
-                </div>
-                
-                <div>
-                <h6 class="fw-bold mb-2">Description</h6>
-                <p id="viewProductDescription">This energy-efficient Smart Inverter AC provides exceptional cooling performance with low noise operation. Features include a sleep mode, timer, and smartphone control capability.</p>
-                </div>
-            </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateProductModal">
-            <i class="bi bi-pencil me-1"></i> Edit
-            </button>
-        </div>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded dynamically -->
+                </tbody>
+            </table>
         </div>
     </div>
+
+    <div class="card view-card d-none" id="productsView">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Products Dashboard</h5>
+            <div class="input-group w-25">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="productsSearch" placeholder="Search products">
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="productsTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Variants</th>
+                        <th>Total Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded dynamically -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Update Product Modal -->
-    <div class="modal fade" id="updateProductModal" tabindex="-1" aria-labelledby="updateProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="updateProductModalLabel">Update Product</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="card view-card d-none" id="warehousesView">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Warehouses Dashboard</h5>
+            <div class="input-group w-25">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="warehousesSearch" placeholder="Search warehouses">
+            </div>
         </div>
-        <div class="modal-body">
-            <form id="updateProductForm">
-            <input type="hidden" id="updateProductId" name="productId" value="">
-            
-            <!-- Basic Information Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Basic Information</h6>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="updateProductName" class="form-label">Product Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="updateProductName" name="productName" value="Smart Inverter AC" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="updateSkuCode" class="form-label">SKU/Product Code <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="updateSkuCode" name="skuCode" value="PRD001" required>
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="updateCategory" class="form-label">Category <span class="text-danger">*</span></label>
-                    <select class="form-select" id="updateCategory" name="category" required>
-                    <option value="" disabled>Select category</option>
-                    <option value="air-conditioners" selected>Air Conditioners</option>
-                    <option value="parts">Parts & Accessories</option>
-                    <option value="tools">Tools & Equipment</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="updateBrand" class="form-label">Brand <span class="text-danger">*</span></label>
-                    <select class="form-select" id="updateBrand" name="brand" required>
-                    <option value="" disabled>Select brand</option>
-                    <option value="daikin">Daikin</option>
-                    <option value="carrier" selected>Carrier</option>
-                    <option value="trane">Trane</option>
-                    <option value="lg">LG</option>
-                    </select>
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-12">
-                    <label for="updateDescription" class="form-label">Description</label>
-                    <textarea class="form-control" id="updateDescription" name="description" rows="4">This energy-efficient Smart Inverter AC provides exceptional cooling performance with low noise operation. Features include a sleep mode, timer, and smartphone control capability.</textarea>
-                </div>
-                </div>
-            </div>
-
-            <!-- Pricing & Inventory Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Pricing & Inventory</h6>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="updatePurchasePrice" class="form-label">Purchase Price <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" id="updatePurchasePrice" name="purchasePrice" step="0.01" min="0" value="199.99" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label for="updateSellingPrice" class="form-label">Selling Price <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                    <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" id="updateSellingPrice" name="sellingPrice" step="0.01" min="0" value="299.99" required>
-                    </div>
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="updateCurrentStock" class="form-label">Current Stock <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="updateCurrentStock" name="currentStock" min="0" value="150" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="updateLowStockThreshold" class="form-label">Low Stock Alert Threshold</label>
-                    <input type="number" class="form-control" id="updateLowStockThreshold" name="lowStockThreshold" min="0" value="20">
-                </div>
-                </div>
-            </div>
-
-            <!-- Technical Specifications Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Technical Specifications</h6>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="updateCoolingCapacity" class="form-label">Cooling Capacity (BTU)</label>
-                    <input type="number" class="form-control" id="updateCoolingCapacity" name="coolingCapacity" min="0" value="12000">
-                </div>
-                <div class="col-md-6">
-                    <label for="updateEnergyRating" class="form-label">Energy Efficiency Rating</label>
-                    <input type="text" class="form-control" id="updateEnergyRating" name="energyRating" value="4.5 Star">
-                </div>
-                </div>
-                <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="updateInventoryType" class="form-label">Inventory Type</label>
-                    <select class="form-select" id="updateInventoryType" name="inventoryType">
-                    <option value="" disabled>Select type</option>
-                    <option value="finished-good" selected>Finished Good</option>
-                    <option value="raw-material">Raw Material</option>
-                    <option value="component">Component/Part</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="updateWarrantyPeriod" class="form-label">Warranty Period</label>
-                    <input type="text" class="form-control" id="updateWarrantyPeriod" name="warrantyPeriod" value="2 Years">
-                </div>
-                </div>
-            </div>
-
-            <!-- Product Images Section -->
-            <div class="mb-4">
-                <h6 class="fw-bold mb-3">Product Images</h6>
-                <div class="row">
-                <div class="col-12">
-                    <div class="border rounded p-3 text-center">
-                    <div class="row align-items-center">
-                        <div class="col-md-4 mb-3 mb-md-0">
-                        <img src="/api/placeholder/180/180" alt="Product image" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
-                        </div>
-                        <div class="col-md-8 text-md-start">
-                        <p class="mb-2">Current image: product-image.jpg</p>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-trash me-1"></i> Remove
-                            </button>
-                            <div class="position-relative">
-                            <button type="button" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-arrow-repeat me-1"></i> Replace
-                            </button>
-                            <input type="file" class="position-absolute top-0 start-0 opacity-0 w-100 h-100" style="cursor: pointer;">
-                            </div>
-                        </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="image-upload-area d-flex flex-column align-items-center justify-content-center p-3">
-                        <i class="bi bi-cloud-arrow-up fs-2 mb-2"></i>
-                        <p class="mb-1">Add more images</p>
-                        <p class="text-muted small">Supported formats: JPG, PNG. Max file size: 5MB</p>
-                        <input type="file" id="updateProductImages" name="productImages[]" class="position-absolute inset-0 opacity-0 w-100 h-100 cursor-pointer" multiple accept=".jpg,.jpeg,.png">
-                    </div>
-                    </div>
-                </div>
-                </div>
-            </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary">Update Product</button>
-        </div>
+        <div class="card-body">
+            <table id="warehousesTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Storage Capacity</th>
+                        <th>Current Usage</th>
+                        <th>Items Below Threshold</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded dynamically -->
+                </tbody>
+            </table>
         </div>
     </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Delete</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-center">
-            <div class="mb-4">
-            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
-            </div>
-            <h5 class="mb-3">Are you sure you want to delete this product?</h5>
-            <p class="text-muted mb-0">This action cannot be undone. All data associated with this product will be permanently removed from the system.</p>
-            <input type="hidden" id="deleteProductId" value="">
-        </div>
-        <div class="modal-footer justify-content-center">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" id="confirmDeleteButton">
-            <i class="bi bi-trash me-1"></i> Delete Product
-            </button>
-        </div>
-        </div>
-    </div>
-    </div>
-
 </div>
 
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="product-info-tab" data-bs-toggle="tab" data-bs-target="#product-info" type="button" role="tab">Product Information</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="product-variants-tab" data-bs-toggle="tab" data-bs-target="#product-variants" type="button" role="tab">Variants</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="product-features-tab" data-bs-toggle="tab" data-bs-target="#product-features" type="button" role="tab">Features & Specs</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="product-inventory-tab" data-bs-toggle="tab" data-bs-target="#product-inventory" type="button" role="tab">Inventory</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="productTabsContent">
+                        <!-- Product Information Tab -->
+                        <div class="tab-pane fade show active" id="product-info" role="tabpanel">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="productName" class="form-label">Product Name</label>
+                                    <input type="text" class="form-control" id="productName" name="prod_name" placeholder="Enter product name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="productAvailability" class="form-label">Availability Status</label>
+                                    <select class="form-select" id="productAvailability" name="prod_availability_status">
+                                        <option value="Available">Available</option>
+                                        <option value="Out of Stock">Out of Stock</option>
+                                        <option value="Discontinued">Discontinued</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="productDescription" name="prod_description" rows="3" placeholder="Enter product description"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Product Image</label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="productImage" name="prod_image">
+                                    <label class="input-group-text" for="productImage">Upload</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Variants Tab -->
+                        <div class="tab-pane fade" id="product-variants" role="tabpanel">
+                            <div class="variants-container">
+                                <div class="variant-form mb-3 p-3 border rounded">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="varCapacity" class="form-label">Capacity</label>
+                                            <input type="text" class="form-control" id="varCapacity" name="variants[0][var_capacity]" placeholder="e.g., 0.8HP (20)">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="varPowerConsumption" class="form-label">Power Consumption</label>
+                                            <input type="text" class="form-control" id="varPowerConsumption" name="variants[0][var_power_consumption]" placeholder="e.g., CSPF (4.60)">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label for="varSrpPrice" class="form-label">SRP Price</label>
+                                            <input type="number" class="form-control" id="varSrpPrice" name="variants[0][var_srp_price]" placeholder="Standard price" step="0.01" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="varFreeInstall" class="form-label">Price (Free Install)</label>
+                                            <input type="number" class="form-control" id="varFreeInstall" name="variants[0][var_price_free_install]" placeholder="Optional" step="0.01">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="varWithInstall" class="form-label">Price (With Install)</label>
+                                            <input type="number" class="form-control" id="varWithInstall" name="variants[0][var_price_with_install]" placeholder="Optional" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary add-variant-btn">
+                                    <i class="bi bi-plus"></i> Add Another Variant
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Features & Specs Tab -->
+                        <div class="tab-pane fade" id="product-features" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Product Features</h6>
+                                    <div class="features-container mb-3">
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" name="features[0]" placeholder="Enter feature">
+                                            <button class="btn btn-outline-danger remove-feature" type="button">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary add-feature-btn">
+                                        <i class="bi bi-plus"></i> Add Feature
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Product Specifications</h6>
+                                    <div class="specs-container mb-3">
+                                        <div class="row mb-2">
+                                            <div class="col-5">
+                                                <input type="text" class="form-control" name="specs[0][spec_name]" placeholder="Spec name">
+                                            </div>
+                                            <div class="col-5">
+                                                <input type="text" class="form-control" name="specs[0][spec_value]" placeholder="Spec value">
+                                            </div>
+                                            <div class="col-2">
+                                                <button class="btn btn-outline-danger w-100 remove-spec" type="button">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary add-spec-btn">
+                                        <i class="bi bi-plus"></i> Add Specification
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Inventory Tab -->
+                        <div class="tab-pane fade" id="product-inventory" role="tabpanel">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                You can set initial inventory levels here, or add them later after creating the product.
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="warehouseSelect" class="form-label">Warehouse Location</label>
+                                    <select class="form-select" id="warehouseSelect" name="warehouse_id">
+                                        <option value="">Select warehouse</option>
+                                        <!-- Will be populated dynamically -->
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="inventoryType" class="form-label">Inventory Type</label>
+                                    <select class="form-select" id="inventoryType" name="inventory_type">
+                                        <option value="Regular">Regular</option>
+                                        <option value="Display">Display</option>
+                                        <option value="Reserve">Reserve</option>
+                                        <option value="Damaged">Damaged</option>
+                                        <option value="Returned">Returned</option>
+                                        <option value="Quarantine">Quarantine</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="variants-inventory-container">
+                                <!-- Will be populated dynamically based on variants -->
+                                <div class="alert alert-secondary">
+                                    Please add variants in the Variants tab first.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveProductBtn">Save Product</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Product Details Modal -->
+<div class="modal fade" id="productDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Product Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="product-detail-header d-flex mb-4">
+                    <div class="product-detail-image me-3">
+                        <img src="/api/placeholder/150/150" alt="Product Image" id="productDetailImage" class="img-fluid rounded">
+                    </div>
+                    <div class="product-detail-info">
+                        <h4 class="product-detail-name" id="productDetailName">Product Name</h4>
+                        <p class="product-detail-description" id="productDetailDescription">Description will be loaded here.</p>
+                        <div class="product-detail-id text-muted" id="productDetailId">Product ID: --</div>
+                        <div class="product-detail-status" id="productDetailStatus"><span class="badge bg-success">Available</span></div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Features</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="feature-list" id="productDetailFeatures">
+                                    <!-- Features will be loaded dynamically -->
+                                    <li class="text-muted">No features specified</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Specifications</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm spec-table">
+                                    <tbody id="productDetailSpecs">
+                                        <!-- Specs will be loaded dynamically -->
+                                        <tr>
+                                            <td colspan="2" class="text-center text-muted">No specifications available</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3 mt-2">Product Variants</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered variant-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Capacity</th>
+                                <th>CSPF</th>
+                                <th>SRP Price</th>
+                                <th>Free Install Price</th>
+                                <th>With Install Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productDetailVariants">
+                            <!-- Variants will be loaded dynamically -->
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No variants available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h5 class="mb-3 mt-4">Inventory Summary</h5>
+                <div class="inventory-detail-cards">
+                    <div class="row" id="productDetailInventory">
+                        <!-- Inventory cards will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editProductBtn">Edit Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Inventory Modal -->
+<div class="modal fade" id="manageInventoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Inventory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" id="inventoryTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="current-stock-tab" data-bs-toggle="tab" data-bs-target="#current-stock" type="button" role="tab">Current Stock</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="add-stock-tab" data-bs-toggle="tab" data-bs-target="#add-stock" type="button" role="tab">Add Stock</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="move-stock-tab" data-bs-toggle="tab" data-bs-target="#move-stock" type="button" role="tab">Move Stock</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="stock-history-tab" data-bs-toggle="tab" data-bs-target="#stock-history" type="button" role="tab">Stock History</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="inventoryTabsContent">
+                    <!-- Current Stock Tab -->
+                    <div class="tab-pane fade show active" id="current-stock" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Variant</th>
+                                        <th>Warehouse</th>
+                                        <th>Inventory Type</th>
+                                        <th>Quantity</th>
+                                        <th>Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="currentStockTable">
+                                    <!-- Current stock will be loaded dynamically -->
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Add Stock Tab -->
+                    <div class="tab-pane fade" id="add-stock" role="tabpanel">
+                        <form id="addStockForm">
+                            <input type="hidden" id="addStockProductId" name="prod_id">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="addVariantSelect" class="form-label">Select Variant</label>
+                                    <select class="form-select" id="addVariantSelect" name="var_id" required>
+                                        <!-- Variants will be loaded dynamically -->
+                                        <option value="">Loading variants...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="addWarehouseSelect" class="form-label">Select Warehouse</label>
+                                    <select class="form-select" id="addWarehouseSelect" name="whouse_id" required>
+                                        <!-- Warehouses will be loaded dynamically -->
+                                        <option value="">Loading warehouses...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="addInventoryType" class="form-label">Inventory Type</label>
+                                    <select class="form-select" id="addInventoryType" name="inve_type">
+                                        <option value="Regular">Regular</option>
+                                        <option value="Display">Display</option>
+                                        <option value="Reserve">Reserve</option>
+                                        <option value="Damaged">Damaged</option>
+                                        <option value="Returned">Returned</option>
+                                        <option value="Quarantine">Quarantine</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="addQuantity" class="form-label">Quantity to Add</label>
+                                    <input type="number" class="form-control" id="addQuantity" name="quantity" min="1" value="1" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="addReason" class="form-label">Reason</label>
+                                <select class="form-select" id="addReason" name="reason">
+                                    <option value="Initial">Initial Stock</option>
+                                    <option value="Restock">Restock</option>
+                                    <option value="Return">Customer Return</option>
+                                    <option value="Adjustment">Inventory Adjustment</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="addNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="addNotes" name="notes" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Stock</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Move Stock Tab -->
+                    <div class="tab-pane fade" id="move-stock" role="tabpanel">
+                        <form id="moveStockForm">
+                            <input type="hidden" id="moveStockProductId" name="prod_id">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="moveVariantSelect" class="form-label">Select Variant</label>
+                                    <select class="form-select" id="moveVariantSelect" name="var_id" required>
+                                        <!-- Variants will be loaded dynamically -->
+                                        <option value="">Loading variants...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="moveInventoryType" class="form-label">Inventory Type</label>
+                                    <select class="form-select" id="moveInventoryType" name="inve_type">
+                                        <option value="Regular">Regular</option>
+                                        <option value="Display">Display</option>
+                                        <option value="Reserve">Reserve</option>
+                                        <option value="Damaged">Damaged</option>
+                                        <option value="Returned">Returned</option>
+                                        <option value="Quarantine">Quarantine</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="sourceWarehouse" class="form-label">Source Warehouse</label>
+                                    <select class="form-select" id="sourceWarehouse" name="source_whouse_id" required>
+                                        <!-- Warehouses will be loaded dynamically -->
+                                        <option value="">Loading warehouses...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="destinationWarehouse" class="form-label">Destination Warehouse</label>
+                                    <select class="form-select" id="destinationWarehouse" name="dest_whouse_id" required>
+                                        <!-- Warehouses will be loaded dynamically -->
+                                        <option value="">Loading warehouses...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="moveQuantity" class="form-label">Quantity to Move</label>
+                                <input type="number" class="form-control" id="moveQuantity" name="quantity" min="1" value="1" required>
+                                <small class="form-text text-muted available-quantity">Available in source: -- units</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="moveNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="moveNotes" name="notes" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Move Stock</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Stock History Tab -->
+                    <div class="tab-pane fade" id="stock-history" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Variant</th>
+                                        <th>Warehouse</th>
+                                        <th>Type</th>
+                                        <th>Action</th>
+                                        <th>Quantity</th>
+                                        <th>User</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockHistoryTable">
+                                    <!-- Stock history will be loaded dynamically -->
+                                    <tr>
+                                        <td colspan="7" class="text-center py-3">
+                                            <div class="alert alert-info mb-0">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                Stock history feature coming soon.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Warehouse Modal -->
+<div class="modal fade" id="warehouseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Warehouses</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="warehouseForm" class="mb-4">
+                    <input type="hidden" id="warehouseId" name="whouse_id" value="">
+                    <div class="mb-3">
+                        <label for="warehouseName" class="form-label">Warehouse Name</label>
+                        <input type="text" class="form-control" id="warehouseName" name="whouse_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="warehouseLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="warehouseLocation" name="whouse_location" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="warehouseCapacity" class="form-label">Storage Capacity</label>
+                            <input type="number" class="form-control" id="warehouseCapacity" name="whouse_storage_capacity" min="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="warehouseThreshold" class="form-label">Restock Threshold</label>
+                            <input type="number" class="form-control" id="warehouseThreshold" name="whouse_restock_threshold" min="1">
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <button type="submit" class="btn btn-primary" id="saveWarehouseBtn">Save Warehouse</button>
+                        <button type="button" class="btn btn-outline-secondary ms-2" id="resetWarehouseBtn">Reset</button>
+                    </div>
+                </form>
+                
+                <h6 class="mb-3">Existing Warehouses</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm" id="warehouseListTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Location</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Warehouse list will be loaded dynamically -->
+                            <tr>
+                                <td colspan="3" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="//cdn.datatables.net/2.3.0/css/dataTables.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+<link rel="stylesheet" href="assets/css/inventory.css">
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="//cdn.datatables.net/2.3.0/js/dataTables.min.js"></script>
+<script src="/assets/js/utility/inventory.js"></script>
+<script src="/assets/js/utility/InventoryDataTablesHandler.js"></script>
+<script>let table = new DataTable('#myTable');</script>
 <?php
 $content = ob_get_clean();
-
-// Additional scripts specific to this page
-$additionalScripts = <<<HTML
-<script>
-    // Initialize JavaScript functionality for the inventory page
-    document.addEventListener('DOMContentLoaded', function() {
-        // Confirmation dialog for delete actions
-        const deleteButtons = document.querySelectorAll('.btn-danger');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (!confirm('Are you sure you want to delete this product?')) {
-                    e.preventDefault();
-                }
-            });
-        });
-        
-        // Switch between inventory tabs
-        const inventoryTabs = document.querySelectorAll('.inventory-tab');
-        inventoryTabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                inventoryTabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                if (this.textContent.trim() === 'Inventory 2') {
-                    // Redirect or load inventory 2 content
-                    alert('Would navigate to Inventory 2 page');
-                }
-            });
-        });
-    });
-</script>
-HTML;
 
 // Include the base template
 include __DIR__ . '/../includes/admin/base.php';

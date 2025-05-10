@@ -88,20 +88,7 @@
                                     <button type="submit" class="btn btn-primary">Log In</button>
                                 </div>
 
-                                <div class="service-highlights">
-                                    <div class="service-highlight">
-                                        <i class="fas fa-bolt"></i>
-                                        <p>Fast Service</p>
-                                    </div>
-                                    <div class="service-highlight">
-                                        <i class="fas fa-shield-alt"></i>
-                                        <p>Secure System</p>
-                                    </div>
-                                    <div class="service-highlight">
-                                        <i class="fas fa-headset"></i>
-                                        <p>24/7 Support</p>
-                                    </div>
-                                </div>
+                                
 
                                 <div class="text-center mt-4">
                                     <p>Don't have an account? <a href="/register" class="toggle-link">Register now</a></p>

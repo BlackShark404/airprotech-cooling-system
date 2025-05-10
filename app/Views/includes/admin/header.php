@@ -32,20 +32,16 @@ function base_url($uri = '', $protocol = true) {
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <img src="/assets/images/logo/Air-TechLogo.png" alt="AirProtect logo" height="36" width="36">
-            AirPotect
+            AirPotech
         </a>
         <div class="d-flex">
             <div class="me-3">
-                <i class="bi bi-bell text-white"></i>
             </div>
             <div class="dropdown profile-dropdown">
                 <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="<?= $_SESSION['profile_url'] ?>" alt="User Profile" width="30" height="30">
                     <span class="d-none d-sm-inline">Admin User</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item href="<?= base_url('/admin/admin-profile') ?>"><i class="bi bi-person"></i> My Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>

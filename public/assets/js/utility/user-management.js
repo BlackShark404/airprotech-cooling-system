@@ -15,19 +15,12 @@ document.addEventListener("DOMContentLoaded", function () {
           title: "Name",
           render: function (data, type, row) {
             return `<div class="d-flex align-items-center">
-                          <div class="avatar-placeholder d-flex align-items-center justify-content-center me-2 rounded-circle bg-light text-primary" 
-                              style="width: 36px; height: 36px; font-size: 14px;">
-                              ${row.first_name.charAt(0)}${row.last_name.charAt(
-              0
-            )}
-                          </div>
-                          <div>
-                              <p class="mb-0 fw-medium">${row.first_name} ${
-              row.last_name
-            }</p>
-                          </div>
-                      </div>`;
+                      <div class="avatar-placeholder d-flex align-items-center justify-content-center me-2 rounded-circle bg-light">
+                        <p class="mb-0 fw-medium text-dark">${row.first_name} ${row.last_name}</p>
+                      </div>
+                    </div>`;
           },
+          
         },
         { data: "email", title: "Email" },
         {

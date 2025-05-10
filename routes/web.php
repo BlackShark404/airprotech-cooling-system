@@ -53,6 +53,28 @@ $router->map('GET', '/admin/inventory', 'App\Controllers\AdminController#renderI
 $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#renderAddProduct', 'render-add-product');
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
 
+// Service Request Management Routes
+$router->map('GET', '/admin/service-requests', 'App\Controllers\ServiceRequestController#adminServiceRequests', 'admin_service_requests');
+$router->map('POST', '/admin/service-requests/data', 'App\Controllers\ServiceRequestController#getServiceRequestsData', 'admin_service_requests_data');
+
+// Inventory Management API Routes
+$router->map('GET', '/inventory/getAllInventory', 'App\Controllers\InventoryController#getAllInventory', 'inventory_get_all');
+$router->map('GET', '/inventory/getInventoryByProduct/[i:productId]', 'App\Controllers\InventoryController#getInventoryByProduct', 'inventory_by_product');
+$router->map('GET', '/inventory/getInventoryByWarehouse/[i:warehouseId]', 'App\Controllers\InventoryController#getInventoryByWarehouse', 'inventory_by_warehouse');
+$router->map('GET', '/inventory/getInventoryByType/[*:type]', 'App\Controllers\InventoryController#getInventoryByType', 'inventory_by_type');
+$router->map('GET', '/inventory/getLowStockProducts', 'App\Controllers\InventoryController#getLowStockProducts', 'inventory_low_stock');
+$router->map('GET', '/inventory/getStats', 'App\Controllers\InventoryController#getStats', 'inventory_stats');
+$router->map('GET', '/inventory/getWarehouses', 'App\Controllers\InventoryController#getWarehouses', 'inventory_warehouses');
+$router->map('GET', '/inventory/getProductsWithVariants', 'App\Controllers\InventoryController#getProductsWithVariants', 'inventory_products_variants');
+$router->map('POST', '/inventory/addStock', 'App\Controllers\InventoryController#addStock', 'inventory_add_stock');
+$router->map('POST', '/inventory/moveStock', 'App\Controllers\InventoryController#moveStock', 'inventory_move_stock');
+$router->map('GET', '/inventory/viewProduct/[i:productId]', 'App\Controllers\InventoryController#viewProduct', 'inventory_view_product');
+$router->map('GET', '/inventory/exportInventory', 'App\Controllers\InventoryController#exportInventory', 'inventory_export');
+$router->map('POST', '/inventory/importInventory', 'App\Controllers\InventoryController#importInventory', 'inventory_import');
+$router->map('POST', '/inventory/createProduct', 'App\Controllers\InventoryController#createProduct', 'inventory_create_product');
+$router->map('PUT', '/inventory/updateProduct/[i:productId]', 'App\Controllers\InventoryController#updateProduct', 'inventory_update_product');
+$router->map('POST', '/inventory/deleteProduct/[i:productId]', 'App\Controllers\InventoryController#deleteProduct', 'inventory_delete_product');
+
 // User Management Routes 
 $router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#index', 'render-user-management');
 $router->map('GET', '/api/users', 'App\Controllers\UserManagementController#getUsers', 'api_get_users');
@@ -63,7 +85,3 @@ $router->map('PUT', '/api/users/[i:id]', 'App\Controllers\UserManagementControll
 $router->map('DELETE', '/api/users/[i:id]', 'App\Controllers\UserManagementController#deleteUser', 'api_delete_user');
 $router->map('POST', '/api/users/reset-password/[i:id]', 'App\Controllers\UserManagementController#resetPassword', 'api_reset_password');
 $router->map('GET', '/api/users/export', 'App\Controllers\UserManagementController#exportUsers', 'api_export_users');
-
-// Service Request Management Routes
-$router->map('GET', '/admin/service-requests', 'App\Controllers\ServiceRequestController#adminServiceRequests', 'admin_service_requests');
-$router->map('POST', '/admin/service-requests/data', 'App\Controllers\ServiceRequestController#getServiceRequestsData', 'admin_service_requests_data');
