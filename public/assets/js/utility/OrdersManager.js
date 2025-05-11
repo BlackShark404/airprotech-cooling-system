@@ -22,34 +22,74 @@ class OrdersManager {
 
         // Initialize modal elements references
         this.modal = {
-            element: document.getElementById(this.config.modalId),
-            orderId: document.getElementById('modal-order-id'),
-            productName: document.getElementById('modal-product-name'),
-            productImage: document.getElementById('modal-product-image'),
-            variant: document.getElementById('modal-variant'),
-            quantity: document.getElementById('modal-quantity'),
-            unitPrice: document.getElementById('modal-unit-price'),
-            totalAmount: document.getElementById('modal-total-amount'),
-            status: document.getElementById('modal-status'),
-            orderDate: document.getElementById('modal-order-date'),
-            paidDate: document.getElementById('modal-paid-date')
+            element: null, // Will be initialized in init()
+            orderId: null,
+            productName: null,
+            productImage: null,
+            variant: null,
+            quantity: null,
+            unitPrice: null,
+            totalAmount: null,
+            status: null,
+            orderDate: null,
+            paidDate: null
         };
 
         // Container for order cards
-        this.container = document.querySelector(this.config.containerSelector);
+        this.container = null;
 
         // Store all orders for filtering
         this.allOrders = [];
+        this.filteredOrders = [];
 
         // Pagination state
         this.currentPage = 1;
         this.itemsPerPage = this.config.itemsPerPage;
+        
+        // Bootstrap modal instance
+        this.bsModal = null;
+    }
+
+    /**
+     * Initialize the OrdersManager
+     */
+    init() {
+        // Get container element
+        this.container = document.querySelector(this.config.containerSelector);
+        if (!this.container) {
+            console.error(`Container element not found: ${this.config.containerSelector}`);
+            return;
+        }
+
+        // Initialize modal elements
+        this.modal.element = document.getElementById(this.config.modalId);
+        
+        if (this.modal.element) {
+            this.modal.orderId = document.getElementById('modal-order-id');
+            this.modal.productName = document.getElementById('modal-product-name');
+            this.modal.productImage = document.getElementById('modal-product-image');
+            this.modal.variant = document.getElementById('modal-variant');
+            this.modal.quantity = document.getElementById('modal-quantity');
+            this.modal.unitPrice = document.getElementById('modal-unit-price');
+            this.modal.totalAmount = document.getElementById('modal-total-amount');
+            this.modal.status = document.getElementById('modal-status');
+            this.modal.orderDate = document.getElementById('modal-order-date');
+            this.modal.paidDate = document.getElementById('modal-paid-date');
+            
+            // Create Bootstrap modal instance
+            this.bsModal = new bootstrap.Modal(this.modal.element);
+        } else {
+            console.warn(`Modal element not found: ${this.config.modalId}`);
+        }
 
         // Initialize modal controls
         this.initModalControls();
 
         // Initialize filter and search
         this.initFilterAndSearch();
+        
+        // Fetch and render orders
+        this.fetchAndRenderOrders();
     }
 
     /**
@@ -142,28 +182,33 @@ class OrdersManager {
     applyFilters() {
         if (!this.allOrders.length) return;
 
-        let filteredOrders = [...this.allOrders];
+        this.filteredOrders = [...this.allOrders];
 
         // Apply date range filter
         if (this.dateFilter && this.dateFilter.value) {
             const now = new Date();
             let startDate;
+            
             switch (this.dateFilter.value) {
                 case 'Last 30 days':
-                    startDate = new Date(now.setDate(now.getDate() - 30));
+                    startDate = new Date();
+                    startDate.setDate(now.getDate() - 30);
                     break;
                 case 'Last 60 days':
-                    startDate = new Date(now.setDate(now.getDate() - 60));
+                    startDate = new Date();
+                    startDate.setDate(now.getDate() - 60);
                     break;
                 case 'Last 90 days':
-                    startDate = new Date(now.setDate(now.getDate() - 90));
+                    startDate = new Date();
+                    startDate.setDate(now.getDate() - 90);
                     break;
                 case 'All time':
                 default:
                     startDate = null;
             }
+            
             if (startDate) {
-                filteredOrders = filteredOrders.filter(order =>
+                this.filteredOrders = this.filteredOrders.filter(order =>
                     new Date(order.PO_ORDER_DATE) >= startDate
                 );
             }
@@ -171,7 +216,7 @@ class OrdersManager {
 
         // Apply status filter
         if (this.statusFilter && this.statusFilter.value && this.statusFilter.value !== 'All Status') {
-            filteredOrders = filteredOrders.filter(order =>
+            this.filteredOrders = this.filteredOrders.filter(order =>
                 order.PO_STATUS.toLowerCase() === this.statusFilter.value.toLowerCase()
             );
         }
@@ -179,7 +224,7 @@ class OrdersManager {
         // Apply search filter
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
-            filteredOrders = filteredOrders.filter(order =>
+            this.filteredOrders = this.filteredOrders.filter(order =>
                 order.PROD_NAME.toLowerCase().includes(searchTerm) ||
                 (order.VAR_CAPACITY && order.VAR_CAPACITY.toLowerCase().includes(searchTerm)) ||
                 `ORD-${order.PO_ID}`.toLowerCase().includes(searchTerm)
@@ -190,12 +235,12 @@ class OrdersManager {
         this.currentPage = 1;
 
         // Render filtered orders with pagination
-        this.renderOrders(filteredOrders);
+        this.renderOrders(this.filteredOrders);
 
         // Update results count if element exists
         const resultsCountElement = document.getElementById('order-results-count');
         if (resultsCountElement) {
-            resultsCountElement.textContent = `${filteredOrders.length} orders found`;
+            resultsCountElement.textContent = `${this.filteredOrders.length} orders found`;
         }
     }
 
@@ -210,17 +255,22 @@ class OrdersManager {
             if (Array.isArray(orders) && orders.length > 0) {
                 // Store all orders for filtering
                 this.allOrders = orders;
+                this.filteredOrders = [...orders];
 
                 // Render first page of orders
-                this.renderOrders(orders);
+                this.renderOrders(this.filteredOrders);
             } else {
                 console.error('No orders found or invalid data format');
-                this.container.innerHTML = '<div class="col-12"><p class="text-center">No orders available.</p></div>';
+                if (this.container) {
+                    this.container.innerHTML = '<div class="col-12"><p class="text-center">No orders available.</p></div>';
+                }
                 this.renderPagination(0);
             }
         } catch (error) {
             console.error('Error fetching orders:', error);
-            this.container.innerHTML = '<div class="col-12"><p class="text-center text-danger">Failed to load orders. Please try again later.</p></div>';
+            if (this.container) {
+                this.container.innerHTML = '<div class="col-12"><p class="text-center text-danger">Failed to load orders. Please try again later.</p></div>';
+            }
             this.renderPagination(0);
         }
     }
@@ -229,6 +279,8 @@ class OrdersManager {
      * Render order cards with pagination
      */
     renderOrders(orders) {
+        if (!this.container) return;
+        
         if (orders.length === 0) {
             this.container.innerHTML = '<div class="col-12"><p class="text-center">No orders match your filters. Try different criteria.</p></div>';
             this.renderPagination(0);
@@ -257,6 +309,12 @@ class OrdersManager {
         if (!paginationContainer) return;
 
         const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+        
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+        
         let paginationHTML = `
             <nav aria-label="Order pagination">
                 <ul class="pagination">
@@ -265,10 +323,55 @@ class OrdersManager {
                     </li>
         `;
 
-        for (let i = 1; i <= totalPages; i++) {
+        // Calculate visible page range
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = startPage + maxVisiblePages - 1;
+        
+        if (endPage > totalPages) {
+            endPage = totalPages;
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+        
+        // Add first page and ellipsis if needed
+        if (startPage > 1) {
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="1">1</a>
+                </li>
+            `;
+            
+            if (startPage > 2) {
+                paginationHTML += `
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                `;
+            }
+        }
+
+        // Add page numbers
+        for (let i = startPage; i <= endPage; i++) {
             paginationHTML += `
                 <li class="page-item ${this.currentPage === i ? 'active' : ''}">
                     <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+        
+        // Add last page and ellipsis if needed
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                paginationHTML += `
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                `;
+            }
+            
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
                 </li>
             `;
         }
@@ -290,12 +393,27 @@ class OrdersManager {
      * Initialize pagination controls
      */
     initPaginationControls() {
-        const paginationLinks = document.querySelectorAll(`${this.config.paginationContainerSelector} .page-link`);
+        const paginationContainer = document.querySelector(this.config.paginationContainerSelector);
+        if (!paginationContainer) return;
+        
+        const paginationLinks = paginationContainer.querySelectorAll('.page-link');
+        
         paginationLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const pageAction = e.target.getAttribute('data-page') || e.target.parentElement.getAttribute('data-page');
-                this.handlePageChange(pageAction);
+                
+                // Get the data-page attribute from the clicked element or its parent
+                let pageAction;
+                
+                if (e.target.hasAttribute('data-page')) {
+                    pageAction = e.target.getAttribute('data-page');
+                } else if (e.target.parentElement.hasAttribute('data-page')) {
+                    pageAction = e.target.parentElement.getAttribute('data-page');
+                }
+                
+                if (pageAction) {
+                    this.handlePageChange(pageAction);
+                }
             });
         });
     }
@@ -304,7 +422,7 @@ class OrdersManager {
      * Handle page change
      */
     handlePageChange(pageAction) {
-        const totalPages = Math.ceil(this.allOrders.length / this.itemsPerPage);
+        const totalPages = Math.ceil(this.filteredOrders.length / this.itemsPerPage);
 
         if (pageAction === 'prev' && this.currentPage > 1) {
             this.currentPage--;
@@ -317,7 +435,7 @@ class OrdersManager {
             }
         }
 
-        this.applyFilters();
+        this.renderOrders(this.filteredOrders);
     }
 
     /**
@@ -331,9 +449,15 @@ class OrdersManager {
             this.currentOrder = order;
             this.populateModal(order);
 
-            const modalElement = document.getElementById(this.config.modalId);
-            const bsModal = new bootstrap.Modal(modalElement);
-            bsModal.show();
+            if (this.bsModal) {
+                this.bsModal.show();
+            } else if (this.modal.element) {
+                // Fallback if bsModal wasn't initialized
+                this.bsModal = new bootstrap.Modal(this.modal.element);
+                this.bsModal.show();
+            } else {
+                console.error('Modal element not found');
+            }
         } catch (error) {
             console.error('Error fetching order details:', error);
             alert('Failed to load order details. Please try again.');
@@ -344,24 +468,44 @@ class OrdersManager {
      * Populate modal with order details
      */
     populateModal(order) {
-        this.modal.orderId.textContent = `ORD-${order.PO_ID}`;
-        this.modal.productName.textContent = order.PROD_NAME;
-        this.modal.productImage.src = order.PROD_IMAGE;
-        this.modal.productImage.alt = order.PROD_NAME;
-        this.modal.variant.textContent = order.VAR_CAPACITY || 'N/A';
-        this.modal.quantity.textContent = order.PO_QUANTITY;
-        this.modal.unitPrice.textContent = `$${order.PO_UNIT_PRICE.toLocaleString()}`;
-        this.modal.totalAmount.textContent = `$${order.PO_TOTAL_AMOUNT.toLocaleString()}`;
-        this.modal.status.textContent = order.PO_STATUS.charAt(0).toUpperCase() + order.PO_STATUS.slice(1);
-        this.modal.orderDate.textContent = new Date(order.PO_ORDER_DATE).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-        this.modal.paidDate.textContent = order.PO_PAID_DATE ? new Date(order.PO_PAID_DATE).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        }) : 'Not Paid';
+        if (!order) return;
+        
+        // Check if modal elements exist before updating them
+        if (this.modal.orderId) this.modal.orderId.textContent = `ORD-${order.PO_ID}`;
+        if (this.modal.productName) this.modal.productName.textContent = order.PROD_NAME;
+        
+        if (this.modal.productImage) {
+            this.modal.productImage.src = order.PROD_IMAGE;
+            this.modal.productImage.alt = order.PROD_NAME;
+        }
+        
+        if (this.modal.variant) this.modal.variant.textContent = order.VAR_CAPACITY || 'N/A';
+        if (this.modal.quantity) this.modal.quantity.textContent = order.PO_QUANTITY;
+        if (this.modal.unitPrice) this.modal.unitPrice.textContent = `$${order.PO_UNIT_PRICE.toLocaleString()}`;
+        if (this.modal.totalAmount) this.modal.totalAmount.textContent = `$${order.PO_TOTAL_AMOUNT.toLocaleString()}`;
+        
+        if (this.modal.status) {
+            this.modal.status.textContent = order.PO_STATUS.charAt(0).toUpperCase() + order.PO_STATUS.slice(1);
+            
+            // Add appropriate status class
+            this.modal.status.className = ''; // Clear existing classes
+            this.modal.status.classList.add(`text-${this.getStatusBadgeClass(order.PO_STATUS)}`);
+        }
+        
+        if (this.modal.orderDate) {
+            this.modal.orderDate.textContent = new Date(order.PO_ORDER_DATE).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+        
+        if (this.modal.paidDate) {
+            this.modal.paidDate.textContent = order.PO_PAID_DATE ? new Date(order.PO_PAID_DATE).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }) : 'Not Paid';
+        }
     }
 }
