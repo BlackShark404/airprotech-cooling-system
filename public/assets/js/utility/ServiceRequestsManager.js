@@ -14,11 +14,13 @@ class ServiceRequestsManager {
             searchInputId: 'service-request-search',
             dateFilterId: 'date-filter',
             statusFilterId: 'status-filter',
-            cardTemplate: this.getDefaultCardTemplate(),
             itemsPerPage: 10,
             paginationContainerSelector: '#services-pagination-container',
             ...options
         };
+
+        // Set card template after configuration is complete
+        this.config.cardTemplate = this.config.cardTemplate || this.getDefaultCardTemplate();
 
         // Initialize modal elements references
         this.modal = {
@@ -40,6 +42,7 @@ class ServiceRequestsManager {
 
         // Store all service requests for filtering
         this.allServiceRequests = [];
+        this.filteredServiceRequests = [];
 
         // Pagination state
         this.currentPage = 1;
@@ -103,6 +106,8 @@ class ServiceRequestsManager {
      * Get badge class based on status
      */
     getStatusBadgeClass(status) {
+        if (!status) return 'secondary';
+        
         switch (status.toLowerCase()) {
             case 'pending': return 'warning';
             case 'confirmed':
@@ -121,7 +126,9 @@ class ServiceRequestsManager {
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('view-details')) {
                 const serviceId = e.target.getAttribute('data-service-id');
-                this.openServiceRequestModal(serviceId);
+                if (serviceId) {
+                    this.openServiceRequestModal(serviceId);
+                }
             }
         });
     }
@@ -168,13 +175,16 @@ class ServiceRequestsManager {
             let startDate;
             switch (this.dateFilter.value) {
                 case 'Last 30 days':
-                    startDate = new Date(now.setDate(now.getDate() - 30));
+                    startDate = new Date();
+                    startDate.setDate(now.getDate() - 30);
                     break;
                 case 'Last 60 days':
-                    startDate = new Date(now.setDate(now.getDate() - 60));
+                    startDate = new Date();
+                    startDate.setDate(now.getDate() - 60);
                     break;
                 case 'Last 90 days':
-                    startDate = new Date(now.setDate(now.getDate() - 90));
+                    startDate = new Date();
+                    startDate.setDate(now.getDate() - 90);
                     break;
                 case 'All time':
                 default:
@@ -182,7 +192,7 @@ class ServiceRequestsManager {
             }
             if (startDate) {
                 filteredServiceRequests = filteredServiceRequests.filter(service =>
-                    new Date(service.SB_CREATED_AT) >= startDate
+                    service.SB_CREATED_AT && new Date(service.SB_CREATED_AT) >= startDate
                 );
             }
         }
@@ -190,7 +200,7 @@ class ServiceRequestsManager {
         // Apply status filter
         if (this.statusFilter && this.statusFilter.value && this.statusFilter.value !== 'All Status') {
             filteredServiceRequests = filteredServiceRequests.filter(service =>
-                service.SB_STATUS.toLowerCase() === this.statusFilter.value.toLowerCase()
+                service.SB_STATUS && service.SB_STATUS.toLowerCase() === this.statusFilter.value.toLowerCase()
             );
         }
 
@@ -198,11 +208,14 @@ class ServiceRequestsManager {
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
             filteredServiceRequests = filteredServiceRequests.filter(service =>
-                service.ST_NAME.toLowerCase().includes(searchTerm) ||
+                (service.ST_NAME && service.ST_NAME.toLowerCase().includes(searchTerm)) ||
                 (service.ST_DESCRIPTION && service.ST_DESCRIPTION.toLowerCase().includes(searchTerm)) ||
-                `SRV-${service.SB_ID}`.toLowerCase().includes(searchTerm)
+                (service.SB_ID && `SRV-${service.SB_ID}`.toLowerCase().includes(searchTerm))
             );
         }
+
+        // Store the filtered results
+        this.filteredServiceRequests = filteredServiceRequests;
 
         // Reset to first page when filters change
         this.currentPage = 1;
@@ -228,17 +241,22 @@ class ServiceRequestsManager {
             if (Array.isArray(serviceRequests) && serviceRequests.length > 0) {
                 // Store all service requests for filtering
                 this.allServiceRequests = serviceRequests;
+                this.filteredServiceRequests = serviceRequests;
 
                 // Render first page of service requests
                 this.renderServiceRequests(serviceRequests);
             } else {
                 console.error('No service requests found or invalid data format');
-                this.container.innerHTML = '<div class="col-12"><p class="text-center">No service requests available.</p></div>';
+                if (this.container) {
+                    this.container.innerHTML = '<div class="col-12"><p class="text-center">No service requests available.</p></div>';
+                }
                 this.renderPagination(0);
             }
         } catch (error) {
             console.error('Error fetching service requests:', error);
-            this.container.innerHTML = '<div class="col-12"><p class="text-center text-danger">Failed to load service requests. Please try again later.</p></div>';
+            if (this.container) {
+                this.container.innerHTML = '<div class="col-12"><p class="text-center text-danger">Failed to load service requests. Please try again later.</p></div>';
+            }
             this.renderPagination(0);
         }
     }
@@ -247,6 +265,11 @@ class ServiceRequestsManager {
      * Render service request cards with pagination
      */
     renderServiceRequests(serviceRequests) {
+        if (!this.container) {
+            console.error('Service request container not found');
+            return;
+        }
+
         if (serviceRequests.length === 0) {
             this.container.innerHTML = '<div class="col-12"><p class="text-center">No service requests match your filters. Try different criteria.</p></div>';
             this.renderPagination(0);
@@ -275,6 +298,12 @@ class ServiceRequestsManager {
         if (!paginationContainer) return;
 
         const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+        
+        if (totalPages <= 0) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
         let paginationHTML = `
             <nav aria-label="Service request pagination">
                 <ul class="pagination">
@@ -283,10 +312,51 @@ class ServiceRequestsManager {
                     </li>
         `;
 
-        for (let i = 1; i <= totalPages; i++) {
+        const maxPageButtons = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxPageButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+        
+        if (endPage - startPage + 1 < maxPageButtons) {
+            startPage = Math.max(1, endPage - maxPageButtons + 1);
+        }
+
+        // First page button if not in view
+        if (startPage > 1) {
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="1">1</a>
+                </li>
+            `;
+            if (startPage > 2) {
+                paginationHTML += `
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                `;
+            }
+        }
+
+        // Page buttons
+        for (let i = startPage; i <= endPage; i++) {
             paginationHTML += `
                 <li class="page-item ${this.currentPage === i ? 'active' : ''}">
                     <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+
+        // Last page button if not in view
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                paginationHTML += `
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                `;
+            }
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
                 </li>
             `;
         }
@@ -308,12 +378,26 @@ class ServiceRequestsManager {
      * Initialize pagination controls
      */
     initPaginationControls() {
-        const paginationLinks = document.querySelectorAll(`${this.config.paginationContainerSelector} .page-link`);
+        const paginationContainer = document.querySelector(this.config.paginationContainerSelector);
+        if (!paginationContainer) return;
+
+        const paginationLinks = paginationContainer.querySelectorAll('.page-link');
         paginationLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const pageAction = e.target.getAttribute('data-page') || e.target.parentElement.getAttribute('data-page');
-                this.handlePageChange(pageAction);
+                
+                // Find the data-page attribute on the clicked element or its parent
+                let target = e.target;
+                let pageAction = target.getAttribute('data-page');
+                
+                // If the target is an icon inside the link, get the parent's data-page
+                if (!pageAction && target.tagName.toLowerCase() === 'i') {
+                    pageAction = target.parentElement.getAttribute('data-page');
+                }
+                
+                if (pageAction) {
+                    this.handlePageChange(pageAction);
+                }
             });
         });
     }
@@ -322,7 +406,7 @@ class ServiceRequestsManager {
      * Handle page change
      */
     handlePageChange(pageAction) {
-        const totalPages = Math.ceil(this.allServiceRequests.length / this.itemsPerPage);
+        const totalPages = Math.ceil(this.filteredServiceRequests.length / this.itemsPerPage);
 
         if (pageAction === 'prev' && this.currentPage > 1) {
             this.currentPage--;
@@ -335,7 +419,13 @@ class ServiceRequestsManager {
             }
         }
 
-        this.applyFilters();
+        // Re-render the current filtered service requests with the new page
+        this.renderServiceRequests(this.filteredServiceRequests);
+        
+        // Scroll to top of the container
+        if (this.container) {
+            this.container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     /**
@@ -343,14 +433,29 @@ class ServiceRequestsManager {
      */
     async openServiceRequestModal(serviceId) {
         try {
-            const response = await axios.get(`${this.config.serviceRequestsEndpoint}/${serviceId}`);
-            const service = response.data;
+            // Check if we already have this service request in our list
+            let service = this.allServiceRequests.find(s => s.SB_ID == serviceId);
+            
+            // If not found in our list or we need fresh data, fetch it
+            if (!service) {
+                const response = await axios.get(`${this.config.serviceRequestsEndpoint}/${serviceId}`);
+                service = response.data;
+            }
+
+            if (!service) {
+                throw new Error('Service request not found');
+            }
 
             this.currentServiceRequest = service;
             this.populateModal(service);
 
-            const modalElement = document.getElementById(this.config.modalId);
-            const bsModal = new bootstrap.Modal(modalElement);
+            // Check if the modal element exists
+            if (!this.modal.element) {
+                console.error('Modal element not found');
+                return;
+            }
+
+            const bsModal = new bootstrap.Modal(this.modal.element);
             bsModal.show();
         } catch (error) {
             console.error('Error fetching service request details:', error);
@@ -362,19 +467,55 @@ class ServiceRequestsManager {
      * Populate modal with service request details
      */
     populateModal(service) {
-        this.modal.serviceId.textContent = `SRV-${service.SB_ID}`;
-        this.modal.serviceName.textContent = service.ST_NAME;
-        this.modal.serviceDescription.textContent = service.ST_DESCRIPTION || 'No description available';
-        this.modal.requestedDate.textContent = new Date(service.SB_REQUESTED_DATE).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-        this.modal.requestedTime.textContent = service.SB_REQUESTED_TIME || 'N/A';
-        this.modal.address.textContent = service.SB_ADDRESS || 'N/A';
-        this.modal.status.textContent = service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1);
-        this.modal.estimatedCost.textContent = service.SB_ESTIMATED_COST ? `$${service.SB_ESTIMATED_COST}` : `$${service.ST_PRICE_BASE || 'TBD'}`;
-        this.modal.priority.textContent = service.SB_PRIORITY.charAt(0).toUpperCase() + service.SB_PRIORITY.slice(1);
-        this.modal.notes.textContent = service.SB_DESCRIPTION || 'No additional notes';
+        if (!service) return;
+        
+        // Safely set text content only if elements exist
+        const safeSetText = (element, text) => {
+            if (element) element.textContent = text;
+        };
+        
+        safeSetText(this.modal.serviceId, `SRV-${service.SB_ID}`);
+        safeSetText(this.modal.serviceName, service.ST_NAME || 'N/A');
+        safeSetText(this.modal.serviceDescription, service.ST_DESCRIPTION || 'No description available');
+        
+        // Handle date formatting safely
+        if (this.modal.requestedDate) {
+            try {
+                const date = service.SB_REQUESTED_DATE ? new Date(service.SB_REQUESTED_DATE) : null;
+                this.modal.requestedDate.textContent = date ? date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                }) : 'N/A';
+            } catch (e) {
+                this.modal.requestedDate.textContent = 'Invalid Date';
+            }
+        }
+        
+        safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME || 'N/A');
+        safeSetText(this.modal.address, service.SB_ADDRESS || 'N/A');
+        
+        // Handle status formatting safely
+        if (this.modal.status && service.SB_STATUS) {
+            this.modal.status.textContent = service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1);
+        } else if (this.modal.status) {
+            this.modal.status.textContent = 'N/A';
+        }
+        
+        // Handle cost formatting safely
+        if (this.modal.estimatedCost) {
+            this.modal.estimatedCost.textContent = service.SB_ESTIMATED_COST ? 
+                `$${service.SB_ESTIMATED_COST}` : 
+                (service.ST_PRICE_BASE ? `$${service.ST_PRICE_BASE}` : 'TBD');
+        }
+        
+        // Handle priority formatting safely
+        if (this.modal.priority && service.SB_PRIORITY) {
+            this.modal.priority.textContent = service.SB_PRIORITY.charAt(0).toUpperCase() + service.SB_PRIORITY.slice(1);
+        } else if (this.modal.priority) {
+            this.modal.priority.textContent = 'N/A';
+        }
+        
+        safeSetText(this.modal.notes, service.SB_DESCRIPTION || 'No additional notes');
     }
 }
