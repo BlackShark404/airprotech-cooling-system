@@ -77,7 +77,7 @@ class UserModel extends Model
                 FROM user_account
                 INNER JOIN user_role ON user_account.ua_role_id = user_role.ur_id
                 WHERE user_account.ua_id = :id";
-        
+            
         return $this->queryOne($sql, ['id' => $id]);
     }
 

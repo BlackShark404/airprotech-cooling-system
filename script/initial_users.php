@@ -31,7 +31,7 @@ if (empty($adminExists)) {
     $hashedPassword = $userModel->hashPassword($adminPassword);
     
     // Create admin user
-    $userModel->insert([
+    $userModel->createUser([
         'ua_profile_url' => $adminProfileUrl,
         'ua_first_name' => $adminFirstName,
         'ua_last_name' => $adminLastName,
@@ -53,7 +53,7 @@ if (empty($adminExists)) {
     $hashedPassword = $userModel->hashPassword($password);
 
     // Create user
-    $userModel->insert([
+    $userModel->createUser([
         'ua_profile_url' => $userProfileUrl,
         'ua_first_name' => $firstName,
         'ua_last_name' => $lastName,

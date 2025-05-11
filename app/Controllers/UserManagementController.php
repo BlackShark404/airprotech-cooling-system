@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use Core\AvatarGenerator;
+
 class UserManagementController extends BaseController
 {
     protected $userModel;
@@ -126,6 +128,8 @@ class UserManagementController extends BaseController
 
     public function createUser()
     {
+        $avatar = new AvatarGenerator();
+
         // Check if request is AJAX and POST
         if (!$this->isAjax() || !$this->isPost()) {
             $this->jsonError('Invalid request method', 400);
@@ -146,10 +150,13 @@ class UserManagementController extends BaseController
         if ($this->userModel->emailExists($data['email'])) {
             $this->jsonError('Email address already in use', 400);
         }
+
+        $profileUrl = $avatar->generate($data['first_name'] . ' ' . $data['last_name']);
         
         try {
             // Map input data to user model fields
             $userData = [
+                'ua_profile_url' => $profileUrl,
                 'ua_first_name' => $data['first_name'],
                 'ua_last_name' => $data['last_name'],
                 'ua_email' => $data['email'],
@@ -174,6 +181,8 @@ class UserManagementController extends BaseController
 
     public function updateUser($id)
     {
+        $avatar = new AvatarGenerator();
+
         // Check if request is AJAX
         if (!$this->isAjax()) {
             $this->jsonError('Invalid request', 400);
@@ -189,7 +198,7 @@ class UserManagementController extends BaseController
         }
         
         // Validate required fields
-        $requiredFields = ['first_name', 'last_name', 'email', 'role_id', 'is_active'];
+        $requiredFields = ['first_name', 'last_name', 'email', 'is_active'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field]) || $data[$field] === '') {
                 $this->jsonError("Missing required field: $field", 400);
@@ -200,14 +209,19 @@ class UserManagementController extends BaseController
         if ($data['email'] !== $user['ua_email'] && $this->userModel->emailExists($data['email'])) {
             $this->jsonError('Email address already in use', 400);
         }
-        
+
+        $oldProfileUrl = $user['ua_profile_url'];
+        $newName = $data['first_name'] . ' ' . $data['last_name'];
+
+        $profileUrl = $avatar->updateNameKeepBackground($oldProfileUrl, $newName);
+
         try {
             // Map input data to user model fields
             $userData = [
+                'ua_profile_url' => $profileUrl,
                 'ua_first_name' => $data['first_name'],
                 'ua_last_name' => $data['last_name'],
                 'ua_email' => $data['email'],
-                'ua_role_id' => $data['role_id'],
                 'ua_is_active' => $data['is_active']
             ];
             

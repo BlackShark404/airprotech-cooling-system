@@ -59,6 +59,11 @@ class AuthController extends BaseController
             return $this->jsonError('This account has been deactivated');
         }
 
+        // Check if account is deactivated
+        if (isset($user['ua_is_active']) && $user['ua_is_active'] === false) {
+            return $this->jsonError('This account has been deactivated');
+        }
+
         // Check if password exists
         if (!isset($user['ua_hashed_password'])) {
             return $this->jsonError('Authentication error');
