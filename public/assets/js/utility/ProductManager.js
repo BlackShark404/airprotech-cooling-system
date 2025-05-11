@@ -15,7 +15,7 @@ class ProductManager {
             cardTemplate: this.getDefaultCardTemplate(),
             itemsPerPage: 9,
             paginationContainerSelector: '#pagination-container',
-            orderEndpoint: '/api/product-orders', // Updated: Changed from bookingEndpoint
+            orderEndpoint: '/api/product-orders',
             ...options
         };
         
@@ -23,18 +23,19 @@ class ProductManager {
         this.modal = {
             element: document.getElementById(this.config.modalId),
             image: document.getElementById('modal-product-image'),
-            name: document.getElementById('modal-product-name'), // Changed from title
-            variantSelect: document.getElementById('modal-variant-select'), // NEW: Variant selector
+            name: document.getElementById('modal-product-name'),
+            variantSelect: document.getElementById('modal-variant-select'),
             price: document.getElementById('modal-product-price'),
             code: document.getElementById('modal-product-code'),
-            availabilityStatus: document.getElementById('modal-availability-status'), // Changed from stockStatus
+            availabilityStatus: document.getElementById('modal-availability-status'),
             quantity: document.getElementById('modal-quantity'),
             orderId: document.getElementById('modal-order-id'),
             orderDate: document.getElementById('modal-order-date'),
             status: document.getElementById('modal-status'),
             totalAmount: document.getElementById('modal-total-amount'),
+            features: document.getElementById('modal-features'),
             specifications: document.getElementById('modal-specifications'),
-            confirmButton: document.getElementById('confirm-order') // Changed from confirm-booking
+            confirmButton: document.getElementById('confirm-order')
         };
         
         // Container for product cards
@@ -84,7 +85,6 @@ class ProductManager {
         // Quantity increase/decrease
         document.getElementById('increase-quantity').addEventListener('click', () => {
             const quantity = parseInt(this.modal.quantity.value, 10);
-            // Check inventory quantity from selected variant
             const selectedVariant = this.currentProduct.variants.find(
                 v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
             );
@@ -452,6 +452,17 @@ class ProductManager {
         this.modal.status.textContent = 'Pending';
         this.updateTotalAmount();
         
+        // Features
+        let featuresHTML = '';
+        if (product.features && Array.isArray(product.features)) {
+            product.features.forEach(feature => {
+                featuresHTML += `<li>• ${feature.FEATURE_NAME}</li>`;
+            });
+        } else {
+            featuresHTML = '<li>No features available</li>';
+        }
+        this.modal.features.innerHTML = featuresHTML;
+        
         // Specifications
         let specsHTML = '';
         if (product.specifications && Array.isArray(product.specifications)) {
@@ -473,8 +484,6 @@ class ProductManager {
      * Get available quantity from inventory
      */
     getAvailableQuantity(variant) {
-        // This would ideally query the INVENTORY table
-        // For now, returning a placeholder value
         // TODO: Implement actual inventory check
         return 100; // Placeholder
     }
@@ -488,13 +497,19 @@ class ProductManager {
             return;
         }
         
+        const customerId = this.getCustomerId();
+        if (!customerId) {
+            alert('You must be logged in to place an order. Please log in and try again.');
+            return;
+        }
+        
         const selectedVariant = this.currentProduct.variants.find(
             v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
         );
         
         // Collect order data
         const orderData = {
-            PO_CUSTOMER_ID: this.getCustomerId(),
+            PO_CUSTOMER_ID: customerId,
             PO_VARIANT_ID: selectedVariant.VAR_ID,
             PO_QUANTITY: parseInt(this.modal.quantity.value, 10),
             PO_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE),
@@ -519,10 +534,9 @@ class ProductManager {
     }
     
     /**
-     * Placeholder for getting customer ID
+     * Get customer ID from embedded JavaScript variable
      */
     getCustomerId() {
-        // TODO: Implement based on your auth system
-        return 1; // Placeholder
+        return window.currentUserId ? parseInt(window.currentUserId, 10) : null;
     }
 }
