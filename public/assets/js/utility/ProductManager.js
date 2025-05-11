@@ -1,11 +1,11 @@
 /**
  * ProductManager Class
  * Handles creating product cards, managing the product details modal,
- * filtering/searching products, client-side pagination, and booking confirmation
+ * filtering/searching products, client-side pagination, and order confirmation
  */
 class ProductManager {
     constructor(options = {}) {
-        // Default configuration with pagination and booking endpoint
+        // Default configuration with pagination and order endpoint
         this.config = {
             productsEndpoint: '/api/products',
             containerSelector: '#products-container',
@@ -15,7 +15,7 @@ class ProductManager {
             cardTemplate: this.getDefaultCardTemplate(),
             itemsPerPage: 9,
             paginationContainerSelector: '#pagination-container',
-            bookingEndpoint: '/api/bookings', // NEW: Endpoint for booking submission
+            orderEndpoint: '/api/product-orders', // Updated: Changed from bookingEndpoint
             ...options
         };
         
@@ -23,18 +23,18 @@ class ProductManager {
         this.modal = {
             element: document.getElementById(this.config.modalId),
             image: document.getElementById('modal-product-image'),
-            title: document.getElementById('modal-product-title'),
+            name: document.getElementById('modal-product-name'), // Changed from title
+            variantSelect: document.getElementById('modal-variant-select'), // NEW: Variant selector
             price: document.getElementById('modal-product-price'),
             code: document.getElementById('modal-product-code'),
-            stockStatus: document.getElementById('modal-stock-status'),
-            stockQuantity: document.getElementById('modal-stock-quantity'),
+            availabilityStatus: document.getElementById('modal-availability-status'), // Changed from stockStatus
             quantity: document.getElementById('modal-quantity'),
             orderId: document.getElementById('modal-order-id'),
             orderDate: document.getElementById('modal-order-date'),
             status: document.getElementById('modal-status'),
             totalAmount: document.getElementById('modal-total-amount'),
             specifications: document.getElementById('modal-specifications'),
-            confirmButton: document.getElementById('confirm-booking') // NEW: Confirm button in modal
+            confirmButton: document.getElementById('confirm-order') // Changed from confirm-booking
         };
         
         // Container for product cards
@@ -47,7 +47,7 @@ class ProductManager {
         this.currentPage = 1;
         this.itemsPerPage = this.config.itemsPerPage;
         
-        // Initialize modal quantity controls and booking confirmation
+        // Initialize modal controls and order confirmation
         this.initModalControls();
         
         // Initialize filter and search
@@ -55,21 +55,21 @@ class ProductManager {
     }
     
     /**
-     * Default card template if none provided
+     * Default card template showing primary variant price
      */
     getDefaultCardTemplate() {
         return (product) => `
             <div class="col-md-6 col-lg-4 mb-4">
-                <div class="product-card" data-product-id="${product.id}" data-category="${product.category || ''}">
+                <div class="product-card" data-product-id="${product.PROD_ID}" data-category="${product.category || ''}">
                     <div class="product-img-container">
-                        <img src="${product.image}" alt="${product.title}" class="product-img">
+                        <img src="${product.PROD_IMAGE}" alt="${product.PROD_NAME}" class="product-img">
                     </div>
                     <div class="product-info">
-                        <h3 class="product-title">${product.title}</h3>
-                        <p class="product-desc">${product.description}</p>
+                        <h3 class="product-title">${product.PROD_NAME}</h3>
+                        <p class="product-desc">${product.PROD_DESCRIPTION || ''}</p>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="product-price">$${product.price}</span>
-                            <button class="btn btn-book-now view-details" data-product-id="${product.id}">Book Now</button>
+                            <span class="product-price">$${product.variants[0]?.VAR_SRP_PRICE || 'N/A'}</span>
+                            <button class="btn btn-book-now view-details" data-product-id="${product.PROD_ID}">Order Now</button>
                         </div>
                     </div>
                 </div>
@@ -84,8 +84,11 @@ class ProductManager {
         // Quantity increase/decrease
         document.getElementById('increase-quantity').addEventListener('click', () => {
             const quantity = parseInt(this.modal.quantity.value, 10);
-            const available = parseInt(this.currentProduct.stock, 10);
-            if (quantity < available) {
+            // Check inventory quantity from selected variant
+            const selectedVariant = this.currentProduct.variants.find(
+                v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
+            );
+            if (selectedVariant && quantity < this.getAvailableQuantity(selectedVariant)) {
                 this.modal.quantity.value = quantity + 1;
                 this.updateTotalAmount();
             }
@@ -99,7 +102,15 @@ class ProductManager {
             }
         });
         
-        // Add event listener to all "Book Now" buttons
+        // Variant selection change
+        if (this.modal.variantSelect) {
+            this.modal.variantSelect.addEventListener('change', () => {
+                this.updateModalPriceAndAvailability();
+                this.updateTotalAmount();
+            });
+        }
+        
+        // Add event listener to all "Order Now" buttons
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('view-details')) {
                 const productId = e.target.getAttribute('data-product-id');
@@ -107,10 +118,10 @@ class ProductManager {
             }
         });
         
-        // NEW: Add event listener for confirm booking button
+        // Add event listener for confirm order button
         if (this.modal.confirmButton) {
             this.modal.confirmButton.addEventListener('click', () => {
-                this.confirmBooking();
+                this.confirmOrder();
             });
         }
     }
@@ -127,13 +138,12 @@ class ProductManager {
         if (this.filterForm) {
             this.filterForm.addEventListener('change', () => this.applyFilters());
             this.filterForm.addEventListener('reset', () => {
-                setTimeout(() => this.applyFilters(), 10); // Small delay to ensure form reset completes
+                setTimeout(() => this.applyFilters(), 10);
             });
         }
         
         // Add event listener for search input
         if (this.searchInput) {
-            // Debounce search to improve performance
             let searchTimeout;
             this.searchInput.addEventListener('input', () => {
                 clearTimeout(searchTimeout);
@@ -165,23 +175,22 @@ class ProductManager {
         if (minPriceFilter && minPriceFilter.value !== '') {
             const minPrice = parseFloat(minPriceFilter.value);
             filteredProducts = filteredProducts.filter(product => 
-                parseFloat(product.price) >= minPrice
+                product.variants.some(variant => parseFloat(variant.VAR_SRP_PRICE) >= minPrice)
             );
         }
         
         if (maxPriceFilter && maxPriceFilter.value !== '') {
             const maxPrice = parseFloat(maxPriceFilter.value);
             filteredProducts = filteredProducts.filter(product => 
-                parseFloat(product.price) <= maxPrice
+                product.variants.some(variant => parseFloat(variant.VAR_SRP_PRICE) <= maxPrice)
             );
         }
         
-        // Apply stock status filter if exists
-        const stockFilter = this.filterForm?.querySelector('[name="stock-status"]');
-        if (stockFilter && stockFilter.value !== '') {
-            const inStock = stockFilter.value === 'in-stock';
+        // Apply availability status filter
+        const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
+        if (availabilityFilter && availabilityFilter.value !== '') {
             filteredProducts = filteredProducts.filter(product => 
-                product.inStock === inStock
+                product.PROD_AVAILABILITY_STATUS === availabilityFilter.value
             );
         }
         
@@ -189,9 +198,8 @@ class ProductManager {
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
             filteredProducts = filteredProducts.filter(product => 
-                product.title.toLowerCase().includes(searchTerm) || 
-                product.description.toLowerCase().includes(searchTerm) ||
-                (product.code && product.code.toLowerCase().includes(searchTerm))
+                product.PROD_NAME.toLowerCase().includes(searchTerm) || 
+                (product.PROD_DESCRIPTION && product.PROD_DESCRIPTION.toLowerCase().includes(searchTerm))
             );
         }
         
@@ -209,17 +217,36 @@ class ProductManager {
     }
     
     /**
-     * Update total amount based on quantity
+     * Update total amount based on quantity and selected variant
      */
     updateTotalAmount() {
         const quantity = parseInt(this.modal.quantity.value, 10);
-        const price = parseFloat(this.currentProduct.price);
+        const selectedVariant = this.currentProduct.variants.find(
+            v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
+        );
+        const price = selectedVariant ? parseFloat(selectedVariant.VAR_SRP_PRICE) : 0;
         const total = price * quantity;
         this.modal.totalAmount.textContent = `$${total.toLocaleString()}`;
     }
     
     /**
-     * Fetch products from API and render them
+     * Update modal price and availability based on selected variant
+     */
+    updateModalPriceAndAvailability() {
+        const selectedVariant = this.currentProduct.variants.find(
+            v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
+        );
+        if (selectedVariant) {
+            this.modal.price.textContent = `$${selectedVariant.VAR_SRP_PRICE}`;
+            this.modal.availabilityStatus.textContent = 
+                this.currentProduct.PROD_AVAILABILITY_STATUS === 'Available' 
+                ? `Available (${this.getAvailableQuantity(selectedVariant)} units)` 
+                : this.currentProduct.PROD_AVAILABILITY_STATUS;
+        }
+    }
+    
+    /**
+     * Fetch products with variants from API and render them
      */
     async fetchAndRenderProducts() {
         try {
@@ -249,22 +276,18 @@ class ProductManager {
     
     /**
      * Populate category filter dropdown with unique categories from products
-     * @param {Array} products - Array of product objects
      */
     populateCategoryFilter(products) {
         const categoryFilter = this.filterForm?.querySelector('[name="category"]');
         if (!categoryFilter) return;
         
         const categories = new Set();
-        
-        // Extract unique categories
         products.forEach(product => {
             if (product.category) {
                 categories.add(product.category);
             }
         });
         
-        // Create option elements for each category
         let options = '<option value="">All Categories</option>';
         categories.forEach(category => {
             options += `<option value="${category}">${this.formatCategoryName(category)}</option>`;
@@ -274,9 +297,7 @@ class ProductManager {
     }
     
     /**
-     * Format category name for display (capitalize, replace dashes with spaces)
-     * @param {string} category - Category name to format
-     * @returns {string} - Formatted category name
+     * Format category name for display
      */
     formatCategoryName(category) {
         return category
@@ -286,8 +307,7 @@ class ProductManager {
     }
     
     /**
-     * Render product cards in the container with pagination
-     * @param {Array} products - Array of product objects
+     * Render product cards with pagination
      */
     renderProducts(products) {
         if (products.length === 0) {
@@ -296,12 +316,10 @@ class ProductManager {
             return;
         }
         
-        // Calculate pagination
         const startIndex = (this.currentPage - 1) * this.itemsPerPage;
         const endIndex = startIndex + this.itemsPerPage;
         const paginatedProducts = products.slice(startIndex, endIndex);
         
-        // Render product cards
         let html = '';
         paginatedProducts.forEach(product => {
             html += this.config.cardTemplate(product);
@@ -309,13 +327,11 @@ class ProductManager {
         
         this.container.innerHTML = html;
         
-        // Render pagination controls
         this.renderPagination(products.length);
     }
     
     /**
      * Render pagination controls
-     * @param {number} totalItems - Total number of products
      */
     renderPagination(totalItems) {
         const paginationContainer = document.querySelector(this.config.paginationContainerSelector);
@@ -330,7 +346,6 @@ class ProductManager {
                     </li>
         `;
         
-        // Generate page numbers
         for (let i = 1; i <= totalPages; i++) {
             paginationHTML += `
                 <li class="page-item ${this.currentPage === i ? 'active' : ''}">
@@ -349,7 +364,6 @@ class ProductManager {
         
         paginationContainer.innerHTML = paginationHTML;
         
-        // Add event listeners to pagination links
         this.initPaginationControls();
     }
     
@@ -369,7 +383,6 @@ class ProductManager {
     
     /**
      * Handle page change
-     * @param {string|number} pageAction - Page number or 'prev'/'next'
      */
     handlePageChange(pageAction) {
         const totalPages = Math.ceil(this.allProducts.length / this.itemsPerPage);
@@ -385,13 +398,11 @@ class ProductManager {
             }
         }
         
-        // Re-apply filters to render the new page
         this.applyFilters();
     }
     
     /**
      * Open product modal with details
-     * @param {string|number} productId - ID of the product to show details for
      */
     async openProductModal(productId) {
         try {
@@ -401,7 +412,6 @@ class ProductManager {
             this.currentProduct = product;
             this.populateModal(product);
             
-            // Show modal using Bootstrap's modal API
             const modalElement = document.getElementById(this.config.modalId);
             const bsModal = new bootstrap.Modal(modalElement);
             bsModal.show();
@@ -413,46 +423,42 @@ class ProductManager {
     
     /**
      * Populate modal with product details
-     * @param {Object} product - Product data object
      */
     populateModal(product) {
-        // Reset quantity to 1
         this.modal.quantity.value = 1;
         
-        // Set basic product info
-        this.modal.image.src = product.image;
-        this.modal.image.alt = product.title;
-        this.modal.title.textContent = product.title;
-        this.modal.price.textContent = `$${product.price}`;
-        this.modal.code.textContent = product.code || `SI-${product.id}`;
+        this.modal.image.src = product.PROD_IMAGE;
+        this.modal.image.alt = product.PROD_NAME;
+        this.modal.name.textContent = product.PROD_NAME;
+        this.modal.code.textContent = `PROD-${product.PROD_ID}`;
         
-        // Stock status
-        this.modal.stockStatus.textContent = product.inStock ? 'In Stock' : 'Out of Stock';
-        this.modal.stockQuantity.textContent = product.inStock ? `(${product.stock} units available)` : '';
+        // Populate variant selector
+        let variantOptions = '';
+        product.variants.forEach(variant => {
+            variantOptions += `<option value="${variant.VAR_ID}">${variant.VAR_CAPACITY} - $${variant.VAR_SRP_PRICE}</option>`;
+        });
+        this.modal.variantSelect.innerHTML = variantOptions;
+        
+        // Set initial price and availability
+        this.updateModalPriceAndAvailability();
         
         // Order details
-        this.modal.orderId.textContent = product.orderId || `ORD-${new Date().getFullYear()}-${String(product.id).padStart(4, '0')}`;
-        this.modal.orderDate.textContent = product.orderDate || new Date().toLocaleDateString('en-US', { 
+        this.modal.orderId.textContent = `PO-${new Date().getFullYear()}-${String(product.PROD_ID).padStart(4, '0')}`;
+        this.modal.orderDate.textContent = new Date().toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short', 
             day: 'numeric' 
         });
-        this.modal.status.textContent = product.status || 'New';
-        this.modal.totalAmount.textContent = `$${product.price}`;
+        this.modal.status.textContent = 'Pending';
+        this.updateTotalAmount();
         
         // Specifications
         let specsHTML = '';
         if (product.specifications && Array.isArray(product.specifications)) {
             product.specifications.forEach(spec => {
-                specsHTML += `<li>• ${spec}</li>`;
+                specsHTML += `<li>• ${spec.SPEC_NAME}: ${spec.SPEC_VALUE}</li>`;
             });
-        } else if (product.specifications && typeof product.specifications === 'object') {
-            // Handle specifications as an object
-            for (const [key, value] of Object.entries(product.specifications)) {
-                specsHTML += `<li>• ${key}: ${value}</li>`;
-            }
         } else {
-            // Default specifications based on image
             specsHTML = `
                 <li>• Energy Rating: 5 Star</li>
                 <li>• Cooling Capacity: 12,000 BTU</li>
@@ -464,42 +470,59 @@ class ProductManager {
     }
     
     /**
-     * NEW: Handle booking confirmation and send to backend
+     * Get available quantity from inventory
      */
-    async confirmBooking() {
+    getAvailableQuantity(variant) {
+        // This would ideally query the INVENTORY table
+        // For now, returning a placeholder value
+        // TODO: Implement actual inventory check
+        return 100; // Placeholder
+    }
+    
+    /**
+     * Handle order confirmation and send to backend
+     */
+    async confirmOrder() {
         if (!this.currentProduct) {
             alert('No product selected. Please try again.');
             return;
         }
         
-        // Collect booking data
-        const bookingData = {
-            productId: this.currentProduct.id,
-            quantity: parseInt(this.modal.quantity.value, 10),
-            totalAmount: parseFloat(this.currentProduct.price) * parseInt(this.modal.quantity.value, 10),
-            orderId: this.modal.orderId.textContent,
-            orderDate: this.modal.orderDate.textContent,
-            status: 'Pending', // Initial status
-            customerId: this.getCustomerId() // Placeholder: Implement based on your auth system
+        const selectedVariant = this.currentProduct.variants.find(
+            v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
+        );
+        
+        // Collect order data
+        const orderData = {
+            PO_CUSTOMER_ID: this.getCustomerId(),
+            PO_VARIANT_ID: selectedVariant.VAR_ID,
+            PO_QUANTITY: parseInt(this.modal.quantity.value, 10),
+            PO_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE),
+            PO_STATUS: 'pending',
+            PO_ORDER_DATE: new Date().toISOString()
         };
         
         try {
-            // Send booking data to backend
-            const response = await axios.post(this.config.bookingEndpoint, bookingData);
+            const response = await axios.post(this.config.orderEndpoint, orderData);
             
-            // Handle successful booking
-            alert('Booking confirmed successfully! Order ID: ' + response.data.orderId);
+            alert('Order placed successfully! Order ID: ' + response.data.PO_ID);
             
-            // Close modal
             const modalElement = document.getElementById(this.config.modalId);
             const bsModal = bootstrap.Modal.getInstance(modalElement);
             bsModal.hide();
             
-            // Optionally refresh products to update stock
             this.fetchAndRenderProducts();
         } catch (error) {
-            console.error('Error confirming booking:', error);
-            alert('Failed to confirm booking. Please try again.');
+            console.error('Error placing order:', error);
+            alert('Failed to place order. Please try again.');
         }
+    }
+    
+    /**
+     * Placeholder for getting customer ID
+     */
+    getCustomerId() {
+        // TODO: Implement based on your auth system
+        return 1; // Placeholder
     }
 }
