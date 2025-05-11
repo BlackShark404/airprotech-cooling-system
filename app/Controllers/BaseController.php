@@ -2,17 +2,9 @@
 
 namespace App\Controllers;
 
-use Config\Database;
-
 class BaseController
 {   protected $pdo;
     
-    public function __construct()
-    {
-        // Get the PDO connection from the Database singleton
-        $this->pdo = Database::getInstance()->getConnection();
-    }
-
     protected function getViewPath(string $relativePath): string {
         $path = __DIR__ . "/../Views/{$relativePath}.php";
         if (!file_exists($path)) {
