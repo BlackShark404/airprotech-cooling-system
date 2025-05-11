@@ -1,11 +1,11 @@
 /**
  * ProductManager Class
  * Handles creating product cards, managing the product details modal,
- * filtering/searching products, and client-side pagination
+ * filtering/searching products, client-side pagination, and booking confirmation
  */
 class ProductManager {
     constructor(options = {}) {
-        // Default configuration with pagination settings
+        // Default configuration with pagination and booking endpoint
         this.config = {
             productsEndpoint: '/api/products',
             containerSelector: '#products-container',
@@ -15,6 +15,7 @@ class ProductManager {
             cardTemplate: this.getDefaultCardTemplate(),
             itemsPerPage: 9,
             paginationContainerSelector: '#pagination-container',
+            bookingEndpoint: '/api/bookings', // NEW: Endpoint for booking submission
             ...options
         };
         
@@ -32,7 +33,8 @@ class ProductManager {
             orderDate: document.getElementById('modal-order-date'),
             status: document.getElementById('modal-status'),
             totalAmount: document.getElementById('modal-total-amount'),
-            specifications: document.getElementById('modal-specifications')
+            specifications: document.getElementById('modal-specifications'),
+            confirmButton: document.getElementById('confirm-booking') // NEW: Confirm button in modal
         };
         
         // Container for product cards
@@ -45,7 +47,7 @@ class ProductManager {
         this.currentPage = 1;
         this.itemsPerPage = this.config.itemsPerPage;
         
-        // Initialize modal quantity controls
+        // Initialize modal quantity controls and booking confirmation
         this.initModalControls();
         
         // Initialize filter and search
@@ -104,6 +106,13 @@ class ProductManager {
                 this.openProductModal(productId);
             }
         });
+        
+        // NEW: Add event listener for confirm booking button
+        if (this.modal.confirmButton) {
+            this.modal.confirmButton.addEventListener('click', () => {
+                this.confirmBooking();
+            });
+        }
     }
     
     /**
@@ -452,5 +461,45 @@ class ProductManager {
             `;
         }
         this.modal.specifications.innerHTML = specsHTML;
+    }
+    
+    /**
+     * NEW: Handle booking confirmation and send to backend
+     */
+    async confirmBooking() {
+        if (!this.currentProduct) {
+            alert('No product selected. Please try again.');
+            return;
+        }
+        
+        // Collect booking data
+        const bookingData = {
+            productId: this.currentProduct.id,
+            quantity: parseInt(this.modal.quantity.value, 10),
+            totalAmount: parseFloat(this.currentProduct.price) * parseInt(this.modal.quantity.value, 10),
+            orderId: this.modal.orderId.textContent,
+            orderDate: this.modal.orderDate.textContent,
+            status: 'Pending', // Initial status
+            customerId: this.getCustomerId() // Placeholder: Implement based on your auth system
+        };
+        
+        try {
+            // Send booking data to backend
+            const response = await axios.post(this.config.bookingEndpoint, bookingData);
+            
+            // Handle successful booking
+            alert('Booking confirmed successfully! Order ID: ' + response.data.orderId);
+            
+            // Close modal
+            const modalElement = document.getElementById(this.config.modalId);
+            const bsModal = bootstrap.Modal.getInstance(modalElement);
+            bsModal.hide();
+            
+            // Optionally refresh products to update stock
+            this.fetchAndRenderProducts();
+        } catch (error) {
+            console.error('Error confirming booking:', error);
+            alert('Failed to confirm booking. Please try again.');
+        }
     }
 }
