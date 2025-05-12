@@ -366,6 +366,7 @@ class ServiceRequestsManager {
                         this.modal.requestedTime.textContent = 'N/A';
                     }
                     
+                    // Make sure we're using the correct field for address
                     this.modal.address.textContent = service.SB_ADDRESS || 'N/A';
                     
                     // Format status with badge
@@ -381,6 +382,7 @@ class ServiceRequestsManager {
                     
                     this.modal.estimatedCost.textContent = service.SB_ESTIMATED_COST ? `$${service.SB_ESTIMATED_COST}` : 'Pending';
                     this.modal.priority.textContent = service.SB_PRIORITY ? service.SB_PRIORITY.charAt(0).toUpperCase() + service.SB_PRIORITY.slice(1) : 'Normal';
+                    // Make sure we're using the correct field for description/notes
                     this.modal.notes.textContent = service.SB_DESCRIPTION || 'No additional notes provided.';
                 } else {
                     this.handleModalError('Failed to load service request details');
