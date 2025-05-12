@@ -289,102 +289,12 @@ ob_start();
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Activity Statistics</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="d-block text-muted mb-2 small">Total Logins</label>
-                                    <div class="d-flex align-items-center">
-                                        <div class="progress flex-grow-1 me-3" style="height: 8px;">
-                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <span class="fw-semibold" id="viewUserLogins">32</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="d-block text-muted mb-2 small">Services Requested</label>
-                                    <div class="d-flex align-items-center">
-                                        <div class="progress flex-grow-1 me-3" style="height: 8px;">
-                                            <div class="progress-bar bg-success" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <span class="fw-semibold" id="viewUserServices">8</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="d-block text-muted mb-2 small">Active Services</label>
-                                    <div class="d-flex align-items-center">
-                                        <div class="progress flex-grow-1 me-3" style="height: 8px;">
-                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <span class="fw-semibold" id="viewUserActiveServices">3</span>
-                                    </div>
-                                </div>
-                                <div class="alert alert-light mt-4 mb-0">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-clock-history me-3 fs-4 text-primary"></i>
-                                        <div>
-                                            <p class="mb-0 small">Last Activity</p>
-                                            <p class="mb-0 fw-medium" id="viewUserLastActivity">2023-05-20 10:45 AM</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id="viewUserEditBtn">
                     <i class="bi bi-pencil me-2"></i>Edit User
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteConfirmModalLabel">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-trash fs-4 text-danger"></i>
-                    </div>
-                    <div>
-                        <h5 class="mb-1">Delete User</h5>
-                        <p class="mb-0 text-muted">This action cannot be undone</p>
-                    </div>
-                </div>
-                
-                <p>Are you sure you want to delete user <strong id="deleteUserName"></strong>?</p>
-                
-                <div class="alert alert-warning">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Deleting this user will remove all associated data including access logs, service requests, and account details.
-                </div>
-                
-                <div class="form-check mt-3">
-                    <input class="form-check-input" type="checkbox" id="confirmDeleteCheck">
-                    <label class="form-check-label" for="confirmDeleteCheck">
-                        I understand the consequences of this action
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>
-                    <i class="bi bi-trash me-2"></i>Delete User
                 </button>
             </div>
         </div>

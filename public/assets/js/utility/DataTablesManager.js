@@ -26,7 +26,7 @@ class DataTablesManager {
     this.tableId = tableId;
     this.dataTable = null;
     this.data = [];
-    
+
     // Default options
     this.options = {
       columns: [],
@@ -46,14 +46,14 @@ class DataTablesManager {
       },
       ...options
     };
-    
+
     // Initialize toast container if it doesn't exist
     this._initializeToastContainer();
-    
+
     // Initialize table
     this.initialize();
   }
-  
+
   /**
    * Initialize the Toast Container
    * @private
@@ -161,16 +161,16 @@ class DataTablesManager {
           }
         </style>
       `;
-      
+
       // Add styles to document head
       $('head').append(toastContainerStyles);
-      
+
       // Create toast container
       const position = this.options.toastOptions.position || 'top-right';
       $('body').append(`<div id="toastContainer" class="${position}"></div>`);
     }
   }
-  
+
   /**
    * Show a toast notification
    * @param {string} type - Toast type (success, error, warning, info)
@@ -182,7 +182,7 @@ class DataTablesManager {
   showToast(type, title, message, options = {}) {
     const toastOptions = { ...this.options.toastOptions, ...options };
     const toastId = `toast-${Date.now()}`;
-    
+
     // Get the icon based on type
     let icon = '';
     switch (type) {
@@ -206,7 +206,7 @@ class DataTablesManager {
         icon = '<i class="fas fa-bell"></i>';
         if (!toastOptions.enableIcons) icon = '🔔';
     }
-    
+
     // Create toast HTML
     const toastHtml = `
       <div id="${toastId}" class="toast toast-${type}">
@@ -219,15 +219,15 @@ class DataTablesManager {
         ${!toastOptions.hideProgressBar ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
       </div>
     `;
-    
+
     // Append toast to container
     $('#toastContainer').append(toastHtml);
     const $toast = $(`#${toastId}`);
-    
+
     // Show toast with animation
     setTimeout(() => {
       $toast.addClass('show');
-      
+
       // Set progress bar animation if enabled
       if (!toastOptions.hideProgressBar) {
         $toast.find('.toast-progress-bar').css({
@@ -235,7 +235,7 @@ class DataTablesManager {
           'transition': `width ${toastOptions.autoClose}ms linear`
         });
       }
-      
+
       // Auto close if enabled
       if (toastOptions.autoClose) {
         setTimeout(() => {
@@ -243,30 +243,30 @@ class DataTablesManager {
         }, toastOptions.autoClose);
       }
     }, 10);
-    
+
     // Attach close event
     $toast.find('.toast-close').on('click', () => {
       this._closeToast($toast);
     });
-    
+
     // Close on click if enabled
     if (toastOptions.closeOnClick) {
-      $toast.on('click', function(e) {
+      $toast.on('click', function (e) {
         if ($(e.target).hasClass('toast-close')) return;
         this._closeToast($toast);
       }.bind(this));
     }
-    
+
     // Pause on hover if enabled
     if (toastOptions.pauseOnHover && toastOptions.autoClose) {
       let remainingTime = toastOptions.autoClose;
       let startTime;
       let timeoutId;
-      
-      $toast.on('mouseenter', function() {
+
+      $toast.on('mouseenter', function () {
         clearTimeout(timeoutId);
         remainingTime -= (Date.now() - startTime);
-        
+
         // Pause progress bar animation
         if (!toastOptions.hideProgressBar) {
           const $progressBar = $toast.find('.toast-progress-bar');
@@ -277,10 +277,10 @@ class DataTablesManager {
           });
         }
       });
-      
-      $toast.on('mouseleave', function() {
+
+      $toast.on('mouseleave', function () {
         startTime = Date.now();
-        
+
         // Resume progress bar animation
         if (!toastOptions.hideProgressBar) {
           const $progressBar = $toast.find('.toast-progress-bar');
@@ -289,18 +289,18 @@ class DataTablesManager {
             'transition': `width ${remainingTime}ms linear`
           });
         }
-        
+
         timeoutId = setTimeout(() => {
           this._closeToast($toast);
         }, remainingTime);
       }.bind(this));
-      
+
       startTime = Date.now();
     }
-    
+
     return $toast;
   }
-  
+
   /**
    * Show a success toast
    * @param {string} title - Toast title
@@ -311,7 +311,7 @@ class DataTablesManager {
   showSuccessToast(title, message, options = {}) {
     return this.showToast('success', title, message, options);
   }
-  
+
   /**
    * Show an error toast
    * @param {string} title - Toast title
@@ -322,7 +322,7 @@ class DataTablesManager {
   showErrorToast(title, message, options = {}) {
     return this.showToast('error', title, message, options);
   }
-  
+
   /**
    * Show a warning toast
    * @param {string} title - Toast title
@@ -333,7 +333,7 @@ class DataTablesManager {
   showWarningToast(title, message, options = {}) {
     return this.showToast('warning', title, message, options);
   }
-  
+
   /**
    * Show an info toast
    * @param {string} title - Toast title
@@ -344,7 +344,7 @@ class DataTablesManager {
   showInfoToast(title, message, options = {}) {
     return this.showToast('info', title, message, options);
   }
-  
+
   /**
    * Close a toast
    * @param {Object} $toast - Toast jQuery element
@@ -356,7 +356,7 @@ class DataTablesManager {
       $toast.remove();
     }, 300);
   }
-  
+
   /**
    * Generate Bootstrap badge HTML
    * @param {string|number} value - The value to display in the badge
@@ -375,38 +375,38 @@ class DataTablesManager {
       customClass: '',      // Additional CSS classes
       valueMap: null        // Map of values to custom display/color
     };
-    
+
     // Merge with provided config
     const config = { ...defaultConfig, ...badgeConfig };
-    
+
     // Check if we have a value mapping
     let displayValue = value;
     let badgeType = config.type;
-    
+
     if (config.valueMap && config.valueMap[value] !== undefined) {
       const mapping = config.valueMap[value];
-      
+
       // Handle object mapping (with custom color and display text)
       if (typeof mapping === 'object') {
         displayValue = mapping.display || value;
         badgeType = mapping.type || badgeType;
-      } 
+      }
       // Handle string mapping (just display text)
       else if (typeof mapping === 'string') {
         displayValue = mapping;
       }
     }
-    
+
     // Build badge classes
     let badgeClasses = `badge bg-${badgeType}`;
     if (config.pill) badgeClasses += ' rounded-pill';
     if (config.size) badgeClasses += ` badge-${config.size}`;
     if (config.customClass) badgeClasses += ` ${config.customClass}`;
-    
+
     // Create badge HTML
     return `<span class="${badgeClasses}">${config.prefix}${displayValue}${config.suffix}</span>`;
   }
-  
+
   /**
    * Initialize the DataTable
    */
@@ -417,30 +417,30 @@ class DataTablesManager {
       if (column.badge) {
         // Clone the column configuration to avoid modifying the original
         const newColumn = { ...column };
-        
+
         // Add render function for badge
         newColumn.render = (data, type, row) => {
           // For sorting and filtering, use the raw data
           if (type === 'sort' || type === 'filter') {
             return data;
           }
-          
+
           // For display, generate badge HTML
           return this._generateBadgeHtml(data, column.badge);
         };
-        
+
         return newColumn;
       }
-      
+
       // Return original column if no badge configuration
       return column;
     });
-    
+
     // Prepare columns with action buttons
     const columns = [...processedColumns];
-    
+
     // Add action column if any callback is provided
-    if (this.options.viewRowCallback || this.options.editRowCallback || this.options.deleteRowCallback) {
+    if (this.options.viewRowCallback || this.options.editRowCallback) {
       columns.push({
         data: null,
         title: 'Actions',
@@ -448,25 +448,21 @@ class DataTablesManager {
         className: 'actions-column',
         render: (data, type, row) => {
           let actionsHtml = '<div class="action-buttons">';
-          
+
           if (this.options.viewRowCallback) {
             actionsHtml += `<button class="btn btn-info btn-sm view-btn" data-id="${row.id}">View</button> `;
           }
-          
+
           if (this.options.editRowCallback) {
             actionsHtml += `<button class="btn btn-warning btn-sm edit-btn" data-id="${row.id}">Edit</button> `;
           }
-          
-          if (this.options.deleteRowCallback) {
-            actionsHtml += `<button class="btn btn-danger btn-sm delete-btn" data-id="${row.id}">Delete</button>`;
-          }
-          
+
           actionsHtml += '</div>';
           return actionsHtml;
         }
       });
     }
-    
+
     // Initialize DataTable
     this.dataTable = $(`#${this.tableId}`).DataTable({
       columns: columns,
@@ -489,54 +485,43 @@ class DataTablesManager {
         emptyTable: "No data available"
       }
     });
-    
+
     // Attach event listeners
     this._attachEventListeners();
   }
-  
+
   /**
    * Attach event listeners for action buttons
    * @private
    */
   _attachEventListeners() {
     const table = $(`#${this.tableId}`);
-    
+
     // View button click handler
     if (this.options.viewRowCallback) {
       table.on('click', '.view-btn', (e) => {
         const id = $(e.currentTarget).data('id');
         const rowData = this._findRowById(id);
         this.options.viewRowCallback(rowData, this);
-        
+
         // Show info toast
         this.showInfoToast('View Record', `Viewing record #${id}`);
       });
     }
-    
+
     // Edit button click handler
     if (this.options.editRowCallback) {
       table.on('click', '.edit-btn', (e) => {
         const id = $(e.currentTarget).data('id');
         const rowData = this._findRowById(id);
         this.options.editRowCallback(rowData, this);
-        
+
         // Show warning toast
         this.showWarningToast('Edit Record', `Editing record #${id}`);
       });
     }
-    
-    // Delete button click handler with confirmation modal
-    if (this.options.deleteRowCallback) {
-      table.on('click', '.delete-btn', (e) => {
-        const id = $(e.currentTarget).data('id');
-        const rowData = this._findRowById(id);
-        
-        // Show confirmation modal
-        this._showDeleteConfirmationModal(rowData);
-      });
-    }
   }
-  
+
   /**
    * Find a row by its ID
    * @param {number|string} id - Row ID
@@ -546,56 +531,7 @@ class DataTablesManager {
   _findRowById(id) {
     return this.data.find(row => row.id == id) || null;
   }
-  
-  /**
-   * Show delete confirmation modal
-   * @param {Object} rowData - Row data
-   * @private
-   */
-  _showDeleteConfirmationModal(rowData) {
-    // Create modal if it doesn't exist
-    let modalId = 'deleteConfirmationModal';
-    let modal = $(`#${modalId}`);
-    
-    if (modal.length === 0) {
-      const modalHtml = `
-        <div class="modal fade" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Delete</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                Are you sure you want to delete this record?
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      $('body').append(modalHtml);
-      modal = $(`#${modalId}`);
-    }
-    
-    // Attach delete confirmation handler
-    $('#confirmDeleteBtn').off('click').on('click', () => {
-      this.options.deleteRowCallback(rowData, this);
-      modal.modal('hide');
-      
-      
-    });
-    
-    // Show modal
-    modal.modal('show');
-  }
-  
+
   /**
    * Refresh the DataTable with new data
    * @param {Array} [newData] - New data to use (optional)
@@ -608,10 +544,10 @@ class DataTablesManager {
     } else {
       this.dataTable.ajax.reload();
     }
-    
+
     return this;
   }
-  
+
   /**
    * Add a new row to the DataTable
    * @param {Object} rowData - Row data
@@ -620,13 +556,13 @@ class DataTablesManager {
   addRow(rowData) {
     this.data.push(rowData);
     this.dataTable.row.add(rowData).draw();
-    
+
     // Show success toast
     this.showSuccessToast('Add Record', `New record #${rowData.id} has been added`);
-    
+
     return this;
   }
-  
+
   /**
    * Update a row in the DataTable
    * @param {number|string} id - Row ID
@@ -636,19 +572,19 @@ class DataTablesManager {
   updateRow(id, newData) {
     // Find the row index
     const rowIndex = this.data.findIndex(row => row.id == id);
-    
+
     if (rowIndex !== -1) {
       // Update the data array
       this.data[rowIndex] = { ...this.data[rowIndex], ...newData };
-      
+
       // Update the DataTable row
-      const row = this.dataTable.row(function(idx, data) {
+      const row = this.dataTable.row(function (idx, data) {
         return data.id == id;
       });
-      
+
       if (row.length) {
         row.data(this.data[rowIndex]).draw();
-        
+
         // Show success toast
         this.showSuccessToast('Update Record', `Record #${id} has been updated`);
       }
@@ -656,42 +592,10 @@ class DataTablesManager {
       // Show error toast if record not found
       this.showErrorToast('Update Error', `Record #${id} not found`);
     }
-    
+
     return this;
   }
-  
-  /**
-   * Delete a row from the DataTable
-   * @param {number|string} id - Row ID
-   * @returns {DataTablesManager} this instance for chaining
-   */
-  deleteRow(id) {
-    // Find the row index
-    const rowIndex = this.data.findIndex(row => row.id == id);
-    
-    if (rowIndex !== -1) {
-      // Remove from the data array
-      this.data.splice(rowIndex, 1);
-      
-      // Remove from the DataTable
-      const row = this.dataTable.row(function(idx, data) {
-        return data.id == id;
-      });
-      
-      if (row.length) {
-        row.remove().draw();
-        
-        // Show error toast (for destructive action)
-        this.showErrorToast('Delete Record', `Record #${id} has been deleted`);
-      }
-    } else {
-      // Show error toast if record not found
-      this.showErrorToast('Delete Error', `Record #${id} not found`);
-    }
-    
-    return this;
-  }
-  
+
   /**
    * Apply filters to the DataTable
    * @param {Object} filters - Filter criteria
@@ -700,7 +604,7 @@ class DataTablesManager {
   applyFilters(filters) {
     // Clear existing custom filters
     $.fn.dataTable.ext.search.pop();
-    
+
     // Add custom filter function
     if (Object.keys(filters).length > 0) {
       $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
@@ -712,19 +616,19 @@ class DataTablesManager {
         }
         return true;
       });
-      
+
       // Show info toast
       this.showInfoToast('Filters Applied', 'Table data has been filtered');
     } else {
       // Show info toast for filter removal
       this.showInfoToast('Filters Removed', 'All filters have been cleared');
     }
-    
+
     // Redraw the table
     this.dataTable.draw();
     return this;
   }
-  
+
   /**
    * Get the currently selected rows
    * @returns {Array} Selected row data
