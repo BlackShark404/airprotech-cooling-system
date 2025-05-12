@@ -3,8 +3,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const userTableManager = new DataTablesManager("usersTable", {
     ajaxUrl: "/api/users",
     responsive: true,
-    dom: "Bfrtip", // Properly display buttons
+    dom: '<"row"<"col-md-6"<"table-title">><"col-md-6"f>>rt<"row"<"col-md-6"i><"col-md-6"p>>', // Custom layout with table title, search, and pagination
     autoWidth: false, // Disable auto width calculation
+
+    // Disable automatic adding of action column by setting callbacks to null initially
+    // We'll handle these separately after initialization
+    viewRowCallback: null,
+    editRowCallback: null,
 
     //This is for add  customer
     columns: [
@@ -71,95 +76,126 @@ document.addEventListener("DOMContentLoaded", function () {
           return `<span class="text-nowrap"><i class="bi bi-clock me-1 text-muted"></i>${data}</span>`;
         },
       },
-    ],
-    // View user callback
-    viewRowCallback: function (rowData, tableManager) {
-      // Set user profile image
-      $("#userProfileImage").attr("src", rowData.profile_url || "/assets/images/default-avatar.png");
-
-      // Populate the view modal with user data
-      $("#viewUserId").text(rowData.id);
-      $("#viewUserName").text(rowData.first_name + " " + rowData.last_name);
-      $("#viewUserEmail").text(rowData.email);
-
-      // Set role with badge
-      let roleBadgeClass = "bg-success";
-      if (rowData.role === "admin") {
-        roleBadgeClass = "bg-danger";
-      } else if (rowData.role === "technician") {
-        roleBadgeClass = "bg-primary";
+      {
+        // Action column with icons
+        data: null,
+        title: "Actions",
+        orderable: false,
+        className: "text-center",
+        render: function (data, type, row) {
+          return `<div class="d-flex justify-content-center gap-2">
+                    <button class="btn btn-icon btn-sm btn-info view-btn" data-id="${row.id}" title="View User">
+                      <i class="bi bi-eye-fill"></i>
+                    </button>
+                    <button class="btn btn-icon btn-sm btn-warning edit-btn" data-id="${row.id}" title="Edit User">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>
+                  </div>`;
+        }
       }
-
-      $("#viewUserRole").html(
-        `<span class="badge ${roleBadgeClass} rounded-pill">${rowData.role.charAt(0).toUpperCase() + rowData.role.slice(1)
-        }</span>`
-      );
-
-      // Set status with badge
-      const statusBadgeClass =
-        rowData.status === "active" ? "bg-success" : "bg-danger";
-      $("#viewUserStatus").html(
-        `<span class="badge ${statusBadgeClass} rounded-pill">${rowData.status.charAt(0).toUpperCase() + rowData.status.slice(1)
-        }</span>`
-      );
-
-      $("#viewUserRegistered").text(rowData.registered);
-      $("#viewUserLastLogin").text(rowData.last_login || "Never");
-
-      // Show the modal
-      const viewModal = new bootstrap.Modal(
-        document.getElementById("viewUserModal")
-      );
-      viewModal.show();
-
-      // Setup edit button in view modal
-      $("#viewUserEditBtn")
-        .off("click")
-        .on("click", function () {
-          // Hide view modal
-          viewModal.hide();
-
-          // Setup and show edit modal
-          setupEditUserModal(rowData, tableManager);
-        });
-    },
-
-    // Edit user callback
-    editRowCallback: function (rowData, tableManager) {
-      setupEditUserModal(rowData, tableManager);
-    },
+    ],
 
     // After data loaded callback to update user count
     afterDataLoadedCallback: function (data) {
       updateUserCount();
     },
+
+    // Remove export buttons, keeping only print button
+    buttons: ['print'],
   });
 
-  // FAILSAFE: Fix duplicate Actions headers after table initialization
-  setTimeout(function () {
-    // Find all column headers with the text "Actions"
-    const actionHeaders = $("#usersTable thead th").filter(function () {
-      return $(this).text().trim() === "Actions";
-    });
+  // Add table title
+  $(".table-title").html('<h5 class="mb-0" id="userCount">User List</h5>');
 
-    // If there are duplicate Actions headers, remove all but the first one
-    if (actionHeaders.length > 1) {
-      console.log("Fixing duplicate Actions headers...");
-      actionHeaders.not(":first").remove();
+  // Add search icon to the search input
+  $(".dataTables_filter input").addClass("form-control");
+  $(".dataTables_filter").addClass("position-relative");
+  $(".dataTables_filter label").html(`
+    <div class="input-group">
+      <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+      <input type="search" class="form-control border-start-0" placeholder="Search users..." aria-controls="${userTableManager.tableId}">
+    </div>
+  `);
 
-      // Force DataTables to redraw the table
-      try {
-        $("#usersTable").DataTable().columns.adjust().draw();
-      } catch (e) {
-        console.error("Error redrawing table:", e);
-      }
+  // Restore search functionality after customizing the search input
+  $(".dataTables_filter input").on('keyup', function (e) {
+    userTableManager.dataTable.search(this.value).draw();
+  });
+
+  // Manually attach event handlers for view and edit buttons
+  $("#usersTable").on("click", ".view-btn", function () {
+    const id = $(this).data("id");
+    const rowData = userTableManager.data.find(row => row.id == id);
+    if (rowData) {
+      handleViewUser(rowData, userTableManager);
     }
-  }, 500);
+  });
+
+  $("#usersTable").on("click", ".edit-btn", function () {
+    const id = $(this).data("id");
+    const rowData = userTableManager.data.find(row => row.id == id);
+    if (rowData) {
+      setupEditUserModal(rowData, userTableManager);
+    }
+  });
+
+  // View user handler function
+  function handleViewUser(rowData, tableManager) {
+    // Set user profile image
+    $("#userProfileImage").attr("src", rowData.profile_url || "/assets/images/default-avatar.png");
+
+    // Populate the view modal with user data
+    $("#viewUserId").text(rowData.id);
+    $("#viewUserName").text(rowData.first_name + " " + rowData.last_name);
+    $("#viewUserEmail").text(rowData.email);
+
+    // Set role with badge
+    let roleBadgeClass = "bg-success";
+    if (rowData.role === "admin") {
+      roleBadgeClass = "bg-danger";
+    } else if (rowData.role === "technician") {
+      roleBadgeClass = "bg-primary";
+    }
+
+    $("#viewUserRole").html(
+      `<span class="badge ${roleBadgeClass} rounded-pill">${rowData.role.charAt(0).toUpperCase() + rowData.role.slice(1)
+      }</span>`
+    );
+
+    // Set status with badge
+    const statusBadgeClass =
+      rowData.status === "active" ? "bg-success" : "bg-danger";
+    $("#viewUserStatus").html(
+      `<span class="badge ${statusBadgeClass} rounded-pill">${rowData.status.charAt(0).toUpperCase() + rowData.status.slice(1)
+      }</span>`
+    );
+
+    $("#viewUserRegistered").text(rowData.registered);
+    $("#viewUserLastLogin").text(rowData.last_login || "Never");
+
+    // Show the modal
+    const viewModal = new bootstrap.Modal(
+      document.getElementById("viewUserModal")
+    );
+    viewModal.show();
+
+    // Setup edit button in view modal
+    $("#viewUserEditBtn")
+      .off("click")
+      .on("click", function () {
+        // Hide view modal
+        viewModal.hide();
+
+        // Setup and show edit modal
+        setupEditUserModal(rowData, tableManager);
+      });
+  }
+
   // Function to update user count
   function updateUserCount() {
     const table = $("#usersTable").DataTable();
     const filteredData = table.rows({ search: "applied" }).data();
-    $("#userCount").text(filteredData.length + " Users");
+    $("#userCount").text(`User List (${filteredData.length})`);
   }
 
   // Auto-apply filters when selection changes
@@ -264,16 +300,27 @@ document.addEventListener("DOMContentLoaded", function () {
       contentType: "application/json",
       success: function (response) {
         if (response.success) {
-          // Close modal
-          const addModal = bootstrap.Modal.getInstance(
-            document.getElementById("addUserModal")
-          );
-          addModal.hide();
+          // Properly close the modal and clean up
+          const addModalEl = document.getElementById("addUserModal");
+
+          // First manually remove the modal backdrop and reset body styles
+          $('.modal-backdrop').remove();
+          $('body').removeClass('modal-open').css('padding-right', '');
+
+          // Try to get Bootstrap modal instance and hide it
+          try {
+            const bsModal = bootstrap.Modal.getInstance(addModalEl);
+            if (bsModal) {
+              bsModal.hide();
+            }
+          } catch (error) {
+            console.log("Modal already closed or instance not found");
+          }
 
           // Reset form
           $("#addUserForm")[0].reset();
 
-          // Refresh table - FIX: Use a non-ajax refresh to avoid getting stuck
+          // Refresh table
           userTableManager.dataTable.ajax.reload();
 
           // Show success message
@@ -342,13 +389,24 @@ document.addEventListener("DOMContentLoaded", function () {
       contentType: "application/json",
       success: function (response) {
         if (response.success) {
-          // Close modal
-          const editModal = bootstrap.Modal.getInstance(
-            document.getElementById("editUserModal")
-          );
-          editModal.hide();
+          // Properly close the modal and clean up
+          const editModalEl = document.getElementById("editUserModal");
 
-          // Refresh table - FIX: Use a non-ajax refresh to avoid getting stuck
+          // First manually remove the modal backdrop and reset body styles
+          $('.modal-backdrop').remove();
+          $('body').removeClass('modal-open').css('padding-right', '');
+
+          // Try to get Bootstrap modal instance and hide it
+          try {
+            const bsModal = bootstrap.Modal.getInstance(editModalEl);
+            if (bsModal) {
+              bsModal.hide();
+            }
+          } catch (error) {
+            console.log("Modal already closed or instance not found");
+          }
+
+          // Refresh table
           userTableManager.dataTable.ajax.reload();
 
           // Show success message
@@ -433,4 +491,23 @@ document.addEventListener("DOMContentLoaded", function () {
     passwordField.attr("type", type);
     $(this).find("i").toggleClass("bi-eye bi-eye-slash");
   });
+
+  // Add CSS for icon buttons
+  $('<style>')
+    .prop('type', 'text/css')
+    .html(`
+      .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 4px;
+      }
+      .btn-icon i {
+        font-size: 14px;
+      }
+    `)
+    .appendTo('head');
 });
