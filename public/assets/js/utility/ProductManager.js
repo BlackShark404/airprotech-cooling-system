@@ -423,26 +423,7 @@ class ProductManager {
      * Handle page change
      */
     handlePageChange(pageAction) {
-        // Determine total items based on current filtered list, or allProducts if no filter applied yet
-        // This part is tricky because applyFilters itself calls renderProducts which calls renderPagination.
-        // We need the count of items *before* slicing for pagination.
-        // applyFilters() will re-calculate and re-render using this.allProducts and current filters.
-        // So, the totalPages logic should rely on the list that applyFilters will use.
-
-        // For simplicity, we assume applyFilters will be called after page change, which will use the correctly filtered list.
-        // The totalPages for enabling/disabling buttons should be based on the currently displayed filtered set.
-        // This is currently handled correctly because applyFilters calls renderProducts with the filtered list.
-
-        let productsForPaging = this.allProducts; // Default to all products
-        // If filters are active, applyFilters() will handle the rendering with the filtered set.
-        // The totalPages calculation within handlePageChange might be slightly off if filters change *between* page changes without re-filtering.
-        // However, applyFilters() is the source of truth for re-rendering.
-
-        const totalPages = Math.ceil(document.querySelectorAll(`${this.config.containerSelector} .product-card`).length > 0 ?
-            this.getFilteredProductsCount() / this.itemsPerPage :
-            this.allProducts.length / this.itemsPerPage
-        );
-
+        const totalPages = Math.ceil(this.getFilteredProductsCount() / this.itemsPerPage);
 
         if (pageAction === 'prev' && this.currentPage > 1) {
             this.currentPage--;
@@ -455,27 +436,49 @@ class ProductManager {
             }
         }
         
-        this.applyFilters(); // Re-apply filters to render the correct page
+        // Re-apply filters to render the correct page.
+        // applyFilters() internally resets currentPage to 1 if it's called for filtering changes,
+        // but here, we are changing the page *for the current filter set*.
+        // So, instead of calling applyFilters() which resets the page, we directly re-render
+        // with the current filtered set and the new page.
+        // To do this, we need to get the currently filtered products without resetting the page.
+        
+        let filteredProducts = [...this.allProducts];
+        const categoryFilter = this.filterForm?.querySelector('[name="category"]');
+        if (categoryFilter && categoryFilter.value) {
+            filteredProducts = filteredProducts.filter(p => p.category === categoryFilter.value);
+        }
+        const minPriceFilter = this.filterForm?.querySelector('[name="min-price"]');
+        if (minPriceFilter && minPriceFilter.value !== '') {
+            const minPrice = parseFloat(minPriceFilter.value);
+            filteredProducts = filteredProducts.filter(p => p.variants.some(v => parseFloat(v.VAR_SRP_PRICE) >= minPrice));
+        }
+        const maxPriceFilter = this.filterForm?.querySelector('[name="max-price"]');
+        if (maxPriceFilter && maxPriceFilter.value !== '') {
+            const maxPrice = parseFloat(maxPriceFilter.value);
+            filteredProducts = filteredProducts.filter(p => p.variants.some(v => parseFloat(v.VAR_SRP_PRICE) <= maxPrice));
+        }
+        const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
+        if (availabilityFilter && availabilityFilter.value !== '') {
+            filteredProducts = filteredProducts.filter(p => p.PROD_AVAILABILITY_STATUS === availabilityFilter.value);
+        }
+        if (this.searchInput && this.searchInput.value.trim() !== '') {
+            const searchTerm = this.searchInput.value.trim().toLowerCase();
+            filteredProducts = filteredProducts.filter(p => p.PROD_NAME.toLowerCase().includes(searchTerm) || (p.PROD_DESCRIPTION && p.PROD_DESCRIPTION.toLowerCase().includes(searchTerm)));
+        }
+        
+        this.renderProducts(filteredProducts); // Render with the new page
     }
 
     /**
      * Helper to get count of currently filtered products (before pagination)
-     * This is a simplified version; applyFilters itself does the filtering.
-     * This function is mainly for handlePageChange to estimate totalPages.
      */
     getFilteredProductsCount() {
-        // This is a bit redundant as applyFilters does the actual filtering.
-        // For robust totalPages in handlePageChange, it should use the result of applyFilters logic.
-        // However, applyFilters itself sets currentPage = 1.
-        // The current structure where applyFilters() is called will correctly re-render and re-paginate.
-        // The current `totalPages` calculation in `renderPagination` is based on the list passed to it, which is correct.
-        // So, `handlePageChange` should primarily just update `this.currentPage` and call `applyFilters`.
-
-        // Re-evaluating filter logic to get count (dry run of applyFilters without side effects)
         let filtered = [...this.allProducts];
         const categoryFilter = this.filterForm?.querySelector('[name="category"]');
-        if (categoryFilter && categoryFilter.value) filtered = filtered.filter(p => p.category === categoryFilter.value);
-        // Add other filters similarly... (minPrice, maxPrice, availability, search)
+        if (categoryFilter && categoryFilter.value) {
+            filtered = filtered.filter(p => p.category === categoryFilter.value);
+        }
         const minPriceFilter = this.filterForm?.querySelector('[name="min-price"]');
         if (minPriceFilter && minPriceFilter.value !== '') {
             const minPrice = parseFloat(minPriceFilter.value);
@@ -614,13 +617,6 @@ class ProductManager {
             return;
         }
         
-        const customerId = this.getCustomerId();
-        if (!customerId) {
-            alert('You must be logged in to place an order. Please log in and try again.');
-            // Potentially redirect to login page: window.location.href = '/login';
-            return;
-        }
-        
         if (!this.modal.variantSelect || !this.modal.quantity) {
             alert('Modal elements for order are missing. Cannot proceed.');
             return;
@@ -636,7 +632,7 @@ class ProductManager {
         }
         
         const orderData = {
-            PO_CUSTOMER_ID: customerId,
+            // PO_CUSTOMER_ID is removed, backend will handle this
             PO_VARIANT_ID: selectedVariant.VAR_ID,
             PO_QUANTITY: parseInt(this.modal.quantity.value, 10),
             PO_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE),
@@ -665,7 +661,14 @@ class ProductManager {
             this.fetchAndRenderProducts(); // Refresh product list (e.g., update stock)
         } catch (error) {
             console.error('Error placing order:', error.response ? error.response.data : error.message);
-            alert(`Failed to place order. ${error.response?.data?.message || 'Please try again.'}`);
+            let errorMessage = 'Failed to place order. Please try again.';
+            if (error.response && error.response.status === 401) { // Unauthorized
+                errorMessage = 'You must be logged in to place an order. Please log in and try again.';
+                // Optionally, redirect to login: window.location.href = '/login';
+            } else if (error.response && error.response.data && error.response.data.message) {
+                errorMessage = `Failed to place order. ${error.response.data.message}`;
+            }
+            alert(errorMessage);
         } finally {
             // Reset confirm button state
              if (this.modal.confirmButton) {
@@ -673,17 +676,5 @@ class ProductManager {
                 this.modal.confirmButton.textContent = 'Confirm Order';
             }
         }
-    }
-    
-    /**
-     * Get customer ID from embedded JavaScript variable
-     */
-    getCustomerId() {
-        // Ensure window.currentUserId is a number or can be parsed to one.
-        const userId = window.currentUserId;
-        if (userId === null || userId === undefined || isNaN(parseInt(userId, 10))) {
-            return null;
-        }
-        return parseInt(userId, 10);
     }
 }
