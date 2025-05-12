@@ -3,8 +3,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const userTableManager = new DataTablesManager("usersTable", {
     ajaxUrl: "/api/users",
     responsive: true,
-    dom: '<"row"<"col-md-6"<"table-title">><"col-md-6"f>>rt<"row"<"col-md-6"i><"col-md-6"p>>', // Custom layout with table title, search, and pagination
+    dom: '<"row align-items-center mb-3"<"col-md-6 d-flex align-items-center"<"table-title me-3"><"table-length"l>><"col-md-6 d-flex justify-content-end"f>>rt<"row align-items-center"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>',
     autoWidth: false, // Disable auto width calculation
+
+    // Add page length options
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    pageLength: 10, // Default number of records per page
 
     // Disable automatic adding of action column by setting callbacks to null initially
     // We'll handle these separately after initialization
@@ -21,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
         render: function (data, type, row) {
           return `<div class="d-flex align-items-center">
                     <div class="me-2 rounded-circle" style="width: 40px; height: 40px; overflow: hidden;">
-                      <img src="${row.profile_url || '/assets/images/default-avatar.png'}" alt="${row.first_name}" class="img-fluid rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">
+                      <img src="${row.profile_url || '/assets/images/avatar/default-avatar.png'}" alt="${row.first_name}" class="img-fluid rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <p class="mb-0 fw-medium text-dark">${row.first_name} ${row.last_name}</p>
                   </div>`;
@@ -100,22 +104,91 @@ document.addEventListener("DOMContentLoaded", function () {
       updateUserCount();
     },
 
-    // Remove export buttons, keeping only print button
-    buttons: ['print'],
+    // Remove all buttons
+    buttons: [],
   });
 
   // Add table title
   $(".table-title").html('<h5 class="mb-0" id="userCount">User List</h5>');
 
-  // Add search icon to the search input
+  // Add search icon to the search input and improve styling
   $(".dataTables_filter input").addClass("form-control");
   $(".dataTables_filter").addClass("position-relative");
   $(".dataTables_filter label").html(`
-    <div class="input-group">
+    <div class="input-group float-end" style="width: 250px;">
       <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
       <input type="search" class="form-control border-start-0" placeholder="Search users..." aria-controls="${userTableManager.tableId}">
     </div>
   `);
+
+  // Style the length menu
+  $(".table-length select").addClass("form-select");
+  $(".table-length").addClass("d-flex align-items-center");
+  $(".table-length label").html(`
+    <div class="d-flex align-items-center">
+      <span class="me-2 text-muted small">Show</span>
+      <select name="usersTable_length" aria-controls="usersTable" class="form-select form-select-sm">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="-1">All</option>
+      </select>
+      <span class="ms-2 text-muted small">entries</span>
+    </div>
+  `);
+
+  // Restore length menu functionality
+  $(".table-length select").on('change', function () {
+    userTableManager.dataTable.page.len($(this).val()).draw();
+  });
+
+  // Apply Bootstrap styling to pagination
+  function enhancePagination() {
+    // Step 1: Add Bootstrap pagination container classes
+    $(".dataTables_paginate").addClass("pagination-container");
+
+    // Step 2: Convert DataTables pagination to Bootstrap pagination
+    if ($(".pagination-container ul.pagination").length === 0) {
+      // Create a Bootstrap pagination container if it doesn't exist
+      $(".pagination-container").wrapInner("<ul class='pagination'></ul>");
+    }
+
+    // Step 3: Style all paginate buttons as Bootstrap page items/links
+    $(".dataTables_paginate .paginate_button").each(function () {
+      $(this).addClass("page-item");
+
+      // If this button doesn't have a page-link yet, wrap its content in one
+      if ($(this).children(".page-link").length === 0) {
+        const buttonContent = $(this).html();
+        $(this).html(`<a class="page-link" href="#">${buttonContent}</a>`);
+      }
+
+      // Handle disabled state
+      if ($(this).hasClass("disabled")) {
+        $(this).addClass("disabled");
+      }
+
+      // Handle active state
+      if ($(this).hasClass("current")) {
+        $(this).addClass("active");
+      }
+    });
+
+    // Step 4: Special handling for previous/next buttons
+    $(".paginate_button.previous, .paginate_button.next").addClass("page-item");
+
+    // Step 5: Apply proper styling to ellipsis
+    $(".ellipsis").addClass("page-item disabled").html('<a class="page-link" href="#">...</a>');
+  }
+
+  // Apply pagination styling on initial load
+  enhancePagination();
+
+  // Re-apply when table is redrawn (for sorting, filtering, pagination changes)
+  $("#usersTable").on("draw.dt", function () {
+    enhancePagination();
+  });
 
   // Restore search functionality after customizing the search input
   $(".dataTables_filter input").on('keyup', function (e) {

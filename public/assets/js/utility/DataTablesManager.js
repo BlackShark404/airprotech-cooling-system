@@ -24,10 +24,12 @@ class DataTablesManager {
    */
   constructor(tableId, options = {}) {
     this.tableId = tableId;
+    this.tableElement = document.getElementById(tableId);
     this.dataTable = null;
     this.data = [];
+    this.toastTimeouts = new Map(); // Store toast timeouts for better memory management
 
-    // Default options
+    // Default options with destructuring for better merging
     this.options = {
       columns: [],
       ajaxUrl: '',
@@ -37,7 +39,7 @@ class DataTablesManager {
       customButtons: {},
       toastOptions: {
         position: 'bottom-right',     // toast position: top-right, top-left, bottom-right, bottom-left
-        autoClose: 4000,              // auto close after 5 seconds
+        autoClose: 4000,              // auto close after 4 seconds
         hideProgressBar: false,       // show progress bar
         closeOnClick: true,           // close when clicked
         pauseOnHover: true,           // pause countdown on hover
@@ -47,7 +49,7 @@ class DataTablesManager {
       ...options
     };
 
-    // Initialize toast container if it doesn't exist
+    // Initialize toast container
     this._initializeToastContainer();
 
     // Initialize table
@@ -55,119 +57,119 @@ class DataTablesManager {
   }
 
   /**
-   * Initialize the Toast Container
+   * Initialize the Toast Container - only once per page load
    * @private
    */
   _initializeToastContainer() {
-    // Check if toast container already exists
-    if ($('#toastContainer').length === 0) {
-      // Toast container styles
-      const toastContainerStyles = `
-        <style>
-          #toastContainer {
-            position: fixed;
-            z-index: 9999;
-            padding: 15px;
-            pointer-events: none;
-          }
-          #toastContainer.top-right {
-            top: 15px;
-            right: 15px;
-          }
-          #toastContainer.top-left {
-            top: 15px;
-            left: 15px;
-          }
-          #toastContainer.bottom-right {
-            bottom: 15px;
-            right: 15px;
-          }
-          #toastContainer.bottom-left {
-            bottom: 15px;
-            left: 15px;
-          }
-          .toast {
-            position: relative;
-            max-width: 350px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            color: white;
-            padding: 15px 20px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            pointer-events: auto;
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.3s ease-in-out;
-          }
-          .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          .toast-icon {
-            margin-right: 12px;
-            font-size: 20px;
-          }
-          .toast-content {
-            flex: 1;
-          }
-          .toast-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-          .toast-message {
-            font-size: 14px;
-          }
-          .toast-close {
-            margin-left: 10px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-            font-size: 18px;
-            background: none;
-            border: none;
-            color: white;
-          }
-          .toast-close:hover {
-            opacity: 1;
-          }
-          .toast-success {
-            background-color: #4caf50;
-          }
-          .toast-error {
-            background-color: #f44336;
-          }
-          .toast-warning {
-            background-color: #ff9800;
-          }
-          .toast-info {
-            background-color: #2196f3;
-          }
-          .toast-progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 3px;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.3);
-          }
-          .toast-progress-bar {
-            height: 100%;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.5);
-            transition: width linear;
-          }
-        </style>
+    // Check if toast container already exists to avoid duplication
+    if (!document.getElementById('toastContainer')) {
+      // Create and add stylesheet to head once
+      const styleElement = document.createElement('style');
+      styleElement.textContent = `
+        #toastContainer {
+          position: fixed;
+          z-index: 9999;
+          padding: 15px;
+          pointer-events: none;
+        }
+        #toastContainer.top-right {
+          top: 15px;
+          right: 15px;
+        }
+        #toastContainer.top-left {
+          top: 15px;
+          left: 15px;
+        }
+        #toastContainer.bottom-right {
+          bottom: 15px;
+          right: 15px;
+        }
+        #toastContainer.bottom-left {
+          bottom: 15px;
+          left: 15px;
+        }
+        .toast {
+          position: relative;
+          max-width: 350px;
+          margin-bottom: 10px;
+          border-radius: 5px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          color: white;
+          padding: 15px 20px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          pointer-events: auto;
+          opacity: 0;
+          transform: translateY(-20px);
+          transition: all 0.3s ease-in-out;
+        }
+        .toast.show {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .toast-icon {
+          margin-right: 12px;
+          font-size: 20px;
+        }
+        .toast-content {
+          flex: 1;
+        }
+        .toast-title {
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        .toast-message {
+          font-size: 14px;
+        }
+        .toast-close {
+          margin-left: 10px;
+          cursor: pointer;
+          opacity: 0.7;
+          transition: opacity 0.2s;
+          font-size: 18px;
+          background: none;
+          border: none;
+          color: white;
+        }
+        .toast-close:hover {
+          opacity: 1;
+        }
+        .toast-success {
+          background-color: #4caf50;
+        }
+        .toast-error {
+          background-color: #f44336;
+        }
+        .toast-warning {
+          background-color: #ff9800;
+        }
+        .toast-info {
+          background-color: #2196f3;
+        }
+        .toast-progress {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          height: 3px;
+          width: 100%;
+          background-color: rgba(255, 255, 255, 0.3);
+        }
+        .toast-progress-bar {
+          height: 100%;
+          width: 100%;
+          background-color: rgba(255, 255, 255, 0.5);
+          transition: width linear;
+        }
       `;
+      document.head.appendChild(styleElement);
 
-      // Add styles to document head
-      $('head').append(toastContainerStyles);
-
-      // Create toast container
+      // Create toast container with specified position
       const position = this.options.toastOptions.position || 'top-right';
-      $('body').append(`<div id="toastContainer" class="${position}"></div>`);
+      const toastContainer = document.createElement('div');
+      toastContainer.id = 'toastContainer';
+      toastContainer.className = position;
+      document.body.appendChild(toastContainer);
     }
   }
 
@@ -177,183 +179,181 @@ class DataTablesManager {
    * @param {string} title - Toast title
    * @param {string} message - Toast message
    * @param {Object} options - Additional options to override defaults
-   * @returns {Object} Toast element
+   * @returns {HTMLElement} Toast element
    */
   showToast(type, title, message, options = {}) {
     const toastOptions = { ...this.options.toastOptions, ...options };
     const toastId = `toast-${Date.now()}`;
+    const toastContainer = document.getElementById('toastContainer');
 
     // Get the icon based on type
     let icon = '';
-    switch (type) {
-      case 'success':
-        icon = '<i class="fas fa-check-circle"></i>';
-        if (!toastOptions.enableIcons) icon = '✓';
-        break;
-      case 'error':
-        icon = '<i class="fas fa-times-circle"></i>';
-        if (!toastOptions.enableIcons) icon = '✗';
-        break;
-      case 'warning':
-        icon = '<i class="fas fa-exclamation-triangle"></i>';
-        if (!toastOptions.enableIcons) icon = '⚠';
-        break;
-      case 'info':
-        icon = '<i class="fas fa-info-circle"></i>';
-        if (!toastOptions.enableIcons) icon = 'ℹ';
-        break;
-      default:
-        icon = '<i class="fas fa-bell"></i>';
-        if (!toastOptions.enableIcons) icon = '🔔';
-    }
+    const iconMap = {
+      success: toastOptions.enableIcons ? '<i class="fas fa-check-circle"></i>' : '✓',
+      error: toastOptions.enableIcons ? '<i class="fas fa-times-circle"></i>' : '✗',
+      warning: toastOptions.enableIcons ? '<i class="fas fa-exclamation-triangle"></i>' : '⚠',
+      info: toastOptions.enableIcons ? '<i class="fas fa-info-circle"></i>' : 'ℹ',
+      default: toastOptions.enableIcons ? '<i class="fas fa-bell"></i>' : '🔔'
+    };
 
-    // Create toast HTML
-    const toastHtml = `
-      <div id="${toastId}" class="toast toast-${type}">
-        <div class="toast-icon">${icon}</div>
-        <div class="toast-content">
-          <div class="toast-title">${title}</div>
-          <div class="toast-message">${message}</div>
-        </div>
-        <button class="toast-close">&times;</button>
-        ${!toastOptions.hideProgressBar ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
+    icon = iconMap[type] || iconMap.default;
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">${icon}</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
       </div>
+      <button class="toast-close">&times;</button>
+      ${!toastOptions.hideProgressBar ? '<div class="toast-progress"><div class="toast-progress-bar"></div></div>' : ''}
     `;
 
     // Append toast to container
-    $('#toastContainer').append(toastHtml);
-    const $toast = $(`#${toastId}`);
+    toastContainer.appendChild(toast);
+
+    // Event delegation for toast interaction
+    this._setupToastEvents(toast, toastOptions);
 
     // Show toast with animation
     setTimeout(() => {
-      $toast.addClass('show');
+      toast.classList.add('show');
 
       // Set progress bar animation if enabled
       if (!toastOptions.hideProgressBar) {
-        $toast.find('.toast-progress-bar').css({
-          'width': '0%',
-          'transition': `width ${toastOptions.autoClose}ms linear`
-        });
+        const progressBar = toast.querySelector('.toast-progress-bar');
+        progressBar.style.width = '0%';
+        progressBar.style.transition = `width ${toastOptions.autoClose}ms linear`;
       }
 
       // Auto close if enabled
       if (toastOptions.autoClose) {
-        setTimeout(() => {
-          this._closeToast($toast);
+        const timeoutId = setTimeout(() => {
+          this._closeToast(toast);
         }, toastOptions.autoClose);
+
+        // Store timeout ID for potential cancellation
+        this.toastTimeouts.set(toastId, timeoutId);
       }
     }, 10);
 
-    // Attach close event
-    $toast.find('.toast-close').on('click', () => {
-      this._closeToast($toast);
-    });
-
-    // Close on click if enabled
-    if (toastOptions.closeOnClick) {
-      $toast.on('click', function (e) {
-        if ($(e.target).hasClass('toast-close')) return;
-        this._closeToast($toast);
-      }.bind(this));
-    }
-
-    // Pause on hover if enabled
-    if (toastOptions.pauseOnHover && toastOptions.autoClose) {
-      let remainingTime = toastOptions.autoClose;
-      let startTime;
-      let timeoutId;
-
-      $toast.on('mouseenter', function () {
-        clearTimeout(timeoutId);
-        remainingTime -= (Date.now() - startTime);
-
-        // Pause progress bar animation
-        if (!toastOptions.hideProgressBar) {
-          const $progressBar = $toast.find('.toast-progress-bar');
-          const currentWidth = $progressBar.width() / $progressBar.parent().width() * 100;
-          $progressBar.css({
-            'width': `${currentWidth}%`,
-            'transition': 'none'
-          });
-        }
-      });
-
-      $toast.on('mouseleave', function () {
-        startTime = Date.now();
-
-        // Resume progress bar animation
-        if (!toastOptions.hideProgressBar) {
-          const $progressBar = $toast.find('.toast-progress-bar');
-          $progressBar.css({
-            'width': '0%',
-            'transition': `width ${remainingTime}ms linear`
-          });
-        }
-
-        timeoutId = setTimeout(() => {
-          this._closeToast($toast);
-        }, remainingTime);
-      }.bind(this));
-
-      startTime = Date.now();
-    }
-
-    return $toast;
+    return toast;
   }
 
   /**
-   * Show a success toast
-   * @param {string} title - Toast title
-   * @param {string} message - Toast message
-   * @param {Object} options - Additional options
-   * @returns {Object} Toast element
+   * Setup event listeners for toast
+   * @param {HTMLElement} toast - Toast element
+   * @param {Object} options - Toast options
+   * @private
+   */
+  _setupToastEvents(toast, options) {
+    const toastId = toast.id;
+    const closeButton = toast.querySelector('.toast-close');
+
+    // Close button event
+    closeButton.addEventListener('click', () => {
+      this._closeToast(toast);
+    });
+
+    // Close on click if enabled
+    if (options.closeOnClick) {
+      toast.addEventListener('click', (e) => {
+        if (e.target.classList.contains('toast-close')) return;
+        this._closeToast(toast);
+      });
+    }
+
+    // Pause on hover if enabled
+    if (options.pauseOnHover && options.autoClose) {
+      let remainingTime = options.autoClose;
+      let startTime;
+
+      toast.addEventListener('mouseenter', () => {
+        // Clear existing timeout
+        const timeoutId = this.toastTimeouts.get(toastId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          this.toastTimeouts.delete(toastId);
+        }
+
+        remainingTime -= (Date.now() - startTime);
+
+        // Pause progress bar animation
+        if (!options.hideProgressBar) {
+          const progressBar = toast.querySelector('.toast-progress-bar');
+          const progressBarWidth = progressBar.getBoundingClientRect().width;
+          const parentWidth = progressBar.parentElement.getBoundingClientRect().width;
+          const currentWidth = (progressBarWidth / parentWidth) * 100;
+
+          progressBar.style.width = `${currentWidth}%`;
+          progressBar.style.transition = 'none';
+        }
+      });
+
+      toast.addEventListener('mouseleave', () => {
+        startTime = Date.now();
+
+        // Resume progress bar animation
+        if (!options.hideProgressBar) {
+          const progressBar = toast.querySelector('.toast-progress-bar');
+          progressBar.style.width = '0%';
+          progressBar.style.transition = `width ${remainingTime}ms linear`;
+        }
+
+        // Set new timeout with remaining time
+        const timeoutId = setTimeout(() => {
+          this._closeToast(toast);
+        }, remainingTime);
+        this.toastTimeouts.set(toastId, timeoutId);
+      });
+
+      startTime = Date.now();
+    }
+  }
+
+  /**
+   * Helper functions for different toast types
+   * Using method shorthand syntax for conciseness
    */
   showSuccessToast(title, message, options = {}) {
     return this.showToast('success', title, message, options);
   }
 
-  /**
-   * Show an error toast
-   * @param {string} title - Toast title
-   * @param {string} message - Toast message
-   * @param {Object} options - Additional options
-   * @returns {Object} Toast element
-   */
   showErrorToast(title, message, options = {}) {
     return this.showToast('error', title, message, options);
   }
 
-  /**
-   * Show a warning toast
-   * @param {string} title - Toast title
-   * @param {string} message - Toast message
-   * @param {Object} options - Additional options
-   * @returns {Object} Toast element
-   */
   showWarningToast(title, message, options = {}) {
     return this.showToast('warning', title, message, options);
   }
 
-  /**
-   * Show an info toast
-   * @param {string} title - Toast title
-   * @param {string} message - Toast message
-   * @param {Object} options - Additional options
-   * @returns {Object} Toast element
-   */
   showInfoToast(title, message, options = {}) {
     return this.showToast('info', title, message, options);
   }
 
   /**
-   * Close a toast
-   * @param {Object} $toast - Toast jQuery element
+   * Close a toast with animation
+   * @param {HTMLElement} toast - Toast element
    * @private
    */
-  _closeToast($toast) {
-    $toast.removeClass('show');
+  _closeToast(toast) {
+    // Clear timeout if exists
+    const toastId = toast.id;
+    const timeoutId = this.toastTimeouts.get(toastId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.toastTimeouts.delete(toastId);
+    }
+
+    // Remove with animation
+    toast.classList.remove('show');
     setTimeout(() => {
-      $toast.remove();
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
     }, 300);
   }
 
@@ -366,18 +366,16 @@ class DataTablesManager {
    */
   _generateBadgeHtml(value, badgeConfig) {
     // Default badge configuration
-    const defaultConfig = {
-      type: 'primary',      // Bootstrap color: primary, secondary, success, danger, warning, info, light, dark
+    const config = {
+      type: 'primary',      // Bootstrap color: primary, secondary, success, etc.
       pill: false,          // Whether to use pill style
       size: '',             // Size: '', 'sm', 'lg'
       prefix: '',           // Text to display before the value
       suffix: '',           // Text to display after the value
       customClass: '',      // Additional CSS classes
-      valueMap: null        // Map of values to custom display/color
+      valueMap: null,       // Map of values to custom display/color
+      ...badgeConfig
     };
-
-    // Merge with provided config
-    const config = { ...defaultConfig, ...badgeConfig };
 
     // Check if we have a value mapping
     let displayValue = value;
@@ -397,11 +395,14 @@ class DataTablesManager {
       }
     }
 
-    // Build badge classes
-    let badgeClasses = `badge bg-${badgeType}`;
-    if (config.pill) badgeClasses += ' rounded-pill';
-    if (config.size) badgeClasses += ` badge-${config.size}`;
-    if (config.customClass) badgeClasses += ` ${config.customClass}`;
+    // Build badge classes with array join for better performance
+    const badgeClasses = [
+      'badge',
+      `bg-${badgeType}`,
+      config.pill ? 'rounded-pill' : '',
+      config.size ? `badge-${config.size}` : '',
+      config.customClass
+    ].filter(Boolean).join(' ');
 
     // Create badge HTML
     return `<span class="${badgeClasses}">${config.prefix}${displayValue}${config.suffix}</span>`;
@@ -411,125 +412,209 @@ class DataTablesManager {
    * Initialize the DataTable
    */
   initialize() {
-    // Process columns to add badge rendering if configured
-    const processedColumns = this.options.columns.map(column => {
-      // Check if column has badge configuration
-      if (column.badge) {
-        // Clone the column configuration to avoid modifying the original
-        const newColumn = { ...column };
+    try {
+      // Process columns to add badge rendering if configured
+      const processedColumns = this.options.columns.map(column => {
+        // Check if column has badge configuration
+        if (column.badge) {
+          // Use object spread for immutability
+          return {
+            ...column,
+            render: (data, type, row) => {
+              // For sorting and filtering, use the raw data
+              if (type === 'sort' || type === 'filter') {
+                return data;
+              }
 
-        // Add render function for badge
-        newColumn.render = (data, type, row) => {
-          // For sorting and filtering, use the raw data
-          if (type === 'sort' || type === 'filter') {
-            return data;
+              // For display, generate badge HTML
+              return this._generateBadgeHtml(data, column.badge);
+            }
+          };
+        }
+
+        // Return original column if no badge configuration
+        return column;
+      });
+
+      // Add action column if any callback is provided
+      const columns = [...processedColumns];
+
+      if (this.options.viewRowCallback || this.options.editRowCallback || this.options.deleteRowCallback) {
+        columns.push({
+          data: null,
+          title: 'Actions',
+          orderable: false,
+          className: 'actions-column',
+          render: (data, type, row) => {
+            const buttons = [];
+
+            if (this.options.viewRowCallback) {
+              buttons.push(`<button class="btn btn-info btn-sm view-btn" data-id="${row.id}">View</button>`);
+            }
+
+            if (this.options.editRowCallback) {
+              buttons.push(`<button class="btn btn-warning btn-sm edit-btn" data-id="${row.id}">Edit</button>`);
+            }
+
+            if (this.options.deleteRowCallback) {
+              buttons.push(`<button class="btn btn-danger btn-sm delete-btn" data-id="${row.id}">Delete</button>`);
+            }
+
+            return `<div class="action-buttons">${buttons.join(' ')}</div>`;
           }
-
-          // For display, generate badge HTML
-          return this._generateBadgeHtml(data, column.badge);
-        };
-
-        return newColumn;
+        });
       }
 
-      // Return original column if no badge configuration
-      return column;
-    });
-
-    // Prepare columns with action buttons
-    const columns = [...processedColumns];
-
-    // Add action column if any callback is provided
-    if (this.options.viewRowCallback || this.options.editRowCallback) {
-      columns.push({
-        data: null,
-        title: 'Actions',
-        orderable: false,
-        className: 'actions-column',
-        render: (data, type, row) => {
-          let actionsHtml = '<div class="action-buttons">';
-
-          if (this.options.viewRowCallback) {
-            actionsHtml += `<button class="btn btn-info btn-sm view-btn" data-id="${row.id}">View</button> `;
+      // Initialize DataTable with jQuery (since DataTables is jQuery-based)
+      this.dataTable = $(`#${this.tableId}`).DataTable({
+        columns,
+        responsive: true,
+        processing: true,
+        dom: this.options.dom || 'Bfrtip',
+        buttons: this.options.buttons || [],
+        lengthMenu: this.options.lengthMenu || [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        pageLength: this.options.pageLength || 10,
+        ajax: {
+          url: this.options.ajaxUrl,
+          dataSrc: (json) => {
+            this.data = json.data || json;
+            return this.data;
+          },
+          error: (xhr, error, thrown) => {
+            this.showErrorToast('Data Loading Error', 'Failed to load table data. ' + thrown);
+            console.error('DataTables AJAX error:', error, thrown);
+            return [];
           }
-
-          if (this.options.editRowCallback) {
-            actionsHtml += `<button class="btn btn-warning btn-sm edit-btn" data-id="${row.id}">Edit</button> `;
-          }
-
-          actionsHtml += '</div>';
-          return actionsHtml;
+        },
+        language: {
+          searchPlaceholder: "Search records",
+          emptyTable: "No data available",
+          lengthMenu: this.options.lengthMenuText || "Show _MENU_ entries"
         }
       });
+
+      // Attach event listeners with delegation for better performance
+      this._attachEventListeners();
+    } catch (error) {
+      console.error('Error initializing DataTable:', error);
+      this.showErrorToast('Initialization Error', 'Failed to initialize table: ' + error.message);
     }
-
-    // Initialize DataTable
-    this.dataTable = $(`#${this.tableId}`).DataTable({
-      columns: columns,
-      responsive: true,
-      processing: true,
-      dom: 'Bfrtip',
-      buttons: [
-        'copy', 'csv', 'excel', 'pdf', 'print',
-        ...(this.options.customButtons ? Object.values(this.options.customButtons) : [])
-      ],
-      ajax: {
-        url: this.options.ajaxUrl,
-        dataSrc: (json) => {
-          this.data = json.data || json;
-          return this.data;
-        }
-      },
-      language: {
-        searchPlaceholder: "Search records",
-        emptyTable: "No data available"
-      }
-    });
-
-    // Attach event listeners
-    this._attachEventListeners();
   }
 
   /**
-   * Attach event listeners for action buttons
+   * Attach event listeners for action buttons using event delegation
    * @private
    */
   _attachEventListeners() {
+    // Use a single event handler with delegation for all buttons
     const table = $(`#${this.tableId}`);
 
-    // View button click handler
-    if (this.options.viewRowCallback) {
-      table.on('click', '.view-btn', (e) => {
-        const id = $(e.currentTarget).data('id');
-        const rowData = this._findRowById(id);
+    // Using event delegation for better performance
+    table.on('click', '.action-buttons button', (e) => {
+      const button = e.currentTarget;
+      const id = button.dataset.id;
+      const rowData = this._findRowById(id);
+
+      if (!rowData) {
+        this.showErrorToast('Error', `Record #${id} not found`);
+        return;
+      }
+
+      // Handle different button types
+      if (button.classList.contains('view-btn') && this.options.viewRowCallback) {
         this.options.viewRowCallback(rowData, this);
-
-        // Show info toast
         this.showInfoToast('View Record', `Viewing record #${id}`);
-      });
-    }
-
-    // Edit button click handler
-    if (this.options.editRowCallback) {
-      table.on('click', '.edit-btn', (e) => {
-        const id = $(e.currentTarget).data('id');
-        const rowData = this._findRowById(id);
+      }
+      else if (button.classList.contains('edit-btn') && this.options.editRowCallback) {
         this.options.editRowCallback(rowData, this);
-
-        // Show warning toast
         this.showWarningToast('Edit Record', `Editing record #${id}`);
-      });
-    }
+      }
+      else if (button.classList.contains('delete-btn') && this.options.deleteRowCallback) {
+        this._showDeleteConfirmationModal(rowData);
+      }
+    });
   }
 
   /**
-   * Find a row by its ID
+   * Find a row by its ID with error handling
    * @param {number|string} id - Row ID
    * @returns {Object|null} Row data or null if not found
    * @private
    */
   _findRowById(id) {
-    return this.data.find(row => row.id == id) || null;
+    if (!id) return null;
+
+    try {
+      return this.data.find(row => row && row.id == id) || null;
+    } catch (error) {
+      console.error('Error finding row by ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Show delete confirmation modal
+   * @param {Object} rowData - Row data
+   * @private
+   */
+  _showDeleteConfirmationModal(rowData) {
+    try {
+      // Create modal if it doesn't exist
+      const modalId = 'deleteConfirmationModal';
+      let modal = document.getElementById(modalId);
+
+      if (!modal) {
+        const modalHtml = `
+          <div class="modal fade" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Delete</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  Are you sure you want to delete this record?
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const modalDiv = document.createElement('div');
+        modalDiv.innerHTML = modalHtml;
+        document.body.appendChild(modalDiv.firstChild);
+        modal = document.getElementById(modalId);
+      }
+
+      // Using jQuery for Bootstrap modal - could be replaced with pure JS if using Bootstrap 5+
+      const $modal = $(modal);
+
+      // Clean up previous handlers to prevent memory leaks
+      $('#confirmDeleteBtn').off('click');
+
+      // Attach new delete confirmation handler
+      $('#confirmDeleteBtn').on('click', () => {
+        try {
+          this.options.deleteRowCallback(rowData, this);
+          $modal.modal('hide');
+        } catch (error) {
+          console.error('Error in delete confirmation:', error);
+          this.showErrorToast('Delete Error', `Error deleting record: ${error.message}`);
+        }
+      });
+
+      // Show modal
+      $modal.modal('show');
+    } catch (error) {
+      console.error('Error showing delete modal:', error);
+      this.showErrorToast('UI Error', 'Failed to show delete confirmation dialog.');
+    }
   }
 
   /**
@@ -538,11 +623,16 @@ class DataTablesManager {
    * @returns {DataTablesManager} this instance for chaining
    */
   refresh(newData = null) {
-    if (newData) {
-      this.data = newData;
-      this.dataTable.clear().rows.add(newData).draw();
-    } else {
-      this.dataTable.ajax.reload();
+    try {
+      if (newData) {
+        this.data = newData;
+        this.dataTable.clear().rows.add(newData).draw();
+      } else {
+        this.dataTable.ajax.reload();
+      }
+    } catch (error) {
+      console.error('Error refreshing table:', error);
+      this.showErrorToast('Refresh Error', `Failed to refresh table: ${error.message}`);
     }
 
     return this;
@@ -554,11 +644,20 @@ class DataTablesManager {
    * @returns {DataTablesManager} this instance for chaining
    */
   addRow(rowData) {
-    this.data.push(rowData);
-    this.dataTable.row.add(rowData).draw();
+    try {
+      if (!rowData) {
+        throw new Error('No data provided to add row');
+      }
 
-    // Show success toast
-    this.showSuccessToast('Add Record', `New record #${rowData.id} has been added`);
+      this.data.push(rowData);
+      this.dataTable.row.add(rowData).draw();
+
+      // Show success toast
+      this.showSuccessToast('Add Record', `New record #${rowData.id} has been added`);
+    } catch (error) {
+      console.error('Error adding row:', error);
+      this.showErrorToast('Add Error', `Failed to add record: ${error.message}`);
+    }
 
     return this;
   }
@@ -570,27 +669,67 @@ class DataTablesManager {
    * @returns {DataTablesManager} this instance for chaining
    */
   updateRow(id, newData) {
-    // Find the row index
-    const rowIndex = this.data.findIndex(row => row.id == id);
+    try {
+      // Find the row index
+      const rowIndex = this.data.findIndex(row => row && row.id == id);
 
-    if (rowIndex !== -1) {
-      // Update the data array
-      this.data[rowIndex] = { ...this.data[rowIndex], ...newData };
+      if (rowIndex !== -1) {
+        // Update the data array
+        this.data[rowIndex] = { ...this.data[rowIndex], ...newData };
 
-      // Update the DataTable row
-      const row = this.dataTable.row(function (idx, data) {
-        return data.id == id;
-      });
+        // Update the DataTable row
+        const row = this.dataTable.row(function (idx, data) {
+          return data && data.id == id;
+        });
 
-      if (row.length) {
-        row.data(this.data[rowIndex]).draw();
-
-        // Show success toast
-        this.showSuccessToast('Update Record', `Record #${id} has been updated`);
+        if (row.length) {
+          row.data(this.data[rowIndex]).draw();
+          this.showSuccessToast('Update Record', `Record #${id} has been updated`);
+        } else {
+          throw new Error(`Row found in data array but not in DataTable`);
+        }
+      } else {
+        this.showErrorToast('Update Error', `Record #${id} not found`);
       }
-    } else {
-      // Show error toast if record not found
-      this.showErrorToast('Update Error', `Record #${id} not found`);
+    } catch (error) {
+      console.error('Error updating row:', error);
+      this.showErrorToast('Update Error', `Failed to update record: ${error.message}`);
+    }
+
+    return this;
+  }
+
+  /**
+   * Delete a row from the DataTable
+   * @param {number|string} id - Row ID
+   * @returns {DataTablesManager} this instance for chaining
+   */
+  deleteRow(id) {
+    try {
+      // Find the row index
+      const rowIndex = this.data.findIndex(row => row && row.id == id);
+
+      if (rowIndex !== -1) {
+        // Remove from the data array
+        this.data.splice(rowIndex, 1);
+
+        // Remove from the DataTable
+        const row = this.dataTable.row(function (idx, data) {
+          return data && data.id == id;
+        });
+
+        if (row.length) {
+          row.remove().draw();
+          this.showErrorToast('Delete Record', `Record #${id} has been deleted`);
+        } else {
+          throw new Error(`Row found in data array but not in DataTable`);
+        }
+      } else {
+        this.showErrorToast('Delete Error', `Record #${id} not found`);
+      }
+    } catch (error) {
+      console.error('Error deleting row:', error);
+      this.showErrorToast('Delete Error', `Failed to delete record: ${error.message}`);
     }
 
     return this;
@@ -602,30 +741,39 @@ class DataTablesManager {
    * @returns {DataTablesManager} this instance for chaining
    */
   applyFilters(filters) {
-    // Clear existing custom filters
-    $.fn.dataTable.ext.search.pop();
+    try {
+      // Clear existing custom filters
+      $.fn.dataTable.ext.search.pop();
 
-    // Add custom filter function
-    if (Object.keys(filters).length > 0) {
-      $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
-        // Check all filter criteria
-        for (const [key, value] of Object.entries(filters)) {
-          if (rowData[key] !== value) {
-            return false;
+      // Add custom filter function if filters exist
+      if (filters && Object.keys(filters).length > 0) {
+        $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
+          // Check if this is our table
+          if (settings.nTable.id !== this.tableId) {
+            return true; // Skip filtering for other tables
           }
-        }
-        return true;
-      });
 
-      // Show info toast
-      this.showInfoToast('Filters Applied', 'Table data has been filtered');
-    } else {
-      // Show info toast for filter removal
-      this.showInfoToast('Filters Removed', 'All filters have been cleared');
+          // Check all filter criteria
+          for (const [key, value] of Object.entries(filters)) {
+            if (rowData[key] !== value) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        this.showInfoToast('Filters Applied', 'Table data has been filtered');
+      } else {
+        this.showInfoToast('Filters Removed', 'All filters have been cleared');
+      }
+
+      // Redraw the table
+      this.dataTable.draw();
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      this.showErrorToast('Filter Error', `Failed to apply filters: ${error.message}`);
     }
 
-    // Redraw the table
-    this.dataTable.draw();
     return this;
   }
 
@@ -634,6 +782,42 @@ class DataTablesManager {
    * @returns {Array} Selected row data
    */
   getSelectedRows() {
-    return this.dataTable.rows({ selected: true }).data().toArray();
+    try {
+      return this.dataTable.rows({ selected: true }).data().toArray();
+    } catch (error) {
+      console.error('Error getting selected rows:', error);
+      this.showErrorToast('Selection Error', `Failed to get selected rows: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Clean up resources when instance is no longer needed
+   * Call this method to prevent memory leaks
+   */
+  destroy() {
+    try {
+      // Clear all toast timeouts
+      for (const timeoutId of this.toastTimeouts.values()) {
+        clearTimeout(timeoutId);
+      }
+      this.toastTimeouts.clear();
+
+      // Remove event listeners
+      if (this.tableElement) {
+        $(this.tableElement).off('click', '.action-buttons button');
+      }
+
+      // Destroy DataTable instance
+      if (this.dataTable) {
+        this.dataTable.destroy();
+        this.dataTable = null;
+      }
+
+      // Clear data
+      this.data = [];
+    } catch (error) {
+      console.error('Error during destroy:', error);
+    }
   }
 }
