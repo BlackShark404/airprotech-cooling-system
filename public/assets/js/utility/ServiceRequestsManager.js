@@ -34,7 +34,9 @@ class ServiceRequestsManager {
             status: document.getElementById('modal-status'),
             estimatedCost: document.getElementById('modal-estimated-cost'),
             priority: document.getElementById('modal-priority'),
-            notes: document.getElementById('modal-notes')
+            notes: document.getElementById('modal-notes'),
+            statusBadge: document.getElementById('modal-status-badge'),
+            serviceIcon: document.getElementById('modal-service-icon')
         };
 
         // Container for service request cards
@@ -653,6 +655,20 @@ class ServiceRequestsManager {
         // Ensure we use the proper field name for address
         safeSetText(this.modal.address, service.SB_ADDRESS || service.sb_address);
 
+        // Set the service icon
+        if (this.modal.serviceIcon) {
+            this.modal.serviceIcon.innerHTML = `<i class="${this.getServiceIcon(service.ST_CODE)}"></i>`;
+        }
+
+        // Set status with badge style
+        if (this.modal.statusBadge && service.SB_STATUS) {
+            const statusClass = this.getStatusBadgeClass(service.SB_STATUS);
+            const statusText = service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1);
+            this.modal.statusBadge.className = `badge bg-${statusClass}-subtle text-${statusClass}`;
+            this.modal.statusBadge.textContent = statusText;
+        }
+
+        // Keep the old status field updated for backward compatibility
         if (this.modal.status && service.SB_STATUS) {
             this.modal.status.textContent = service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1);
         } else if (this.modal.status) {

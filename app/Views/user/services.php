@@ -462,80 +462,6 @@
         </div>
     </div>
 
-    <!-- Book Service Modal -->
-    <div class="modal fade" id="bookServiceModal" tabindex="-1" aria-labelledby="bookServiceModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="bookServiceModalLabel">Request Service</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <form id="serviceBookingForm">
-                        <!-- Service Selection -->
-                        <div class="mb-3">
-                            <label for="serviceSelect" class="form-label">Select Service <span class="text-danger">*</span></label>
-                            <select class="form-select" id="serviceSelect" required>
-                                <option value="" selected disabled>Choose a service</option>
-                                <option value="checkup-repair">Aircon Check-up & Repair</option>
-                                <option value="installation">Installation of Units</option>
-                                <option value="ducting">Ducting Works</option>
-                                <option value="cleaning-pms">General Cleaning & PMS</option>
-                                <option value="supply-units">Supply of Brand New Aircon Units</option>
-                                <option value="survey-estimation">Survey & Estimation</option>
-                                <option value="quotations">Project Quotations</option>
-                                <option value="biddings">Project Biddings</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Date and Time Selection -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="preferredDate" class="form-label">Preferred Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="preferredDate" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="preferredTime" class="form-label">Preferred Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="preferredTime" required>
-                            </div>
-                        </div>
-                        
-                        <!-- Service Description -->
-                        <div class="mb-3">
-                            <label for="serviceDescription" class="form-label">Service Description <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="serviceDescription" rows="3" placeholder="Please describe your service needs..." required></textarea>
-                        </div>
-                        
-                        <!-- Contact Information -->
-                        <div class="mb-3">
-                            <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="fullName" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="emailAddress" class="form-label">Email Address <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="emailAddress" placeholder="Enter your email address" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="phoneNumber" placeholder="Enter your phone number" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="address" placeholder="Enter your address" required>
-                        </div>
-                        
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-danger">Submit Request</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
     <?php require __DIR__. '/../includes/shared/footer.php' ?>
         
@@ -558,6 +484,31 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             handleFormSubmission('serviceBookingForm', '/user/service/request'); 
+            
+            // Set minimum date for the date picker to today
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const formattedToday = `${year}-${month}-${day}`;
+            
+            // Apply min date to all preferredDate inputs
+            const dateInputs = document.querySelectorAll('#preferredDate');
+            dateInputs.forEach(input => {
+                input.setAttribute('min', formattedToday);
+                
+                // Add change event listener to validate date selection
+                input.addEventListener('change', function() {
+                    if (this.value && this.value < formattedToday) {
+                        this.value = formattedToday;
+                        ToastNotification.show({
+                            title: 'Date Validation',
+                            message: 'Service dates must be today or later',
+                            type: 'warning'
+                        });
+                    }
+                });
+            });
         });
 
         // Service Selection Functionality

@@ -146,32 +146,55 @@
     <div class="modal fade" id="serviceRequestDetailModal" tabindex="-1" aria-labelledby="serviceRequestDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="serviceRequestDetailModalLabel">Service Request Details: <span id="modal-service-id"></span></h5>
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="serviceRequestDetailModalLabel">
+                        <span class="service-icon me-2" id="modal-service-icon"></span>
+                        Service Request: <span id="modal-service-id" class="fw-bold"></span>
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h4 id="modal-service-name" class="fw-bold mb-0"></h4>
+                        <span id="modal-status-badge" class="badge"></span>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Service Type:</strong> <span id="modal-service-name"></span></p>
-                            <p><strong>Description:</strong> <span id="modal-service-description"></span></p>
-                            <p><strong>Requested Date:</strong> <span id="modal-requested-date"></span></p>
-                            <p><strong>Requested Time:</strong> <span id="modal-requested-time"></span></p>
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Service Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Service Type:</strong> <span id="modal-service-description"></span></p>
+                                    <p class="mb-2"><strong>Estimated Cost:</strong> <span id="modal-estimated-cost" class="fw-bold"></span></p>
+                                    <p class="mb-0"><strong>Priority:</strong> <span id="modal-priority"></span></p>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Address:</strong> <span id="modal-address"></span></p>
-                            <p><strong>Status:</strong> <span id="modal-status"></span></p>
-                            <p><strong>Estimated Cost:</strong> <span id="modal-estimated-cost"></span></p>
-                            <p><strong>Priority:</strong> <span id="modal-priority"></span></p>
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Schedule Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Requested Date:</strong> <span id="modal-requested-date"></span></p>
+                                    <p class="mb-2"><strong>Requested Time:</strong> <span id="modal-requested-time"></span></p>
+                                    <p class="mb-0"><strong>Service Address:</strong> <span id="modal-address"></span></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <hr>
-                    <p><strong>Details from Request:</strong></p>
-                    <p id="modal-notes" style="white-space: pre-wrap;"></p>
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Request Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <p id="modal-notes" style="white-space: pre-wrap;"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    
                 </div>
             </div>
         </div>
