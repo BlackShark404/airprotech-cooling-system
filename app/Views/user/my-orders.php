@@ -166,7 +166,7 @@
                         </div>
                     </div>
                     <hr>
-                    <p><strong>Notes/Details from Request:</strong></p>
+                    <p><strong>Details from Request:</strong></p>
                     <p id="modal-notes" style="white-space: pre-wrap;"></p>
                 </div>
                 <div class="modal-footer">
