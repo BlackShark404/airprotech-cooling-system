@@ -5,7 +5,21 @@ namespace App\Models;
 class ServiceRequestTypeModel extends BaseModel
 {
     protected $table = 'service_type';
-    
+    protected $primaryKey = 'st_id';
+
+    // Define which fields can be mass-assigned
+    protected $fillable = [
+        'st_code',
+        'st_name',
+        'st_description',
+        'st_is_active'
+    ];
+
+    // Enable timestamps
+    protected $timestamps = true;
+    protected $createdAtColumn = 'st_created_at';
+    protected $updatedAtColumn = 'st_updated_at';
+
     /**
      * Get all active service types
      * 
@@ -13,11 +27,11 @@ class ServiceRequestTypeModel extends BaseModel
      */
     public function getActiveServiceTypes()
     {
-        $sql = "SELECT * FROM {$this->table} 
-                WHERE st_is_active = :isActive 
-                ORDER BY st_name ASC";
-                
-        return $this->query($sql, ['isActive' => true]);
+        return $this->where("st_is_active = :isActive")
+                ->orderBy("st_name ASC")
+                ->bind(['isActive' => true])
+                ->get();
+
     }
     
     /**
@@ -28,10 +42,10 @@ class ServiceRequestTypeModel extends BaseModel
      */
     public function getServiceTypeByCode($code)
     {
-        $sql = "SELECT * FROM {$this->table} 
-                WHERE st_code = :code";
-                
-        return $this->queryOne($sql, ['code' => $code]);
+        return $this->where("st_code = :code")
+                ->bind(['code' => $code])
+                ->first();
+
     }
     
     /**
@@ -42,12 +56,7 @@ class ServiceRequestTypeModel extends BaseModel
      */
     public function createServiceType($data)
     {
-        $formatted = $this->formatInsertData($data);
-        
-        $sql = "INSERT INTO {$this->table} ({$formatted['columns']}) 
-                VALUES ({$formatted['placeholders']})";
-                
-        return $this->execute($sql, $formatted['filteredData']) > 0;
+        return $this->insert($data);
     }
     
     /**
@@ -59,15 +68,12 @@ class ServiceRequestTypeModel extends BaseModel
      */
     public function updateServiceType($typeId, $data)
     {
-        $formatted = $this->formatUpdateData($data);
-        
-        $sql = "UPDATE {$this->table} 
-                SET {$formatted['updateClause']}
-                WHERE st_id = :typeId";
-                
-        $params = array_merge($formatted['filteredData'], ['typeId' => $typeId]);
-        
-        return $this->execute($sql, $params) > 0;
+        return $this->update(
+            $data,
+            "st_id = :typeId",
+            ['typeId' => $typeId]
+        );
+
     }
     
     /**
@@ -79,13 +85,10 @@ class ServiceRequestTypeModel extends BaseModel
      */
     public function toggleServiceTypeStatus($typeId, $isActive)
     {
-        $sql = "UPDATE {$this->table} 
-                SET st_is_active = :isActive 
-                WHERE st_id = :typeId";
-                
-        return $this->execute($sql, [
-            'isActive' => $isActive,
-            'typeId' => $typeId
-        ]) > 0;
+        return $this->update(
+            ['st_is_active' => $isActive],
+            "st_id = :typeId",
+            ['typeId' => $typeId]
+        );
     }
 }

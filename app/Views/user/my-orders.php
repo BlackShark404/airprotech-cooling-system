@@ -5,11 +5,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?? 'My Orders & Service Requests' ?></title> {/* Use passed title */}
+    <title><?= $pageTitle ?? 'My Orders & Service Requests' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/home.css"> {/* Or your specific dashboard CSS */}
+    <link rel="stylesheet" href="/assets/css/home.css">
     <style>
         /* Optional: Add some styling for loading or empty states */
         .service-icon i { font-size: 1.5rem; color: #0d6efd; }
@@ -56,7 +56,7 @@
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/user/orders-services">My Orders & Service Requests</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/user/my-orders">My Orders & Service Requests</a></li>
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="position-relative">
@@ -66,9 +66,6 @@
                             <span class="ms-2 text-dark"><?= htmlspecialchars(Session::get('user_name', 'Guest')) ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
-                            <li><a class="dropdown-item" href="/user/settings">Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
                         </ul>
                     </li>
