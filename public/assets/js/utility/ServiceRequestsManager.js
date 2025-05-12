@@ -650,7 +650,29 @@ class ServiceRequestsManager {
             }
         }
 
-        safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
+        // Format the time in 12-hour format with AM/PM
+        if (this.modal.requestedTime && service.SB_REQUESTED_TIME) {
+            try {
+                // Parse the time string (expected format: HH:MM:SS)
+                const timeParts = service.SB_REQUESTED_TIME.split(':');
+                if (timeParts.length >= 2) {
+                    const hours = parseInt(timeParts[0], 10);
+                    const minutes = parseInt(timeParts[1], 10);
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    const hours12 = hours % 12 || 12; // Convert to 12-hour format (0 becomes 12)
+
+                    // Format as hours:minutes AM/PM
+                    this.modal.requestedTime.textContent = `${hours12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+                } else {
+                    safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
+                }
+            } catch (e) {
+                console.warn('Error formatting requestedTime:', e);
+                safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
+            }
+        } else {
+            safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
+        }
 
         // Ensure we use the proper field name for address
         safeSetText(this.modal.address, service.SB_ADDRESS || service.sb_address);

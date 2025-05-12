@@ -154,10 +154,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h4 id="modal-service-name" class="fw-bold mb-0"></h4>
-                        <span id="modal-status-badge" class="badge"></span>
-                    </div>
+                <div class="d-flex justify-content-between align-items-start mb-3 p-3">
+                    <h4 id="modal-service-name" class="fw-bold mb-0"></h4>
+                    <span id="modal-status-badge" class="badge"></span>
+                </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card shadow-sm mb-3">

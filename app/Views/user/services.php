@@ -496,18 +496,6 @@
             const dateInputs = document.querySelectorAll('#preferredDate');
             dateInputs.forEach(input => {
                 input.setAttribute('min', formattedToday);
-                
-                // Add change event listener to validate date selection
-                input.addEventListener('change', function() {
-                    if (this.value && this.value < formattedToday) {
-                        this.value = formattedToday;
-                        ToastNotification.show({
-                            title: 'Date Validation',
-                            message: 'Service dates must be today or later',
-                            type: 'warning'
-                        });
-                    }
-                });
             });
         });
 
