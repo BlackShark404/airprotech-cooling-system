@@ -7,14 +7,14 @@ class ServiceRequestsManager {
     constructor(options = {}) {
         // Default configuration
         this.config = {
-            serviceRequestsEndpoint: '/api/service-bookings',
-            containerSelector: '#services',
+            serviceRequestsEndpoint: '/api/user/service-bookings',
+            containerSelector: '#service-requests-list-container',
             modalId: 'serviceRequestDetailModal',
             filterFormId: 'service-request-filters',
             searchInputId: 'service-request-search',
             dateFilterId: 'date-filter',
             statusFilterId: 'status-filter',
-            itemsPerPage: 10,
+            itemsPerPage: 5,
             paginationContainerSelector: '#services-pagination-container',
             ...options
         };
@@ -43,7 +43,6 @@ class ServiceRequestsManager {
         // Store all service requests for filtering
         this.allServiceRequests = [];
         this.filteredServiceRequests = [];
-        // this.currentServiceRequest = null; // To store the service data for the currently open modal
 
         // Pagination state
         this.currentPage = 1;
@@ -111,8 +110,8 @@ class ServiceRequestsManager {
         
         switch (status.toLowerCase()) {
             case 'pending': return 'warning';
-            case 'confirmed':
-            case 'in-progress':
+            case 'confirmed': return 'primary';
+            case 'in-progress': return 'primary';
             case 'completed': return 'success';
             case 'cancelled': return 'danger';
             default: return 'secondary';
@@ -164,17 +163,267 @@ class ServiceRequestsManager {
             });
         }
     }
+    
+    /**
+     * Fetch service requests from the API and render them
+     */
+    fetchAndRenderServiceRequests() {
+        // Show loading state
+        if (this.container) {
+            this.container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading service requests...</p></div>';
+        }
+
+        // Fetch service requests from the API
+        axios.get(this.config.serviceRequestsEndpoint)
+            .then(response => {
+                if (response.data && response.data.success) {
+                    this.allServiceRequests = response.data.data || [];
+                    this.filteredServiceRequests = [...this.allServiceRequests];
+                    this.renderServiceRequests();
+                    
+                    // Update results count
+                    const resultsCountElement = document.getElementById('service-results-count');
+                    if (resultsCountElement) {
+                        resultsCountElement.textContent = `Showing ${this.filteredServiceRequests.length} of ${this.allServiceRequests.length} service requests`;
+                    }
+                } else {
+                    this.handleError('Failed to load service requests');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching service requests:', error);
+                this.handleError('Error loading service requests. Please try again later.');
+            });
+    }
+    
+    /**
+     * Render service requests with pagination
+     */
+    renderServiceRequests() {
+        if (!this.container) return;
+
+        // Calculate pagination
+        const totalPages = Math.ceil(this.filteredServiceRequests.length / this.itemsPerPage);
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const currentPageItems = this.filteredServiceRequests.slice(startIndex, endIndex);
+
+        // Clear container
+        this.container.innerHTML = '';
+
+        // Check if there are any service requests to display
+        if (currentPageItems.length === 0) {
+            this.container.innerHTML = '<div class="alert alert-info text-center">No service requests found matching your criteria.</div>';
+            this.renderPagination(totalPages);
+            return;
+        }
+
+        // Render service request cards
+        currentPageItems.forEach(service => {
+            const cardHtml = this.config.cardTemplate(service);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = cardHtml;
+            this.container.appendChild(tempDiv.firstElementChild);
+        });
+
+        // Render pagination
+        this.renderPagination(totalPages);
+    }
+    
+    /**
+     * Render pagination controls
+     */
+    renderPagination(totalPages) {
+        const paginationContainer = document.querySelector(this.config.paginationContainerSelector);
+        if (!paginationContainer) return;
+
+        // Clear pagination container
+        paginationContainer.innerHTML = '';
+
+        // Don't show pagination if there's only one page
+        if (totalPages <= 1) return;
+
+        // Create pagination nav
+        const nav = document.createElement('nav');
+        nav.setAttribute('aria-label', 'Service requests pagination');
+        const ul = document.createElement('ul');
+        ul.className = 'pagination';
+
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${this.currentPage === 1 ? 'disabled' : ''}`;
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.setAttribute('aria-label', 'Previous');
+        prevLink.innerHTML = '<span aria-hidden="true">&laquo;</span>';
+        prevLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.renderServiceRequests();
+            }
+        });
+        prevLi.appendChild(prevLink);
+        ul.appendChild(prevLi);
+
+        // Page numbers
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+        // Adjust if we're near the end
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === this.currentPage ? 'active' : ''}`;
+            const link = document.createElement('a');
+            link.className = 'page-link';
+            link.href = '#';
+            link.textContent = i;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.currentPage = i;
+                this.renderServiceRequests();
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
+        }
+
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${this.currentPage === totalPages ? 'disabled' : ''}`;
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.setAttribute('aria-label', 'Next');
+        nextLink.innerHTML = '<span aria-hidden="true">&raquo;</span>';
+        nextLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.currentPage < totalPages) {
+                this.currentPage++;
+                this.renderServiceRequests();
+            }
+        });
+        nextLi.appendChild(nextLink);
+        ul.appendChild(nextLi);
+
+        nav.appendChild(ul);
+        paginationContainer.appendChild(nav);
+    }
+    
+    /**
+     * Open the service request detail modal
+     */
+    openServiceRequestModal(serviceId) {
+        // Show loading state in modal
+        this.modal.serviceId.textContent = serviceId;
+        this.modal.serviceName.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+        this.modal.serviceDescription.textContent = 'Loading...';
+        this.modal.requestedDate.textContent = '';
+        this.modal.requestedTime.textContent = '';
+        this.modal.address.textContent = '';
+        this.modal.status.textContent = '';
+        this.modal.estimatedCost.textContent = '';
+        this.modal.priority.textContent = '';
+        this.modal.notes.textContent = '';
+
+        // Show the modal
+        const modalInstance = new bootstrap.Modal(this.modal.element);
+        modalInstance.show();
+
+        // Fetch service request details
+        axios.get(`${this.config.serviceRequestsEndpoint}/${serviceId}`)
+            .then(response => {
+                if (response.data && response.data.success) {
+                    const service = response.data.data;
+                    
+                    // Update modal content
+                    this.modal.serviceId.textContent = service.SB_ID;
+                    this.modal.serviceName.textContent = service.ST_NAME || 'N/A';
+                    this.modal.serviceDescription.textContent = service.ST_DESCRIPTION || 'N/A';
+                    
+                    // Format date
+                    if (service.SB_REQUESTED_DATE) {
+                        const date = new Date(service.SB_REQUESTED_DATE);
+                        this.modal.requestedDate.textContent = date.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                    } else {
+                        this.modal.requestedDate.textContent = 'N/A';
+                    }
+                    
+                    // Format time
+                    if (service.SB_REQUESTED_TIME) {
+                        this.modal.requestedTime.textContent = service.SB_REQUESTED_TIME;
+                    } else {
+                        this.modal.requestedTime.textContent = 'N/A';
+                    }
+                    
+                    this.modal.address.textContent = service.SB_ADDRESS || 'N/A';
+                    
+                    // Format status with badge
+                    if (service.SB_STATUS) {
+                        const statusBadge = document.createElement('span');
+                        statusBadge.className = `badge bg-${this.getStatusBadgeClass(service.SB_STATUS)}`;
+                        statusBadge.textContent = service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1);
+                        this.modal.status.innerHTML = '';
+                        this.modal.status.appendChild(statusBadge);
+                    } else {
+                        this.modal.status.textContent = 'N/A';
+                    }
+                    
+                    this.modal.estimatedCost.textContent = service.SB_ESTIMATED_COST ? `$${service.SB_ESTIMATED_COST}` : 'Pending';
+                    this.modal.priority.textContent = service.SB_PRIORITY ? service.SB_PRIORITY.charAt(0).toUpperCase() + service.SB_PRIORITY.slice(1) : 'Normal';
+                    this.modal.notes.textContent = service.SB_DESCRIPTION || 'No additional notes provided.';
+                } else {
+                    this.handleModalError('Failed to load service request details');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching service request details:', error);
+                this.handleModalError('Error loading service request details. Please try again later.');
+            });
+    }
+    
+    /**
+     * Handle error in the main container
+     */
+    handleError(message) {
+        if (this.container) {
+            this.container.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+        }
+    }
+    
+    /**
+     * Handle error in the modal
+     */
+    handleModalError(message) {
+        this.modal.serviceName.textContent = 'Error';
+        this.modal.serviceDescription.textContent = message;
+        this.modal.requestedDate.textContent = '';
+        this.modal.requestedTime.textContent = '';
+        this.modal.address.textContent = '';
+        this.modal.status.textContent = '';
+        this.modal.estimatedCost.textContent = '';
+        this.modal.priority.textContent = '';
+        this.modal.notes.textContent = '';
+    }
 
     /**
      * Apply all active filters and search
      */
     applyFilters() {
-        if (!this.allServiceRequests.length && this.config.serviceRequestsEndpoint) {
-            // Data might not be loaded yet if filters are applied before initial fetch completes.
-            // Or, it might genuinely be empty.
-            // console.warn("applyFilters called when allServiceRequests is empty. Ensure data is loaded first.");
+        if (!this.allServiceRequests.length) {
+            // Data might not be loaded yet if filters are applied before initial fetch completes
+            return;
         }
-
 
         let filteredServiceRequests = [...this.allServiceRequests];
 
@@ -245,9 +494,10 @@ class ServiceRequestsManager {
 
         try {
             const response = await axios.get(this.config.serviceRequestsEndpoint);
-            const serviceRequests = response.data;
-
-            if (Array.isArray(serviceRequests)) {
+            
+            // Check if response has the expected structure with success and data properties
+            if (response.data && response.data.success && Array.isArray(response.data.data)) {
+                const serviceRequests = response.data.data;
                 this.allServiceRequests = serviceRequests;
                 this.filteredServiceRequests = [...serviceRequests]; // Initialize filtered list
 
@@ -258,7 +508,7 @@ class ServiceRequestsManager {
                     this.renderPagination(0);
                 }
             } else {
-                console.error('Invalid data format received. Expected an array of service requests.', serviceRequests);
+                console.error('Invalid data format received. Expected an array of service requests.', response.data);
                 this.container.innerHTML = '<div class="col-12"><p class="text-center text-danger">Could not load service requests due to invalid data format.</p></div>';
                 this.renderPagination(0);
             }

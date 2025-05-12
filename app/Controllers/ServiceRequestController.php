@@ -15,6 +15,85 @@ class ServiceRequestController extends BaseController
     }
     
     /**
+     * Get all service bookings for the current user
+     * API endpoint for ServiceRequestsManager.js
+     */
+    public function getUserServiceBookings()
+    {
+        // Check if user is logged in
+        if (!isset($_SESSION['user_id'])) {
+            $this->jsonError('User not authenticated', 401);
+            return;
+        }
+        
+        $customerId = $_SESSION['user_id'];
+        $bookings = $this->serviceModel->getCustomerBookings($customerId);
+        
+        // Enhance bookings with service type information
+        foreach ($bookings as &$booking) {
+            $serviceType = $this->serviceTypeModel->getServiceTypeById($booking['sb_service_type_id']);
+            if ($serviceType) {
+                $booking['ST_NAME'] = $serviceType['st_name'];
+                $booking['ST_DESCRIPTION'] = $serviceType['st_description'];
+                $booking['ST_CODE'] = $serviceType['st_code'];
+            }
+            
+            // Convert DB column names to the expected format for the frontend
+            $booking['SB_ID'] = $booking['sb_id'];
+            $booking['SB_STATUS'] = $booking['sb_status'];
+            $booking['SB_CREATED_AT'] = $booking['sb_created_at'];
+            $booking['SB_REQUESTED_DATE'] = $booking['sb_requested_date'];
+            $booking['SB_REQUESTED_TIME'] = $booking['sb_requested_time'];
+            $booking['SB_ESTIMATED_COST'] = $booking['sb_estimated_cost'] ?? null;
+            $booking['SB_PRIORITY'] = $booking['sb_priority'] ?? 'normal';
+        }
+        
+        $this->jsonSuccess($bookings);
+    }
+    
+    /**
+     * Get details for a specific service booking
+     * API endpoint for ServiceRequestsManager.js
+     */
+    public function getUserServiceBookingDetails($id)
+    {
+        // Check if user is logged in
+        if (!isset($_SESSION['user_id'])) {
+            $this->jsonError('User not authenticated', 401);
+            return;
+        }
+        
+        $customerId = $_SESSION['user_id'];
+        $booking = $this->serviceModel->getBookingWithDetails($id);
+        
+        // Check if booking exists and belongs to the current user
+        if (!$booking || $booking['sb_customer_id'] != $customerId) {
+            $this->jsonError('Service booking not found or access denied', 404);
+            return;
+        }
+        
+        // Convert DB column names to the expected format for the frontend
+        $result = [
+            'SB_ID' => $booking['sb_id'],
+            'SB_STATUS' => $booking['sb_status'],
+            'SB_CREATED_AT' => $booking['sb_created_at'],
+            'SB_REQUESTED_DATE' => $booking['sb_requested_date'],
+            'SB_REQUESTED_TIME' => $booking['sb_requested_time'],
+            'SB_ADDRESS' => $booking['sb_address'],
+            'SB_DESCRIPTION' => $booking['sb_description'],
+            'SB_ESTIMATED_COST' => $booking['sb_estimated_cost'] ?? null,
+            'SB_PRIORITY' => $booking['sb_priority'] ?? 'normal',
+            'ST_NAME' => $booking['service_name'],
+            'ST_DESCRIPTION' => $booking['service_description'],
+            'CUSTOMER_NAME' => $booking['customer_first_name'] . ' ' . $booking['customer_last_name'],
+            'CUSTOMER_EMAIL' => $booking['customer_email'],
+            'CUSTOMER_PHONE' => $booking['customer_phone']
+        ];
+        
+        $this->jsonSuccess($result);
+    }
+    
+    /**
      * Display services page
      */
     public function index()

@@ -48,6 +48,10 @@ $router->map('GET', '/user/bookings', 'App\Controllers\ServiceRequestController#
 $router->map('POST', '/user/bookings/cancel/[i:id]', 'App\Controllers\ServiceRequestController#cancelBooking', 'user_cancel_booking');
 $router->map('GET', '/user/my-orders', 'App\Controllers\UserController#renderMyOrders', 'render_my-orders');
 
+// Service Request API endpoints for ServiceRequestsManager.js
+$router->map('GET', '/api/user/service-bookings', 'App\Controllers\ServiceRequestController#getUserServiceBookings', 'user_service_bookings_api');
+$router->map('GET', '/api/user/service-bookings/[i:id]', 'App\Controllers\ServiceRequestController#getUserServiceBookingDetails', 'user_service_booking_details_api');
+
 
 // Admin routes
 $router->map('GET', '/admin/service-request', 'App\Controllers\AdminController#renderServiceRequest', 'render-service-request');

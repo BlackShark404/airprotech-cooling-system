@@ -49,6 +49,18 @@ class ServiceRequestTypeModel extends Model
     {
         $sql = "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :id";
         return $this->queryOne($sql, ['id' => $id]);
+     }
+    
+    /**
+     * Get a service type by its primary key (ID) - alias for findById
+     * Used by ServiceRequestController
+     *
+     * @param int $id The service type ID
+     * @return array|null The service type or null if not found
+     */
+    public function getServiceTypeById($id)
+    {
+        return $this->findById($id);
     }
 
     /**
