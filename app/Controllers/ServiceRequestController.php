@@ -44,6 +44,8 @@ class ServiceRequestController extends BaseController
             $booking['SB_CREATED_AT'] = $booking['sb_created_at'];
             $booking['SB_REQUESTED_DATE'] = $booking['sb_requested_date'];
             $booking['SB_REQUESTED_TIME'] = $booking['sb_requested_time'];
+            $booking['SB_ADDRESS'] = $booking['sb_address'];
+            $booking['SB_DESCRIPTION'] = $booking['sb_description'];
             $booking['SB_ESTIMATED_COST'] = $booking['sb_estimated_cost'] ?? null;
             $booking['SB_PRIORITY'] = $booking['sb_priority'] ?? 'normal';
         }

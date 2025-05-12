@@ -107,7 +107,7 @@ class ServiceRequestsManager {
      */
     getStatusBadgeClass(status) {
         if (!status) return 'secondary';
-        
+
         switch (status.toLowerCase()) {
             case 'pending': return 'warning';
             case 'confirmed': return 'primary';
@@ -150,7 +150,7 @@ class ServiceRequestsManager {
             this.filterForm.addEventListener('change', () => this.applyFilters());
             this.filterForm.addEventListener('reset', () => {
                 // Use a short timeout to allow form elements to reset before applying filters
-                setTimeout(() => this.applyFilters(), 10); 
+                setTimeout(() => this.applyFilters(), 10);
             });
         }
 
@@ -163,7 +163,7 @@ class ServiceRequestsManager {
             });
         }
     }
-    
+
     /**
      * Fetch service requests from the API and render them
      */
@@ -180,7 +180,7 @@ class ServiceRequestsManager {
                     this.allServiceRequests = response.data.data || [];
                     this.filteredServiceRequests = [...this.allServiceRequests];
                     this.renderServiceRequests();
-                    
+
                     // Update results count
                     const resultsCountElement = document.getElementById('service-results-count');
                     if (resultsCountElement) {
@@ -195,7 +195,7 @@ class ServiceRequestsManager {
                 this.handleError('Error loading service requests. Please try again later.');
             });
     }
-    
+
     /**
      * Render service requests with pagination
      */
@@ -229,7 +229,7 @@ class ServiceRequestsManager {
         // Render pagination
         this.renderPagination(totalPages);
     }
-    
+
     /**
      * Render pagination controls
      */
@@ -314,86 +314,50 @@ class ServiceRequestsManager {
         nav.appendChild(ul);
         paginationContainer.appendChild(nav);
     }
-    
+
     /**
      * Open the service request detail modal
      */
     openServiceRequestModal(serviceId) {
-        // Show loading state in modal
-        this.modal.serviceId.textContent = serviceId;
-        this.modal.serviceName.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
-        this.modal.serviceDescription.textContent = 'Loading...';
-        this.modal.requestedDate.textContent = '';
-        this.modal.requestedTime.textContent = '';
-        this.modal.address.textContent = '';
-        this.modal.status.textContent = '';
-        this.modal.estimatedCost.textContent = '';
-        this.modal.priority.textContent = '';
-        this.modal.notes.textContent = '';
+        try {
+            // Find the service request in our existing list.
+            // serviceId is a string from data-attribute, SB_ID might be a number or string.
+            // Using '==' for comparison handles type coercion (e.g., 123 == "123" is true).
+            const service = this.allServiceRequests.find(s => s.SB_ID == serviceId);
 
-        // Show the modal
-        const modalInstance = new bootstrap.Modal(this.modal.element);
-        modalInstance.show();
+            if (!service) {
+                // This case implies that the serviceId clicked does not exist in the
+                // pre-loaded data. This could indicate a data inconsistency or a stale UI.
+                console.error(`Service request with ID ${serviceId} not found in this.allServiceRequests. This might indicate that the local data is incomplete or out of sync with the UI elements.`);
+                alert('Error: Could not find details for the selected service. The information may be unavailable or out of date.');
+                return;
+            }
 
-        // Fetch service request details
-        axios.get(`${this.config.serviceRequestsEndpoint}/${serviceId}`)
-            .then(response => {
-                if (response.data && response.data.success) {
-                    const service = response.data.data;
-                    
-                    // Update modal content
-                    this.modal.serviceId.textContent = service.SB_ID;
-                    this.modal.serviceName.textContent = service.ST_NAME || 'N/A';
-                    this.modal.serviceDescription.textContent = service.ST_DESCRIPTION || 'N/A';
-                    
-                    // Format date
-                    if (service.SB_REQUESTED_DATE) {
-                        const date = new Date(service.SB_REQUESTED_DATE);
-                        this.modal.requestedDate.textContent = date.toLocaleDateString('en-US', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                        });
-                    } else {
-                        this.modal.requestedDate.textContent = 'N/A';
-                    }
-                    
-                    // Format time
-                    if (service.SB_REQUESTED_TIME) {
-                        this.modal.requestedTime.textContent = service.SB_REQUESTED_TIME;
-                    } else {
-                        this.modal.requestedTime.textContent = 'N/A';
-                    }
-                    
-                    // Make sure we're using the correct field for address
-                    this.modal.address.textContent = service.SB_ADDRESS || 'N/A';
-                    
-                    // Format status with badge
-                    if (service.SB_STATUS) {
-                        const statusBadge = document.createElement('span');
-                        statusBadge.className = `badge bg-${this.getStatusBadgeClass(service.SB_STATUS)}`;
-                        statusBadge.textContent = service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1);
-                        this.modal.status.innerHTML = '';
-                        this.modal.status.appendChild(statusBadge);
-                    } else {
-                        this.modal.status.textContent = 'N/A';
-                    }
-                    
-                    this.modal.estimatedCost.textContent = service.SB_ESTIMATED_COST ? `$${service.SB_ESTIMATED_COST}` : 'Pending';
-                    this.modal.priority.textContent = service.SB_PRIORITY ? service.SB_PRIORITY.charAt(0).toUpperCase() + service.SB_PRIORITY.slice(1) : 'Normal';
-                    // Make sure we're using the correct field for description/notes
-                    this.modal.notes.textContent = service.SB_DESCRIPTION || 'No additional notes provided.';
-                } else {
-                    this.handleModalError('Failed to load service request details');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching service request details:', error);
-                this.handleModalError('Error loading service request details. Please try again later.');
-            });
+            // this.currentServiceRequest = service; // Store if needed for other modal interactions
+
+            this.populateModal(service);
+
+            if (!this.modal.element) {
+                console.error(`Modal element (ID: ${this.config.modalId}) not found in the DOM.`);
+                alert('Error: The details view component is missing. Please contact support.');
+                return;
+            }
+
+            if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
+                console.error('Bootstrap Modal component is not loaded or bootstrap is not defined.');
+                alert('Error: A required UI component (Modal) is not available. Please ensure Bootstrap JavaScript is loaded.');
+                return;
+            }
+
+            const bsModal = bootstrap.Modal.getOrCreateInstance(this.modal.element);
+            bsModal.show();
+
+        } catch (error) {
+            console.error('Error in openServiceRequestModal:', error);
+            alert('An unexpected error occurred while trying to display the service details. Please try again.');
+        }
     }
-    
+
     /**
      * Handle error in the main container
      */
@@ -402,7 +366,7 @@ class ServiceRequestsManager {
             this.container.innerHTML = `<div class="alert alert-danger">${message}</div>`;
         }
     }
-    
+
     /**
      * Handle error in the modal
      */
@@ -450,7 +414,7 @@ class ServiceRequestsManager {
             }
             if (startDate) {
                 // Normalize start of day for comparison
-                startDate.setHours(0, 0, 0, 0); 
+                startDate.setHours(0, 0, 0, 0);
                 filteredServiceRequests = filteredServiceRequests.filter(service =>
                     service.SB_CREATED_AT && new Date(service.SB_CREATED_AT) >= startDate
                 );
@@ -496,7 +460,7 @@ class ServiceRequestsManager {
 
         try {
             const response = await axios.get(this.config.serviceRequestsEndpoint);
-            
+
             // Check if response has the expected structure with success and data properties
             if (response.data && response.data.success && Array.isArray(response.data.data)) {
                 const serviceRequests = response.data.data;
@@ -552,7 +516,7 @@ class ServiceRequestsManager {
         if (!paginationContainer) return;
 
         const totalPages = Math.ceil(totalItems / this.itemsPerPage);
-        
+
         if (totalPages <= 1) { // Also hide if only one page
             paginationContainer.innerHTML = '';
             return;
@@ -569,7 +533,7 @@ class ServiceRequestsManager {
         const maxPageButtons = 5; // Max number of page buttons to show
         let startPage = Math.max(1, this.currentPage - Math.floor(maxPageButtons / 2));
         let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
-        
+
         // Adjust startPage if endPage is at the limit and there are fewer than maxPageButtons
         if (endPage - startPage + 1 < maxPageButtons) {
             startPage = Math.max(1, endPage - maxPageButtons + 1);
@@ -619,7 +583,7 @@ class ServiceRequestsManager {
         // Remove previous listeners to avoid multiple bindings if called repeatedly
         // A more robust way is to attach one listener to the container.
         // For simplicity, if this function is only called after innerHTML overwrite, it's fine.
-        
+
         paginationContainer.addEventListener('click', (e) => {
             e.preventDefault();
             const link = e.target.closest('.page-link');
@@ -650,73 +614,26 @@ class ServiceRequestsManager {
         }
 
         this.renderServiceRequests(this.filteredServiceRequests);
-        
+
         if (this.container) {
             this.container.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
-
-    // --- MODIFIED METHOD ---
-    /**
-     * Open service request modal with details.
-     * This version assumes all necessary service request data is already present in
-     * `this.allServiceRequests` and populates the modal directly from this local data.
-     */
-    openServiceRequestModal(serviceId) { // Removed async as no network request (await) is made here
-        try {
-            // Find the service request in our existing list.
-            // serviceId is a string from data-attribute, SB_ID might be a number or string.
-            // Using '==' for comparison handles type coercion (e.g., 123 == "123" is true).
-            const service = this.allServiceRequests.find(s => s.SB_ID == serviceId);
-
-            if (!service) {
-                // This case implies that the serviceId clicked does not exist in the
-                // pre-loaded data. This could indicate a data inconsistency or a stale UI.
-                console.error(`Service request with ID ${serviceId} not found in this.allServiceRequests. This might indicate that the local data is incomplete or out of sync with the UI elements.`);
-                alert('Error: Could not find details for the selected service. The information may be unavailable or out of date.');
-                return;
-            }
-
-            // this.currentServiceRequest = service; // Store if needed for other modal interactions
-
-            this.populateModal(service);
-
-            if (!this.modal.element) {
-                console.error(`Modal element (ID: ${this.config.modalId}) not found in the DOM.`);
-                alert('Error: The details view component is missing. Please contact support.');
-                return;
-            }
-
-            if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
-                console.error('Bootstrap Modal component is not loaded or bootstrap is not defined.');
-                alert('Error: A required UI component (Modal) is not available. Please ensure Bootstrap JavaScript is loaded.');
-                return;
-            }
-
-            const bsModal = bootstrap.Modal.getOrCreateInstance(this.modal.element);
-            bsModal.show();
-
-        } catch (error) {
-            console.error('Error in openServiceRequestModal:', error);
-            alert('An unexpected error occurred while trying to display the service details. Please try again.');
-        }
-    }
-    // --- END OF MODIFIED METHOD ---
 
     /**
      * Populate modal with service request details
      */
     populateModal(service) {
         if (!service) return;
-        
+
         const safeSetText = (element, text) => {
             if (element) element.textContent = text !== null && text !== undefined ? String(text) : 'N/A';
         };
-        
+
         safeSetText(this.modal.serviceId, `SRV-${service.SB_ID}`);
         safeSetText(this.modal.serviceName, service.ST_NAME);
         safeSetText(this.modal.serviceDescription, service.ST_DESCRIPTION || 'No description available');
-        
+
         if (this.modal.requestedDate) {
             try {
                 const date = service.SB_REQUESTED_DATE ? new Date(service.SB_REQUESTED_DATE) : null;
@@ -730,35 +647,30 @@ class ServiceRequestsManager {
                 this.modal.requestedDate.textContent = 'Invalid Date';
             }
         }
-        
+
         safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
-        safeSetText(this.modal.address, service.SB_ADDRESS);
-        
+
+        // Ensure we use the proper field name for address
+        safeSetText(this.modal.address, service.SB_ADDRESS || service.sb_address);
+
         if (this.modal.status && service.SB_STATUS) {
             this.modal.status.textContent = service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1);
         } else if (this.modal.status) {
             this.modal.status.textContent = 'N/A';
         }
-        
+
         if (this.modal.estimatedCost) {
-            this.modal.estimatedCost.textContent = service.SB_ESTIMATED_COST ? 
+            this.modal.estimatedCost.textContent = service.SB_ESTIMATED_COST ?
                 `$${parseFloat(service.SB_ESTIMATED_COST).toFixed(2)}` : 'TBD';
         }
-        
+
         if (this.modal.priority && service.SB_PRIORITY) {
             this.modal.priority.textContent = service.SB_PRIORITY.charAt(0).toUpperCase() + service.SB_PRIORITY.slice(1);
         } else if (this.modal.priority) {
             this.modal.priority.textContent = 'N/A';
         }
-        
-        // Assuming SB_DESCRIPTION here for notes might be an oversight from the original code,
-        // if SB_NOTES or a similar field exists, it should be used.
-        // Using ST_DESCRIPTION for service description and SB_NOTES for specific booking notes.
-        // If SB_NOTES is what you mean by service.SB_DESCRIPTION for modal notes:
-        // safeSetText(this.modal.notes, service.SB_NOTES || 'No additional notes');
-        // If it truly is SB_DESCRIPTION that contains notes for the booking:
-        safeSetText(this.modal.notes, service.SB_DESCRIPTION || 'No additional notes'); 
-        // Or, if it's a general service description that was intended for notes as a fallback:
-        // safeSetText(this.modal.notes, service.ST_DESCRIPTION || 'No additional notes');
+
+        // Use SB_DESCRIPTION for the notes field
+        safeSetText(this.modal.notes, service.SB_DESCRIPTION || service.sb_description || 'No additional notes');
     }
 }
