@@ -297,11 +297,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const lastName = $("#edit_last_name").val();
     const email = $("#edit_email").val();
     const password = $("#edit_password").val();
-    const roleId = parseInt($("#edit_role_id").val()); // Ensure roleId is an integer
+    // Get roleId from the disabled select (we'll keep the original value)
+    const roleId = parseInt($("#edit_role_id").val());
     const isActive = parseInt($("#edit_is_active").val()); // Ensure isActive is an integer
 
     // Simple validation
-    if (!firstName || !lastName || !email || !roleId) {
+    if (!firstName || !lastName || !email) {
       userTableManager.showErrorToast(
         "Validation Error",
         "Please fill all required fields"
@@ -324,8 +325,8 @@ document.addEventListener("DOMContentLoaded", function () {
       first_name: firstName,
       last_name: lastName,
       email: email,
-      role_id: roleId, // Now correctly as a number
-      is_active: isActive, // Now correctly as a number
+      role_id: roleId, // Include role_id but it won't change since field is disabled
+      is_active: isActive
     };
 
     // Add password only if provided
@@ -386,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("Setting role dropdown for: " + rowData.role + " with value: " + roleId);
 
-    // Set the dropdown value
+    // Set the dropdown value (even though it's disabled, we want to display the correct role)
     $("#edit_role_id").val(roleId);
 
     // Set status

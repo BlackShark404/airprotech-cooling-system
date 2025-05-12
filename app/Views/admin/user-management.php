@@ -223,6 +223,18 @@ ob_start();
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_role_id" class="form-label">Role (Read Only)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield text-muted"></i></span>
+                                <select class="form-select border-start-0" id="edit_role_id" name="role_id" disabled>
+                                    <option value="3">Admin</option>
+                                    <option value="2">Technician</option>
+                                    <option value="1">Customer</option>
+                                </select>
+                            </div>
+                            <small class="text-muted">Role cannot be changed</small>
+                        </div>
                     </div>
                 </form>
             </div>
