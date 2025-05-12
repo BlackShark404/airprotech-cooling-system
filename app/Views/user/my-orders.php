@@ -42,8 +42,8 @@
         </div>
     </div>
 
-    <!-- Main Navigation (copied from your example) -->
-    <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
+   <!-- Main Navigation -->
+   <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
                 <img src="/assets/images/logo/Air-TechLogo.png" alt="Logo" class="rounded-circle me-2" width="40" height="40">
@@ -56,16 +56,17 @@
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/user/my-orders">My Orders & Service Requests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/my-orders">My Orders & Service Requests</a></li>
+                    <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="position-relative">
-                                <img src="<?= htmlspecialchars(Session::get('profile_url', '/assets/images/default-profile.png')) ?>" alt="Profile Image" class="rounded-circle" width="30" height="30">
+                                <img src="<?=Session::get('profile_url')?>" alt="Profile Image" class="rounded-circle" width="30" height="30">
                                 <span class="position-absolute bottom-0 end-0 translate-middle-y bg-success rounded-circle border border-white" style="width: 8px; height: 8px;"></span>
                             </div>
-                            <span class="ms-2 text-dark"><?= htmlspecialchars(Session::get('user_name', 'Guest')) ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            
                             <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
                         </ul>
                     </li>
