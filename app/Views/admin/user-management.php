@@ -53,11 +53,8 @@ ob_start();
  
                 <div class="col-md-3">
                     <div class="d-flex gap-2">
-                        <button id="applyFilters" class="btn btn-primary w-100">
-                            <i class="bi bi-funnel-fill me-2"></i>Apply Filters
-                        </button>
                         <button id="resetFilters" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-counterclockwise"></i>
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
                         </button>
                     </div>
                 </div>
@@ -241,7 +238,7 @@ ob_start();
 
 <!-- View User Modal -->
 <div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-semibold" id="viewUserModalLabel">
@@ -250,43 +247,39 @@ ob_start();
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="card h-100 border-0 shadow-sm">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h6>
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="me-3 rounded-circle" style="width: 64px; height: 64px; overflow: hidden;">
+                                <img id="userProfileImage" src="" alt="Profile" class="img-fluid rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-4">
-                                    <div class="avatar-placeholder d-flex align-items-center justify-content-center me-3 rounded-circle bg-primary text-white" style="width: 64px; height: 64px; font-size: 24px;" id="userInitials">
-                                        JD
-                                    </div>
-                                    <div>
-                                        <h5 class="mb-1" id="viewUserName">John Doe</h5>
-                                        <p class="mb-0 text-muted" id="viewUserEmail">john.doe@example.com</p>
-                                    </div>
-                                </div>
-                                <div class="mb-2 d-flex justify-content-between">
-                                    <span class="text-muted">User ID:</span>
-                                    <span class="fw-medium" id="viewUserId">12345</span>
-                                </div>
-                                <div class="mb-2 d-flex justify-content-between">
-                                    <span class="text-muted">Role:</span>
-                                    <span class="fw-medium" id="viewUserRole">Admin</span>
-                                </div>
-                                <div class="mb-2 d-flex justify-content-between">
-                                    <span class="text-muted">Status:</span>
-                                    <span class="fw-medium" id="viewUserStatus">Active</span>
-                                </div>
-                                <div class="mb-2 d-flex justify-content-between">
-                                    <span class="text-muted">Registered:</span>
-                                    <span class="fw-medium" id="viewUserRegistered">2023-01-15</span>
-                                </div>
-                                <div class="mb-2 d-flex justify-content-between">
-                                    <span class="text-muted">Last Login:</span>
-                                    <span class="fw-medium" id="viewUserLastLogin">2023-05-20</span>
-                                </div>
+                            <div>
+                                <h5 class="mb-1" id="viewUserName">John Doe</h5>
+                                <p class="mb-0 text-muted" id="viewUserEmail">john.doe@example.com</p>
                             </div>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">User ID:</span>
+                            <span class="fw-medium" id="viewUserId">12345</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Role:</span>
+                            <span class="fw-medium" id="viewUserRole">Admin</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Status:</span>
+                            <span class="fw-medium" id="viewUserStatus">Active</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Registered:</span>
+                            <span class="fw-medium" id="viewUserRegistered">2023-01-15</span>
+                        </div>
+                        <div class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Last Login:</span>
+                            <span class="fw-medium" id="viewUserLastLogin">2023-05-20</span>
                         </div>
                     </div>
                 </div>

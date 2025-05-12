@@ -15,12 +15,12 @@ document.addEventListener("DOMContentLoaded", function () {
         title: "Name",
         render: function (data, type, row) {
           return `<div class="d-flex align-items-center">
-                      <div class="avatar-placeholder d-flex align-items-center justify-content-center me-2 rounded-circle bg-light">
-                        <p class="mb-0 fw-medium text-dark">${row.first_name} ${row.last_name}</p>
-                      </div>
-                    </div>`;
+                    <div class="me-2 rounded-circle" style="width: 40px; height: 40px; overflow: hidden;">
+                      <img src="${row.profile_url || '/assets/images/default-avatar.png'}" alt="${row.first_name}" class="img-fluid rounded-circle" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <p class="mb-0 fw-medium text-dark">${row.first_name} ${row.last_name}</p>
+                  </div>`;
         },
-
       },
       { data: "email", title: "Email" },
       {
@@ -74,10 +74,8 @@ document.addEventListener("DOMContentLoaded", function () {
     ],
     // View user callback
     viewRowCallback: function (rowData, tableManager) {
-      // Set user initials
-      const initials =
-        rowData.first_name.charAt(0) + rowData.last_name.charAt(0);
-      $("#userInitials").text(initials);
+      // Set user profile image
+      $("#userProfileImage").attr("src", rowData.profile_url || "/assets/images/default-avatar.png");
 
       // Populate the view modal with user data
       $("#viewUserId").text(rowData.id);
@@ -164,8 +162,8 @@ document.addEventListener("DOMContentLoaded", function () {
     $("#userCount").text(filteredData.length + " Users");
   }
 
-  // Apply filters functionality
-  $("#applyFilters").on("click", function () {
+  // Auto-apply filters when selection changes
+  $("#roleFilter, #statusFilter").on("change", function () {
     applyTableFilters();
   });
 
@@ -173,7 +171,6 @@ document.addEventListener("DOMContentLoaded", function () {
   function applyTableFilters() {
     const roleFilter = $("#roleFilter").val();
     const statusFilter = $("#statusFilter").val();
-    const searchQuery = $("#searchInput").val();
 
     // Apply filters
     const filters = {};
@@ -181,7 +178,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (statusFilter) filters.status = statusFilter;
 
     userTableManager.applyFilters(filters);
-
 
     // Update user count
     updateUserCount();
@@ -200,7 +196,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Clear search
     const table = $("#usersTable").DataTable();
     table.search("").draw();
-
 
     // Update user count
     updateUserCount();
