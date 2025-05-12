@@ -7,6 +7,58 @@ $activeTab = 'user_management';
 ob_start();
 ?>
 <link rel="stylesheet" href="/assets/css/user-management.css">
+<style>
+    /* Custom DataTables styling */
+    .dataTables_wrapper .dataTables_paginate {
+        float: right;
+        margin-top: 10px;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.5em 1em;
+        margin-left: 5px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        background-color: #fff;
+        color: #495057;
+        cursor: pointer;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background-color: #0d6efd;
+        color: #fff !important;
+        border-color: #0d6efd;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+        background-color: #e9ecef;
+        color: #495057 !important;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        color: #6c757d !important;
+        background-color: #fff;
+        cursor: not-allowed;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 15px;
+    }
+    
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+        margin-bottom: 15px;
+    }
+    
+    .table-title {
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .dataTables_wrapper .dataTables_length {
+        margin-top: 10px;
+    }
+</style>
 
 <!-- Main Content -->
 <div class="container-fluid py-4 fade-in">
@@ -132,6 +184,16 @@ ob_start();
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label for="is_active" class="form-label">Status</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-toggle2-on text-muted"></i></span>
+                                <select class="form-select border-start-0" id="is_active" name="is_active" required>
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label for="role_id" class="form-label">Role</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield text-muted"></i></span>
@@ -140,16 +202,6 @@ ob_start();
                                     <option value="3">Admin</option>
                                     <option value="2">Technician</option>
                                     <option value="1">Customer</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="is_active" class="form-label">Status</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-toggle2-on text-muted"></i></span>
-                                <select class="form-select border-start-0" id="is_active" name="is_active" required>
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
                                 </select>
                             </div>
                         </div>
@@ -309,8 +361,6 @@ ob_start();
 <!-- Required JavaScript -->
 <script src="/assets/js/javascript-query/jquery-3.7.1.js"></script>
 <link rel="stylesheet" href="//cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>    
-<script src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
 <script src="//cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -321,9 +371,6 @@ ob_start();
 <!-- DataTablesManager -->
 <script src="/assets/js/utility/DataTablesManager.js"></script>
 <script src="/assets/js/utility/user-management.js"></script>
-<script>  	
-let table = new DataTable('#myTable');
-</script>
 
 <?php
 // Close the output buffer and include footer
