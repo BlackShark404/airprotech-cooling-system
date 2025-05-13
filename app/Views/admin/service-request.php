@@ -196,173 +196,25 @@ ob_start();
     </div>
 </div>
 
-<!-- View Modal -->
-<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewModalLabel">Service Request Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <h6>Customer Information</h6>
-                        <p><strong>Name:</strong> <span id="viewCustomerName"></span></p>
-                        <p><strong>Email:</strong> <span id="viewCustomerEmail"></span></p>
-                        <p><strong>Phone:</strong> <span id="viewCustomerPhone"></span></p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <h6>Service Information</h6>
-                        <p><strong>Type:</strong> <span id="viewServiceType"></span></p>
-                        <p><strong>Status:</strong> <span id="viewStatus"></span></p>
-                        <p><strong>Priority:</strong> <span id="viewPriority"></span></p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <h6>Schedule Information</h6>
-                        <p><strong>Date:</strong> <span id="viewDate"></span></p>
-                        <p><strong>Time:</strong> <span id="viewTime"></span></p>
-                        <p><strong>Technician:</strong> <span id="viewTechnician"></span></p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <h6>Address</h6>
-                        <p id="viewAddress"></p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <h6>Description</h6>
-                        <p id="viewDescription"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Edit Modal -->
-<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Edit Service Request</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editServiceRequestForm">
-                    <input type="hidden" id="editBookingId" name="bookingId">
-                    <div class="mb-3">
-                        <label for="editStatus" class="form-label">Status</label>
-                        <select id="editStatus" name="status" class="form-select" required>
-                            <option value="pending">Pending</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editPriority" class="form-label">Priority</label>
-                        <select id="editPriority" name="priority" class="form-select" required>
-                            <option value="high">Urgent</option>
-                            <option value="medium">Moderate</option>
-                            <option value="low">Normal</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDate" class="form-label">Date</label>
-                        <input type="date" id="editDate" name="requestedDate" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTime" class="form-label">Time</label>
-                        <input type="time" id="editTime" name="requestedTime" class="form-control" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Assign Technician Modal -->
-<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="assignModalLabel">Assign Technician</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="assignTechnicianForm">
-                    <input type="hidden" id="assignBookingId" name="bookingId">
-                    <div class="mb-3">
-                        <label for="assignTechnician" class="form-label">Select Technician</label>
-                        <select id="assignTechnician" name="technicianId" class="form-select" required>
-                            <option value="">Select a technician</option>
-                            <!-- To be populated by AJAX -->
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="assignNotes" class="form-label">Assignment Notes</label>
-                        <textarea id="assignNotes" name="notes" class="form-control" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveAssignBtn">Assign Technician</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this service request? This action cannot be undone.</p>
-                <input type="hidden" id="deleteBookingId">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Include jQuery -->
+<!-- Include jQuery first -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Include DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
 
 <!-- Include DataTables JS -->
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 
 <script src="/assets/js/utility/toast-notifications.js"></script>
+<script src="/assets/js/utility/DataTablesManager.js"></script>
 
 <!-- Initialize DataTables and handle service requests -->
 <script>
