@@ -38,7 +38,7 @@ class ServiceRequestModel extends Model // Extends Model directly
             $sql .= " AND {$this->deletedAtColumn} IS NULL";
         }
         
-        $sql .= " ORDER BY sb_requested_date DESC, sb_requested_time DESC";
+        $sql .= " ORDER BY sb_preferred_date DESC, sb_preferred_time DESC";
         
         return $this->query($sql, ['customerId' => $customerId]);
     }
@@ -78,7 +78,7 @@ class ServiceRequestModel extends Model // Extends Model directly
      * @param array $data Booking data. It's assumed that this data is pre-validated
      *                    and safe for insertion, as no $fillable mechanism is used here.
      *                    Required fields by DB: sb_customer_id, sb_service_type_id, 
-     *                                          sb_requested_date, sb_requested_time,
+     *                                          sb_preferred_date, sb_preferred_time,
      *                                          sb_address, sb_description.
      * @return string|false The last inserted ID (sb_id) on success, or false on failure.
      */
@@ -285,10 +285,10 @@ class ServiceRequestModel extends Model // Extends Model directly
     /**
      * Get all active (non-deleted) service bookings.
      *
-     * @param array $orderBy Associative array for ordering (e.g., ['sb_requested_date' => 'DESC']).
+     * @param array $orderBy Associative array for ordering (e.g., ['sb_preferred_date' => 'DESC']).
      * @return array An array of booking records.
      */
-    public function getAllActiveBookings($orderBy = ['sb_requested_date' => 'DESC', 'sb_requested_time' => 'DESC'])
+    public function getAllActiveBookings($orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         $sql = "SELECT * FROM {$this->table}";
         $whereClauses = [];
@@ -321,12 +321,12 @@ class ServiceRequestModel extends Model // Extends Model directly
      * Get service bookings based on a set of criteria.
      *
      * @param array $criteria Associative array of filter conditions (e.g., ['sb_status' => 'pending']).
-     *                        For date ranges on 'sb_requested_date', use: ['sb_requested_date' => ['from' => 'YYYY-MM-DD', 'to' => 'YYYY-MM-DD']].
+     *                        For date ranges on 'sb_preferred_date', use: ['sb_preferred_date' => ['from' => 'YYYY-MM-DD', 'to' => 'YYYY-MM-DD']].
      *                        For IN clauses, provide an array of values: ['sb_status' => ['pending', 'confirmed']].
      * @param array $orderBy Associative array for ordering.
      * @return array An array of matching booking records.
      */
-    public function getBookingsByCriteria(array $criteria, $orderBy = ['sb_requested_date' => 'DESC', 'sb_requested_time' => 'DESC'])
+    public function getBookingsByCriteria(array $criteria, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         $sql = "SELECT * FROM {$this->table}";
         $whereClauses = [];
@@ -337,7 +337,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         }
 
         $allowedFilterColumns = [
-            'sb_customer_id', 'sb_service_type_id', 'sb_requested_date', 
+            'sb_customer_id', 'sb_service_type_id', 'sb_preferred_date', 
             'sb_status', 'sb_priority'
             // Add other SB_ columns here if they should be filterable
         ];
@@ -350,7 +350,7 @@ class ServiceRequestModel extends Model // Extends Model directly
                 
                 $paramKey = ":" . $columnLower . "_filt"; // e.g. :sb_status_filt
 
-                if ($actualColumn === 'sb_requested_date' && is_array($value) && isset($value['from']) && isset($value['to'])) {
+                if ($actualColumn === 'sb_preferred_date' && is_array($value) && isset($value['from']) && isset($value['to'])) {
                     $whereClauses[] = "{$actualColumn} BETWEEN {$paramKey}_from AND {$paramKey}_to";
                     $params["{$paramKey}_from"] = $value['from'];
                     $params["{$paramKey}_to"] = $value['to'];
@@ -400,7 +400,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         }
         
         $allowedFilterColumns = [
-            'sb_customer_id', 'sb_service_type_id', 'sb_requested_date', 
+            'sb_customer_id', 'sb_service_type_id', 'sb_preferred_date', 
             'sb_status', 'sb_priority'
         ];
 
@@ -410,7 +410,7 @@ class ServiceRequestModel extends Model // Extends Model directly
                 $actualColumn = $column;
                 $paramKey = ":" . $columnLower . "_filt";
 
-                if ($actualColumn === 'sb_requested_date' && is_array($value) && isset($value['from']) && isset($value['to'])) {
+                if ($actualColumn === 'sb_preferred_date' && is_array($value) && isset($value['from']) && isset($value['to'])) {
                     $whereClauses[] = "{$actualColumn} BETWEEN {$paramKey}_from AND {$paramKey}_to";
                     $params["{$paramKey}_from"] = $value['from'];
                     $params["{$paramKey}_to"] = $value['to'];
@@ -438,7 +438,7 @@ class ServiceRequestModel extends Model // Extends Model directly
      * @param array $orderBy Ordering criteria.
      * @return array Array of bookings.
      */
-    public function getBookingsByStatus($status, $orderBy = ['sb_requested_date' => 'DESC', 'sb_requested_time' => 'DESC'])
+    public function getBookingsByStatus($status, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         return $this->getBookingsByCriteria(['sb_status' => $status], $orderBy);
     }
@@ -450,22 +450,22 @@ class ServiceRequestModel extends Model // Extends Model directly
      * @param array $orderBy Ordering criteria.
      * @return array Array of bookings.
      */
-    public function getBookingsByServiceType($serviceTypeId, $orderBy = ['sb_requested_date' => 'DESC', 'sb_requested_time' => 'DESC'])
+    public function getBookingsByServiceType($serviceTypeId, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         return $this->getBookingsByCriteria(['sb_service_type_id' => $serviceTypeId], $orderBy);
     }
 
     /**
-     * Get bookings within a specific date range (based on sb_requested_date).
+     * Get bookings within a specific date range (based on sb_preferred_date).
      *
      * @param string $startDate Start date (YYYY-MM-DD).
      * @param string $endDate End date (YYYY-MM-DD).
      * @param array $orderBy Ordering criteria.
      * @return array Array of bookings.
      */
-    public function getBookingsByDateRange($startDate, $endDate, $orderBy = ['sb_requested_date' => 'DESC', 'sb_requested_time' => 'DESC'])
+    public function getBookingsByDateRange($startDate, $endDate, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
-        $criteria = ['sb_requested_date' => ['from' => $startDate, 'to' => $endDate]];
+        $criteria = ['sb_preferred_date' => ['from' => $startDate, 'to' => $endDate]];
         return $this->getBookingsByCriteria($criteria, $orderBy);
     }
 
@@ -473,16 +473,16 @@ class ServiceRequestModel extends Model // Extends Model directly
      * Check if a customer has an active, non-completed/cancelled booking at a specific date and time.
      *
      * @param int $customerId Customer ID (UA_ID).
-     * @param string $requestedDate Date (YYYY-MM-DD).
-     * @param string $requestedTime Time (HH:MM:SS or HH:MM).
+     * @param string $preferredDate Date (YYYY-MM-DD).
+     * @param string $preferredTime Time (HH:MM:SS or HH:MM).
      * @return bool True if a conflicting booking exists, false otherwise.
      */
-    public function hasConflictingBooking($customerId, $requestedDate, $requestedTime)
+    public function hasConflictingBooking($customerId, $preferredDate, $preferredTime)
     {
         $sql = "SELECT COUNT(*) FROM {$this->table} 
                 WHERE sb_customer_id = :customerId 
-                AND sb_requested_date = :requestedDate 
-                AND sb_requested_time = :requestedTime
+                AND sb_preferred_date = :preferredDate 
+                AND sb_preferred_time = :preferredTime
                 AND sb_status NOT IN ('completed', 'cancelled')";
 
         if ($this->useSoftDeletes) {
@@ -491,8 +491,8 @@ class ServiceRequestModel extends Model // Extends Model directly
 
         $params = [
             'customerId' => $customerId,
-            'requestedDate' => $requestedDate,
-            'requestedTime' => $requestedTime
+            'preferredDate' => $preferredDate,
+            'preferredTime' => $preferredTime
         ];
         
         return $this->queryScalar($sql, $params) > 0;
@@ -506,7 +506,7 @@ class ServiceRequestModel extends Model // Extends Model directly
      * @param array $orderBy Ordering criteria for the bookings.
      * @return array Array of service bookings.
      */
-    public function getBookingsForTechnician($technicianId, $filters = [], $orderBy = ['sb.sb_requested_date' => 'ASC', 'sb.sb_requested_time' => 'ASC'])
+    public function getBookingsForTechnician($technicianId, $filters = [], $orderBy = ['sb.sb_preferred_date' => 'ASC', 'sb.sb_preferred_time' => 'ASC'])
     {
         $sql = "SELECT sb.* 
                 FROM {$this->table} sb
@@ -557,7 +557,7 @@ class ServiceRequestModel extends Model // Extends Model directly
      * @param array $orderBy Ordering criteria for the unassigned bookings.
      * @return array Array of unassigned service bookings.
      */
-    public function getUnassignedBookings($bookingStatus = 'confirmed', $orderBy = ['sb.sb_requested_date' => 'ASC', 'sb.sb_requested_time' => 'ASC'])
+    public function getUnassignedBookings($bookingStatus = 'confirmed', $orderBy = ['sb.sb_preferred_date' => 'ASC', 'sb.sb_preferred_time' => 'ASC'])
     {
         $sql = "SELECT sb.*
                 FROM {$this->table} sb

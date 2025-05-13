@@ -127,8 +127,8 @@ class BookingAssignmentModel extends BaseModel
     {
         $this->select('
             ba.*,
-            sb.sb_requested_date,
-            sb.sb_requested_time,
+            sb.sb_preferred_date,
+            sb.sb_preferred_time,
             sb.sb_address,
             sb.sb_description,
             sb.sb_status as booking_status,

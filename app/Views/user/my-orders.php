@@ -178,8 +178,8 @@
                                     <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Schedule Details</h6>
                                 </div>
                                 <div class="card-body">
-                                    <p class="mb-2"><strong>Requested Date:</strong> <span id="modal-requested-date"></span></p>
-                                    <p class="mb-2"><strong>Requested Time:</strong> <span id="modal-requested-time"></span></p>
+                                    <p class="mb-2"><strong>Preferred Date:</strong> <span id="modal-requested-date"></span></p>
+                                    <p class="mb-2"><strong>Preferred Time:</strong> <span id="modal-requested-time"></span></p>
                                     <p class="mb-0"><strong>Service Address:</strong> <span id="modal-address"></span></p>
                                 </div>
                             </div>

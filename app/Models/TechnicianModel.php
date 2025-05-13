@@ -127,8 +127,8 @@ class TechnicianModel extends BaseModel
         return $this->db->query("
             SELECT 
                 ba.*,
-                sb.sb_requested_date,
-                sb.sb_requested_time,
+                sb.sb_preferred_date,
+                sb.sb_preferred_time,
                 sb.sb_address,
                 sb.sb_description,
                 sb.sb_status as booking_status,
@@ -142,7 +142,7 @@ class TechnicianModel extends BaseModel
             JOIN user_account ua ON sb.sb_customer_id = ua.ua_id
             WHERE ba.ba_technician_id = :technician_id
             AND ba.ba_status IN ('assigned', 'in-progress')
-            ORDER BY sb.sb_requested_date, sb.sb_requested_time
+            ORDER BY sb.sb_preferred_date, sb.sb_preferred_time
         ", ['technician_id' => $technicianId])->fetchAll();
     }
 

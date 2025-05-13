@@ -42,8 +42,8 @@ class ServiceRequestController extends BaseController
             $booking['SB_ID'] = $booking['sb_id'];
             $booking['SB_STATUS'] = $booking['sb_status'];
             $booking['SB_CREATED_AT'] = $booking['sb_created_at'];
-            $booking['SB_REQUESTED_DATE'] = $booking['sb_requested_date'];
-            $booking['SB_REQUESTED_TIME'] = $booking['sb_requested_time'];
+            $booking['SB_PREFERRED_DATE'] = $booking['sb_preferred_date'];
+            $booking['SB_PREFERRED_TIME'] = $booking['sb_preferred_time'];
             $booking['SB_ADDRESS'] = $booking['sb_address'];
             $booking['SB_DESCRIPTION'] = $booking['sb_description'];
             $booking['SB_ESTIMATED_COST'] = $booking['sb_estimated_cost'] ?? null;
@@ -79,8 +79,8 @@ class ServiceRequestController extends BaseController
             'SB_ID' => $booking['sb_id'],
             'SB_STATUS' => $booking['sb_status'],
             'SB_CREATED_AT' => $booking['sb_created_at'],
-            'SB_REQUESTED_DATE' => $booking['sb_requested_date'],
-            'SB_REQUESTED_TIME' => $booking['sb_requested_time'],
+            'SB_PREFERRED_DATE' => $booking['sb_preferred_date'],
+            'SB_PREFERRED_TIME' => $booking['sb_preferred_time'],
             'SB_ADDRESS' => $booking['sb_address'],
             'SB_DESCRIPTION' => $booking['sb_description'],
             'SB_ESTIMATED_COST' => $booking['sb_estimated_cost'] ?? null,
@@ -157,8 +157,8 @@ class ServiceRequestController extends BaseController
         $bookingData = [
             'sb_customer_id' => $_SESSION['user_id'],
             'sb_service_type_id' => $serviceType['st_id'],
-            'sb_requested_date' => $input['preferredDate'],
-            'sb_requested_time' => $input['preferredTime'],
+            'sb_preferred_date' => $input['preferredDate'],
+            'sb_preferred_time' => $input['preferredTime'],
             'sb_address' => $input['address'],
             'sb_description' => $input['serviceDescription'],
             'sb_status' => 'pending'

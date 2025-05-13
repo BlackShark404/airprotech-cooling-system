@@ -90,8 +90,8 @@ class ServiceRequestsManager {
                                 <p class="text-muted mb-0">Service: ${service.ST_DESCRIPTION || 'N/A'}</p>
                                 <p class="fw-bold text-dark mb-0">
                                     ${service.SB_ESTIMATED_COST && parseFloat(service.SB_ESTIMATED_COST) !== 0
-                                        ? 'Cost: $' + parseFloat(service.SB_ESTIMATED_COST).toFixed(2)
-                                        : 'Cost pending'}
+                ? 'Cost: $' + parseFloat(service.SB_ESTIMATED_COST).toFixed(2)
+                : 'Cost pending'}
                                 </p>
                             </div>
                             <div class="text-end">
@@ -642,7 +642,7 @@ class ServiceRequestsManager {
 
         if (this.modal.requestedDate) {
             try {
-                const date = service.SB_REQUESTED_DATE ? new Date(service.SB_REQUESTED_DATE) : null;
+                const date = service.SB_PREFERRED_DATE ? new Date(service.SB_PREFERRED_DATE) : null;
                 this.modal.requestedDate.textContent = date ? date.toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -655,10 +655,10 @@ class ServiceRequestsManager {
         }
 
         // Format the time in 12-hour format with AM/PM
-        if (this.modal.requestedTime && service.SB_REQUESTED_TIME) {
+        if (this.modal.requestedTime && service.SB_PREFERRED_TIME) {
             try {
                 // Parse the time string (expected format: HH:MM:SS)
-                const timeParts = service.SB_REQUESTED_TIME.split(':');
+                const timeParts = service.SB_PREFERRED_TIME.split(':');
                 if (timeParts.length >= 2) {
                     const hours = parseInt(timeParts[0], 10);
                     const minutes = parseInt(timeParts[1], 10);
@@ -668,14 +668,14 @@ class ServiceRequestsManager {
                     // Format as hours:minutes AM/PM
                     this.modal.requestedTime.textContent = `${hours12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
                 } else {
-                    safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
+                    safeSetText(this.modal.requestedTime, service.SB_PREFERRED_TIME);
                 }
             } catch (e) {
                 console.warn('Error formatting requestedTime:', e);
-                safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
+                safeSetText(this.modal.requestedTime, service.SB_PREFERRED_TIME);
             }
         } else {
-            safeSetText(this.modal.requestedTime, service.SB_REQUESTED_TIME);
+            safeSetText(this.modal.requestedTime, service.SB_PREFERRED_TIME);
         }
 
         // Ensure we use the proper field name for address
@@ -707,7 +707,7 @@ class ServiceRequestsManager {
                     ? `$${parseFloat(service.SB_ESTIMATED_COST).toFixed(2)}`
                     : 'Estimate pending';
         }
-        
+
 
         if (this.modal.priority && service.SB_PRIORITY) {
             this.modal.priority.textContent = service.SB_PRIORITY.charAt(0).toUpperCase() + service.SB_PRIORITY.slice(1);
