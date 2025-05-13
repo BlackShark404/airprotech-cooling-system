@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class TechnicianModel extends BaseModel
+class TechnicianModel extends Model
 {
     protected $table = 'technician';
     protected $primaryKey = 'te_account_id';
