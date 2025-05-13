@@ -726,7 +726,6 @@ class ServiceRequestController extends BaseController
      */
     public function getTechnicians()
     {
-        // Remove strict admin-only check to allow the API to be used more broadly
         // We're only returning public information about technicians
         
         try {

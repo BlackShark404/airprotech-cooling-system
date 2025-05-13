@@ -11,5 +11,5 @@ class TechnicianModel extends Model
         'te_account_id',
         'te_is_available'
     ];
-
+    
 }
