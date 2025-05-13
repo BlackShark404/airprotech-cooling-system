@@ -306,6 +306,17 @@ ob_start();
                     </div>
                     
                     <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit-date" class="form-label">Preferred Date</label>
+                            <input type="date" class="form-control" id="edit-date" name="preferredDate">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-time" class="form-label">Preferred Time</label>
+                            <input type="time" class="form-control" id="edit-time" name="preferredTime">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
                         <div class="col-12">
                             <label class="form-label">Assigned Technicians</label>
                             <div class="d-flex align-items-center">
@@ -612,6 +623,10 @@ function editServiceRequest(rowData) {
             $('#edit-priority').val(data.sb_priority);
             $('#edit-cost').val(data.sb_estimated_cost || '');
             
+            // Set the date and time values
+            $('#edit-date').val(data.sb_preferred_date);
+            $('#edit-time').val(data.sb_preferred_time);
+            
             // Clear and populate assigned technicians
             assignedTechnicians = [];
             const techList = $('#technician-list');
@@ -695,6 +710,8 @@ function saveServiceRequest() {
     const status = $('#edit-status').val();
     const priority = $('#edit-priority').val();
     const estimatedCost = $('#edit-cost').val();
+    const preferredDate = $('#edit-date').val();
+    const preferredTime = $('#edit-time').val();
     const technicianIds = assignedTechnicians.map(tech => tech.id);
     
     // Prepare data for update
@@ -703,6 +720,8 @@ function saveServiceRequest() {
         status: status,
         priority: priority,
         estimatedCost: estimatedCost,
+        preferredDate: preferredDate,
+        preferredTime: preferredTime,
         technicians: technicianIds
     };
     

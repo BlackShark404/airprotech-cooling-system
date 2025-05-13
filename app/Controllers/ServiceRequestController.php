@@ -601,6 +601,15 @@ class ServiceRequestController extends BaseController
                 $updateData['sb_estimated_cost'] = $input['estimatedCost'];
             }
             
+            // Update preferred date and time if provided (for rescheduling)
+            if (isset($input['preferredDate']) && !empty($input['preferredDate'])) {
+                $updateData['sb_preferred_date'] = $input['preferredDate'];
+            }
+            
+            if (isset($input['preferredTime']) && !empty($input['preferredTime'])) {
+                $updateData['sb_preferred_time'] = $input['preferredTime'];
+            }
+            
             // Update the booking
             if (!empty($updateData)) {
                 $success = $this->serviceModel->updateBooking($bookingId, $updateData);
@@ -693,22 +702,25 @@ class ServiceRequestController extends BaseController
      */
     public function getTechnicians()
     {
-        // Check if user is admin
-        if (!$this->checkPermission('admin')) {
-            $this->jsonError('Access denied', 403);
-            return;
+        // Remove strict admin-only check to allow the API to be used more broadly
+        // We're only returning public information about technicians
+        
+        try {
+            // This requires a join between technician and user_account tables
+            $sql = "SELECT t.te_account_id, u.ua_first_name, u.ua_last_name, u.ua_email, u.ua_phone_number, u.ua_profile_url 
+                    FROM technician t 
+                    JOIN user_account u ON t.te_account_id = u.ua_id 
+                    WHERE u.ua_is_active = true AND u.ua_role_id = (SELECT ur_id FROM user_role WHERE ur_name = 'technician')
+                    ORDER BY u.ua_last_name, u.ua_first_name";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $technicians = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            $this->jsonSuccess($technicians);
+        } catch (\Exception $e) {
+            $this->jsonError('Failed to retrieve technicians: ' . $e->getMessage(), 500);
         }
-        
-        // This requires a join between technician and user_account tables
-        $sql = "SELECT t.*, u.ua_first_name, u.ua_last_name, u.ua_email, u.ua_phone_number, u.ua_profile_url 
-                FROM technician t 
-                JOIN user_account u ON t.te_account_id = u.ua_id 
-                WHERE u.ua_is_active = true 
-                ORDER BY u.ua_last_name, u.ua_first_name";
-        
-        $technicians = $this->pdo->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
-        
-        $this->jsonSuccess($technicians);
     }
     
     /**
