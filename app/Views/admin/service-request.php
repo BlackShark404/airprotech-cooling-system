@@ -413,19 +413,38 @@ document.addEventListener('DOMContentLoaded', function() {
             { data: 'sb_estimated_cost', title: 'Est. Cost', render: function(data) {
                 return data ? '$' + parseFloat(data).toFixed(2) : '-';
             }},
+            {
+                data: null,
+                title: 'Actions',
+                render: function(data, type, row) {
+                    return `<div class="d-flex">
+                        <button class="btn btn-sm btn-info me-1 view-btn" data-id="${row.sb_id}">View</button>
+                        <button class="btn btn-sm btn-warning me-1 edit-btn" data-id="${row.sb_id}">Edit</button>
+                        <button class="btn btn-sm btn-danger delete-btn" data-id="${row.sb_id}">Delete</button>
+                    </div>`;
+                }
+            }
         ],
-        viewRowCallback: viewServiceRequest,
-        editRowCallback: editServiceRequest,
-        deleteRowCallback: confirmDeleteServiceRequest,
-        ajaxDataProcessing: function(json) {
-            const data = json.data || json;
-            return data.map(item => {
-                return {
-                    ...item,
-                    id: item.sb_id
-                };
-            });
-        }
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'excel', 'pdf', 'print'
+        ]
+    });
+
+    // Manually attach event listeners for action buttons
+    $('#serviceRequestsTable').on('click', '.view-btn', function() {
+        const id = $(this).data('id');
+        viewServiceRequest({sb_id: id});
+    });
+
+    $('#serviceRequestsTable').on('click', '.edit-btn', function() {
+        const id = $(this).data('id');
+        editServiceRequest({sb_id: id});
+    });
+
+    $('#serviceRequestsTable').on('click', '.delete-btn', function() {
+        const id = $(this).data('id');
+        confirmDeleteServiceRequest({sb_id: id});
     });
 
     // Load service types for filter
