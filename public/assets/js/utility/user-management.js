@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Add table title
-  $(".table-title").html('<h5 class="mb-0" id="userCount">User List</h5>');
+  $(".table-title").html('<h5 class="mb-0">User List</h5>');
 
   // Add search icon to the search input and improve styling
   $(".dataTables_filter input").addClass("form-control");

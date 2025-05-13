@@ -455,7 +455,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     $('#serviceRequestsTable').on('click', '.delete-btn', function() {
         const id = $(this).data('id');
-        confirmDeleteServiceRequest({sb_id: id});
+        // Find the full row data from the DataTable
+        const rowData = serviceRequestsManager.dataTable.row($(this).closest('tr')).data();
+        confirmDeleteServiceRequest(rowData);
     });
 
     // Load service types for filter
