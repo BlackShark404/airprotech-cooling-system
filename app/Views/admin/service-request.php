@@ -628,6 +628,11 @@ function editServiceRequest(rowData) {
             $('#edit-priority').val(data.sb_priority);
             $('#edit-cost').val(data.sb_estimated_cost || '');
             
+            // Set min date and time to current date and time
+            const now = new Date();
+            const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+            $('#edit-date').attr('min', currentDate);
+            
             // Set the date and time values
             $('#edit-date').val(data.sb_preferred_date);
             $('#edit-time').val(data.sb_preferred_time);
@@ -730,6 +735,15 @@ function saveServiceRequest() {
     const preferredDate = $('#edit-date').val();
     const preferredTime = $('#edit-time').val();
     const technicianIds = assignedTechnicians.map(tech => tech.id);
+    
+    // Validate date and time
+    const now = new Date();
+    const selectedDateTime = new Date(`${preferredDate}T${preferredTime}`);
+    
+    if (selectedDateTime < now) {
+        serviceRequestsManager.showErrorToast('Validation Error', 'Preferred date and time cannot be in the past');
+        return;
+    }
     
     // Prepare data for update
     const updateData = {
