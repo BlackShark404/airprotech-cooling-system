@@ -59,6 +59,8 @@ $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#rende
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
 
 // Service Request Management Routes
+$router->map('GET', '/api/user/service-bookings', 'App\Controllers\ServiceRequestController#getUserServiceBookings', 'user_service_bookings_api');
+$router->map('GET', '/api/user/service-bookings/[i:id]', 'App\Controllers\ServiceRequestController#getUserServiceBookingDetails', 'user_service_booking_details_api');
 
 
 // Inventory Management API Routes
