@@ -514,12 +514,22 @@ class ServiceRequestController extends BaseController
             return;
         }
         
+        // Debug log to see what's in the booking data
+        error_log("Booking data: " . json_encode($booking));
+        
         // Get assigned technicians
         $assignedTechnicians = $this->bookingAssignmentModel->getAssignmentsForBooking($id);
+        
+        // Debug log to see what's in the assignments
+        error_log("Assigned technicians: " . json_encode($assignedTechnicians));
+        
         $technicians = [];
         
         foreach ($assignedTechnicians as $assignment) {
             $technicianInfo = $this->getUserInfo($assignment['ba_technician_id']);
+            
+            // Debug log for each technician info
+            error_log("Technician info for ID {$assignment['ba_technician_id']}: " . json_encode($technicianInfo));
             
             if ($technicianInfo) {
                 $technicians[] = [
@@ -530,6 +540,9 @@ class ServiceRequestController extends BaseController
                 ];
             }
         }
+        
+        // Debug log for the final technicians array
+        error_log("Final technicians array: " . json_encode($technicians));
         
         // Format the response data
         $result = [
@@ -621,22 +634,32 @@ class ServiceRequestController extends BaseController
             
             // Handle technician assignments if provided
             if (isset($input['technicians'])) {
+                // Debug log
+                error_log("Processing technicians: " . json_encode($input['technicians']));
+                
                 // First, get current assignments
                 $currentAssignments = $this->bookingAssignmentModel->getAssignmentsForBooking($bookingId);
                 $currentTechIds = array_column($currentAssignments, 'ba_technician_id');
+                
+                error_log("Current technician IDs: " . json_encode($currentTechIds));
                 
                 // Determine technicians to add and remove
                 $newTechIds = $input['technicians'];
                 $techToAdd = array_diff($newTechIds, $currentTechIds);
                 $techToRemove = array_diff($currentTechIds, $newTechIds);
                 
+                error_log("Technicians to add: " . json_encode($techToAdd));
+                error_log("Technicians to remove: " . json_encode($techToRemove));
+                
                 // Remove assignments for technicians no longer assigned
                 foreach ($techToRemove as $techId) {
+                    error_log("Removing technician: " . $techId);
                     $this->bookingAssignmentModel->removeAssignment($bookingId, $techId);
                 }
                 
                 // Add new assignments
                 foreach ($techToAdd as $techId) {
+                    error_log("Adding technician: " . $techId);
                     $assignmentData = [
                         'ba_booking_id' => $bookingId,
                         'ba_technician_id' => $techId,
@@ -644,7 +667,8 @@ class ServiceRequestController extends BaseController
                         'ba_assigned_at' => date('Y-m-d H:i:s')
                     ];
                     
-                    $this->bookingAssignmentModel->addAssignment($assignmentData);
+                    $result = $this->bookingAssignmentModel->addAssignment($assignmentData);
+                    error_log("Assignment result: " . ($result ? $result : 'FALSE'));
                 }
             }
             

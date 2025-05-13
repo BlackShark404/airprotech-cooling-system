@@ -591,6 +591,8 @@ function viewServiceRequest(rowData) {
             const techContainer = $('#view-technicians');
             techContainer.empty();
             
+            console.log("Technicians data:", data.technicians); // Debug log
+            
             if (data.technicians && data.technicians.length > 0) {
                 data.technicians.forEach(tech => {
                     techContainer.append(`<div class="technician-badge">${tech.name}</div>`);
@@ -603,7 +605,8 @@ function viewServiceRequest(rowData) {
             $('#viewServiceRequestModal').modal('show');
         },
         error: function(xhr) {
-            serviceRequestsManager.showErrorToast('Error', 'Failed to load service request details');
+            console.error("Error fetching service request details:", xhr);
+            alert('Failed to load service request details');
         }
     });
 }
@@ -658,15 +661,27 @@ function addTechnicianToList() {
     const techId = techSelect.val();
     
     if (!techId) {
-        serviceRequestsManager.showWarningToast('Warning', 'Please select a technician');
+        // Show toast notification for empty selection
+        if (typeof serviceRequestsManager !== 'undefined') {
+            serviceRequestsManager.showWarningToast('Warning', 'Please select a technician');
+        } else {
+            alert('Please select a technician');
+        }
         return;
     }
     
     const techName = techSelect.find('option:selected').data('name');
     
     // Check if technician is already in the list
-    if (assignedTechnicians.some(tech => tech.id === techId)) {
-        serviceRequestsManager.showWarningToast('Warning', 'This technician is already assigned');
+    const alreadyAssigned = assignedTechnicians.some(tech => tech.id === techId || tech.id === parseInt(techId));
+    
+    if (alreadyAssigned) {
+        // Show toast notification for duplicate technician
+        if (typeof serviceRequestsManager !== 'undefined') {
+            serviceRequestsManager.showWarningToast('Warning', `${techName} is already assigned to this request`);
+        } else {
+            alert(`${techName} is already assigned to this request`);
+        }
         return;
     }
     

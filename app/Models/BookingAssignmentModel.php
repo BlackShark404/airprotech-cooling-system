@@ -28,7 +28,10 @@ class BookingAssignmentModel extends Model
      */
     public function getAssignmentsForBooking($bookingId)
     {
-        $sql = "SELECT * FROM {$this->table} WHERE ba_booking_id = :bookingId ORDER BY ba_assigned_at DESC";
+        $sql = "SELECT * FROM {$this->table} 
+                WHERE ba_booking_id = :bookingId 
+                AND ba_status IN ('assigned', 'in-progress', 'completed')
+                ORDER BY ba_assigned_at DESC";
         return $this->query($sql, ['bookingId' => $bookingId]);
     }
 
@@ -64,48 +67,76 @@ class BookingAssignmentModel extends Model
     {
         // Ensure required fields are present
         if (empty($data['ba_booking_id']) || empty($data['ba_technician_id'])) {
+            error_log("Missing required fields for booking assignment");
             return false;
         }
         
-        // Set default values if not provided
-        if (!isset($data['ba_status'])) {
-            $data['ba_status'] = 'assigned';
-        }
-        
-        if (!isset($data['ba_assigned_at'])) {
-            $data['ba_assigned_at'] = date('Y-m-d H:i:s');
-        }
-        
-        // Check if assignment already exists
-        $existing = $this->queryOne(
-            "SELECT * FROM {$this->table} WHERE ba_booking_id = :bookingId AND ba_technician_id = :technicianId",
-            [
-                'bookingId' => $data['ba_booking_id'],
-                'technicianId' => $data['ba_technician_id']
-            ]
-        );
-        
-        if ($existing) {
-            // If assignment exists but was cancelled, reactivate it
-            if ($existing['ba_status'] === 'cancelled') {
-                return $this->updateAssignment($existing[$this->primaryKey], [
-                    'ba_status' => 'assigned',
-                    'ba_assigned_at' => date('Y-m-d H:i:s')
-                ]);
+        try {
+            // Set default values if not provided
+            if (!isset($data['ba_status'])) {
+                $data['ba_status'] = 'assigned';
             }
             
-            // Assignment already exists and is active
-            return $existing[$this->primaryKey];
+            if (!isset($data['ba_assigned_at'])) {
+                $data['ba_assigned_at'] = date('Y-m-d H:i:s');
+            }
+            
+            // Check if assignment already exists
+            $existing = $this->queryOne(
+                "SELECT * FROM {$this->table} WHERE ba_booking_id = :bookingId AND ba_technician_id = :technicianId",
+                [
+                    'bookingId' => $data['ba_booking_id'],
+                    'technicianId' => $data['ba_technician_id']
+                ]
+            );
+            
+            if ($existing) {
+                // Debug log
+                error_log("Assignment already exists for booking {$data['ba_booking_id']} and technician {$data['ba_technician_id']}");
+                
+                // If assignment exists but was cancelled, reactivate it
+                if ($existing['ba_status'] === 'cancelled') {
+                    error_log("Reactivating cancelled assignment");
+                    return $this->updateAssignment($existing[$this->primaryKey], [
+                        'ba_status' => 'assigned',
+                        'ba_assigned_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+                
+                // Assignment already exists and is active
+                return $existing[$this->primaryKey];
+            }
+            
+            // Format insert data
+            $formattedInsert = $this->formatInsertData($data);
+            
+            // Debug log
+            error_log("Inserting new assignment: " . json_encode($formattedInsert));
+            
+            $sql = "INSERT INTO {$this->table} ({$formattedInsert['columns']}) 
+                    VALUES ({$formattedInsert['placeholders']})";
+            
+            $result = $this->execute($sql, $formattedInsert['filteredData']);
+            
+            if ($result <= 0) {
+                error_log("Failed to insert assignment record");
+                return false;
+            }
+            
+            // Get the sequence name for PostgreSQL
+            $sequenceName = "{$this->table}_{$this->primaryKey}_seq";
+            
+            // Debug log
+            error_log("Using sequence name: " . $sequenceName);
+            
+            $insertId = $this->lastInsertId($sequenceName);
+            error_log("Inserted assignment with ID: " . $insertId);
+            
+            return $insertId;
+        } catch (\Exception $e) {
+            error_log("Error inserting booking assignment: " . $e->getMessage());
+            return false;
         }
-        
-        // Format insert data
-        $formattedInsert = $this->formatInsertData($data);
-        
-        $sql = "INSERT INTO {$this->table} ({$formattedInsert['columns']}) 
-                VALUES ({$formattedInsert['placeholders']})";
-        
-        $this->execute($sql, $formattedInsert['filteredData']);
-        return $this->lastInsertId();
     }
 
     /**
