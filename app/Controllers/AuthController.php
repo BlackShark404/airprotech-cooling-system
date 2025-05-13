@@ -105,7 +105,7 @@ class AuthController extends BaseController
 
         $redirectUrl = match ($role) {
             'customer'      => '/user/services',
-            'admin'     => '/admin/service-request',
+            'admin'     => '/admin/service-requests',
             default     => '/'
         };
 

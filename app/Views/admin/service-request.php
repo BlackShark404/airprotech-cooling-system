@@ -1,5 +1,5 @@
 <?php
-$title = 'Service Requests - AC Service Pro';
+$title = 'Service Requests - AirProtech';
 $activeTab = 'service_requests';
 
 // Add any additional styles specific to this page
@@ -140,7 +140,7 @@ ob_start();
                         <!-- To be populated by AJAX -->
                     </select>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-2 mb-3">
                     <label for="priorityFilter" class="form-label">Priority</label>
                     <select id="priorityFilter" class="form-select filter-dropdown">
                         <option value="">All Priorities</option>
@@ -149,33 +149,24 @@ ob_start();
                         <option value="low">Normal</option>
                     </select>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-2 mb-3">
                     <label for="technicianFilter" class="form-label">Technician</label>
                     <select id="technicianFilter" class="form-select filter-dropdown">
-                        <option value="">All Technicians</option>
+                        <option value="assigned">Assigned</option>
                         <option value="unassigned">Unassigned</option>
                         <!-- To be populated by AJAX -->
                     </select>
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label for="startDate" class="form-label">Start Date</label>
-                    <input type="date" id="startDate" class="form-control date-input">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="endDate" class="form-label">End Date</label>
-                    <input type="date" id="endDate" class="form-control date-input">
-                </div>
                 <div class="col-md-6 d-flex align-items-end mb-3">
-                    <button id="applyFilters" class="btn btn-primary me-2">Apply Filters</button>
                     <button id="resetFilters" class="btn btn-secondary">Reset</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Service Requests Card -->
+    <!-- Service Requests Table -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Service Requests</h5>

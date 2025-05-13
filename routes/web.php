@@ -54,14 +54,13 @@ $router->map('GET', '/api/user/service-bookings/[i:id]', 'App\Controllers\Servic
 
 
 // Admin routes
-$router->map('GET', '/admin/service-request', 'App\Controllers\AdminController#renderServiceRequest', 'render-service-request');
+$router->map('GET', '/admin/service-requests', 'App\Controllers\AdminController#renderServiceRequest', 'render-service-request');
 $router->map('GET', '/admin/inventory', 'App\Controllers\AdminController#renderInventory', 'render-inventory');
 $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#renderAddProduct', 'render-add-product');
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
 
 // Service Request Management Routes
-$router->map('GET', '/admin/service-requests', 'App\Controllers\ServiceRequestController#adminServiceRequests', 'admin_service_requests');
-$router->map('POST', '/admin/service-requests/data', 'App\Controllers\ServiceRequestController#getServiceRequestsData', 'admin_service_requests_data');
+
 
 // Inventory Management API Routes
 $router->map('GET', '/inventory/getAllInventory', 'App\Controllers\InventoryController#getAllInventory', 'inventory_get_all');
