@@ -359,7 +359,6 @@ ob_start();
 </div>
 
 <!-- Required JavaScript -->
-<script src="/assets/js/javascript-query/jquery-3.7.1.js"></script>
 <link rel="stylesheet" href="//cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css">
 <script src="//cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
