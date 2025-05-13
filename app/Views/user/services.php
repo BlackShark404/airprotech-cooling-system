@@ -483,7 +483,28 @@
         });
 
         document.addEventListener("DOMContentLoaded", function () {
-            handleFormSubmission('serviceBookingForm', '/user/service/request'); 
+            // Custom validation before form submission
+            document.getElementById('serviceBookingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get selected date and time
+                const selectedDate = document.getElementById('preferredDate').value;
+                const selectedTime = document.getElementById('preferredTime').value;
+                
+                // Create date objects for comparison
+                const now = new Date();
+                const selectedDateTime = new Date(`${selectedDate}T${selectedTime}`);
+                
+                // Check if selected date and time is in the past
+                if (selectedDateTime < now) {
+                    // Show error message
+                    showToast('error', 'Invalid Appointment Time', 'Oops! It looks like you selected a date or time that has already passed. Please choose a future date and time for your service appointment.');
+                    return false;
+                }
+                
+                // Continue with form submission if validation passes
+                handleFormSubmission('serviceBookingForm', '/user/service/request');
+            });
             
             // Set minimum date for the date picker to today
             const today = new Date();
