@@ -10,8 +10,11 @@ class ServiceRequestController extends BaseController
     public function __construct()
     {
         parent::__construct();
+        $this->serviceModel = $this->loadModel('TechnicianModel');
         $this->serviceModel = $this->loadModel('ServiceRequestModel');
         $this->serviceTypeModel = $this->loadModel('ServiceRequestTypeModel');
+        $this->serviceModel = $this->loadModel('BookingAssignmentModel');
+
     }
     
     /**

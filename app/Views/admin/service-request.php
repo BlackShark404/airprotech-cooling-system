@@ -167,33 +167,7 @@ ob_start();
     </div>
 
     <!-- Service Requests Table -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Service Requests</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="serviceRequestsTable" class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Customer</th>
-                            <th>Type</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Technician</th>
-                            <th>Status</th>
-                            <th>Priority</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- DataTables will populate this -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    
 </div>
 
 
