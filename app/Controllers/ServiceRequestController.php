@@ -6,14 +6,16 @@ class ServiceRequestController extends BaseController
 {
     private $serviceModel;
     private $serviceTypeModel;
+    private $technicianModel;
+    private $bookingAssignmentModel;
     
     public function __construct()
     {
         parent::__construct();
-        $this->serviceModel = $this->loadModel('TechnicianModel');
+        $this->technicianModel = $this->loadModel('TechnicianModel');
         $this->serviceTypeModel = $this->loadModel('ServiceRequestTypeModel');
         $this->serviceModel = $this->loadModel('ServiceRequestModel');
-        $this->serviceModel = $this->loadModel('BookingAssignmentModel');
+        $this->bookingAssignmentModel = $this->loadModel('BookingAssignmentModel');
     }
     
     /**
@@ -432,5 +434,303 @@ class ServiceRequestController extends BaseController
         } else {
             $this->jsonError("Failed to update service type status. Please try again later.", 500);
         }
+    }
+    
+    /**
+     * Get all service requests for admin
+     * API endpoint for admin service request management
+     */
+    public function getAdminServiceRequests()
+    {
+        // Check if user is admin
+        if (!$this->checkPermission('admin')) {
+            $this->jsonError('Access denied', 403);
+            return;
+        }
+        
+        // Get query parameters for filtering
+        $filters = [];
+        
+        // Status filter
+        if (isset($_GET['status']) && !empty($_GET['status'])) {
+            $filters['sb_status'] = $_GET['status'];
+        }
+        
+        // Service type filter
+        if (isset($_GET['service_type_id']) && !empty($_GET['service_type_id'])) {
+            $filters['sb_service_type_id'] = $_GET['service_type_id'];
+        }
+        
+        // Priority filter
+        if (isset($_GET['priority']) && !empty($_GET['priority'])) {
+            $filters['sb_priority'] = $_GET['priority'];
+        }
+        
+        // Get bookings with the specified filters
+        $bookings = empty($filters) 
+            ? $this->serviceModel->getAllActiveBookings() 
+            : $this->serviceModel->getBookingsByCriteria($filters);
+        
+        // Enhance booking data with additional information
+        $enhancedBookings = [];
+        
+        foreach ($bookings as $booking) {
+            // Get service type information
+            $serviceType = $this->serviceTypeModel->getServiceTypeById($booking['sb_service_type_id']);
+            
+            // Get customer information
+            $customerInfo = $this->getUserInfo($booking['sb_customer_id']);
+            
+            // Add the enhanced data
+            $enhancedBooking = $booking;
+            $enhancedBooking['service_name'] = $serviceType ? $serviceType['st_name'] : 'Unknown';
+            $enhancedBooking['customer_name'] = $customerInfo 
+                ? $customerInfo['ua_first_name'] . ' ' . $customerInfo['ua_last_name'] 
+                : 'Unknown';
+            
+            $enhancedBookings[] = $enhancedBooking;
+        }
+        
+        $this->jsonSuccess($enhancedBookings);
+    }
+    
+    /**
+     * Get details for a specific service request (admin view)
+     * API endpoint for admin service request management
+     */
+    public function getAdminServiceRequestDetails($id)
+    {
+        // Check if user is admin
+        if (!$this->checkPermission('admin')) {
+            $this->jsonError('Access denied', 403);
+            return;
+        }
+        
+        // Get the booking details
+        $booking = $this->serviceModel->getBookingWithDetails($id);
+        
+        if (!$booking) {
+            $this->jsonError('Service request not found', 404);
+            return;
+        }
+        
+        // Get assigned technicians
+        $assignedTechnicians = $this->bookingAssignmentModel->getAssignmentsForBooking($id);
+        $technicians = [];
+        
+        foreach ($assignedTechnicians as $assignment) {
+            $technicianInfo = $this->getUserInfo($assignment['ba_technician_id']);
+            
+            if ($technicianInfo) {
+                $technicians[] = [
+                    'id' => $assignment['ba_technician_id'],
+                    'name' => $technicianInfo['ua_first_name'] . ' ' . $technicianInfo['ua_last_name'],
+                    'status' => $assignment['ba_status'],
+                    'assigned_at' => $assignment['ba_assigned_at']
+                ];
+            }
+        }
+        
+        // Format the response data
+        $result = [
+            'sb_id' => $booking['sb_id'],
+            'sb_customer_id' => $booking['sb_customer_id'],
+            'sb_service_type_id' => $booking['sb_service_type_id'],
+            'sb_preferred_date' => $booking['sb_preferred_date'],
+            'sb_preferred_time' => $booking['sb_preferred_time'],
+            'sb_status' => $booking['sb_status'],
+            'sb_priority' => $booking['sb_priority'],
+            'sb_estimated_cost' => $booking['sb_estimated_cost'],
+            'sb_address' => $booking['sb_address'],
+            'sb_description' => $booking['sb_description'],
+            'sb_created_at' => $booking['sb_created_at'],
+            'sb_updated_at' => $booking['sb_updated_at'],
+            'service_name' => $booking['service_name'],
+            'service_description' => $booking['service_description'],
+            'customer_name' => $booking['customer_first_name'] . ' ' . $booking['customer_last_name'],
+            'customer_email' => $booking['customer_email'],
+            'customer_phone' => $booking['customer_phone'],
+            'technicians' => $technicians
+        ];
+        
+        $this->jsonSuccess($result);
+    }
+    
+    /**
+     * Update a service request
+     * API endpoint for admin service request management
+     */
+    public function updateServiceRequest()
+    {
+        // Check if user is admin
+        if (!$this->checkPermission('admin')) {
+            $this->jsonError('Access denied', 403);
+            return;
+        }
+        
+        // Get JSON input
+        $input = $this->getJsonInput();
+        
+        // Validate required fields
+        if (empty($input['bookingId'])) {
+            $this->jsonError('Booking ID is required', 400);
+            return;
+        }
+        
+        $bookingId = $input['bookingId'];
+        
+        // Start a transaction
+        $this->pdo->beginTransaction();
+        
+        try {
+            // Prepare data for update
+            $updateData = [];
+            
+            // Update status if provided
+            if (isset($input['status'])) {
+                $updateData['sb_status'] = $input['status'];
+            }
+            
+            // Update priority if provided
+            if (isset($input['priority'])) {
+                $updateData['sb_priority'] = $input['priority'];
+            }
+            
+            // Update estimated cost if provided
+            if (isset($input['estimatedCost'])) {
+                $updateData['sb_estimated_cost'] = $input['estimatedCost'];
+            }
+            
+            // Update the booking
+            if (!empty($updateData)) {
+                $success = $this->serviceModel->updateBooking($bookingId, $updateData);
+                
+                if (!$success) {
+                    throw new \Exception('Failed to update service request');
+                }
+            }
+            
+            // Handle technician assignments if provided
+            if (isset($input['technicians'])) {
+                // First, get current assignments
+                $currentAssignments = $this->bookingAssignmentModel->getAssignmentsForBooking($bookingId);
+                $currentTechIds = array_column($currentAssignments, 'ba_technician_id');
+                
+                // Determine technicians to add and remove
+                $newTechIds = $input['technicians'];
+                $techToAdd = array_diff($newTechIds, $currentTechIds);
+                $techToRemove = array_diff($currentTechIds, $newTechIds);
+                
+                // Remove assignments for technicians no longer assigned
+                foreach ($techToRemove as $techId) {
+                    $this->bookingAssignmentModel->removeAssignment($bookingId, $techId);
+                }
+                
+                // Add new assignments
+                foreach ($techToAdd as $techId) {
+                    $assignmentData = [
+                        'ba_booking_id' => $bookingId,
+                        'ba_technician_id' => $techId,
+                        'ba_status' => 'assigned',
+                        'ba_assigned_at' => date('Y-m-d H:i:s')
+                    ];
+                    
+                    $this->bookingAssignmentModel->addAssignment($assignmentData);
+                }
+            }
+            
+            // Commit the transaction
+            $this->pdo->commit();
+            
+            $this->jsonSuccess(
+                ['status' => 'updated'],
+                'Service request updated successfully'
+            );
+            
+        } catch (\Exception $e) {
+            // Rollback the transaction on error
+            $this->pdo->rollback();
+            $this->jsonError('Failed to update service request: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * Delete a service request
+     * API endpoint for admin service request management
+     */
+    public function deleteServiceRequest($id)
+    {
+        // Check if user is admin
+        if (!$this->checkPermission('admin')) {
+            $this->jsonError('Access denied', 403);
+            return;
+        }
+        
+        // Check if the booking exists
+        $booking = $this->serviceModel->getBookingById($id);
+        
+        if (!$booking) {
+            $this->jsonError('Service request not found', 404);
+            return;
+        }
+        
+        // Delete the booking (soft delete)
+        $success = $this->serviceModel->deleteBooking($id);
+        
+        if ($success) {
+            $this->jsonSuccess(
+                ['status' => 'deleted'],
+                'Service request deleted successfully'
+            );
+        } else {
+            $this->jsonError('Failed to delete service request', 500);
+        }
+    }
+    
+    /**
+     * Get all technicians
+     * API endpoint for admin service request management
+     */
+    public function getTechnicians()
+    {
+        // Check if user is admin
+        if (!$this->checkPermission('admin')) {
+            $this->jsonError('Access denied', 403);
+            return;
+        }
+        
+        // This requires a join between technician and user_account tables
+        $sql = "SELECT t.*, u.ua_first_name, u.ua_last_name, u.ua_email, u.ua_phone_number, u.ua_profile_url 
+                FROM technician t 
+                JOIN user_account u ON t.te_account_id = u.ua_id 
+                WHERE u.ua_is_active = true 
+                ORDER BY u.ua_last_name, u.ua_first_name";
+        
+        $technicians = $this->pdo->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        
+        $this->jsonSuccess($technicians);
+    }
+    
+    /**
+     * Get all active service types
+     * API endpoint for admin service request management
+     */
+    public function getServiceTypes()
+    {
+        // Get all active service types
+        $serviceTypes = $this->serviceTypeModel->getActiveServiceTypes();
+        
+        $this->jsonSuccess($serviceTypes);
+    }
+    
+    /**
+     * Helper function to get user information by ID
+     */
+    private function getUserInfo($userId)
+    {
+        $sql = "SELECT * FROM user_account WHERE ua_id = :userId";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['userId' => $userId]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 }

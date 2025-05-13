@@ -62,6 +62,15 @@ $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderRep
 $router->map('GET', '/api/user/service-bookings', 'App\Controllers\ServiceRequestController#getUserServiceBookings', 'user_service_bookings_api');
 $router->map('GET', '/api/user/service-bookings/[i:id]', 'App\Controllers\ServiceRequestController#getUserServiceBookingDetails', 'user_service_booking_details_api');
 
+// Admin Service Request API Routes
+$router->map('GET', '/api/admin/service-requests', 'App\Controllers\ServiceRequestController#getAdminServiceRequests', 'admin_service_requests_api');
+$router->map('GET', '/api/admin/service-requests/[i:id]', 'App\Controllers\ServiceRequestController#getAdminServiceRequestDetails', 'admin_service_request_details_api');
+$router->map('POST', '/api/admin/service-requests/update', 'App\Controllers\ServiceRequestController#updateServiceRequest', 'admin_update_service_request_api');
+$router->map('POST', '/api/admin/service-requests/delete/[i:id]', 'App\Controllers\ServiceRequestController#deleteServiceRequest', 'admin_delete_service_request_api');
+
+// API routes for technicians and service types
+$router->map('GET', '/api/technicians', 'App\Controllers\ServiceRequestController#getTechnicians', 'technicians_api');
+$router->map('GET', '/api/service-types', 'App\Controllers\ServiceRequestController#getServiceTypes', 'service_types_api');
 
 // Inventory Management API Routes
 $router->map('GET', '/inventory/getAllInventory', 'App\Controllers\InventoryController#getAllInventory', 'inventory_get_all');
