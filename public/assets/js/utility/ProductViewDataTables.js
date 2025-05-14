@@ -457,6 +457,9 @@ document.addEventListener('DOMContentLoaded', function () {
             productData.PROD_IMAGE = '/assets/img/no-image.png';
         }
 
+        // All field names are now already using uppercase naming consistent with the backend
+        console.log('Sending product data:', productData);
+
         // Send data to server
         $.ajax({
             url: '/api/products',
@@ -474,6 +477,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             },
             error: function (xhr, status, error) {
+                console.error('Error saving product:', xhr.responseText);
                 showErrorToast('Error saving product: ' + error);
             }
         });

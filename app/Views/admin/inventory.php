@@ -574,11 +574,11 @@ ob_start();
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="productName" class="form-label">Product Name</label>
-                                    <input type="text" class="form-control" id="productName" name="prod_name" placeholder="Enter product name" required>
+                                    <input type="text" class="form-control" id="productName" name="PROD_NAME" placeholder="Enter product name" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="productAvailability" class="form-label">Availability Status</label>
-                                    <select class="form-select" id="productAvailability" name="prod_availability_status">
+                                    <select class="form-select" id="productAvailability" name="PROD_AVAILABILITY_STATUS">
                                         <option value="Available">Available</option>
                                         <option value="Out of Stock">Out of Stock</option>
                                         <option value="Discontinued">Discontinued</option>
@@ -587,12 +587,12 @@ ob_start();
                             </div>
                             <div class="mb-3">
                                 <label for="productDescription" class="form-label">Description</label>
-                                <textarea class="form-control" id="productDescription" name="prod_description" rows="3" placeholder="Enter product description"></textarea>
+                                <textarea class="form-control" id="productDescription" name="PROD_DESCRIPTION" rows="3" placeholder="Enter product description"></textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Product Image</label>
                                 <div class="input-group">
-                                    <input type="file" class="form-control" id="productImage" name="prod_image">
+                                    <input type="file" class="form-control" id="productImage" name="PROD_IMAGE">
                                     <label class="input-group-text" for="productImage">Upload</label>
                                 </div>
                             </div>
@@ -605,25 +605,25 @@ ob_start();
                                     <div class="row mb-3">
                                         <div class="col-md-6">
                                             <label for="varCapacity" class="form-label">Capacity</label>
-                                            <input type="text" class="form-control" id="varCapacity" name="variants[0][var_capacity]" placeholder="e.g., 0.8HP (20)">
+                                            <input type="text" class="form-control" id="varCapacity" name="variants[0][VAR_CAPACITY]" placeholder="e.g., 0.8HP (20)">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="varPowerConsumption" class="form-label">Power Consumption</label>
-                                            <input type="text" class="form-control" id="varPowerConsumption" name="variants[0][var_power_consumption]" placeholder="e.g., CSPF (4.60)">
+                                            <input type="text" class="form-control" id="varPowerConsumption" name="variants[0][VAR_POWER_CONSUMPTION]" placeholder="e.g., CSPF (4.60)">
                                         </div>
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-md-4">
                                             <label for="varSrpPrice" class="form-label">SRP Price</label>
-                                            <input type="number" class="form-control" id="varSrpPrice" name="variants[0][var_srp_price]" placeholder="Standard price" step="0.01" required>
+                                            <input type="number" class="form-control" id="varSrpPrice" name="variants[0][VAR_SRP_PRICE]" placeholder="Standard price" step="0.01" required>
                                         </div>
                                         <div class="col-md-4">
                                             <label for="varFreeInstall" class="form-label">Price (Free Install)</label>
-                                            <input type="number" class="form-control" id="varFreeInstall" name="variants[0][var_price_free_install]" placeholder="Optional" step="0.01">
+                                            <input type="number" class="form-control" id="varFreeInstall" name="variants[0][VAR_PRICE_FREE_INSTALL]" placeholder="Optional" step="0.01">
                                         </div>
                                         <div class="col-md-4">
                                             <label for="varWithInstall" class="form-label">Price (With Install)</label>
-                                            <input type="number" class="form-control" id="varWithInstall" name="variants[0][var_price_with_install]" placeholder="Optional" step="0.01">
+                                            <input type="number" class="form-control" id="varWithInstall" name="variants[0][VAR_PRICE_WITH_INSTALL]" placeholder="Optional" step="0.01">
                                         </div>
                                     </div>
                                 </div>
@@ -655,10 +655,10 @@ ob_start();
                                     <div class="specs-container mb-3">
                                         <div class="row mb-2">
                                             <div class="col-5">
-                                                <input type="text" class="form-control" name="specs[0][spec_name]" placeholder="Spec name">
+                                                <input type="text" class="form-control" name="specs[0][SPEC_NAME]" placeholder="Spec name">
                                             </div>
                                             <div class="col-5">
-                                                <input type="text" class="form-control" name="specs[0][spec_value]" placeholder="Spec value">
+                                                <input type="text" class="form-control" name="specs[0][SPEC_VALUE]" placeholder="Spec value">
                                             </div>
                                             <div class="col-2">
                                                 <button class="btn btn-outline-danger w-100 remove-spec" type="button">
@@ -683,14 +683,14 @@ ob_start();
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="warehouseSelect" class="form-label">Warehouse Location</label>
-                                    <select class="form-select" id="warehouseSelect" name="warehouse_id">
+                                    <select class="form-select" id="warehouseSelect" name="WHOUSE_ID">
                                         <option value="">Select warehouse</option>
                                         <!-- Will be populated dynamically -->
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="inventoryType" class="form-label">Inventory Type</label>
-                                    <select class="form-select" id="inventoryType" name="inventory_type">
+                                    <select class="form-select" id="inventoryType" name="INVE_TYPE">
                                         <option value="Regular">Regular</option>
                                         <option value="Display">Display</option>
                                         <option value="Reserve">Reserve</option>

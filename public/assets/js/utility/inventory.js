@@ -85,6 +85,48 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Handle adding variants to update inventory tab
+    $(document).on('click', '.add-variant-btn', function () {
+        updateVariantsInventoryFields();
+    });
+
+    // When a variant is removed, also update the inventory fields
+    $(document).on('click', '.remove-variant', function () {
+        updateVariantsInventoryFields();
+    });
+
+    // Update inventory fields based on variants
+    function updateVariantsInventoryFields() {
+        setTimeout(function () {
+            const variantForms = $('.variant-form');
+            const variantsInventoryContainer = $('.variants-inventory-container');
+
+            if (variantForms.length > 0) {
+                variantsInventoryContainer.empty();
+
+                variantForms.each(function (index) {
+                    const capacityInput = $(this).find('input[name^="variants"][name$="[VAR_CAPACITY]"]');
+                    const capacity = capacityInput.val() || `Variant ${index + 1}`;
+
+                    const inventoryField = `
+                    <div class="mb-3 p-3 border rounded">
+                        <div class="row mb-2">
+                            <div class="col-md-8">
+                                <label class="form-label">Quantity for ${capacity}</label>
+                                <input type="number" class="form-control" name="inventory[${index}][quantity]" min="0" value="0">
+                                <input type="hidden" name="inventory[${index}][variant_index]" value="${index}">
+                            </div>
+                        </div>
+                    </div>`;
+
+                    variantsInventoryContainer.append(inventoryField);
+                });
+            } else {
+                variantsInventoryContainer.html('<div class="alert alert-secondary">Please add variants in the Variants tab first.</div>');
+            }
+        }, 100); // Small delay to ensure the DOM has been updated
+    }
+
     // Load inventory statistics
     function loadInventoryStats() {
         $.ajax({
@@ -130,25 +172,25 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Capacity</label>
-                    <input type="text" class="form-control" name="variants[${index}][var_capacity]" placeholder="e.g., 0.8HP (20)">
+                    <input type="text" class="form-control" name="variants[${index}][VAR_CAPACITY]" placeholder="e.g., 0.8HP (20)">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Power Consumption</label>
-                    <input type="text" class="form-control" name="variants[${index}][var_power_consumption]" placeholder="e.g., CSPF (4.60)">
+                    <input type="text" class="form-control" name="variants[${index}][VAR_POWER_CONSUMPTION]" placeholder="e.g., CSPF (4.60)">
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">SRP Price</label>
-                    <input type="number" class="form-control" name="variants[${index}][var_srp_price]" placeholder="Standard price" step="0.01" required>
+                    <input type="number" class="form-control" name="variants[${index}][VAR_SRP_PRICE]" placeholder="Standard price" step="0.01" required>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Price (Free Install)</label>
-                    <input type="number" class="form-control" name="variants[${index}][var_price_free_install]" placeholder="Optional" step="0.01">
+                    <input type="number" class="form-control" name="variants[${index}][VAR_PRICE_FREE_INSTALL]" placeholder="Optional" step="0.01">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Price (With Install)</label>
-                    <input type="number" class="form-control" name="variants[${index}][var_price_with_install]" placeholder="Optional" step="0.01">
+                    <input type="number" class="form-control" name="variants[${index}][VAR_PRICE_WITH_INSTALL]" placeholder="Optional" step="0.01">
                 </div>
             </div>
         `;
@@ -159,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
         newVariantForm.querySelector('.remove-variant').addEventListener('click', function () {
             newVariantForm.remove();
             updateVariantIndices();
-            updateVariantsInventoryContainer();
+            updateVariantsInventoryFields();
         });
     }
 
@@ -212,10 +254,10 @@ document.addEventListener('DOMContentLoaded', function () {
         row.className = 'row mb-2';
         row.innerHTML = `
             <div class="col-5">
-                <input type="text" class="form-control" name="specs[${index}][spec_name]" placeholder="Spec name">
+                <input type="text" class="form-control" name="specs[${index}][SPEC_NAME]" placeholder="Spec name">
             </div>
             <div class="col-5">
-                <input type="text" class="form-control" name="specs[${index}][spec_value]" placeholder="Spec value">
+                <input type="text" class="form-control" name="specs[${index}][SPEC_VALUE]" placeholder="Spec value">
             </div>
             <div class="col-2">
                 <button class="btn btn-outline-danger w-100 remove-spec" type="button">
@@ -246,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Create inventory inputs for each variant
         variantForms.forEach((form, index) => {
-            const capacity = form.querySelector('input[name^="variants"][name$="[var_capacity]"]').value || `Variant ${index + 1}`;
+            const capacity = form.querySelector('input[name^="variants"][name$="[VAR_CAPACITY]"]').value || `Variant ${index + 1}`;
 
             const inventoryItem = document.createElement('div');
             inventoryItem.className = 'mb-3 p-3 border rounded';
