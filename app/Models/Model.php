@@ -34,6 +34,11 @@ class Model
             
             // Bind parameters
             foreach ($params as $key => $value) {
+                // Skip array values - they should be processed separately before calling query
+                if (is_array($value)) {
+                    continue;
+                }
+                
                 $paramType = PDO::PARAM_STR;
                 
                 if (is_int($value)) {
@@ -49,19 +54,7 @@ class Model
                     $key = ':' . $key;
                 }
                 
-                // Handle array values for IN clauses
-                if (is_array($value)) {
-                    $placeholders = [];
-                    foreach ($value as $i => $item) {
-                        $paramName = $key . '_' . $i;
-                        $placeholders[] = $paramName;
-                        $stmt->bindValue($paramName, $item, $this->getParamType($item));
-                    }
-                    // Replace the original parameter with expanded placeholders
-                    $sql = str_replace($key, implode(', ', $placeholders), $sql);
-                } else {
-                    $stmt->bindValue($key, $value, $paramType);
-                }
+                $stmt->bindValue($key, $value, $paramType);
             }
             
             // Execute the query
@@ -107,6 +100,11 @@ class Model
             $stmt = $this->pdo->prepare($sql);
             
             foreach ($params as $key => $value) {
+                // Skip array values - they should be processed separately before calling queryScalar
+                if (is_array($value)) {
+                    continue;
+                }
+                
                 $paramType = PDO::PARAM_STR;
                 
                 if (is_int($value)) {
@@ -175,6 +173,11 @@ class Model
             $stmt = $this->pdo->prepare($sql);
             
             foreach ($params as $key => $value) {
+                // Skip array values - they should be processed separately before calling execute
+                if (is_array($value)) {
+                    continue;
+                }
+                
                 $paramType = PDO::PARAM_STR;
                 
                 if (is_int($value)) {
@@ -266,6 +269,13 @@ class Model
         // Filter out excluded columns
         $filteredData = array_diff_key($data, array_flip($exclude));
         
+        // Filter out array values which can't be inserted directly
+        foreach ($filteredData as $key => $value) {
+            if (is_array($value)) {
+                unset($filteredData[$key]);
+            }
+        }
+        
         $columns = [];
         $placeholders = [];
         
@@ -300,6 +310,13 @@ class Model
     {
         // Filter out excluded columns
         $filteredData = array_diff_key($data, array_flip($exclude));
+        
+        // Filter out array values which can't be updated directly
+        foreach ($filteredData as $key => $value) {
+            if (is_array($value)) {
+                unset($filteredData[$key]);
+            }
+        }
         
         $updateParts = [];
         

@@ -86,6 +86,18 @@ class ProductController extends BaseController
             // Begin transaction
             $this->productModel->beginTransaction();
             
+            // Extract and store special data arrays
+            $variants = $data['variants'] ?? [];
+            $features = $data['features'] ?? [];
+            $specs = $data['specs'] ?? [];
+            $inventory = $data['inventory'] ?? [];
+            
+            // Remove non-product fields from data
+            unset($data['variants']);
+            unset($data['features']);
+            unset($data['specs']);
+            unset($data['inventory']);
+            
             // Create product
             $productId = $this->productModel->createProduct($data);
             
@@ -95,36 +107,36 @@ class ProductController extends BaseController
             }
             
             // Process variants if provided
-            if (!empty($data['variants']) && is_array($data['variants'])) {
-                foreach ($data['variants'] as $variant) {
+            if (!empty($variants) && is_array($variants)) {
+                foreach ($variants as $variant) {
                     $variant['PROD_ID'] = $productId;
                     $this->productVariantModel->createVariant($variant);
                 }
             }
             
             // Process features if provided
-            if (!empty($data['features']) && is_array($data['features'])) {
-                $this->productFeatureModel->addFeaturesToProduct($productId, $data['features']);
+            if (!empty($features) && is_array($features)) {
+                $this->productFeatureModel->addFeaturesToProduct($productId, $features);
             }
             
             // Process specifications if provided
-            if (!empty($data['specs']) && is_array($data['specs'])) {
-                $specs = [];
-                foreach ($data['specs'] as $spec) {
+            if (!empty($specs) && is_array($specs)) {
+                $specData = [];
+                foreach ($specs as $spec) {
                     if (!empty($spec['SPEC_NAME']) && !empty($spec['SPEC_VALUE'])) {
-                        $specs[$spec['SPEC_NAME']] = $spec['SPEC_VALUE'];
+                        $specData[$spec['SPEC_NAME']] = $spec['SPEC_VALUE'];
                     }
                 }
-                if (!empty($specs)) {
-                    $this->productSpecModel->addSpecsToProduct($productId, $specs);
+                if (!empty($specData)) {
+                    $this->productSpecModel->addSpecsToProduct($productId, $specData);
                 }
             }
             
             // Process initial inventory if provided
-            if (!empty($data['inventory']) && is_array($data['inventory']) &&
+            if (!empty($inventory) && is_array($inventory) &&
                 !empty($data['WHOUSE_ID']) && !empty($data['INVE_TYPE'])) {
                 
-                foreach ($data['inventory'] as $inventoryItem) {
+                foreach ($inventory as $inventoryItem) {
                     if (!empty($inventoryItem['quantity']) && $inventoryItem['quantity'] > 0) {
                         $this->inventoryModel->updateProductQuantity(
                             $productId,
@@ -165,6 +177,17 @@ class ProductController extends BaseController
             // Begin transaction
             $this->productModel->beginTransaction();
             
+            // Extract and store special data arrays
+            $variants = $data['variants'] ?? [];
+            $features = isset($data['features']) ? $data['features'] : null;
+            $specs = isset($data['specs']) ? $data['specs'] : null;
+            
+            // Remove non-product fields from data
+            unset($data['variants']);
+            unset($data['features']);
+            unset($data['specs']);
+            unset($data['inventory']);
+            
             // Update product
             $result = $this->productModel->updateProduct($id, $data);
             
@@ -174,8 +197,8 @@ class ProductController extends BaseController
             }
             
             // Update variants if provided
-            if (!empty($data['variants']) && is_array($data['variants'])) {
-                foreach ($data['variants'] as $variant) {
+            if (!empty($variants) && is_array($variants)) {
+                foreach ($variants as $variant) {
                     if (!empty($variant['VAR_ID'])) {
                         // Update existing variant
                         $this->productVariantModel->updateVariant($variant['VAR_ID'], $variant);
@@ -188,31 +211,31 @@ class ProductController extends BaseController
             }
             
             // Update features if provided
-            if (isset($data['features'])) {
+            if ($features !== null) {
                 // First, delete existing features
                 $this->productFeatureModel->deleteFeaturesByProductId($id);
                 
                 // Then add new features
-                if (!empty($data['features']) && is_array($data['features'])) {
-                    $this->productFeatureModel->addFeaturesToProduct($id, $data['features']);
+                if (!empty($features) && is_array($features)) {
+                    $this->productFeatureModel->addFeaturesToProduct($id, $features);
                 }
             }
             
             // Update specifications if provided
-            if (isset($data['specs'])) {
+            if ($specs !== null) {
                 // First, delete existing specs
                 $this->productSpecModel->deleteSpecsByProductId($id);
                 
                 // Then add new specs
-                if (!empty($data['specs']) && is_array($data['specs'])) {
-                    $specs = [];
-                    foreach ($data['specs'] as $spec) {
+                if (!empty($specs) && is_array($specs)) {
+                    $specData = [];
+                    foreach ($specs as $spec) {
                         if (!empty($spec['SPEC_NAME']) && !empty($spec['SPEC_VALUE'])) {
-                            $specs[$spec['SPEC_NAME']] = $spec['SPEC_VALUE'];
+                            $specData[$spec['SPEC_NAME']] = $spec['SPEC_VALUE'];
                         }
                     }
-                    if (!empty($specs)) {
-                        $this->productSpecModel->addSpecsToProduct($id, $specs);
+                    if (!empty($specData)) {
+                        $this->productSpecModel->addSpecsToProduct($id, $specData);
                     }
                 }
             }
