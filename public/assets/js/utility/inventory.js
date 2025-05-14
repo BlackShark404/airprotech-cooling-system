@@ -1,184 +1,171 @@
 // AirProtect Inventory Management System JavaScript - Revised Version
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM content loaded, initializing inventory system...");
     /**
  * Initialize global event delegation for all action buttons
  */
-function initializeGlobalEventDelegation() {
-    console.log("Initializing global event delegation...");
-    
-    // Use a single event listener on the document body
-    document.body.addEventListener('click', function(event) {
-        const target = event.target;
-        
-        // Check if click was on a button or within a button
-        const button = target.closest('button');
-        if (!button) return;
-        
-        // View product buttons
-        if (button.classList.contains('view-product')) {
-            const productId = button.getAttribute('data-id');
-            console.log("View product button clicked, ID:", productId);
-            if (window.inventoryHandler) {
-                window.inventoryHandler.viewProductDetails(productId);
-            } else {
-                viewProductDetails(productId);
-            }
-            event.preventDefault();
-        }
-        
-        // Manage inventory buttons
-        else if (button.classList.contains('manage-inventory')) {
-            const productId = button.getAttribute('data-id');
-            console.log("Manage inventory button clicked, ID:", productId);
-            if (window.inventoryHandler) {
-                window.inventoryHandler.openManageInventory(productId);
-            } else {
-                openManageInventory(productId);
-            }
-            event.preventDefault();
-        }
-        
-        // Delete product buttons
-        else if (button.classList.contains('delete-product')) {
-            const productId = button.getAttribute('data-id');
-            console.log("Delete product button clicked, ID:", productId);
-            if (window.inventoryHandler) {
-                window.inventoryHandler.confirmDeleteProduct(productId);
-            } else {
-                confirmDeleteProduct(productId);
-            }
-            event.preventDefault();
-        }
-        
-        // View warehouse buttons
-        else if (button.classList.contains('view-warehouse')) {
-            const warehouseId = button.getAttribute('data-id');
-            console.log("View warehouse button clicked, ID:", warehouseId);
-            if (window.inventoryHandler) {
-                window.inventoryHandler.viewWarehouseDetails(warehouseId);
-            } else {
-                viewWarehouseDetails(warehouseId);
-            }
-            event.preventDefault();
-        }
-        
-        // Edit warehouse buttons
-        else if (button.classList.contains('edit-warehouse')) {
-            const warehouseId = button.getAttribute('data-id');
-            console.log("Edit warehouse button clicked, ID:", warehouseId);
-            
-            // Get warehouse data from attributes
-            const name = button.getAttribute('data-name');
-            const location = button.getAttribute('data-location');
-            const capacity = button.getAttribute('data-capacity');
-            const threshold = button.getAttribute('data-threshold');
-            
-            // Populate form
-            document.getElementById('warehouseId').value = warehouseId || '';
-            document.getElementById('warehouseName').value = name || '';
-            document.getElementById('warehouseLocation').value = location || '';
-            document.getElementById('warehouseCapacity').value = capacity || '';
-            document.getElementById('warehouseThreshold').value = threshold || '';
-            
-            // Show warehouse modal
-            const modal = new bootstrap.Modal(document.getElementById('warehouseModal'));
-            modal.show();
-            
-            event.preventDefault();
-        }
-        
-        // Delete warehouse buttons
-        else if (button.classList.contains('delete-warehouse')) {
-            const warehouseId = button.getAttribute('data-id');
-            console.log("Delete warehouse button clicked, ID:", warehouseId);
-            confirmDeleteWarehouse(warehouseId);
-            event.preventDefault();
-        }
-        
-        // Remove variant buttons
-        else if (button.classList.contains('remove-variant')) {
-            const variantForm = button.closest('.variant-form');
-            if (variantForm) {
-                // Only remove if there's more than one variant form
-                const variantForms = document.querySelectorAll('.variant-form');
-                if (variantForms.length > 1) {
-                    variantForm.remove();
-                    updateInventoryVariants();
-                } else {
-                    showAlert('warning', 'At least one variant is required');
-                }
-            }
-            event.preventDefault();
-        }
-        
-        // Remove feature buttons
-        else if (button.classList.contains('remove-feature')) {
-            const featureGroup = button.closest('.input-group');
-            if (featureGroup) {
-                featureGroup.remove();
-            }
-            event.preventDefault();
-        }
-        
-        // Remove spec buttons
-        else if (button.classList.contains('remove-spec')) {
-            const specRow = button.closest('.row');
-            if (specRow) {
-                specRow.remove();
-            }
-            event.preventDefault();
-        }
-    });
-    
-    console.log("Global event delegation initialized");
-}
+    function initializeGlobalEventDelegation() {
+        console.log("Initializing global event delegation...");
 
-window.onerror = function(message, source, lineno, colno, error) {
-    console.error("Global error caught:", {
-        message: message,
-        source: source,
-        lineno: lineno,
-        colno: colno,
-        error: error
-    });
-    
-    // Display an error message to the user
-    showGlobalErrorBanner("An unexpected error occurred. Please refresh the page or try again later.");
-    
-    return true; // Prevents the default error handling
-};
+        // Use a single event listener on the document body
+        document.body.addEventListener('click', function (event) {
+            const target = event.target;
+
+            // Check if click was on a button or within a button
+            const button = target.closest('button');
+            if (!button) return;
+
+            // View product buttons
+            if (button.classList.contains('view-product')) {
+                const productId = button.getAttribute('data-id');
+                console.log("View product button clicked, ID:", productId);
+                if (window.inventoryHandler) {
+                    window.inventoryHandler.viewProductDetails(productId);
+                } else {
+                    viewProductDetails(productId);
+                }
+                event.preventDefault();
+            }
+
+            // Manage inventory buttons
+            else if (button.classList.contains('manage-inventory')) {
+                const productId = button.getAttribute('data-id');
+                console.log("Manage inventory button clicked, ID:", productId);
+                if (window.inventoryHandler) {
+                    window.inventoryHandler.openManageInventory(productId);
+                } else {
+                    openManageInventory(productId);
+                }
+                event.preventDefault();
+            }
+
+            // Delete product buttons
+            else if (button.classList.contains('delete-product')) {
+                const productId = button.getAttribute('data-id');
+                console.log("Delete product button clicked, ID:", productId);
+                if (window.inventoryHandler) {
+                    window.inventoryHandler.confirmDeleteProduct(productId);
+                } else {
+                    confirmDeleteProduct(productId);
+                }
+                event.preventDefault();
+            }
+
+            // View warehouse buttons
+            else if (button.classList.contains('view-warehouse')) {
+                const warehouseId = button.getAttribute('data-id');
+                console.log("View warehouse button clicked, ID:", warehouseId);
+                if (window.inventoryHandler) {
+                    window.inventoryHandler.viewWarehouseDetails(warehouseId);
+                } else {
+                    viewWarehouseDetails(warehouseId);
+                }
+                event.preventDefault();
+            }
+
+            // Edit warehouse buttons
+            else if (button.classList.contains('edit-warehouse')) {
+                const warehouseId = button.getAttribute('data-id');
+                console.log("Edit warehouse button clicked, ID:", warehouseId);
+
+                // Get warehouse data from attributes
+                const name = button.getAttribute('data-name');
+                const location = button.getAttribute('data-location');
+                const capacity = button.getAttribute('data-capacity');
+                const threshold = button.getAttribute('data-threshold');
+
+                // Populate form
+                document.getElementById('warehouseId').value = warehouseId || '';
+                document.getElementById('warehouseName').value = name || '';
+                document.getElementById('warehouseLocation').value = location || '';
+                document.getElementById('warehouseCapacity').value = capacity || '';
+                document.getElementById('warehouseThreshold').value = threshold || '';
+
+                // Show warehouse modal
+                const modal = new bootstrap.Modal(document.getElementById('warehouseModal'));
+                modal.show();
+
+                event.preventDefault();
+            }
+
+            // Delete warehouse buttons
+            else if (button.classList.contains('delete-warehouse')) {
+                const warehouseId = button.getAttribute('data-id');
+                console.log("Delete warehouse button clicked, ID:", warehouseId);
+                confirmDeleteWarehouse(warehouseId);
+                event.preventDefault();
+            }
+
+            // Remove variant buttons
+            else if (button.classList.contains('remove-variant')) {
+                const variantForm = button.closest('.variant-form');
+                if (variantForm) {
+                    // Only remove if there's more than one variant form
+                    const variantForms = document.querySelectorAll('.variant-form');
+                    if (variantForms.length > 1) {
+                        variantForm.remove();
+                        updateInventoryVariants();
+                    } else {
+                        showAlert('warning', 'At least one variant is required');
+                    }
+                }
+                event.preventDefault();
+            }
+
+            // Remove feature buttons
+            else if (button.classList.contains('remove-feature')) {
+                const featureGroup = button.closest('.input-group');
+                if (featureGroup) {
+                    featureGroup.remove();
+                }
+                event.preventDefault();
+            }
+
+            // Remove spec buttons
+            else if (button.classList.contains('remove-spec')) {
+                const specRow = button.closest('.row');
+                if (specRow) {
+                    specRow.remove();
+                }
+                event.preventDefault();
+            }
+        });
+
+        console.log("Global event delegation initialized");
+    }
+
+    // The problematic duplicate window.onerror is removed from here
+
     initializeGlobalEventDelegation();
     // Initialize API endpoints
     const API_ENDPOINTS = {
-    GET_ALL_INVENTORY: '/inventory/getAllInventory',
-    GET_INVENTORY_BY_PRODUCT: '/inventory/getInventoryByProduct/',
-    GET_INVENTORY_BY_WAREHOUSE: '/inventory/getInventoryByWarehouse/',
-    GET_INVENTORY_BY_TYPE: '/inventory/getInventoryByType/',
-    GET_LOW_STOCK: '/inventory/getLowStockProducts',
-    GET_STATS: '/inventory/getStats',
-    GET_WAREHOUSES: '/inventory/getWarehouses',
-    GET_PRODUCTS: '/inventory/getProductsWithVariants',
-    ADD_STOCK: '/inventory/addStock',
-    MOVE_STOCK: '/inventory/moveStock',
-    EXPORT_INVENTORY: '/inventory/exportInventory',
-    PRODUCT_DETAILS: '/inventory/viewProduct/',
-    CREATE_PRODUCT: '/inventory/createProduct',
-    UPDATE_PRODUCT: '/inventory/updateProduct/',
-    DELETE_PRODUCT: '/inventory/deleteProduct/',
-    
-    // Warehouse endpoints
-    GET_ALL_WAREHOUSES: '/warehouse/getAllWarehouses',
-    GET_WAREHOUSE: '/warehouse/getWarehouse/',
-    CREATE_WAREHOUSE: '/warehouse/createWarehouse',
-    UPDATE_WAREHOUSE: '/warehouse/updateWarehouse/',
-    DELETE_WAREHOUSE: '/warehouse/deleteWarehouse/',
-    GET_WAREHOUSE_INVENTORY: '/warehouse/getWarehouseInventory/',
-    GET_WAREHOUSE_SUMMARY: '/warehouse/getWarehousesWithSummary',
-    GET_WAREHOUSES_LOW_STOCK: '/warehouse/getWarehousesWithLowStock'
+        GET_ALL_INVENTORY: '/inventory/getAllInventory',
+        GET_INVENTORY_BY_PRODUCT: '/inventory/getInventoryByProduct/',
+        GET_INVENTORY_BY_WAREHOUSE: '/inventory/getInventoryByWarehouse/',
+        GET_INVENTORY_BY_TYPE: '/inventory/getInventoryByType/',
+        GET_LOW_STOCK: '/inventory/getLowStockProducts',
+        GET_STATS: '/inventory/getStats',
+        GET_WAREHOUSES: '/inventory/getWarehouses',
+        GET_PRODUCTS: '/inventory/getProductsWithVariants',
+        ADD_STOCK: '/inventory/addStock',
+        MOVE_STOCK: '/inventory/moveStock',
+        PRODUCT_DETAILS: '/inventory/viewProduct/',
+        CREATE_PRODUCT: '/inventory/createProduct',
+        UPDATE_PRODUCT: '/inventory/updateProduct/',
+        DELETE_PRODUCT: '/inventory/deleteProduct/',
+
+        // Warehouse endpoints
+        GET_ALL_WAREHOUSES: '/warehouse/getAllWarehouses',
+        GET_WAREHOUSE: '/warehouse/getWarehouse/',
+        CREATE_WAREHOUSE: '/warehouse/createWarehouse',
+        UPDATE_WAREHOUSE: '/warehouse/updateWarehouse/',
+        DELETE_WAREHOUSE: '/warehouse/deleteWarehouse/',
+        GET_WAREHOUSE_INVENTORY: '/warehouse/getWarehouseInventory/',
+        GET_WAREHOUSE_SUMMARY: '/warehouse/getWarehousesWithSummary',
+        GET_WAREHOUSES_LOW_STOCK: '/warehouse/getWarehousesWithLowStock'
     };
-    
+
     // State management
     let currentView = 'inventory';
     let currentProductId = null;
@@ -186,6 +173,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     let variantCounter = 0;
     let featureCounter = 0;
     let specCounter = 0;
+    let warehouseModalInitialized = false; // Declare this variable here so it's available for all functions
 
     // Initialize the InventoryDataTablesHandler
     try {
@@ -202,60 +190,60 @@ window.onerror = function(message, source, lineno, colno, error) {
                 warehouseModal: 'warehouseModal'
             }
         });
-        
+
         // Store handler in window object for debugging
         window.inventoryHandler = inventoryHandler;
         console.log("InventoryDataTablesHandler initialized successfully");
     } catch (error) {
         console.error("Error initializing InventoryDataTablesHandler:", error);
         showGlobalErrorBanner("Error initializing inventory system. Please refresh the page.");
-        
+
         // Initialize fallback functionality
         initializeFallbackFunctionality();
     }
-    
+
     // Initialize tabs and buttons
     initializeTabsAndButtons();
-    
+
     // Initialize warehouse modal if it exists
     initializeWarehouseModal();
-    
+
     // Load dashboard stats
     loadDashboardStats();
-    
+
     /**
      * Initialize tabs and view selector buttons
      */
     function initializeTabsAndButtons() {
         console.log("Initializing tabs and buttons...");
-        
+
         // View Selector Toggle
         const viewButtons = document.querySelectorAll('.view-selector .btn');
         if (viewButtons.length) {
             viewButtons.forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function () {
                     console.log("View button clicked:", this.getAttribute('data-view'));
-                    
+
                     // Remove active class from all buttons
                     viewButtons.forEach(btn => btn.classList.remove('active'));
-                    
+
                     // Add active class to clicked button
                     this.classList.add('active');
-                    
+
                     // Get the view type
                     const viewType = this.getAttribute('data-view');
                     currentView = viewType;
-                    
+
                     // Hide all views
                     document.querySelectorAll('.view-card').forEach(card => {
                         card.classList.add('d-none');
                     });
-                    
+
                     // Show the selected view
                     const selectedView = document.getElementById(`${viewType}View`);
                     if (selectedView) {
                         selectedView.classList.remove('d-none');
-                        
+
                         // Load appropriate data based on view
                         if (viewType === 'warehouses') {
                             loadWarehouseData();
@@ -265,7 +253,7 @@ window.onerror = function(message, source, lineno, colno, error) {
                             loadInventoryData();
                         }
                     }
-                    
+
                     // If handler exists, notify it of view change
                     if (window.inventoryHandler) {
                         window.inventoryHandler.changeView(viewType);
@@ -273,14 +261,14 @@ window.onerror = function(message, source, lineno, colno, error) {
                 });
             });
         }
-        
+
         // Stock Type Filter
         const stockTypeFilter = document.getElementById('stockTypeFilter');
         if (stockTypeFilter) {
-            stockTypeFilter.addEventListener('change', function() {
+            stockTypeFilter.addEventListener('change', function () {
                 const selectedType = this.value;
                 console.log("Stock type filter changed:", selectedType);
-                
+
                 if (window.inventoryHandler) {
                     window.inventoryHandler.filterByStockType(selectedType);
                 } else {
@@ -288,33 +276,11 @@ window.onerror = function(message, source, lineno, colno, error) {
                 }
             });
         }
-        
-        // Export Button
-        const exportBtn = document.getElementById('exportBtn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', function() {
-                console.log("Export button clicked");
-                window.location.href = API_ENDPOINTS.EXPORT_INVENTORY;
-            });
-        }
-        
-        // Import Button
-        const importBtn = document.getElementById('importBtn');
-        if (importBtn) {
-            importBtn.addEventListener('click', function() {
-                console.log("Import button clicked");
-                if (window.inventoryHandler) {
-                    window.inventoryHandler.showImportModal();
-                } else {
-                    showImportModal();
-                }
-            });
-        }
-        
+
         // Warehouses Button
         const warehousesBtn = document.querySelector('[data-bs-target="#warehouseModal"]');
         if (warehousesBtn) {
-            warehousesBtn.addEventListener('click', function() {
+            warehousesBtn.addEventListener('click', function () {
                 console.log("Warehouses button clicked");
                 loadWarehouseListForModal();
             });
@@ -322,50 +288,50 @@ window.onerror = function(message, source, lineno, colno, error) {
             // For standalone warehouses button
             const standaloneWarehousesBtn = document.querySelector('.btn[data-action="warehouses"], .warehouses-btn');
             if (standaloneWarehousesBtn) {
-                standaloneWarehousesBtn.addEventListener('click', function() {
+                standaloneWarehousesBtn.addEventListener('click', function () {
                     console.log("Standalone warehouses button clicked");
-                    
+
                     // Check if modal exists, if not create it
                     if (!document.getElementById('warehouseModal')) {
                         createWarehouseModal();
                     }
-                    
+
                     // Load warehouse list and open modal
                     loadWarehouseListForModal();
-                    
+
                     // Show modal
                     const modal = new bootstrap.Modal(document.getElementById('warehouseModal'));
                     modal.show();
                 });
             }
         }
-        
+
         // Add Product Button
         const addProductBtn = document.querySelector('.btn-red, .add-product-btn, [data-bs-target="#addProductModal"]');
         if (addProductBtn) {
-            addProductBtn.addEventListener('click', function() {
+            addProductBtn.addEventListener('click', function () {
                 console.log("Add product button clicked");
-                
+
                 // Reset form before showing
                 if (window.inventoryHandler) {
                     window.inventoryHandler.resetProductForm();
                 } else {
                     resetProductForm();
                 }
-                
+
                 // Ensure modal title is set correctly
                 document.getElementById('addProductModalLabel').textContent = 'Add New Product';
                 document.getElementById('saveProductBtn').textContent = 'Save Product';
-                
+
                 // Load warehouses for dropdown
                 loadWarehousesForDropdown();
             });
         }
-        
+
         // Product form save button
         const saveProductBtn = document.getElementById('saveProductBtn');
         if (saveProductBtn) {
-            saveProductBtn.addEventListener('click', function() {
+            saveProductBtn.addEventListener('click', function () {
                 console.log("Save product button clicked");
                 if (window.inventoryHandler) {
                     window.inventoryHandler.saveProduct();
@@ -374,11 +340,11 @@ window.onerror = function(message, source, lineno, colno, error) {
                 }
             });
         }
-        
+
         // Add variant button
         const addVariantBtn = document.querySelector('.add-variant-btn');
         if (addVariantBtn) {
-            addVariantBtn.addEventListener('click', function() {
+            addVariantBtn.addEventListener('click', function () {
                 console.log("Add variant button clicked");
                 if (window.inventoryHandler) {
                     window.inventoryHandler.addNewVariantForm();
@@ -387,11 +353,11 @@ window.onerror = function(message, source, lineno, colno, error) {
                 }
             });
         }
-        
+
         // Add feature button
         const addFeatureBtn = document.querySelector('.add-feature-btn');
         if (addFeatureBtn) {
-            addFeatureBtn.addEventListener('click', function() {
+            addFeatureBtn.addEventListener('click', function () {
                 console.log("Add feature button clicked");
                 if (window.inventoryHandler) {
                     window.inventoryHandler.addNewFeatureInput();
@@ -400,11 +366,11 @@ window.onerror = function(message, source, lineno, colno, error) {
                 }
             });
         }
-        
+
         // Add spec button
         const addSpecBtn = document.querySelector('.add-spec-btn');
         if (addSpecBtn) {
-            addSpecBtn.addEventListener('click', function() {
+            addSpecBtn.addEventListener('click', function () {
                 console.log("Add spec button clicked");
                 if (window.inventoryHandler) {
                     window.inventoryHandler.addNewSpecInput();
@@ -413,47 +379,56 @@ window.onerror = function(message, source, lineno, colno, error) {
                 }
             });
         }
-        
+
         console.log("Tabs and buttons initialized");
     }
-    
+
     /**
      * Initialize warehouse modal
      */
     function initializeWarehouseModal() {
         console.log("Initializing warehouse modal...");
-        
+
+        // Don't initialize multiple times
+        if (warehouseModalInitialized) {
+            console.log("Warehouse modal already initialized, skipping");
+            return;
+        }
+
         // Create modal if it doesn't exist
         if (!document.getElementById('warehouseModal')) {
             createWarehouseModal();
         }
-        
-        // Initialize warehouse form submission
-        const warehouseForm = document.getElementById('warehouseForm');
-        if (warehouseForm) {
-            warehouseForm.addEventListener('submit', function(event) {
+
+        // Initialize warehouse form submission - using event delegation to prevent duplicate listeners
+        document.body.addEventListener('submit', function (event) {
+            const warehouseForm = event.target.closest('#warehouseForm');
+            if (warehouseForm) {
                 event.preventDefault();
                 console.log("Warehouse form submitted");
-                
                 saveWarehouse();
-            });
-            
-            // Reset warehouse form button
-            document.getElementById('resetWarehouseBtn')?.addEventListener('click', function() {
+            }
+        });
+
+        // Reset warehouse form button - using event delegation
+        document.body.addEventListener('click', function (event) {
+            if (event.target.closest('#resetWarehouseBtn')) {
                 console.log("Reset warehouse form button clicked");
                 resetWarehouseForm();
-            });
-        }
-        
+            }
+        });
+
+        // Mark as initialized
+        warehouseModalInitialized = true;
         console.log("Warehouse modal initialized");
     }
-    
+
     /**
      * Create warehouse modal if it doesn't exist
      */
     function createWarehouseModal() {
         console.log("Creating warehouse modal...");
-        
+
         const modalHTML = `
             <div class="modal fade" id="warehouseModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
@@ -518,47 +493,37 @@ window.onerror = function(message, source, lineno, colno, error) {
                 </div>
             </div>
         `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Add event listeners to the new modal
-        const warehouseForm = document.getElementById('warehouseForm');
-        if (warehouseForm) {
-            warehouseForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                saveWarehouse();
-            });
-            
-            document.getElementById('resetWarehouseBtn').addEventListener('click', function() {
-                resetWarehouseForm();
-            });
-        }
-        
-        console.log("Warehouse modal created");
-    }
-    
 
-/**
- * Load warehouse list for modal
- */
-function loadWarehouseListForModal() {
-    console.log("Loading warehouse list for modal...");
-    
-    const warehouseListTable = document.getElementById('warehouseListTable')?.querySelector('tbody');
-    if (!warehouseListTable) {
-        console.error("Warehouse list table not found");
-        return;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        console.log("Warehouse modal created");
+
+        // We'll initialize the event listeners in initializeWarehouseModal instead
+        // This prevents duplicate event listeners
     }
-    
-    // Mark as loading to prevent duplicate calls
-    if (warehouseListTable.dataset.loading === 'true') {
-        console.log("Already loading warehouse list, skipping...");
-        return;
-    }
-    warehouseListTable.dataset.loading = 'true';
-    
-    // Show loading indicator
-    warehouseListTable.innerHTML = `
+
+
+    /**
+     * Load warehouse list for modal
+     */
+    function loadWarehouseListForModal() {
+        console.log("Loading warehouse list for modal...");
+
+        const warehouseListTable = document.getElementById('warehouseListTable')?.querySelector('tbody');
+        if (!warehouseListTable) {
+            console.error("Warehouse list table not found");
+            return;
+        }
+
+        // Mark as loading to prevent duplicate calls
+        if (warehouseListTable.dataset.loading === 'true') {
+            console.log("Already loading warehouse list, skipping...");
+            return;
+        }
+        warehouseListTable.dataset.loading = 'true';
+
+        // Show loading indicator
+        warehouseListTable.innerHTML = `
         <tr>
             <td colspan="3" class="text-center py-3">
                 <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -567,33 +532,33 @@ function loadWarehouseListForModal() {
             </td>
         </tr>
     `;
-    
-    // Fetch warehouses with error handling and timeout
-    fetchWithTimeout(API_ENDPOINTS.GET_ALL_WAREHOUSES, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
+
+        // Fetch warehouses with error handling and timeout
+        fetchWithTimeout(API_ENDPOINTS.GET_ALL_WAREHOUSES, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-            return response.json();
         })
-        .then(data => {
-            console.log("Warehouse data received:", data);
-            
-            if (data.success && data.data && data.data.length > 0) {
-                // Clear the table completely before adding new rows
-                warehouseListTable.innerHTML = '';
-                
-                // Use a document fragment to build the rows
-                const fragment = document.createDocumentFragment();
-                
-                data.data.forEach(warehouse => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Warehouse data received:", data);
+
+                if (data.success && data.data && data.data.length > 0) {
+                    // Clear the table completely before adding new rows
+                    warehouseListTable.innerHTML = '';
+
+                    // Use a document fragment to build the rows
+                    const fragment = document.createDocumentFragment();
+
+                    data.data.forEach(warehouse => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
                         <td>${warehouse.whouse_name}</td>
                         <td>${warehouse.whouse_location}</td>
                         <td>
@@ -613,24 +578,24 @@ function loadWarehouseListForModal() {
                             </div>
                         </td>
                     `;
-                    fragment.appendChild(row);
-                });
-                
-                // Add all rows at once
-                warehouseListTable.appendChild(fragment);
-            } else {
-                // No warehouses found
-                warehouseListTable.innerHTML = `
+                        fragment.appendChild(row);
+                    });
+
+                    // Add all rows at once
+                    warehouseListTable.appendChild(fragment);
+                } else {
+                    // No warehouses found
+                    warehouseListTable.innerHTML = `
                     <tr>
                         <td colspan="3" class="text-center py-3">No warehouses found</td>
                     </tr>
                 `;
-            }
-        })
-        .catch(error => {
-            console.error("Error loading warehouses:", error);
-            
-            warehouseListTable.innerHTML = `
+                }
+            })
+            .catch(error => {
+                console.error("Error loading warehouses:", error);
+
+                warehouseListTable.innerHTML = `
                 <tr>
                     <td colspan="3" class="text-center py-3">
                         <div class="alert alert-danger mb-0">
@@ -639,210 +604,263 @@ function loadWarehouseListForModal() {
                     </td>
                 </tr>
             `;
-        })
-        .finally(() => {
-            // Remove loading flag
-            warehouseListTable.dataset.loading = 'false';
-        });
-}
-    
+            })
+            .finally(() => {
+                // Remove loading flag
+                warehouseListTable.dataset.loading = 'false';
+            });
+    }
+
     /**
      * Load warehouses for dropdown
      */
-// In inventory.js
-/**
- * Load warehouses for dropdown - FIXED to prevent duplicates
- */
-function loadWarehousesForDropdown() {
-    console.log("Loading warehouses for dropdown...");
-    
-    const warehouseSelect = document.getElementById('warehouseSelect');
-    if (!warehouseSelect) {
-        console.error("Warehouse select not found");
-        return;
-    }
-    
-    // Prevent duplicate calls
-    if (warehouseSelect.dataset.loading === 'true') {
-        console.log("Already loading warehouses, skipping...");
-        return;
-    }
-    
-    // Mark as loading
-    warehouseSelect.dataset.loading = 'true';
-    
-    // Clear and show loading indicator
-    warehouseSelect.innerHTML = '<option value="">Loading warehouses...</option>';
-    
-    // Fetch warehouses
-    fetchWithTimeout(API_ENDPOINTS.GET_ALL_WAREHOUSES, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+    // In inventory.js
+    /**
+     * Load warehouses for dropdown - FIXED to prevent duplicates
+     */
+    function loadWarehousesForDropdown() {
+        console.log("Loading warehouses for dropdown...");
+
+        const warehouseSelect = document.getElementById('warehouseSelect');
+        if (!warehouseSelect) {
+            console.error("Warehouse select not found");
+            return;
         }
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Warehouses for dropdown received:", data);
-            
-            // Clear again before populating
-            warehouseSelect.innerHTML = '';
-            
-            if (data.success && data.data && data.data.length > 0) {
-                // Add default option
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Select warehouse';
-                warehouseSelect.appendChild(defaultOption);
-                
-                // Use a Set to track added warehouse IDs
-                const addedWarehouses = new Set();
-                
-                // Add warehouses, ensuring no duplicates
-                data.data.forEach(warehouse => {
-                    if (!addedWarehouses.has(warehouse.whouse_id)) {
-                        const option = document.createElement('option');
-                        option.value = warehouse.whouse_id;
-                        option.textContent = warehouse.whouse_name;
-                        warehouseSelect.appendChild(option);
-                        addedWarehouses.add(warehouse.whouse_id);
-                    }
-                });
-            } else {
-                warehouseSelect.innerHTML = '<option value="">No warehouses available</option>';
+
+        // Prevent duplicate calls
+        if (warehouseSelect.dataset.loading === 'true') {
+            console.log("Already loading warehouses, skipping...");
+            return;
+        }
+
+        // Mark as loading
+        warehouseSelect.dataset.loading = 'true';
+
+        // Clear and show loading indicator
+        warehouseSelect.innerHTML = '<option value="">Loading warehouses...</option>';
+
+        // Fetch warehouses
+        fetchWithTimeout(API_ENDPOINTS.GET_ALL_WAREHOUSES, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .catch(error => {
-            console.error("Error loading warehouses for dropdown:", error);
-            warehouseSelect.innerHTML = '<option value="">Error loading warehouses</option>';
-        })
-        .finally(() => {
-            // Remove loading flag
-            warehouseSelect.dataset.loading = 'false';
-        });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Warehouses for dropdown received:", data);
+
+                // Clear again before populating
+                warehouseSelect.innerHTML = '';
+
+                if (data.success && data.data && data.data.length > 0) {
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Select warehouse';
+                    warehouseSelect.appendChild(defaultOption);
+
+                    // Use a Set to track added warehouse IDs
+                    const addedWarehouses = new Set();
+
+                    // Add warehouses, ensuring no duplicates
+                    data.data.forEach(warehouse => {
+                        if (!addedWarehouses.has(warehouse.whouse_id)) {
+                            const option = document.createElement('option');
+                            option.value = warehouse.whouse_id;
+                            option.textContent = warehouse.whouse_name;
+                            warehouseSelect.appendChild(option);
+                            addedWarehouses.add(warehouse.whouse_id);
+                        }
+                    });
+                } else {
+                    warehouseSelect.innerHTML = '<option value="">No warehouses available</option>';
+                }
+            })
+            .catch(error => {
+                console.error("Error loading warehouses for dropdown:", error);
+                warehouseSelect.innerHTML = '<option value="">Error loading warehouses</option>';
+            })
+            .finally(() => {
+                // Remove loading flag
+                warehouseSelect.dataset.loading = 'false';
+            });
     }
     /**
      * Save warehouse
      */
     function saveWarehouse() {
         console.log("Saving warehouse...");
-        
+
+        // Check if already submitting
+        if (document.getElementById('saveWarehouseBtn').hasAttribute('data-submitting')) {
+            console.log("Already submitting warehouse, preventing duplicate submission");
+            return;
+        }
+
         const form = document.getElementById('warehouseForm');
         if (!form) {
             console.error("Warehouse form not found");
             return;
         }
-        
+
+        // Mark as submitting
+        document.getElementById('saveWarehouseBtn').setAttribute('data-submitting', 'true');
+        document.getElementById('saveWarehouseBtn').textContent = 'Saving...';
+
         // Show saving indicator
         showAlert('info', 'Saving warehouse...');
-        
-        // Get form data
-        const formData = new FormData(form);
-        const warehouseId = formData.get('whouse_id');
-        const isUpdate = warehouseId !== '';
-        
-        // Convert FormData to object
-        const warehouseData = {};
-        formData.forEach((value, key) => {
-            warehouseData[key] = value;
+
+        // Get form field values directly
+        const warehouseId = form.querySelector('#warehouseId').value;
+        const warehouseName = form.querySelector('#warehouseName').value;
+        const warehouseLocation = form.querySelector('#warehouseLocation').value;
+        const storageCapacity = form.querySelector('#warehouseCapacity').value;
+        const restockThreshold = form.querySelector('#warehouseThreshold').value;
+
+        console.log("Form values:", {
+            warehouseId,
+            warehouseName,
+            warehouseLocation,
+            storageCapacity,
+            restockThreshold
         });
-        
-        console.log("Warehouse form data:", warehouseData);
-        console.log("Is update:", isUpdate);
-        
-        // Validate required fields
-        if (!warehouseData.whouse_name || !warehouseData.whouse_location) {
-            showAlert('error', 'Warehouse name and location are required');
+
+        // Validate form fields
+        if (!warehouseName) {
+            showAlert('error', 'Warehouse name is required');
+            document.getElementById('saveWarehouseBtn').removeAttribute('data-submitting');
+            document.getElementById('saveWarehouseBtn').textContent = 'Save Warehouse';
             return;
         }
-        
-        // Determine URL and method
-        const url = isUpdate ? API_ENDPOINTS.UPDATE_WAREHOUSE + warehouseId : API_ENDPOINTS.CREATE_WAREHOUSE;
-        const method = isUpdate ? 'PUT' : 'POST';
-        
-        console.log("Sending request to:", url, "method:", method);
-        
-        // Send request with timeout
-        fetchWithTimeout(url, {
-            method: method,
+
+        if (!warehouseLocation) {
+            showAlert('error', 'Warehouse location is required');
+            document.getElementById('saveWarehouseBtn').removeAttribute('data-submitting');
+            document.getElementById('saveWarehouseBtn').textContent = 'Save Warehouse';
+            return;
+        }
+
+        // Determine if this is a create or update operation
+        const isUpdate = warehouseId !== '';
+        const url = isUpdate
+            ? API_ENDPOINTS.UPDATE_WAREHOUSE + warehouseId
+            : API_ENDPOINTS.CREATE_WAREHOUSE;
+
+        console.log(`${isUpdate ? 'Updating' : 'Creating'} warehouse via ${url}`);
+
+        // Create form data for traditional form submission instead of JSON
+        const formData = new FormData();
+        formData.append('whouse_name', warehouseName);
+        formData.append('whouse_location', warehouseLocation);
+        if (storageCapacity) formData.append('whouse_storage_capacity', storageCapacity);
+        if (restockThreshold) formData.append('whouse_restock_threshold', restockThreshold);
+        // For updates, include the ID
+        if (warehouseId) formData.append('whouse_id', warehouseId);
+
+        // Send the request using form data instead of JSON
+        fetch(url, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify(warehouseData)
+            body: formData
         })
             .then(response => {
-                if (!response.ok) {
-                    // Try to get error message from response
-                    return response.json().then(errorData => {
-                        throw new Error(errorData.message || `HTTP error ${response.status}`);
-                    }).catch(() => {
-                        throw new Error(`HTTP error ${response.status}`);
-                    });
-                }
-                return response.json();
+                console.log("Server response status:", response.status);
+
+                // Get the raw response text first
+                return response.text().then(rawText => {
+                    console.log("Raw server response:", rawText);
+
+                    // Check if response is successful
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}: ${rawText || 'Unknown error'}`);
+                    }
+
+                    // Try to parse as JSON if not empty
+                    if (rawText.trim()) {
+                        try {
+                            return JSON.parse(rawText);
+                        } catch (e) {
+                            console.error("Failed to parse JSON:", e);
+                            // If we can't parse as JSON but response is OK, assume it succeeded
+                            return {
+                                success: true,
+                                message: `Warehouse ${isUpdate ? 'updated' : 'created'} successfully`
+                            };
+                        }
+                    } else {
+                        // Empty response but HTTP status was OK, assume success
+                        return {
+                            success: true,
+                            message: `Warehouse ${isUpdate ? 'updated' : 'created'} successfully`
+                        };
+                    }
+                });
             })
             .then(data => {
-                console.log("Warehouse save response:", data);
-                
+                console.log("Processed response data:", data);
+
                 if (data.success) {
                     // Show success message
-                    showAlert('success', `Warehouse ${isUpdate ? 'updated' : 'created'} successfully`);
-                    
-                    // Reset form
+                    showAlert('success', data.message || `Warehouse ${isUpdate ? 'updated' : 'created'} successfully`);
+
+                    // Reset form for new entry
                     resetWarehouseForm();
-                    
+
                     // Refresh warehouse list
                     loadWarehouseListForModal();
-                    
-                    // Refresh warehouses dropdown in product form
-                    loadWarehousesForDropdown();
-                    
-                    // Refresh dashboard stats
-                    loadDashboardStats();
-                    
-                    // Refresh warehouses view if visible
+
+                    // Also refresh warehouse data table if on warehouse view
                     if (currentView === 'warehouses') {
                         loadWarehouseData();
                     }
                 } else {
-                    showAlert('error', data.message || `Failed to ${isUpdate ? 'update' : 'create'} warehouse`);
+                    throw new Error(data.message || 'Error saving warehouse');
                 }
             })
             .catch(error => {
                 console.error("Error saving warehouse:", error);
                 showAlert('error', `Error ${isUpdate ? 'updating' : 'creating'} warehouse: ${error.message}`);
+            })
+            .finally(() => {
+                // Reset submitting state
+                document.getElementById('saveWarehouseBtn').removeAttribute('data-submitting');
+                document.getElementById('saveWarehouseBtn').textContent = 'Save Warehouse';
             });
     }
-    
+
     /**
      * Reset warehouse form
      */
     function resetWarehouseForm() {
-        console.log("Resetting warehouse form...");
-        
+        console.log("Resetting warehouse form");
+
         const form = document.getElementById('warehouseForm');
         if (form) {
             form.reset();
-            document.getElementById('warehouseId').value = '';
+            form.querySelector('#warehouseId').value = '';
+            document.getElementById('saveWarehouseBtn').textContent = 'Save Warehouse';
+            document.getElementById('saveWarehouseBtn').removeAttribute('data-submitting');
         }
     }
-    
+
     /**
      * Confirm delete warehouse
      */
     function confirmDeleteWarehouse(warehouseId) {
         console.log("Confirming warehouse deletion:", warehouseId);
-        
+
         if (confirm('Are you sure you want to delete this warehouse? This action cannot be undone.')) {
             // Show deleting indicator
             showAlert('info', 'Deleting warehouse...');
-            
+
             // Send delete request
             fetchWithTimeout(API_ENDPOINTS.DELETE_WAREHOUSE + warehouseId, {
                 method: 'POST',
@@ -862,20 +880,20 @@ function loadWarehousesForDropdown() {
                 })
                 .then(data => {
                     console.log("Warehouse delete response:", data);
-                    
+
                     if (data.success) {
                         // Show success message
                         showAlert('success', 'Warehouse deleted successfully');
-                        
+
                         // Refresh warehouse list
                         loadWarehouseListForModal();
-                        
+
                         // Refresh warehouses dropdown in product form
                         loadWarehousesForDropdown();
-                        
+
                         // Refresh dashboard stats
                         loadDashboardStats();
-                        
+
                         // Refresh warehouses view if visible
                         if (currentView === 'warehouses') {
                             loadWarehouseData();
@@ -890,13 +908,13 @@ function loadWarehousesForDropdown() {
                 });
         }
     }
-    
+
     /**
      * Load dashboard stats
      */
     function loadDashboardStats() {
         console.log("Loading dashboard stats...");
-        
+
         fetchWithTimeout(API_ENDPOINTS.GET_STATS, {
             method: 'GET',
             headers: {
@@ -911,7 +929,7 @@ function loadWarehousesForDropdown() {
             })
             .then(data => {
                 console.log("Dashboard stats received:", data);
-                
+
                 if (data.success) {
                     updateStatCards(data.data);
                 } else {
@@ -936,55 +954,55 @@ function loadWarehousesForDropdown() {
                 });
             });
     }
-    
+
     /**
      * Update stat cards
      */
     function updateStatCards(stats) {
         console.log("Updating stat cards with data:", stats);
-        
+
         // Get all stat cards elements
         const totalProductsElem = document.querySelector('#totalProducts, .stats-card:nth-child(1) h3, [data-stat="total_products"]');
         const totalVariantsElem = document.querySelector('#totalVariants, .stats-card:nth-child(2) h3, [data-stat="total_variants"]');
         const totalWarehousesElem = document.querySelector('#totalWarehouses, .stats-card:nth-child(3) h3, [data-stat="total_warehouses"]');
         const lowStockItemsElem = document.querySelector('#lowStockItems, .stats-card:nth-child(4) h3, [data-stat="low_stock_count"]');
-        
+
         // Update values if elements exist
         if (totalProductsElem && stats.total_products !== undefined) {
             totalProductsElem.textContent = stats.total_products;
         }
-        
+
         if (totalVariantsElem && stats.total_variants !== undefined) {
             totalVariantsElem.textContent = stats.total_variants;
         }
-        
+
         if (totalWarehousesElem && stats.total_warehouses !== undefined) {
             totalWarehousesElem.textContent = stats.total_warehouses;
         }
-        
+
         if (lowStockItemsElem && stats.low_stock_count !== undefined) {
             lowStockItemsElem.textContent = stats.low_stock_count;
         }
     }
-    
+
     /**
      * Load warehouse data (for warehouses view)
      */
     function loadWarehouseData() {
         console.log("Loading warehouse data...");
-        
+
         const warehousesView = document.getElementById('warehousesView');
         if (!warehousesView || warehousesView.classList.contains('d-none')) {
             console.log("Warehouses view not visible, skipping data load");
             return;
         }
-        
+
         const warehousesDashboard = document.querySelector('#warehousesView .card-body');
         if (!warehousesDashboard) {
             console.error("Warehouses dashboard container not found");
             return;
         }
-        
+
         // Show loading indicator
         warehousesDashboard.innerHTML = `
             <div class="text-center py-5">
@@ -994,7 +1012,7 @@ function loadWarehousesForDropdown() {
                 <p class="mt-2">Loading warehouse data...</p>
             </div>
         `;
-        
+
         // Fetch warehouses
         fetchWithTimeout(API_ENDPOINTS.GET_WAREHOUSE_SUMMARY, {
             method: 'GET',
@@ -1010,7 +1028,7 @@ function loadWarehousesForDropdown() {
             })
             .then(data => {
                 console.log("Warehouses data received:", data);
-                
+
                 if (data.success && data.data && data.data.length > 0) {
                     // Create table
                     let html = `
@@ -1027,21 +1045,21 @@ function loadWarehousesForDropdown() {
                             </thead>
                             <tbody>
                     `;
-                    
+
                     // Add rows
                     data.data.forEach(warehouse => {
                         const capacity = parseInt(warehouse.whouse_storage_capacity) || 0;
                         const used = parseInt(warehouse.total_quantity) || 0;
                         let percent = 0;
-                        
+
                         if (capacity > 0 && used > 0) {
                             percent = Math.min(Math.round((used / capacity) * 100), 100);
                         }
-                        
+
                         let bgClass = 'bg-primary';
                         if (percent > 90) bgClass = 'bg-danger';
                         else if (percent > 70) bgClass = 'bg-warning';
-                        
+
                         html += `
                             <tr>
                                 <td>${warehouse.whouse_name}</td>
@@ -1079,20 +1097,20 @@ function loadWarehousesForDropdown() {
                             </tr>
                         `;
                     });
-                    
+
                     html += `
                             </tbody>
                         </table>
                     `;
-                    
+
                     warehousesDashboard.innerHTML = html;
-                    
+
                     // Add event listeners to buttons
                     warehousesDashboard.querySelectorAll('.view-warehouse').forEach(button => {
-                        button.addEventListener('click', function() {
+                        button.addEventListener('click', function () {
                             const id = this.getAttribute('data-id');
                             console.log("View warehouse button clicked:", id);
-                            
+
                             // View warehouse details
                             if (window.inventoryHandler) {
                                 window.inventoryHandler.viewWarehouseDetails(id);
@@ -1101,32 +1119,32 @@ function loadWarehousesForDropdown() {
                             }
                         });
                     });
-                    
+
                     warehousesDashboard.querySelectorAll('.edit-warehouse').forEach(button => {
-                        button.addEventListener('click', function() {
+                        button.addEventListener('click', function () {
                             const id = this.getAttribute('data-id');
                             const name = this.getAttribute('data-name');
                             const location = this.getAttribute('data-location');
                             const capacity = this.getAttribute('data-capacity');
                             const threshold = this.getAttribute('data-threshold');
-                            
+
                             console.log("Edit warehouse button clicked:", id);
-                            
+
                             // Open warehouse modal for editing
                             if (!document.getElementById('warehouseModal')) {
                                 createWarehouseModal();
                             }
-                            
+
                             // Populate form fields
                             document.getElementById('warehouseId').value = id;
                             document.getElementById('warehouseName').value = name;
                             document.getElementById('warehouseLocation').value = location;
                             document.getElementById('warehouseCapacity').value = capacity;
                             document.getElementById('warehouseThreshold').value = threshold;
-                            
+
                             // Load warehouse list
                             loadWarehouseListForModal();
-                            
+
                             // Show modal
                             const modal = new bootstrap.Modal(document.getElementById('warehouseModal'));
                             modal.show();
@@ -1144,7 +1162,7 @@ function loadWarehousesForDropdown() {
             })
             .catch(error => {
                 console.error("Error loading warehouses data:", error);
-                
+
                 warehousesDashboard.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
@@ -1153,25 +1171,25 @@ function loadWarehousesForDropdown() {
                 `;
             });
     }
-    
+
     /**
      * Load product data (for products view)
      */
     function loadProductData() {
         console.log("Loading product data...");
-        
+
         const productsView = document.getElementById('productsView');
         if (!productsView || productsView.classList.contains('d-none')) {
             console.log("Products view not visible, skipping data load");
             return;
         }
-        
+
         const productsDashboard = document.querySelector('#productsView .card-body');
         if (!productsDashboard) {
             console.error("Products dashboard container not found");
             return;
         }
-        
+
         // Show loading indicator
         productsDashboard.innerHTML = `
             <div class="text-center py-5">
@@ -1181,7 +1199,7 @@ function loadWarehousesForDropdown() {
                 <p class="mt-2">Loading product data...</p>
             </div>
         `;
-        
+
         // Fetch products
         fetchWithTimeout(API_ENDPOINTS.GET_PRODUCTS, {
             method: 'GET',
@@ -1197,7 +1215,7 @@ function loadWarehousesForDropdown() {
             })
             .then(data => {
                 console.log("Products data received:", data);
-                
+
                 if (data.success && data.data && data.data.length > 0) {
                     // Create table
                     let html = `
@@ -1215,7 +1233,7 @@ function loadWarehousesForDropdown() {
                             </thead>
                             <tbody>
                     `;
-                    
+
                     // Add rows
                     data.data.forEach(product => {
                         const statusClasses = {
@@ -1223,9 +1241,9 @@ function loadWarehousesForDropdown() {
                             'Out of Stock': 'bg-danger',
                             'Discontinued': 'bg-secondary'
                         };
-                        
+
                         const bgClass = statusClasses[product.prod_availability_status] || 'bg-secondary';
-                        
+
                         html += `
                             <tr>
                                 <td>
@@ -1257,20 +1275,20 @@ function loadWarehousesForDropdown() {
                             </tr>
                         `;
                     });
-                    
+
                     html += `
                             </tbody>
                         </table>
                     `;
-                    
+
                     productsDashboard.innerHTML = html;
-                    
+
                     // Add event listeners to buttons
                     productsDashboard.querySelectorAll('.view-product').forEach(button => {
-                        button.addEventListener('click', function() {
+                        button.addEventListener('click', function () {
                             const id = this.getAttribute('data-id');
                             console.log("View product button clicked:", id);
-                            
+
                             // View product details
                             if (window.inventoryHandler) {
                                 window.inventoryHandler.viewProductDetails(id);
@@ -1279,12 +1297,12 @@ function loadWarehousesForDropdown() {
                             }
                         });
                     });
-                    
+
                     productsDashboard.querySelectorAll('.manage-inventory').forEach(button => {
-                        button.addEventListener('click', function() {
+                        button.addEventListener('click', function () {
                             const id = this.getAttribute('data-id');
                             console.log("Manage inventory button clicked:", id);
-                            
+
                             // Open manage inventory modal
                             if (window.inventoryHandler) {
                                 window.inventoryHandler.openManageInventory(id);
@@ -1293,12 +1311,12 @@ function loadWarehousesForDropdown() {
                             }
                         });
                     });
-                    
+
                     productsDashboard.querySelectorAll('.delete-product').forEach(button => {
-                        button.addEventListener('click', function() {
+                        button.addEventListener('click', function () {
                             const id = this.getAttribute('data-id');
                             console.log("Delete product button clicked:", id);
-                            
+
                             // Confirm product deletion
                             if (window.inventoryHandler) {
                                 window.inventoryHandler.confirmDeleteProduct(id);
@@ -1319,7 +1337,7 @@ function loadWarehousesForDropdown() {
             })
             .catch(error => {
                 console.error("Error loading products data:", error);
-                
+
                 productsDashboard.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
@@ -1328,25 +1346,25 @@ function loadWarehousesForDropdown() {
                 `;
             });
     }
-    
+
     /**
      * Load inventory data (for inventory view)
      */
     function loadInventoryData() {
         console.log("Loading inventory data...");
-        
+
         const inventoryView = document.getElementById('inventoryView');
         if (!inventoryView || inventoryView.classList.contains('d-none')) {
             console.log("Inventory view not visible, skipping data load");
             return;
         }
-        
+
         const inventoryDashboard = document.querySelector('#inventoryView .card-body');
         if (!inventoryDashboard) {
             console.error("Inventory dashboard container not found");
             return;
         }
-        
+
         // Show loading indicator
         inventoryDashboard.innerHTML = `
             <div class="text-center py-5">
@@ -1356,7 +1374,7 @@ function loadWarehousesForDropdown() {
                 <p class="mt-2">Loading inventory data...</p>
             </div>
         `;
-        
+
         // Fetch inventory
         fetchWithTimeout(API_ENDPOINTS.GET_ALL_INVENTORY, {
             method: 'GET',
@@ -1372,7 +1390,7 @@ function loadWarehousesForDropdown() {
             })
             .then(data => {
                 console.log("Inventory data received:", data);
-                
+
                 if (data.success && data.data && data.data.length > 0) {
                     // Create table
                     let html = `
@@ -1391,7 +1409,7 @@ function loadWarehousesForDropdown() {
                             </thead>
                             <tbody>
                     `;
-                    
+
                     // Add rows
                     data.data.forEach(item => {
                         const typeClasses = {
@@ -1402,12 +1420,12 @@ function loadWarehousesForDropdown() {
                             'Returned': 'bg-warning',
                             'Quarantine': 'bg-dark'
                         };
-                        
+
                         const bgClass = typeClasses[item.inve_type] || 'bg-secondary';
-                        
+
                         let statusClass = 'bg-success';
                         let statusText = 'In Stock';
-                        
+
                         if (parseInt(item.quantity) <= 0) {
                             statusClass = 'bg-danger';
                             statusText = 'Out of Stock';
@@ -1415,7 +1433,7 @@ function loadWarehousesForDropdown() {
                             statusClass = 'bg-warning';
                             statusText = 'Low Stock';
                         }
-                        
+
                         html += `
                             <tr>
                                 <td>
@@ -1450,20 +1468,20 @@ function loadWarehousesForDropdown() {
                             </tr>
                         `;
                     });
-                    
+
                     html += `
                             </tbody>
                         </table>
                     `;
-                    
+
                     inventoryDashboard.innerHTML = html;
-                    
+
                     // Add event listeners to buttons
                     inventoryDashboard.querySelectorAll('.view-product').forEach(button => {
-                        button.addEventListener('click', function() {
+                        button.addEventListener('click', function () {
                             const id = this.getAttribute('data-id');
                             console.log("View product button clicked:", id);
-                            
+
                             // View product details
                             if (window.inventoryHandler) {
                                 window.inventoryHandler.viewProductDetails(id);
@@ -1472,12 +1490,12 @@ function loadWarehousesForDropdown() {
                             }
                         });
                     });
-                    
+
                     inventoryDashboard.querySelectorAll('.manage-inventory').forEach(button => {
-                        button.addEventListener('click', function() {
+                        button.addEventListener('click', function () {
                             const id = this.getAttribute('data-id');
                             console.log("Manage inventory button clicked:", id);
-                            
+
                             // Open manage inventory modal
                             if (window.inventoryHandler) {
                                 window.inventoryHandler.openManageInventory(id);
@@ -1498,7 +1516,7 @@ function loadWarehousesForDropdown() {
             })
             .catch(error => {
                 console.error("Error loading inventory data:", error);
-                
+
                 inventoryDashboard.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>
@@ -1507,25 +1525,25 @@ function loadWarehousesForDropdown() {
                 `;
             });
     }
-    
+
     /**
      * View product details
      */
     function viewProductDetails(productId) {
         console.log("Viewing product details for ID:", productId);
-        
+
         // If handler exists, use it
         if (window.inventoryHandler) {
             window.inventoryHandler.viewProductDetails(productId);
             return;
         }
-        
+
         // Store current product ID
         currentProductId = productId;
-        
+
         // Show loading indicator
         showAlert('info', 'Loading product details...');
-        
+
         // Fetch product details
         fetchWithTimeout(API_ENDPOINTS.PRODUCT_DETAILS + productId, {
             method: 'GET',
@@ -1541,7 +1559,7 @@ function loadWarehousesForDropdown() {
             })
             .then(data => {
                 console.log("Product details received:", data);
-                
+
                 if (data.success) {
                     // Show product details modal
                     showProductDetailsModal(data.data);
@@ -1554,26 +1572,26 @@ function loadWarehousesForDropdown() {
                 showAlert('error', 'Error loading product details');
             });
     }
-    
+
     /**
      * Show product details modal
      */
     function showProductDetailsModal(data) {
         console.log("Showing product details modal with data:", data);
-        
+
         // Check if modal exists, if not create it
         if (!document.getElementById('productDetailsModal')) {
             createProductDetailsModal();
         }
-        
+
         const { product, variants, inventory } = data;
-        
+
         // Basic product details
         document.getElementById('productDetailName').textContent = product.prod_name;
         document.getElementById('productDetailDescription').textContent = product.prod_description || 'No description available';
         document.getElementById('productDetailId').textContent = 'Product ID: ' + product.prod_id;
         document.getElementById('productDetailImage').src = product.prod_image || '/api/placeholder/150/150';
-        
+
         // Status badge
         const statusBadge = document.getElementById('productDetailStatus');
         const statusClasses = {
@@ -1582,31 +1600,31 @@ function loadWarehousesForDropdown() {
             'Discontinued': 'bg-secondary'
         };
         statusBadge.innerHTML = `<span class="badge ${statusClasses[product.prod_availability_status] || 'bg-secondary'}">${product.prod_availability_status}</span>`;
-        
+
         // Features
         const featuresList = document.getElementById('productDetailFeatures');
         if (product.features && product.features.length > 0) {
-            featuresList.innerHTML = product.features.map(feature => 
+            featuresList.innerHTML = product.features.map(feature =>
                 `<li>${feature.feature_name}</li>`
             ).join('');
         } else {
             featuresList.innerHTML = '<li class="text-muted">No features specified</li>';
         }
-        
+
         // Specifications
         const specsTable = document.getElementById('productDetailSpecs');
         if (product.specs && product.specs.length > 0) {
-            specsTable.innerHTML = product.specs.map(spec => 
+            specsTable.innerHTML = product.specs.map(spec =>
                 `<tr><td class="fw-bold">${spec.spec_name}</td><td>${spec.spec_value}</td></tr>`
             ).join('');
         } else {
             specsTable.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No specifications available</td></tr>';
         }
-        
+
         // Variants
         const variantsTable = document.getElementById('productDetailVariants');
         if (variants && variants.length > 0) {
-            variantsTable.innerHTML = variants.map(variant => 
+            variantsTable.innerHTML = variants.map(variant =>
                 `<tr>
                     <td>${variant.var_capacity || 'N/A'}</td>
                     <td>${variant.var_power_consumption || 'N/A'}</td>
@@ -1618,7 +1636,7 @@ function loadWarehousesForDropdown() {
         } else {
             variantsTable.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No variants available</td></tr>';
         }
-        
+
         // Inventory summary
         const inventoryContainer = document.getElementById('productDetailInventory');
         if (inventory && inventory.length > 0) {
@@ -1634,14 +1652,14 @@ function loadWarehousesForDropdown() {
                 }
                 inventoryByWarehouse[warehouseId].items.push(item);
             });
-            
+
             // Generate inventory cards
             let inventoryHTML = '';
             for (const warehouseId in inventoryByWarehouse) {
                 const warehouse = inventoryByWarehouse[warehouseId];
                 let totalQuantity = 0;
                 warehouse.items.forEach(item => totalQuantity += parseInt(item.quantity || 0));
-                
+
                 inventoryHTML += `
                     <div class="col-md-4 mb-3">
                         <div class="card">
@@ -1677,15 +1695,15 @@ function loadWarehousesForDropdown() {
                 </div>
             `;
         }
-        
+
         // Set up edit button
         const editBtn = document.getElementById('editProductBtn');
         editBtn.setAttribute('data-id', product.prod_id);
-        
+
         // Remove any existing event listeners to prevent duplicates
         const newEditBtn = editBtn.cloneNode(true);
         editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-        
+
         // Add new event listener
         newEditBtn.addEventListener('click', () => {
             // Edit product
@@ -1694,25 +1712,25 @@ function loadWarehousesForDropdown() {
             } else {
                 editProduct(product.prod_id);
             }
-            
+
             // Close details modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('productDetailsModal'));
             if (modal) {
                 modal.hide();
             }
         });
-        
+
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('productDetailsModal'));
         modal.show();
     }
-    
+
     /**
      * Create product details modal
      */
     function createProductDetailsModal() {
         console.log("Creating product details modal...");
-        
+
         const modalHTML = `
             <div class="modal fade" id="productDetailsModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1802,28 +1820,28 @@ function loadWarehousesForDropdown() {
                 </div>
             </div>
         `;
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
-    
+
     /**
      * Open manage inventory modal
      */
     function openManageInventory(productId) {
         console.log("Opening manage inventory modal for product ID:", productId);
-        
+
         // If handler exists, use it
         if (window.inventoryHandler) {
             window.inventoryHandler.openManageInventory(productId);
             return;
         }
-        
+
         // Store current product ID
         currentProductId = productId;
-        
+
         // Show loading indicator
         showAlert('info', 'Loading inventory data...');
-        
+
         // Fetch product details
         fetchWithTimeout(API_ENDPOINTS.PRODUCT_DETAILS + productId, {
             method: 'GET',
@@ -1839,13 +1857,13 @@ function loadWarehousesForDropdown() {
             })
             .then(data => {
                 console.log("Product details received for inventory management:", data);
-                
+
                 if (data.success) {
                     // Check if manage inventory modal exists, if not create it
                     if (!document.getElementById('manageInventoryModal')) {
                         createManageInventoryModal();
                     }
-                    
+
                     // Show manage inventory modal
                     showManageInventoryModal(data.data, productId);
                 } else {
@@ -1857,13 +1875,13 @@ function loadWarehousesForDropdown() {
                 showAlert('error', 'Error loading product inventory');
             });
     }
-    
+
     /**
      * Create manage inventory modal
      */
     function createManageInventoryModal() {
         console.log("Creating manage inventory modal...");
-        
+
         const modalHTML = `
             <div class="modal fade" id="manageInventoryModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
@@ -2060,31 +2078,31 @@ function loadWarehousesForDropdown() {
                 </div>
             </div>
         `;
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
+
         // Add event listeners
         const addStockForm = document.getElementById('addStockForm');
         if (addStockForm) {
-            addStockForm.addEventListener('submit', function(event) {
+            addStockForm.addEventListener('submit', function (event) {
                 event.preventDefault();
                 submitAddStock();
             });
         }
-        
+
         const moveStockForm = document.getElementById('moveStockForm');
         if (moveStockForm) {
-            moveStockForm.addEventListener('submit', function(event) {
+            moveStockForm.addEventListener('submit', function (event) {
                 event.preventDefault();
                 submitMoveStock();
             });
         }
-        
+
         // Add tab change listeners
         document.querySelectorAll('#inventoryTabs .nav-link').forEach(tab => {
-            tab.addEventListener('click', function() {
+            tab.addEventListener('click', function () {
                 const targetTab = this.getAttribute('data-bs-target');
-                
+
                 if (targetTab === '#add-stock') {
                     loadVariantsForStock(currentProductId);
                     loadWarehousesForStockDropdown();
@@ -2095,19 +2113,19 @@ function loadWarehousesForDropdown() {
             });
         });
     }
-    
+
     /**
      * Show manage inventory modal
      */
     function showManageInventoryModal(data, productId) {
         console.log("Showing manage inventory modal for product ID:", productId);
-        
+
         const { product, variants, inventory } = data;
-        
+
         // Set product IDs in forms
         document.getElementById('addStockProductId').value = productId;
         document.getElementById('moveStockProductId').value = productId;
-        
+
         // Load current stock
         const currentStockTable = document.getElementById('currentStockTable');
         if (inventory && inventory.length > 0) {
@@ -2121,7 +2139,7 @@ function loadWarehousesForDropdown() {
                         variantName = variant.var_capacity || 'Default';
                     }
                 }
-                
+
                 html += `
                     <tr>
                         <td>${variantName}</td>
@@ -2145,17 +2163,17 @@ function loadWarehousesForDropdown() {
                 </tr>
             `;
         }
-        
+
         // Load variants for dropdowns
         loadVariantsForStock(productId, variants);
-        
+
         // Load warehouses for dropdowns
         loadWarehousesForStockDropdown();
-        
+
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('manageInventoryModal'));
         modal.show();
-        
+
         // Activate first tab
         const firstTab = document.querySelector('#inventoryTabs .nav-link');
         if (firstTab && bootstrap && bootstrap.Tab) {
@@ -2163,32 +2181,32 @@ function loadWarehousesForDropdown() {
             tab.show();
         }
     }
-    
+
     /**
      * Load variants for stock management
      */
     function loadVariantsForStock(productId, variants = null) {
         console.log("Loading variants for stock management...");
-        
+
         const addVariantSelect = document.getElementById('addVariantSelect');
         const moveVariantSelect = document.getElementById('moveVariantSelect');
-        
+
         if (!addVariantSelect || !moveVariantSelect) {
             console.error("Variant select elements not found");
             return;
         }
-        
+
         // Show loading indicator
         addVariantSelect.innerHTML = '<option value="">Loading variants...</option>';
         moveVariantSelect.innerHTML = '<option value="">Loading variants...</option>';
-        
+
         if (variants) {
             // Use provided variants
             let html = '';
             variants.forEach(variant => {
                 html += `<option value="${variant.var_id}">${variant.var_capacity || 'Default Variant'}</option>`;
             });
-            
+
             addVariantSelect.innerHTML = html;
             moveVariantSelect.innerHTML = html;
         } else {
@@ -2207,13 +2225,13 @@ function loadWarehousesForDropdown() {
                 })
                 .then(data => {
                     console.log("Variants data received:", data);
-                    
+
                     if (data.success && data.data.variants && data.data.variants.length > 0) {
                         let html = '';
                         data.data.variants.forEach(variant => {
                             html += `<option value="${variant.var_id}">${variant.var_capacity || 'Default Variant'}</option>`;
                         });
-                        
+
                         addVariantSelect.innerHTML = html;
                         moveVariantSelect.innerHTML = html;
                     } else {
@@ -2228,27 +2246,27 @@ function loadWarehousesForDropdown() {
                 });
         }
     }
-    
+
     /**
      * Load warehouses for stock management dropdowns
      */
     function loadWarehousesForStockDropdown() {
         console.log("Loading warehouses for stock management...");
-        
+
         const addWarehouseSelect = document.getElementById('addWarehouseSelect');
         const sourceWarehouse = document.getElementById('sourceWarehouse');
         const destinationWarehouse = document.getElementById('destinationWarehouse');
-        
+
         if (!addWarehouseSelect || !sourceWarehouse || !destinationWarehouse) {
             console.error("Warehouse select elements not found");
             return;
         }
-        
+
         // Show loading indicator
         addWarehouseSelect.innerHTML = '<option value="">Loading warehouses...</option>';
         sourceWarehouse.innerHTML = '<option value="">Loading warehouses...</option>';
         destinationWarehouse.innerHTML = '<option value="">Loading warehouses...</option>';
-        
+
         // Fetch warehouses
         fetchWithTimeout(API_ENDPOINTS.GET_ALL_WAREHOUSES, {
             method: 'GET',
@@ -2264,13 +2282,13 @@ function loadWarehousesForDropdown() {
             })
             .then(data => {
                 console.log("Warehouses for stock management received:", data);
-                
+
                 if (data.success && data.data && data.data.length > 0) {
                     let html = '';
                     data.data.forEach(warehouse => {
                         html += `<option value="${warehouse.whouse_id}">${warehouse.whouse_name}</option>`;
                     });
-                    
+
                     addWarehouseSelect.innerHTML = html;
                     sourceWarehouse.innerHTML = html;
                     destinationWarehouse.innerHTML = html;
@@ -2289,191 +2307,191 @@ function loadWarehousesForDropdown() {
                 destinationWarehouse.innerHTML = errorOption;
             });
     }
-    
-// Add Stock Form Submission
-function submitAddStock() {
-    console.log("Submitting add stock form...");
-    
-    const form = document.getElementById('addStockForm');
-    if (!form) {
-        console.error("Add stock form not found");
-        return;
-    }
-    
-    // Show adding indicator
-    showAlert('info', 'Adding stock...');
-    
-    const formData = new FormData(form);
-    const addStockData = {
-        prod_id: formData.get('prod_id'),
-        var_id: formData.get('var_id'),  // Ensure that variant ID is included
-        whouse_id: formData.get('whouse_id'),
-        inve_type: formData.get('inve_type'),  // Ensure that inventory type is included
-        quantity: formData.get('quantity'),
-        reason: formData.get('reason'),
-        notes: formData.get('notes')
-    };
-    
-    // Validate required fields
-    if (!addStockData.var_id || !addStockData.whouse_id || !addStockData.quantity || !addStockData.inve_type) {
-        showAlert('error', 'Please fill all required fields');
-        return;
-    }
 
-    // Send add stock request
-    fetchWithTimeout(API_ENDPOINTS.ADD_STOCK, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(addStockData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errorData => {
-                throw new Error(errorData.message || `HTTP error ${response.status}`);
-            }).catch(() => {
-                throw new Error(`HTTP error ${response.status}`);
+    // Add Stock Form Submission
+    function submitAddStock() {
+        console.log("Submitting add stock form...");
+
+        const form = document.getElementById('addStockForm');
+        if (!form) {
+            console.error("Add stock form not found");
+            return;
+        }
+
+        // Show adding indicator
+        showAlert('info', 'Adding stock...');
+
+        const formData = new FormData(form);
+        const addStockData = {
+            prod_id: formData.get('prod_id'),
+            var_id: formData.get('var_id'),  // Ensure that variant ID is included
+            whouse_id: formData.get('whouse_id'),
+            inve_type: formData.get('inve_type'),  // Ensure that inventory type is included
+            quantity: formData.get('quantity'),
+            reason: formData.get('reason'),
+            notes: formData.get('notes')
+        };
+
+        // Validate required fields
+        if (!addStockData.var_id || !addStockData.whouse_id || !addStockData.quantity || !addStockData.inve_type) {
+            showAlert('error', 'Please fill all required fields');
+            return;
+        }
+
+        // Send add stock request
+        fetchWithTimeout(API_ENDPOINTS.ADD_STOCK, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(addStockData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || `HTTP error ${response.status}`);
+                    }).catch(() => {
+                        throw new Error(`HTTP error ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Stock added successfully');
+                    form.reset();
+                    loadInventoryData();  // Refresh inventory after adding stock
+                } else {
+                    showAlert('error', data.message || 'Failed to add stock');
+                }
+            })
+            .catch(error => {
+                console.error("Error adding stock:", error);
+                showAlert('error', `Error adding stock: ${error.message}`);
             });
+    }
+
+    // Move Stock Form Submission
+    function submitMoveStock() {
+        console.log("Submitting move stock form...");
+
+        const form = document.getElementById('moveStockForm');
+        if (!form) {
+            console.error("Move stock form not found");
+            return;
         }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showAlert('success', 'Stock added successfully');
-            form.reset();
-            loadInventoryData();  // Refresh inventory after adding stock
-        } else {
-            showAlert('error', data.message || 'Failed to add stock');
+
+        // Show moving indicator
+        showAlert('info', 'Moving stock...');
+
+        const formData = new FormData(form);
+        const moveStockData = {
+            prod_id: formData.get('prod_id'),
+            var_id: formData.get('var_id'),  // Ensure that variant ID is included
+            source_warehouse_id: formData.get('source_warehouse_id'),
+            destination_warehouse_id: formData.get('destination_warehouse_id'),
+            inve_type: formData.get('inve_type'),  // Ensure that inventory type is included
+            quantity: formData.get('quantity'),
+            notes: formData.get('notes')
+        };
+
+        // Validate required fields
+        if (!moveStockData.var_id || !moveStockData.source_warehouse_id || !moveStockData.destination_warehouse_id || !moveStockData.quantity || !moveStockData.inve_type) {
+            showAlert('error', 'Please fill all required fields');
+            return;
         }
-    })
-    .catch(error => {
-        console.error("Error adding stock:", error);
-        showAlert('error', `Error adding stock: ${error.message}`);
-    });
-}
 
-// Move Stock Form Submission
-function submitMoveStock() {
-    console.log("Submitting move stock form...");
-    
-    const form = document.getElementById('moveStockForm');
-    if (!form) {
-        console.error("Move stock form not found");
-        return;
-    }
-    
-    // Show moving indicator
-    showAlert('info', 'Moving stock...');
-    
-    const formData = new FormData(form);
-    const moveStockData = {
-        prod_id: formData.get('prod_id'),
-        var_id: formData.get('var_id'),  // Ensure that variant ID is included
-        source_warehouse_id: formData.get('source_warehouse_id'),
-        destination_warehouse_id: formData.get('destination_warehouse_id'),
-        inve_type: formData.get('inve_type'),  // Ensure that inventory type is included
-        quantity: formData.get('quantity'),
-        notes: formData.get('notes')
-    };
-    
-    // Validate required fields
-    if (!moveStockData.var_id || !moveStockData.source_warehouse_id || !moveStockData.destination_warehouse_id || !moveStockData.quantity || !moveStockData.inve_type) {
-        showAlert('error', 'Please fill all required fields');
-        return;
-    }
+        // Check if source and destination are different
+        if (moveStockData.source_warehouse_id === moveStockData.destination_warehouse_id) {
+            showAlert('error', 'Source and destination warehouses must be different');
+            return;
+        }
 
-    // Check if source and destination are different
-    if (moveStockData.source_warehouse_id === moveStockData.destination_warehouse_id) {
-        showAlert('error', 'Source and destination warehouses must be different');
-        return;
-    }
-
-    fetchWithTimeout(API_ENDPOINTS.MOVE_STOCK, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(moveStockData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errorData => {
-                throw new Error(errorData.message || `HTTP error ${response.status}`);
-            }).catch(() => {
-                throw new Error(`HTTP error ${response.status}`);
+        fetchWithTimeout(API_ENDPOINTS.MOVE_STOCK, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(moveStockData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || `HTTP error ${response.status}`);
+                    }).catch(() => {
+                        throw new Error(`HTTP error ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Stock moved successfully');
+                    form.reset();
+                    loadInventoryData();  // Refresh inventory after moving stock
+                } else {
+                    showAlert('error', data.message || 'Failed to move stock');
+                }
+            })
+            .catch(error => {
+                console.error("Error moving stock:", error);
+                showAlert('error', `Error moving stock: ${error.message}`);
             });
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showAlert('success', 'Stock moved successfully');
-            form.reset();
-            loadInventoryData();  // Refresh inventory after moving stock
-        } else {
-            showAlert('error', data.message || 'Failed to move stock');
-        }
-    })
-    .catch(error => {
-        console.error("Error moving stock:", error);
-        showAlert('error', `Error moving stock: ${error.message}`);
-    });
-}
+    }
 
     /**
      * Save product
      */
     function saveProduct() {
         console.log("Saving product...");
-        
+
         const form = document.getElementById('productForm');
         if (!form) {
             console.error("Product form not found");
             return;
         }
-        
+
         // Show saving indicator
         showAlert('info', 'Saving product...');
-        
+
         // Validate form
         const productName = document.getElementById('productName').value;
         if (!productName) {
             showAlert('error', 'Product name is required');
             return;
         }
-        
+
         // Check if at least one variant exists
         const variantForms = document.querySelectorAll('.variant-form');
         if (variantForms.length === 0) {
             showAlert('error', 'At least one variant is required');
             return;
         }
-        
+
         // Create FormData object
         const formData = new FormData(form);
-        
+
         // Add JSON data for variants, features, and specs
         const variants = collectVariantsData();
         formData.append('variants', JSON.stringify(variants));
-        
+
         const features = collectFeaturesData();
         formData.append('features', JSON.stringify(features));
-        
+
         const specs = collectSpecsData();
         formData.append('specs', JSON.stringify(specs));
-        
+
         // Add inventory data
         const inventory = collectInventoryData();
         formData.append('inventory', JSON.stringify(inventory));
-        
+
         // Determine if this is create or update
         const isUpdate = currentProductId !== null;
         const url = isUpdate ? API_ENDPOINTS.UPDATE_PRODUCT + currentProductId : API_ENDPOINTS.CREATE_PRODUCT;
         const method = isUpdate ? 'PUT' : 'POST';
-        
+
         // Submit form with timeout handling
         const submitPromise = fetch(url, {
             method: method,
@@ -2482,11 +2500,11 @@ function submitMoveStock() {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
-        
-        const timeoutPromise = new Promise((_, reject) => 
+
+        const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error("Request timeout")), 30000)
         );
-        
+
         Promise.race([submitPromise, timeoutPromise])
             .then(response => {
                 if (!response.ok) {
@@ -2500,28 +2518,28 @@ function submitMoveStock() {
             })
             .then(data => {
                 console.log("Product save response:", data);
-                
+
                 if (data.success) {
                     // Show success message
                     showAlert('success', `Product ${isUpdate ? 'updated' : 'created'} successfully`);
-                    
+
                     // Reset form
                     resetProductForm();
-                    
+
                     // Reset current product ID if update
                     if (isUpdate) {
                         currentProductId = null;
                     }
-                    
+
                     // Close modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
                     if (modal) {
                         modal.hide();
                     }
-                    
+
                     // Refresh dashboard stats
                     loadDashboardStats();
-                    
+
                     // Refresh current view
                     if (currentView === 'inventory') {
                         loadInventoryData();
@@ -2537,21 +2555,21 @@ function submitMoveStock() {
                 showAlert('error', `Error ${isUpdate ? 'updating' : 'creating'} product: ${error.message}`);
             });
     }
-    
+
     /**
      * Collect variants data from form
      */
     function collectVariantsData() {
         const variants = [];
         const variantForms = document.querySelectorAll('.variant-form');
-        
+
         variantForms.forEach((form) => {
             const capacityInput = form.querySelector('[name^="variants"][name$="[var_capacity]"]');
             const powerInput = form.querySelector('[name^="variants"][name$="[var_power_consumption]"]');
             const srpPriceInput = form.querySelector('[name^="variants"][name$="[var_srp_price]"]');
             const freeInstallInput = form.querySelector('[name^="variants"][name$="[var_price_free_install]"]');
             const withInstallInput = form.querySelector('[name^="variants"][name$="[var_price_with_install]"]');
-            
+
             variants.push({
                 var_capacity: capacityInput ? capacityInput.value : '',
                 var_power_consumption: powerInput ? powerInput.value : '',
@@ -2560,37 +2578,37 @@ function submitMoveStock() {
                 var_price_with_install: withInstallInput ? withInstallInput.value : ''
             });
         });
-        
+
         return variants;
     }
-    
+
     /**
      * Collect features data from form
      */
     function collectFeaturesData() {
         const features = [];
         const featureInputs = document.querySelectorAll('.features-container input');
-        
+
         featureInputs.forEach(input => {
             if (input.value) {
                 features.push(input.value);
             }
         });
-        
+
         return features;
     }
-    
+
     /**
      * Collect specifications data from form
      */
     function collectSpecsData() {
         const specs = [];
         const specRows = document.querySelectorAll('.specs-container .row');
-        
+
         specRows.forEach(row => {
             const nameInput = row.querySelector('[name$="[spec_name]"]');
             const valueInput = row.querySelector('[name$="[spec_value]"]');
-            
+
             if (nameInput && valueInput && nameInput.value && valueInput.value) {
                 specs.push({
                     spec_name: nameInput.value,
@@ -2598,10 +2616,10 @@ function submitMoveStock() {
                 });
             }
         });
-        
+
         return specs;
     }
-    
+
     /**
      * Collect inventory data from form
      */
@@ -2610,15 +2628,15 @@ function submitMoveStock() {
         const variantInventories = document.querySelectorAll('.variant-inventory');
         const warehouseId = document.getElementById('warehouseSelect').value;
         const inventoryType = document.getElementById('inventoryType').value;
-        
+
         if (!warehouseId) {
             return inventory;
         }
-        
+
         variantInventories.forEach((invDiv) => {
             const quantityInput = invDiv.querySelector('[name$="[quantity]"]');
             const variantIndexInput = invDiv.querySelector('[name$="[variant_index]"]');
-            
+
             if (quantityInput && parseInt(quantityInput.value) > 0 && variantIndexInput) {
                 inventory.push({
                     variant_id: variantIndexInput.value,
@@ -2628,94 +2646,94 @@ function submitMoveStock() {
                 });
             }
         });
-        
+
         return inventory;
     }
-    
+
     /**
      * Reset product form
      */
     function resetProductForm() {
         console.log("Resetting product form...");
-        
+
         const form = document.getElementById('productForm');
         if (form) {
             form.reset();
         }
-        
+
         // Reset basic fields
         const productNameElem = document.getElementById('productName');
         const productDescriptionElem = document.getElementById('productDescription');
         const productAvailabilityElem = document.getElementById('productAvailability');
         const productImageElem = document.getElementById('productImage');
-        
+
         if (productNameElem) productNameElem.value = '';
         if (productDescriptionElem) productDescriptionElem.value = '';
         if (productAvailabilityElem) productAvailabilityElem.value = 'Available';
         if (productImageElem) productImageElem.value = '';
-        
+
         // Reset variants (keep only first one)
         const variantsContainer = document.querySelector('.variants-container');
         if (variantsContainer) {
             const variantForms = variantsContainer.querySelectorAll('.variant-form');
-            
+
             if (variantForms.length > 0) {
                 // Clear first form fields
                 const firstForm = variantForms[0];
                 const inputs = firstForm.querySelectorAll('input');
                 inputs.forEach(input => input.value = '');
-                
+
                 // Remove additional forms
                 for (let i = 1; i < variantForms.length; i++) {
                     variantForms[i].remove();
                 }
             }
         }
-        
+
         // Reset features
         const featuresContainer = document.querySelector('.features-container');
         if (featuresContainer) {
             const featureInputs = featuresContainer.querySelectorAll('.input-group');
-            
+
             if (featureInputs.length > 0) {
                 // Clear first feature
                 featureInputs[0].querySelector('input').value = '';
-                
+
                 // Remove additional features
                 for (let i = 1; i < featureInputs.length; i++) {
                     featureInputs[i].remove();
                 }
             }
         }
-        
+
         // Reset specifications
         const specsContainer = document.querySelector('.specs-container');
         if (specsContainer) {
             const specRows = specsContainer.querySelectorAll('.row');
-            
+
             if (specRows.length > 0) {
                 // Clear first spec
                 const inputs = specRows[0].querySelectorAll('input');
                 inputs.forEach(input => input.value = '');
-                
+
                 // Remove additional specs
                 for (let i = 1; i < specRows.length; i++) {
                     specRows[i].remove();
                 }
             }
         }
-        
+
         // Reset inventory tab
         updateInventoryVariants();
-        
+
         // Reset counters
         variantCounter = 0;
         featureCounter = 0;
         specCounter = 0;
-        
+
         // Reset current product ID
         currentProductId = null;
-        
+
         // Switch to first tab
         const firstTab = document.querySelector('#product-info-tab');
         if (firstTab && bootstrap && bootstrap.Tab) {
@@ -2723,92 +2741,92 @@ function submitMoveStock() {
             tab.show();
         }
     }
-    
+
     /**
      * Edit product
      */
     /**
  * Edit product
  */
-function editProduct(productId) {
-    console.log("Editing product:", productId);
-    
-    // Store current product ID
-    currentProductId = productId;
-    
-    // Show loading indicator
-    showAlert('info', 'Loading product data...');
-    
-    // Fetch product details
-    fetchWithTimeout(API_ENDPOINTS.PRODUCT_DETAILS + productId, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Product data for editing received:", data);
-            
-            if (data.success) {
-                // Close the product details modal if it's open
-                const detailsModal = bootstrap.Modal.getInstance(document.getElementById('productDetailsModal'));
-                if (detailsModal) {
-                    detailsModal.hide();
-                }
-                
-                // Reset form first
-                resetProductForm();
-                
-                // Clear warehouse dropdown and reset its loading state
-                const warehouseSelect = document.getElementById('warehouseSelect');
-                if (warehouseSelect) {
-                    warehouseSelect.innerHTML = '<option value="">Select warehouse</option>';
-                    warehouseSelect.dataset.loading = 'false';
-                }
-                
-                // Populate form with product data
-                populateProductForm(data.data);
-                
-                // Update modal title
-                document.getElementById('addProductModalLabel').textContent = 'Edit Product';
-                document.getElementById('saveProductBtn').textContent = 'Update Product';
-                
-                // Show edit modal
-                const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
-                modal.show();
-                
-                // Load warehouses for dropdown after modal is shown
-                setTimeout(() => {
-                    loadWarehousesForDropdown();
-                }, 100);
-            } else {
-                showAlert('error', 'Could not load product details: ' + data.message);
+    function editProduct(productId) {
+        console.log("Editing product:", productId);
+
+        // Store current product ID
+        currentProductId = productId;
+
+        // Show loading indicator
+        showAlert('info', 'Loading product data...');
+
+        // Fetch product details
+        fetchWithTimeout(API_ENDPOINTS.PRODUCT_DETAILS + productId, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .catch(error => {
-            console.error("Error loading product details for editing:", error);
-            showAlert('error', 'Error loading product details');
-        });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Product data for editing received:", data);
+
+                if (data.success) {
+                    // Close the product details modal if it's open
+                    const detailsModal = bootstrap.Modal.getInstance(document.getElementById('productDetailsModal'));
+                    if (detailsModal) {
+                        detailsModal.hide();
+                    }
+
+                    // Reset form first
+                    resetProductForm();
+
+                    // Clear warehouse dropdown and reset its loading state
+                    const warehouseSelect = document.getElementById('warehouseSelect');
+                    if (warehouseSelect) {
+                        warehouseSelect.innerHTML = '<option value="">Select warehouse</option>';
+                        warehouseSelect.dataset.loading = 'false';
+                    }
+
+                    // Populate form with product data
+                    populateProductForm(data.data);
+
+                    // Update modal title
+                    document.getElementById('addProductModalLabel').textContent = 'Edit Product';
+                    document.getElementById('saveProductBtn').textContent = 'Update Product';
+
+                    // Show edit modal
+                    const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+                    modal.show();
+
+                    // Load warehouses for dropdown after modal is shown
+                    setTimeout(() => {
+                        loadWarehousesForDropdown();
+                    }, 100);
+                } else {
+                    showAlert('error', 'Could not load product details: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error("Error loading product details for editing:", error);
+                showAlert('error', 'Error loading product details');
+            });
     }
     /**
      * Populate product form with data for editing
      */
     function populateProductForm(data) {
         console.log("Populating product form with data:", data);
-        
+
         const { product, variants, inventory } = data;
-        
+
         // Basic product details
         document.getElementById('productName').value = product.prod_name || '';
         document.getElementById('productDescription').value = product.prod_description || '';
         document.getElementById('productAvailability').value = product.prod_availability_status || 'Available';
-        
+
         // Variants data
         if (variants && variants.length > 0) {
             // Fill first variant form
@@ -2820,7 +2838,7 @@ function editProduct(productId) {
                 firstVariantForm.querySelector('[name^="variants"][name$="[var_price_free_install]"]').value = variants[0].var_price_free_install || '';
                 firstVariantForm.querySelector('[name^="variants"][name$="[var_price_with_install]"]').value = variants[0].var_price_with_install || '';
             }
-            
+
             // Add additional variant forms for each variant
             for (let i = 1; i < variants.length; i++) {
                 addNewVariantForm();
@@ -2834,14 +2852,14 @@ function editProduct(productId) {
                 }
             }
         }
-        
+
         // Features
         if (product.features && product.features.length > 0) {
             const featuresContainer = document.querySelector('.features-container');
-            
+
             // Clear container
             featuresContainer.innerHTML = '';
-            
+
             // Add feature inputs
             product.features.forEach((feature, index) => {
                 const featureHTML = `
@@ -2856,14 +2874,14 @@ function editProduct(productId) {
                 featureCounter = index;
             });
         }
-        
+
         // Specifications
         if (product.specs && product.specs.length > 0) {
             const specsContainer = document.querySelector('.specs-container');
-            
+
             // Clear container
             specsContainer.innerHTML = '';
-            
+
             // Add spec inputs
             product.specs.forEach((spec, index) => {
                 const specHTML = `
@@ -2885,21 +2903,21 @@ function editProduct(productId) {
                 specCounter = index;
             });
         }
-        
+
         // Update inventory variants tab
         updateInventoryVariants();
     }
-    
+
     /**
      * Confirm delete product
      */
     function confirmDeleteProduct(productId) {
         console.log("Confirming product deletion:", productId);
-        
+
         if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
             // Show deleting indicator
             showAlert('info', 'Deleting product...');
-            
+
             // Send delete request
             fetchWithTimeout(API_ENDPOINTS.DELETE_PRODUCT + productId, {
                 method: 'POST',
@@ -2919,14 +2937,14 @@ function editProduct(productId) {
                 })
                 .then(data => {
                     console.log("Product delete response:", data);
-                    
+
                     if (data.success) {
                         // Show success message
                         showAlert('success', 'Product deleted successfully');
-                        
+
                         // Refresh dashboard stats
                         loadDashboardStats();
-                        
+
                         // Refresh current view
                         if (currentView === 'inventory') {
                             loadInventoryData();
@@ -2943,133 +2961,19 @@ function editProduct(productId) {
                 });
         }
     }
-    
-    /**
-     * Show import modal
-     */
-    function showImportModal() {
-        console.log("Showing import modal...");
-        
-        // Create modal if it doesn't exist
-        if (!document.getElementById('importInventoryModal')) {
-            const modalHTML = `
-                <div class="modal fade" id="importInventoryModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Import Inventory</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="importForm" enctype="multipart/form-data">
-                                    <div class="mb-3">
-                                        <label for="importFile" class="form-label">CSV File</label>
-                                        <input type="file" class="form-control" id="importFile" name="inventory_file" accept=".csv" required>
-                                    </div>
-                                    <div class="alert alert-info">
-                                        <i class="bi bi-info-circle me-2"></i>
-                                        CSV should have columns: product_id, warehouse_id, type, quantity
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="importInventoryBtn">Import</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            // Add event listener to import button
-            document.getElementById('importInventoryBtn').addEventListener('click', importInventory);
-        }
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('importInventoryModal'));
-        modal.show();
-    }
-    
-    /**
-     * Import inventory from CSV
-     */
-    function importInventory() {
-        console.log("Importing inventory...");
-        
-        const form = document.getElementById('importForm');
-        const fileInput = document.getElementById('importFile');
-        
-        if (!form || !fileInput) {
-            console.error("Import form or file input not found");
-            return;
-        }
-        
-        if (!fileInput.files || fileInput.files.length === 0) {
-            showAlert('error', 'Please select a CSV file');
-            return;
-        }
-        
-        // Show importing indicator
-        showAlert('info', 'Importing inventory...');
-        
-        const formData = new FormData(form);
-        
-        // Send import request
-        fetchWithTimeout(API_ENDPOINTS.IMPORT_INVENTORY, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errorData => {
-                        throw new Error(errorData.message || `HTTP error ${response.status}`);
-                    }).catch(() => {
-                        throw new Error(`HTTP error ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("Import response:", data);
-                
-                if (data.success) {
-                    // Show success message
-                    showAlert('success', `Successfully imported ${data.data.count} inventory records`);
-                    
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('importInventoryModal'));
-                    if (modal) {
-                        modal.hide();
-                    }
-                    
-                    // Refresh inventory view if visible
-                    if (currentView === 'inventory') {
-                        loadInventoryData();
-                    }
-                } else {
-                    showAlert('error', data.message || 'Import failed');
-                }
-            })
-            .catch(error => {
-                console.error("Error importing inventory:", error);
-                showAlert('error', `Error importing inventory: ${error.message}`);
-            });
-    }
-    
+
     /**
      * View warehouse details
      */
     function viewWarehouseDetails(warehouseId) {
         console.log("View warehouse details (ID: " + warehouseId + ")");
-        
+
         // Store current warehouse ID
         currentWarehouseId = warehouseId;
-        
+
         // Show loading indicator
         showAlert('info', 'Loading warehouse details...');
-        
+
         // Fetch warehouse data
         fetchWithTimeout(API_ENDPOINTS.GET_WAREHOUSE + warehouseId, {
             method: 'GET',
@@ -3085,7 +2989,7 @@ function editProduct(productId) {
             })
             .then(data => {
                 console.log("Warehouse data received:", data);
-                
+
                 if (data.success) {
                     // Fetch warehouse inventory
                     fetchWithTimeout(API_ENDPOINTS.GET_WAREHOUSE_INVENTORY + warehouseId, {
@@ -3102,7 +3006,7 @@ function editProduct(productId) {
                         })
                         .then(inventoryData => {
                             console.log("Warehouse inventory received:", inventoryData);
-                            
+
                             // TODO: Implement warehouse details view
                             showAlert('info', 'Warehouse details view will be implemented in the next update');
                         })
@@ -3119,19 +3023,19 @@ function editProduct(productId) {
                 showAlert('error', 'Error loading warehouse details');
             });
     }
-    
+
     /**
      * Initialize fallback functionality
      */
     function initializeFallbackFunctionality() {
         console.log("Initializing fallback functionality...");
-        
+
         // Load default view
         const activeView = document.querySelector('.view-selector .btn.active');
         if (activeView) {
             const viewType = activeView.getAttribute('data-view');
             currentView = viewType;
-            
+
             if (viewType === 'inventory') {
                 loadInventoryData();
             } else if (viewType === 'products') {
@@ -3144,8 +3048,8 @@ function editProduct(productId) {
             loadInventoryData();
         }
     }
-    
-        
+
+
     /**
      * Helper function to get CSS class for inventory type
      */
@@ -3158,51 +3062,51 @@ function editProduct(productId) {
             'Returned': 'bg-warning',
             'Quarantine': 'bg-dark'
         };
-        
+
         return typeClasses[type] || 'bg-secondary';
     }
-    
+
     /**
      * Format currency value
      */
     function formatCurrency(value) {
         if (!value && value !== 0) return 'N/A';
-        
+
         return new Intl.NumberFormat('en-PH', {
             style: 'currency',
             currency: 'PHP'
         }).format(value);
     }
-    
+
     /**
      * Format date value
      */
     function formatDate(dateString) {
         if (!dateString) return 'N/A';
-        
+
         return new Date(dateString).toLocaleString();
     }
-    
+
     /**
      * Fetch with timeout
      */
     function fetchWithTimeout(url, options, timeout = 15000) {
         return Promise.race([
             fetch(url, options),
-            new Promise((_, reject) => 
+            new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Request timed out')), timeout)
             )
         ]);
     }
-    
+
     /**
      * Filter inventory by type
      */
     function filterInventoryByType(type) {
         console.log("Filtering inventory by type:", type);
-        
+
         const url = type === 'all' ? API_ENDPOINTS.GET_ALL_INVENTORY : API_ENDPOINTS.GET_INVENTORY_BY_TYPE + '/' + type;
-        
+
         fetchWithTimeout(url, {
             method: 'GET',
             headers: {
@@ -3217,7 +3121,7 @@ function editProduct(productId) {
             })
             .then(data => {
                 console.log("Filtered inventory data received:", data);
-                
+
                 if (data.success) {
                     // Update inventory view
                     const inventoryDashboard = document.querySelector('#inventoryView .card-body');
@@ -3239,7 +3143,7 @@ function editProduct(productId) {
                                 </thead>
                                 <tbody>
                         `;
-                        
+
                         if (data.data && data.data.length > 0) {
                             // Add rows
                             data.data.forEach(item => {
@@ -3251,12 +3155,12 @@ function editProduct(productId) {
                                     'Returned': 'bg-warning',
                                     'Quarantine': 'bg-dark'
                                 };
-                                
+
                                 const bgClass = typeClasses[item.inve_type] || 'bg-secondary';
-                                
+
                                 let statusClass = 'bg-success';
                                 let statusText = 'In Stock';
-                                
+
                                 if (parseInt(item.quantity) <= 0) {
                                     statusClass = 'bg-danger';
                                     statusText = 'Out of Stock';
@@ -3264,7 +3168,7 @@ function editProduct(productId) {
                                     statusClass = 'bg-warning';
                                     statusText = 'Low Stock';
                                 }
-                                
+
                                 html += `
                                     <tr>
                                         <td>
@@ -3311,24 +3215,24 @@ function editProduct(productId) {
                                 </tr>
                             `;
                         }
-                        
+
                         html += `
                                 </tbody>
                             </table>
                         `;
-                        
+
                         inventoryDashboard.innerHTML = html;
-                        
+
                         // Add event listeners
                         inventoryDashboard.querySelectorAll('.view-product').forEach(button => {
-                            button.addEventListener('click', function() {
+                            button.addEventListener('click', function () {
                                 const id = this.getAttribute('data-id');
                                 viewProductDetails(id);
                             });
                         });
-                        
+
                         inventoryDashboard.querySelectorAll('.manage-inventory').forEach(button => {
-                            button.addEventListener('click', function() {
+                            button.addEventListener('click', function () {
                                 const id = this.getAttribute('data-id');
                                 openManageInventory(id);
                             });
@@ -3343,22 +3247,22 @@ function editProduct(productId) {
                 showAlert('error', 'Error filtering inventory');
             });
     }
-    
+
     /**
      * Show alert message
      */
     function showAlert(type, message) {
         console.log(`Showing ${type} alert:`, message);
-        
+
         const alertClasses = {
             'success': 'alert-success',
             'error': 'alert-danger',
             'info': 'alert-info',
             'warning': 'alert-warning'
         };
-        
+
         const alertClass = alertClasses[type] || 'alert-info';
-        
+
         // Create alert element
         const alertContainer = document.createElement('div');
         alertContainer.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
@@ -3368,15 +3272,15 @@ function editProduct(productId) {
         alertContainer.style.maxWidth = '400px';
         alertContainer.style.zIndex = '9999';
         alertContainer.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
-        
+
         alertContainer.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
-        
+
         // Add to body
         document.body.appendChild(alertContainer);
-        
+
         // Auto-dismiss after 5 seconds
         setTimeout(() => {
             if (alertContainer && alertContainer.parentNode) {
@@ -3390,7 +3294,7 @@ function editProduct(productId) {
  * Global error handler for better debugging
  * This ensures any uncaught errors will still show a message to the user
  */
-window.onerror = function(message, source, lineno, colno, error) {
+window.onerror = function (message, source, lineno, colno, error) {
     console.error("Global error caught:", {
         message: message,
         source: source,
@@ -3398,10 +3302,10 @@ window.onerror = function(message, source, lineno, colno, error) {
         colno: colno,
         error: error
     });
-    
+
     // Display an error message to the user
     showGlobalErrorBanner("An unexpected error occurred. Please refresh the page or try again later.");
-    
+
     return true; // Prevents the default error handling
 };
 
@@ -3412,7 +3316,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 function showGlobalErrorBanner(message) {
     // Remove any existing error banners
     document.querySelectorAll('.global-error-banner').forEach(banner => banner.remove());
-    
+
     // Create new error banner
     const errorBanner = document.createElement('div');
     errorBanner.className = 'alert alert-danger alert-dismissible fade show global-error-banner';
@@ -3424,15 +3328,15 @@ function showGlobalErrorBanner(message) {
     errorBanner.style.zIndex = '9999';
     errorBanner.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
     errorBanner.style.maxWidth = '90%';
-    
+
     errorBanner.innerHTML = `
         <strong>Error:</strong> ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
-    
+
     // Add to body
     document.body.appendChild(errorBanner);
-    
+
     // Auto-dismiss after 10 seconds
     setTimeout(() => {
         if (errorBanner && errorBanner.parentNode) {

@@ -66,67 +66,69 @@ class WarehouseController extends BaseController
         error_log("createWarehouse called");
         error_log("REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
         error_log("CONTENT_TYPE: " . ($_SERVER['CONTENT_TYPE'] ?? 'not set'));
-        error_log("POST data: " . json_encode($_POST));
-        error_log("Raw input: " . file_get_contents('php://input'));
         
         // Handle both AJAX and form submissions
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Check if this is a form submission or JSON
-            if (isset($_POST['whouse_name']) && isset($_POST['whouse_location'])) {
-                // Form submission
-                $data = [
-                    'whouse_name' => $_POST['whouse_name'],
-                    'whouse_location' => $_POST['whouse_location'],
-                    'whouse_storage_capacity' => $_POST['whouse_storage_capacity'] ?? null,
-                    'whouse_restock_threshold' => $_POST['whouse_restock_threshold'] ?? null
-                ];
-            } else {
-                // JSON submission
-                $data = $this->getJsonInput();
-            }
-            
-            error_log("Processed data for warehouse creation: " . json_encode($data));
-            
-            // Validate required fields
-            if (empty($data['whouse_name']) || empty($data['whouse_location'])) {
-                error_log("Missing required fields for warehouse creation");
-                $this->jsonError('Warehouse name and location are required', 400);
-                return;
-            }
+            // Get the raw input
+            $input = file_get_contents('php://input');
+            error_log("Raw input: " . $input);
             
             try {
-                // Create warehouse
+                // Check if this is a form submission or JSON
+                if (isset($_POST['whouse_name']) && isset($_POST['whouse_location'])) {
+                    // Form submission
+                    $data = [
+                        'WHOUSE_NAME' => $_POST['whouse_name'],
+                        'WHOUSE_LOCATION' => $_POST['whouse_location'],
+                        'WHOUSE_STORAGE_CAPACITY' => $_POST['whouse_storage_capacity'] ?? null,
+                        'WHOUSE_RESTOCK_THRESHOLD' => $_POST['whouse_restock_threshold'] ?? null
+                    ];
+                } else {
+                    // JSON submission - parse and validate
+                    $data = json_decode($input, true);
+                    
+                    // Check if JSON data is valid
+                    if (!$data || !is_array($data)) {
+                        error_log("Invalid JSON data: " . $input);
+                        $this->jsonError('Invalid JSON data', 400);
+                        return;
+                    }
+                }
+                
+                error_log("Processed data for warehouse creation: " . json_encode($data));
+                
+                // Validate required fields - check both uppercase and lowercase fields
+                $warehouseName = $data['WHOUSE_NAME'] ?? $data['whouse_name'] ?? null;
+                $warehouseLocation = $data['WHOUSE_LOCATION'] ?? $data['whouse_location'] ?? null;
+                
+                if (empty($warehouseName) || empty($warehouseLocation)) {
+                    error_log("Missing required fields for warehouse creation. Name: " . ($warehouseName ?? 'null') . ", Location: " . ($warehouseLocation ?? 'null'));
+                    $this->jsonError('Warehouse name and location are required', 400);
+                    return;
+                }
+                
+                // Create warehouse - use the values we extracted
                 $result = $this->warehouseModel->createWarehouse([
-                    'whouse_name' => $data['whouse_name'],
-                    'whouse_location' => $data['whouse_location'],
-                    'whouse_storage_capacity' => $data['whouse_storage_capacity'] ?? null,
-                    'whouse_restock_threshold' => $data['whouse_restock_threshold'] ?? null
+                    'whouse_name' => $warehouseName,
+                    'whouse_location' => $warehouseLocation,
+                    'whouse_storage_capacity' => $data['WHOUSE_STORAGE_CAPACITY'] ?? $data['whouse_storage_capacity'] ?? null,
+                    'whouse_restock_threshold' => $data['WHOUSE_RESTOCK_THRESHOLD'] ?? $data['whouse_restock_threshold'] ?? null
                 ]);
                 
                 if ($result) {
-                    // Get the newly created warehouse with its ID
-                    $warehouseId = $this->db->lastInsertId();
-                    $warehouse = $this->warehouseModel->findById($warehouseId);
-                    error_log("Warehouse created successfully with ID: " . $warehouseId);
-                    
-                    // Handle redirect for form submission
-                    if ($this->isAjax()) {
-                        $this->jsonSuccess($warehouse, 'Warehouse created successfully');
-                    } else {
-                        // Redirect to inventory page
-                        $this->redirect('/admin/inventory?success=warehouse_created');
-                    }
+                    error_log("Warehouse created successfully with ID: " . $result);
+                    $this->jsonSuccess(['id' => $result, 'message' => 'Warehouse created successfully']);
                 } else {
                     error_log("Failed to create warehouse");
                     $this->jsonError('Failed to create warehouse', 500);
                 }
             } catch (\Exception $e) {
-                error_log("Error creating warehouse: " . $e->getMessage());
+                error_log("Exception in createWarehouse: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 $this->jsonError('Error creating warehouse: ' . $e->getMessage(), 500);
             }
         } else {
-            error_log("Invalid request method for warehouse creation");
-            $this->jsonError('Invalid request method', 400);
+            error_log("Invalid request method for warehouse creation: " . $_SERVER['REQUEST_METHOD']);
+            $this->jsonError('Invalid request method', 405);
         }
     }
     
@@ -140,62 +142,77 @@ class WarehouseController extends BaseController
         
         // Handle both AJAX and form submissions for update
         if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT') {
-            // Check if this is a form submission or JSON
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['whouse_name'])) {
-                // Form submission
-                $data = [
-                    'whouse_name' => $_POST['whouse_name'],
-                    'whouse_location' => $_POST['whouse_location'],
-                    'whouse_storage_capacity' => $_POST['whouse_storage_capacity'] ?? null,
-                    'whouse_restock_threshold' => $_POST['whouse_restock_threshold'] ?? null
-                ];
-            } else {
-                // JSON submission
-                $data = $this->getJsonInput();
-            }
-            
-            error_log("Processed data for warehouse update: " . json_encode($data));
-            
-            // Check if warehouse exists
-            $warehouse = $this->warehouseModel->findById($warehouseId);
-            if (!$warehouse) {
-                error_log("Warehouse not found for update: " . $warehouseId);
-                $this->jsonError('Warehouse not found', 404);
-                return;
-            }
+            // Get the raw input
+            $input = file_get_contents('php://input');
+            error_log("Raw input: " . $input);
             
             try {
+                // Check if this is a form submission or JSON
+                if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['whouse_name'])) {
+                    // Form submission
+                    $data = [
+                        'WHOUSE_NAME' => $_POST['whouse_name'],
+                        'WHOUSE_LOCATION' => $_POST['whouse_location'],
+                        'WHOUSE_STORAGE_CAPACITY' => $_POST['whouse_storage_capacity'] ?? null,
+                        'WHOUSE_RESTOCK_THRESHOLD' => $_POST['whouse_restock_threshold'] ?? null
+                    ];
+                } else {
+                    // JSON submission - parse and validate
+                    $data = json_decode($input, true);
+                    
+                    // Check if JSON data is valid
+                    if (!$data || !is_array($data)) {
+                        error_log("Invalid JSON data: " . $input);
+                        $this->jsonError('Invalid JSON data', 400);
+                        return;
+                    }
+                }
+                
+                error_log("Processed data for warehouse update: " . json_encode($data));
+                
+                // Check if warehouse exists
+                $warehouse = $this->warehouseModel->findById($warehouseId);
+                if (!$warehouse) {
+                    error_log("Warehouse not found for update: " . $warehouseId);
+                    $this->jsonError('Warehouse not found', 404);
+                    return;
+                }
+                
+                // Extract fields with flexibility for case
+                $warehouseName = $data['WHOUSE_NAME'] ?? $data['whouse_name'] ?? $warehouse['whouse_name'];
+                $warehouseLocation = $data['WHOUSE_LOCATION'] ?? $data['whouse_location'] ?? $warehouse['whouse_location'];
+                $storageCapacity = $data['WHOUSE_STORAGE_CAPACITY'] ?? $data['whouse_storage_capacity'] ?? $warehouse['whouse_storage_capacity'];
+                $restockThreshold = $data['WHOUSE_RESTOCK_THRESHOLD'] ?? $data['whouse_restock_threshold'] ?? $warehouse['whouse_restock_threshold'];
+                
+                // Validate required fields
+                if (empty($warehouseName) || empty($warehouseLocation)) {
+                    error_log("Missing required fields for warehouse update. Name: " . ($warehouseName ?? 'null') . ", Location: " . ($warehouseLocation ?? 'null'));
+                    $this->jsonError('Warehouse name and location are required', 400);
+                    return;
+                }
+                
                 // Update warehouse
                 $result = $this->warehouseModel->updateWarehouse($warehouseId, [
-                    'whouse_name' => $data['whouse_name'] ?? $warehouse['whouse_name'],
-                    'whouse_location' => $data['whouse_location'] ?? $warehouse['whouse_location'],
-                    'whouse_storage_capacity' => $data['whouse_storage_capacity'] ?? $warehouse['whouse_storage_capacity'],
-                    'whouse_restock_threshold' => $data['whouse_restock_threshold'] ?? $warehouse['whouse_restock_threshold']
+                    'whouse_name' => $warehouseName,
+                    'whouse_location' => $warehouseLocation,
+                    'whouse_storage_capacity' => $storageCapacity,
+                    'whouse_restock_threshold' => $restockThreshold
                 ]);
                 
                 if ($result) {
-                    // Get the updated warehouse
-                    $updatedWarehouse = $this->warehouseModel->findById($warehouseId);
                     error_log("Warehouse updated successfully: " . $warehouseId);
-                    
-                    // Handle redirect for form submission
-                    if ($this->isAjax()) {
-                        $this->jsonSuccess($updatedWarehouse, 'Warehouse updated successfully');
-                    } else {
-                        // Redirect to inventory page
-                        $this->redirect('/admin/inventory?success=warehouse_updated');
-                    }
+                    $this->jsonSuccess(['id' => $warehouseId, 'message' => 'Warehouse updated successfully']);
                 } else {
                     error_log("Failed to update warehouse: " . $warehouseId);
                     $this->jsonError('Failed to update warehouse', 500);
                 }
             } catch (\Exception $e) {
-                error_log("Error updating warehouse: " . $e->getMessage());
+                error_log("Exception in updateWarehouse: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 $this->jsonError('Error updating warehouse: ' . $e->getMessage(), 500);
             }
         } else {
-            error_log("Invalid request method for warehouse update");
-            $this->jsonError('Invalid request method', 400);
+            error_log("Invalid request method for warehouse update: " . $_SERVER['REQUEST_METHOD']);
+            $this->jsonError('Invalid request method', 405);
         }
     }
     

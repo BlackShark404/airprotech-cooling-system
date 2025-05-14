@@ -85,14 +85,6 @@ ob_start();
         </div>
         <div class="col-md-4 d-flex justify-content-end">
             <div class="btn-group">
-                <button class="btn btn-outline-primary d-flex align-items-center" id="importBtn">
-                    <i class="bi bi-upload me-2"></i>
-                    Import
-                </button>
-                <button class="btn btn-outline-primary d-flex align-items-center" id="exportBtn">
-                    <i class="bi bi-download me-2"></i>
-                    Export
-                </button>
                 <button class="btn btn-outline-primary d-flex align-items-center" id="warehouseBtn" data-bs-toggle="modal" data-bs-target="#warehouseModal">
                     <i class="bi bi-building me-2"></i>
                     Warehouses
@@ -716,15 +708,18 @@ ob_start();
     </div>
 </div>
 
+
+
 <link rel="stylesheet" href="//cdn.datatables.net/2.3.0/css/dataTables.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
 <link rel="stylesheet" href="assets/css/inventory.css">
 
-<!-- Remove duplicate Bootstrap JS -->
+<!-- Add jQuery before Bootstrap and DataTables -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="//cdn.datatables.net/2.3.0/js/dataTables.min.js"></script>
 <script src="/assets/js/utility/inventory.js"></script>
 <script src="/assets/js/utility/InventoryDataTablesHandler.js"></script>
-<script>let table = new DataTable('#myTable');</script>
 <?php
 $content = ob_get_clean();
 

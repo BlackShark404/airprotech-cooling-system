@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
-class WarehouseModel extends BaseModel
+class WarehouseModel extends Model
 {
     // Table name
-    protected $table = 'warehouse';
-    protected $primaryKey = 'whouse_id';
+    protected $table = 'WAREHOUSE';
+    protected $primaryKey = 'WHOUSE_ID';
     
     // Fillable fields
     protected $fillable = [
-        'whouse_name',
-        'whouse_location',
-        'whouse_storage_capacity',
-        'whouse_restock_threshold'
+        'WHOUSE_NAME',
+        'WHOUSE_LOCATION',
+        'WHOUSE_STORAGE_CAPACITY',
+        'WHOUSE_RESTOCK_THRESHOLD'
     ];
     
     /**
@@ -23,7 +23,9 @@ class WarehouseModel extends BaseModel
     {
         error_log("WarehouseModel::getAllWarehouses called");
         try {
-            $warehouses = $this->orderBy('whouse_name')->get();
+            $warehouses = $this->query(
+                "SELECT * FROM {$this->table} WHERE WHOUSE_DELETED_AT IS NULL ORDER BY WHOUSE_NAME"
+            );
             error_log("Retrieved " . count($warehouses) . " warehouses");
             return $warehouses;
         } catch (\Exception $e) {
@@ -39,7 +41,10 @@ class WarehouseModel extends BaseModel
     {
         error_log("WarehouseModel::findById called with ID: " . $id);
         try {
-            $warehouse = $this->find($id);
+            $warehouse = $this->queryOne(
+                "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :id AND WHOUSE_DELETED_AT IS NULL", 
+                ['id' => $id]
+            );
             if ($warehouse) {
                 error_log("Warehouse found: " . json_encode($warehouse));
             } else {
@@ -59,13 +64,33 @@ class WarehouseModel extends BaseModel
     {
         error_log("WarehouseModel::createWarehouse called with data: " . json_encode($data));
         
+        // Normalize data - accept both uppercase and lowercase field names
+        $normalizedData = [];
+        $fieldMap = [
+            'whouse_name' => 'WHOUSE_NAME',
+            'whouse_location' => 'WHOUSE_LOCATION',
+            'whouse_storage_capacity' => 'WHOUSE_STORAGE_CAPACITY',
+            'whouse_restock_threshold' => 'WHOUSE_RESTOCK_THRESHOLD'
+        ];
+        
+        // Process input data to support both naming conventions
+        foreach ($fieldMap as $lowercase => $uppercase) {
+            if (isset($data[$uppercase])) {
+                $normalizedData[$uppercase] = $data[$uppercase];
+            } else if (isset($data[$lowercase])) {
+                $normalizedData[$uppercase] = $data[$lowercase];
+            }
+        }
+        
+        error_log("Normalized data for warehouse creation: " . json_encode($normalizedData));
+        
         // Validate data
-        if (empty($data['whouse_name'])) {
+        if (empty($normalizedData['WHOUSE_NAME'])) {
             error_log("Warehouse name is required");
             throw new \Exception("Warehouse name is required");
         }
         
-        if (empty($data['whouse_location'])) {
+        if (empty($normalizedData['WHOUSE_LOCATION'])) {
             error_log("Warehouse location is required");
             throw new \Exception("Warehouse location is required");
         }
@@ -74,14 +99,25 @@ class WarehouseModel extends BaseModel
             // Begin transaction
             $this->beginTransaction();
             
+            // Add timestamps
+            $now = date('Y-m-d H:i:s');
+            $normalizedData['WHOUSE_CREATED_AT'] = $now;
+            $normalizedData['WHOUSE_UPDATED_AT'] = $now;
+            
+            // Format the insert data
+            $formatData = $this->formatInsertData($normalizedData);
+            
             // Insert warehouse
-            $result = $this->insert($data);
+            $sql = "INSERT INTO {$this->table} ({$formatData['columns']}) VALUES ({$formatData['placeholders']})";
+            $this->execute($sql, $formatData['filteredData']);
+            
+            $warehouseId = $this->lastInsertId();
             
             // Commit transaction
             $this->commit();
             
-            error_log("Warehouse created successfully");
-            return $result;
+            error_log("Warehouse created successfully with ID: " . $warehouseId);
+            return $warehouseId;
         } catch (\Exception $e) {
             // Rollback transaction on error
             if ($this->inTransaction()) {
@@ -106,22 +142,46 @@ class WarehouseModel extends BaseModel
             throw new \Exception("Warehouse not found");
         }
         
+        // Normalize data - accept both uppercase and lowercase field names
+        $normalizedData = [];
+        $fieldMap = [
+            'whouse_name' => 'WHOUSE_NAME',
+            'whouse_location' => 'WHOUSE_LOCATION',
+            'whouse_storage_capacity' => 'WHOUSE_STORAGE_CAPACITY',
+            'whouse_restock_threshold' => 'WHOUSE_RESTOCK_THRESHOLD'
+        ];
+        
+        // Process input data to support both naming conventions
+        foreach ($fieldMap as $lowercase => $uppercase) {
+            if (isset($data[$uppercase])) {
+                $normalizedData[$uppercase] = $data[$uppercase];
+            } else if (isset($data[$lowercase])) {
+                $normalizedData[$uppercase] = $data[$lowercase];
+            }
+        }
+        
+        error_log("Normalized data for warehouse update: " . json_encode($normalizedData));
+        
         try {
             // Begin transaction
             $this->beginTransaction();
             
+            // Add updated timestamp
+            $normalizedData['WHOUSE_UPDATED_AT'] = date('Y-m-d H:i:s');
+            
+            // Format the update data
+            $formatData = $this->formatUpdateData($normalizedData);
+            
             // Update warehouse
-            $result = $this->update(
-                $data,
-                "{$this->primaryKey} = :id",
-                ['id' => $warehouseId]
-            );
+            $sql = "UPDATE {$this->table} SET {$formatData['updateClause']} WHERE {$this->primaryKey} = :id";
+            $params = array_merge($formatData['filteredData'], ['id' => $warehouseId]);
+            $this->execute($sql, $params);
             
             // Commit transaction
             $this->commit();
             
             error_log("Warehouse updated successfully: " . $warehouseId);
-            return $result;
+            return true;
         } catch (\Exception $e) {
             // Rollback transaction on error
             if ($this->inTransaction()) {
@@ -147,11 +207,11 @@ class WarehouseModel extends BaseModel
         }
         
         // First check if warehouse has inventory
-        $hasInventory = $this->db->prepare(
-            "SELECT COUNT(*) FROM inventory WHERE whouse_id = :whouse_id"
+        $count = $this->queryScalar(
+            "SELECT COUNT(*) FROM INVENTORY WHERE WHOUSE_ID = :whouse_id AND INVE_DELETED_AT IS NULL",
+            ['whouse_id' => $warehouseId],
+            0
         );
-        $hasInventory->execute(['whouse_id' => $warehouseId]);
-        $count = $hasInventory->fetchColumn();
         
         if ($count > 0) {
             error_log("Cannot delete warehouse with inventory: " . $warehouseId . " (has " . $count . " items)");
@@ -162,17 +222,17 @@ class WarehouseModel extends BaseModel
             // Begin transaction
             $this->beginTransaction();
             
-            // Delete warehouse
-            $result = $this->delete(
-                "{$this->primaryKey} = :id",
-                ['id' => $warehouseId]
+            // Soft delete warehouse
+            $this->execute(
+                "UPDATE {$this->table} SET WHOUSE_DELETED_AT = :now WHERE {$this->primaryKey} = :id",
+                ['now' => date('Y-m-d H:i:s'), 'id' => $warehouseId]
             );
             
             // Commit transaction
             $this->commit();
             
             error_log("Warehouse deleted successfully: " . $warehouseId);
-            return $result;
+            return true;
         } catch (\Exception $e) {
             // Rollback transaction on error
             if ($this->inTransaction()) {
@@ -195,24 +255,26 @@ class WarehouseModel extends BaseModel
             $query = "
                 SELECT 
                     w.*,
-                    COUNT(DISTINCT i.prod_id) as product_count,
-                    COALESCE(SUM(i.quantity), 0) as total_quantity,
+                    COUNT(DISTINCT i.PROD_ID) as product_count,
+                    COALESCE(SUM(i.QUANTITY), 0) as total_quantity,
                     CASE 
-                        WHEN w.whouse_storage_capacity > 0 THEN 
-                            (COALESCE(SUM(i.quantity), 0) / w.whouse_storage_capacity) * 100 
+                        WHEN w.WHOUSE_STORAGE_CAPACITY > 0 THEN 
+                            (COALESCE(SUM(i.QUANTITY), 0) / w.WHOUSE_STORAGE_CAPACITY) * 100 
                         ELSE 0 
                     END as capacity_used_percent
                 FROM 
                     {$this->table} w
                 LEFT JOIN 
-                    inventory i ON w.whouse_id = i.whouse_id
+                    INVENTORY i ON w.WHOUSE_ID = i.WHOUSE_ID AND i.INVE_DELETED_AT IS NULL
+                WHERE
+                    w.WHOUSE_DELETED_AT IS NULL
                 GROUP BY 
-                    w.whouse_id
+                    w.WHOUSE_ID
                 ORDER BY 
-                    w.whouse_name
+                    w.WHOUSE_NAME
             ";
             
-            $result = $this->db->query($query)->fetchAll(\PDO::FETCH_ASSOC);
+            $result = $this->query($query);
             error_log("Retrieved warehouse summary with " . count($result) . " warehouses");
             return $result;
         } catch (\Exception $e) {
@@ -232,29 +294,30 @@ class WarehouseModel extends BaseModel
             // Using raw query for complex join
             $query = "
                 SELECT 
-                    p.prod_id,
-                    p.prod_name,
-                    p.prod_image,
-                    pv.var_id,
-                    pv.var_capacity,
-                    i.inve_type,
-                    i.quantity,
-                    i.last_updated
+                    p.PROD_ID,
+                    p.PROD_NAME,
+                    p.PROD_IMAGE,
+                    pv.VAR_ID,
+                    pv.VAR_CAPACITY,
+                    i.INVE_TYPE,
+                    i.QUANTITY,
+                    i.LAST_UPDATED
                 FROM 
-                    inventory i
+                    INVENTORY i
                 JOIN 
-                    product p ON i.prod_id = p.prod_id
+                    PRODUCT p ON i.PROD_ID = p.PROD_ID
                 JOIN 
-                    product_variant pv ON p.prod_id = pv.prod_id
+                    PRODUCT_VARIANT pv ON p.PROD_ID = pv.PROD_ID
                 WHERE 
-                    i.whouse_id = :whouse_id
+                    i.WHOUSE_ID = :whouse_id AND
+                    i.INVE_DELETED_AT IS NULL AND
+                    p.PROD_DELETED_AT IS NULL AND
+                    pv.VAR_DELETED_AT IS NULL
                 ORDER BY 
-                    p.prod_name, pv.var_capacity
+                    p.PROD_NAME, pv.VAR_CAPACITY
             ";
             
-            $stmt = $this->db->prepare($query);
-            $stmt->execute(['whouse_id' => $warehouseId]);
-            $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $result = $this->query($query, ['whouse_id' => $warehouseId]);
             
             error_log("Retrieved " . count($result) . " product inventory items for warehouse: " . $warehouseId);
             return $result;
@@ -275,22 +338,24 @@ class WarehouseModel extends BaseModel
             // Using raw query for complex join
             $query = "
                 SELECT 
-                    w.whouse_id,
-                    w.whouse_name,
-                    COUNT(DISTINCT i.prod_id) as low_stock_product_count
+                    w.WHOUSE_ID,
+                    w.WHOUSE_NAME,
+                    COUNT(DISTINCT i.PROD_ID) as low_stock_product_count
                 FROM 
                     {$this->table} w
                 JOIN 
-                    inventory i ON w.whouse_id = i.whouse_id
+                    INVENTORY i ON w.WHOUSE_ID = i.WHOUSE_ID
                 WHERE 
-                    i.quantity <= w.whouse_restock_threshold
+                    i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD AND
+                    i.INVE_DELETED_AT IS NULL AND
+                    w.WHOUSE_DELETED_AT IS NULL
                 GROUP BY 
-                    w.whouse_id, w.whouse_name
+                    w.WHOUSE_ID, w.WHOUSE_NAME
                 ORDER BY 
                     low_stock_product_count DESC
             ";
             
-            $result = $this->db->query($query)->fetchAll(\PDO::FETCH_ASSOC);
+            $result = $this->query($query);
             error_log("Retrieved " . count($result) . " warehouses with low stock");
             return $result;
         } catch (\Exception $e) {
@@ -307,7 +372,7 @@ class WarehouseModel extends BaseModel
         error_log("WarehouseModel::warehouseExistsByName called for name: " . $name);
         
         try {
-            $query = "SELECT COUNT(*) FROM {$this->table} WHERE whouse_name = :name";
+            $query = "SELECT COUNT(*) FROM {$this->table} WHERE WHOUSE_NAME = :name AND WHOUSE_DELETED_AT IS NULL";
             $params = ['name' => $name];
             
             if ($excludeId) {
@@ -315,9 +380,7 @@ class WarehouseModel extends BaseModel
                 $params['id'] = $excludeId;
             }
             
-            $stmt = $this->db->prepare($query);
-            $stmt->execute($params);
-            $count = $stmt->fetchColumn();
+            $count = $this->queryScalar($query, $params, 0);
             
             error_log("Warehouse name check result: " . ($count > 0 ? 'exists' : 'does not exist'));
             return $count > 0;

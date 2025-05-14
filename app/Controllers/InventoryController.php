@@ -500,19 +500,64 @@ class InventoryController extends BaseController
     {
         if (!$this->isAjax()) {
             $this->jsonError('Invalid request', 400);
+            return;
         }
         
         try {
+            // Use more robust ways to count records instead of relying on a count() method
             $stats = [
-                'total_products' => $this->productModel->count(),
-                'total_variants' => $this->productVariantModel->count(),
-                'total_warehouses' => $this->warehouseModel->count(),
-                'low_stock_count' => count($this->inventoryModel->getLowStockProducts())
+                'total_products' => $this->countProducts(),
+                'total_variants' => $this->countVariants(),
+                'total_warehouses' => $this->countWarehouses(),
+                'low_stock_count' => count($this->inventoryModel->getLowStockProducts() ?: [])
             ];
             
             $this->jsonSuccess($stats);
         } catch (\Exception $e) {
+            error_log("Error in getStats: " . $e->getMessage());
             $this->jsonError('Error fetching statistics: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * Count products
+     */
+    private function countProducts()
+    {
+        try {
+            $result = $this->productModel->query("SELECT COUNT(*) as count FROM PRODUCT WHERE PROD_DELETED_AT IS NULL");
+            return isset($result[0]['count']) ? (int)$result[0]['count'] : 0;
+        } catch (\Exception $e) {
+            error_log("Error counting products: " . $e->getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Count variants
+     */
+    private function countVariants()
+    {
+        try {
+            $result = $this->productVariantModel->query("SELECT COUNT(*) as count FROM PRODUCT_VARIANT WHERE VAR_DELETED_AT IS NULL");
+            return isset($result[0]['count']) ? (int)$result[0]['count'] : 0;
+        } catch (\Exception $e) {
+            error_log("Error counting variants: " . $e->getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Count warehouses
+     */
+    private function countWarehouses()
+    {
+        try {
+            $result = $this->warehouseModel->query("SELECT COUNT(*) as count FROM WAREHOUSE WHERE WHOUSE_DELETED_AT IS NULL");
+            return isset($result[0]['count']) ? (int)$result[0]['count'] : 0;
+        } catch (\Exception $e) {
+            error_log("Error counting warehouses: " . $e->getMessage());
+            return 0;
         }
     }
     

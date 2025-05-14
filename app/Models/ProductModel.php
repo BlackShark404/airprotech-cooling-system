@@ -2,48 +2,51 @@
 
 namespace App\Models;
 
-class ProductModel extends BaseModel
+class ProductModel extends Model
 {
     // Table name
-    protected $table = 'product';
-    protected $primaryKey = 'prod_id';
+    protected $table = 'PRODUCT';
+    protected $primaryKey = 'PROD_ID';
     
     // Fillable fields
     protected $fillable = [
-        'prod_name',
-        'prod_description',
-        'prod_image',
-        'prod_availability_status'
+        'PROD_NAME',
+        'PROD_DESCRIPTION',
+        'PROD_IMAGE',
+        'PROD_AVAILABILITY_STATUS'
     ];
     
     // Get all products
     public function getAllProducts()
     {
-        return $this->all();
+        return $this->query("SELECT * FROM {$this->table} WHERE PROD_DELETED_AT IS NULL ORDER BY PROD_NAME");
     }
     
     // Find product by ID
     public function findById($id)
     {
-        return $this->find($id);
+        return $this->queryOne("SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :id AND PROD_DELETED_AT IS NULL", ['id' => $id]);
     }
     
     // Get products with variants
     public function getProductsWithVariants()
     {
-        return $this->db->query("
+        return $this->query("
             SELECT 
                 p.*,
-                COUNT(pv.var_id) AS variant_count
+                COUNT(pv.VAR_ID) AS variant_count
             FROM 
-                product p
+                {$this->table} p
             LEFT JOIN 
-                product_variant pv ON p.prod_id = pv.prod_id
+                PRODUCT_VARIANT pv ON p.PROD_ID = pv.PROD_ID
+            WHERE 
+                p.PROD_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL
             GROUP BY 
-                p.prod_id
+                p.PROD_ID
             ORDER BY 
-                p.prod_name
-        ")->fetchAll();
+                p.PROD_NAME
+        ");
     }
     
     // Get product with full details (variants, features, specs)
@@ -56,19 +59,28 @@ class ProductModel extends BaseModel
         }
         
         // Get variants
-        $variants = $this->db->query("
-            SELECT * FROM product_variant WHERE prod_id = :prod_id
-        ", ['prod_id' => $productId])->fetchAll();
+        $variants = $this->query("
+            SELECT * FROM PRODUCT_VARIANT 
+            WHERE PROD_ID = :prod_id 
+            AND VAR_DELETED_AT IS NULL", 
+            ['prod_id' => $productId]
+        );
         
         // Get features
-        $features = $this->db->query("
-            SELECT * FROM product_feature WHERE prod_id = :prod_id
-        ", ['prod_id' => $productId])->fetchAll();
+        $features = $this->query("
+            SELECT * FROM PRODUCT_FEATURE 
+            WHERE PROD_ID = :prod_id 
+            AND FEATURE_DELETED_AT IS NULL", 
+            ['prod_id' => $productId]
+        );
         
         // Get specs
-        $specs = $this->db->query("
-            SELECT * FROM product_spec WHERE prod_id = :prod_id
-        ", ['prod_id' => $productId])->fetchAll();
+        $specs = $this->query("
+            SELECT * FROM PRODUCT_SPEC 
+            WHERE PROD_ID = :prod_id 
+            AND SPEC_DELETED_AT IS NULL", 
+            ['prod_id' => $productId]
+        );
         
         // Build combined result
         $product['variants'] = $variants;
@@ -81,53 +93,68 @@ class ProductModel extends BaseModel
     // Create a new product with variants, features, and specs
     public function createProduct($productData, $variants = [], $features = [], $specs = [])
     {
-        $this->db->beginTransaction();
+        $this->beginTransaction();
         
         try {
+            // Add timestamps
+            $productData['PROD_CREATED_AT'] = date('Y-m-d H:i:s');
+            $productData['PROD_UPDATED_AT'] = date('Y-m-d H:i:s');
+            
+            // Format the insert data
+            $formatData = $this->formatInsertData($productData);
+            
             // Insert product
-            $this->insert($productData);
-            $productId = $this->db->lastInsertId();
+            $sql = "INSERT INTO {$this->table} ({$formatData['columns']}) VALUES ({$formatData['placeholders']})";
+            $this->execute($sql, $formatData['filteredData']);
+            
+            $productId = $this->lastInsertId();
             
             // Insert variants
             if (!empty($variants)) {
                 foreach ($variants as $variant) {
-                    $variant['prod_id'] = $productId;
-                    $stmt = $this->db->prepare(
-                        "INSERT INTO product_variant (prod_id, var_capacity, var_srp_price, var_price_free_install, var_price_with_install, var_power_consumption) 
-                        VALUES (:prod_id, :var_capacity, :var_srp_price, :var_price_free_install, :var_price_with_install, :var_power_consumption)"
-                    );
-                    $stmt->execute($variant);
+                    $variant['PROD_ID'] = $productId;
+                    $variant['VAR_CREATED_AT'] = date('Y-m-d H:i:s');
+                    $variant['VAR_UPDATED_AT'] = date('Y-m-d H:i:s');
+                    
+                    $variantFormat = $this->formatInsertData($variant);
+                    $sql = "INSERT INTO PRODUCT_VARIANT ({$variantFormat['columns']}) VALUES ({$variantFormat['placeholders']})";
+                    $this->execute($sql, $variantFormat['filteredData']);
                 }
             }
             
             // Insert features
             if (!empty($features)) {
                 foreach ($features as $feature) {
-                    $stmt = $this->db->prepare(
-                        "INSERT INTO product_feature (prod_id, feature_name) VALUES (:prod_id, :feature_name)"
-                    );
-                    $stmt->execute([
-                        'prod_id' => $productId, 
-                        'feature_name' => $feature
-                    ]);
+                    $featureData = [
+                        'PROD_ID' => $productId,
+                        'FEATURE_NAME' => $feature,
+                        'FEATURE_CREATED_AT' => date('Y-m-d H:i:s'),
+                        'FEATURE_UPDATED_AT' => date('Y-m-d H:i:s')
+                    ];
+                    
+                    $featureFormat = $this->formatInsertData($featureData);
+                    $sql = "INSERT INTO PRODUCT_FEATURE ({$featureFormat['columns']}) VALUES ({$featureFormat['placeholders']})";
+                    $this->execute($sql, $featureFormat['filteredData']);
                 }
             }
             
             // Insert specs
             if (!empty($specs)) {
                 foreach ($specs as $spec) {
-                    $spec['prod_id'] = $productId;
-                    $stmt = $this->db->prepare(
-                        "INSERT INTO product_spec (prod_id, spec_name, spec_value) VALUES (:prod_id, :spec_name, :spec_value)"
-                    );
-                    $stmt->execute($spec);
+                    $spec['PROD_ID'] = $productId;
+                    $spec['SPEC_CREATED_AT'] = date('Y-m-d H:i:s');
+                    $spec['SPEC_UPDATED_AT'] = date('Y-m-d H:i:s');
+                    
+                    $specFormat = $this->formatInsertData($spec);
+                    $sql = "INSERT INTO PRODUCT_SPEC ({$specFormat['columns']}) VALUES ({$specFormat['placeholders']})";
+                    $this->execute($sql, $specFormat['filteredData']);
                 }
             }
             
-            $this->db->commit();
+            $this->commit();
             return $productId;
         } catch (\Exception $e) {
-            $this->db->rollBack();
+            $this->rollback();
             throw $e;
         }
     }
@@ -135,102 +162,125 @@ class ProductModel extends BaseModel
     // Update product with variants, features, and specs
     public function updateProduct($productId, $productData, $variants = null, $features = null, $specs = null)
     {
-        $this->db->beginTransaction();
+        $this->beginTransaction();
         
         try {
+            // Add updated timestamp
+            $productData['PROD_UPDATED_AT'] = date('Y-m-d H:i:s');
+            
+            // Format the update data
+            $formatData = $this->formatUpdateData($productData);
+            
             // Update product
-            $this->update($productData, "{$this->primaryKey} = :id", ['id' => $productId]);
+            $sql = "UPDATE {$this->table} SET {$formatData['updateClause']} WHERE {$this->primaryKey} = :id";
+            $params = array_merge($formatData['filteredData'], ['id' => $productId]);
+            $this->execute($sql, $params);
             
             // Handle variants
             if ($variants !== null) {
-                // Delete existing variants
-                $stmt = $this->db->prepare("DELETE FROM product_variant WHERE prod_id = :prod_id");
-                $stmt->execute(['prod_id' => $productId]);
+                // Soft delete existing variants
+                $this->execute(
+                    "UPDATE PRODUCT_VARIANT SET VAR_DELETED_AT = :now WHERE PROD_ID = :prod_id",
+                    ['now' => date('Y-m-d H:i:s'), 'prod_id' => $productId]
+                );
                 
                 // Insert new variants
                 foreach ($variants as $variant) {
-                    $variant['prod_id'] = $productId;
-                    $stmt = $this->db->prepare(
-                        "INSERT INTO product_variant (prod_id, var_capacity, var_srp_price, var_price_free_install, var_price_with_install, var_power_consumption) 
-                        VALUES (:prod_id, :var_capacity, :var_srp_price, :var_price_free_install, :var_price_with_install, :var_power_consumption)"
-                    );
-                    $stmt->execute($variant);
+                    $variant['PROD_ID'] = $productId;
+                    $variant['VAR_CREATED_AT'] = date('Y-m-d H:i:s');
+                    $variant['VAR_UPDATED_AT'] = date('Y-m-d H:i:s');
+                    
+                    $variantFormat = $this->formatInsertData($variant);
+                    $sql = "INSERT INTO PRODUCT_VARIANT ({$variantFormat['columns']}) VALUES ({$variantFormat['placeholders']})";
+                    $this->execute($sql, $variantFormat['filteredData']);
                 }
             }
             
             // Handle features
             if ($features !== null) {
-                // Delete existing features
-                $stmt = $this->db->prepare("DELETE FROM product_feature WHERE prod_id = :prod_id");
-                $stmt->execute(['prod_id' => $productId]);
+                // Soft delete existing features
+                $this->execute(
+                    "UPDATE PRODUCT_FEATURE SET FEATURE_DELETED_AT = :now WHERE PROD_ID = :prod_id",
+                    ['now' => date('Y-m-d H:i:s'), 'prod_id' => $productId]
+                );
                 
                 // Insert new features
                 foreach ($features as $feature) {
-                    $stmt = $this->db->prepare(
-                        "INSERT INTO product_feature (prod_id, feature_name) VALUES (:prod_id, :feature_name)"
-                    );
-                    $stmt->execute([
-                        'prod_id' => $productId, 
-                        'feature_name' => $feature
-                    ]);
+                    $featureData = [
+                        'PROD_ID' => $productId,
+                        'FEATURE_NAME' => $feature,
+                        'FEATURE_CREATED_AT' => date('Y-m-d H:i:s'),
+                        'FEATURE_UPDATED_AT' => date('Y-m-d H:i:s')
+                    ];
+                    
+                    $featureFormat = $this->formatInsertData($featureData);
+                    $sql = "INSERT INTO PRODUCT_FEATURE ({$featureFormat['columns']}) VALUES ({$featureFormat['placeholders']})";
+                    $this->execute($sql, $featureFormat['filteredData']);
                 }
             }
             
             // Handle specs
             if ($specs !== null) {
-                // Delete existing specs
-                $stmt = $this->db->prepare("DELETE FROM product_spec WHERE prod_id = :prod_id");
-                $stmt->execute(['prod_id' => $productId]);
+                // Soft delete existing specs
+                $this->execute(
+                    "UPDATE PRODUCT_SPEC SET SPEC_DELETED_AT = :now WHERE PROD_ID = :prod_id",
+                    ['now' => date('Y-m-d H:i:s'), 'prod_id' => $productId]
+                );
                 
                 // Insert new specs
                 foreach ($specs as $spec) {
-                    $spec['prod_id'] = $productId;
-                    $stmt = $this->db->prepare(
-                        "INSERT INTO product_spec (prod_id, spec_name, spec_value) VALUES (:prod_id, :spec_name, :spec_value)"
-                    );
-                    $stmt->execute($spec);
+                    $spec['PROD_ID'] = $productId;
+                    $spec['SPEC_CREATED_AT'] = date('Y-m-d H:i:s');
+                    $spec['SPEC_UPDATED_AT'] = date('Y-m-d H:i:s');
+                    
+                    $specFormat = $this->formatInsertData($spec);
+                    $sql = "INSERT INTO PRODUCT_SPEC ({$specFormat['columns']}) VALUES ({$specFormat['placeholders']})";
+                    $this->execute($sql, $specFormat['filteredData']);
                 }
             }
             
-            $this->db->commit();
+            $this->commit();
             return true;
         } catch (\Exception $e) {
-            $this->db->rollBack();
+            $this->rollback();
             throw $e;
         }
     }
     
     // Delete product and related data
-// Delete product and related data
     public function deleteProduct($productId)
     {
-        $this->db->beginTransaction();
+        $this->beginTransaction();
         
         try {
-            // Delete from inventory
-            $stmt = $this->db->prepare("DELETE FROM inventory WHERE prod_id = :prod_id");
-            $stmt->execute(['prod_id' => $productId]);
+            // Soft delete product (set deletion timestamp)
+            $this->execute(
+                "UPDATE {$this->table} SET PROD_DELETED_AT = :now WHERE {$this->primaryKey} = :id",
+                ['now' => date('Y-m-d H:i:s'), 'id' => $productId]
+            );
             
-            // Delete variants
-            $stmt = $this->db->prepare("DELETE FROM product_variant WHERE prod_id = :prod_id");
-            $stmt->execute(['prod_id' => $productId]);
+            // Soft delete variants
+            $this->execute(
+                "UPDATE PRODUCT_VARIANT SET VAR_DELETED_AT = :now WHERE PROD_ID = :prod_id",
+                ['now' => date('Y-m-d H:i:s'), 'prod_id' => $productId]
+            );
             
-            // Delete features
-            $stmt = $this->db->prepare("DELETE FROM product_feature WHERE prod_id = :prod_id");
-            $stmt->execute(['prod_id' => $productId]);
+            // Soft delete features
+            $this->execute(
+                "UPDATE PRODUCT_FEATURE SET FEATURE_DELETED_AT = :now WHERE PROD_ID = :prod_id",
+                ['now' => date('Y-m-d H:i:s'), 'prod_id' => $productId]
+            );
             
-            // Delete specs
-            $stmt = $this->db->prepare("DELETE FROM product_spec WHERE prod_id = :prod_id");
-            $stmt->execute(['prod_id' => $productId]);
+            // Soft delete specs
+            $this->execute(
+                "UPDATE PRODUCT_SPEC SET SPEC_DELETED_AT = :now WHERE PROD_ID = :prod_id",
+                ['now' => date('Y-m-d H:i:s'), 'prod_id' => $productId]
+            );
             
-            // Delete product using raw DELETE query
-            $stmt = $this->db->prepare("DELETE FROM product WHERE prod_id = :prod_id");
-            $stmt->execute(['prod_id' => $productId]);
-            
-            $this->db->commit();
+            $this->commit();
             return true;
         } catch (\Exception $e) {
-            $this->db->rollBack();
+            $this->rollback();
             throw $e;
         }
     }
@@ -238,33 +288,32 @@ class ProductModel extends BaseModel
     // Update product availability status
     public function updateAvailabilityStatus($productId, $status)
     {
-        return $this->update(
-            ['prod_availability_status' => $status],
-            "{$this->primaryKey} = :id",
-            ['id' => $productId]
+        return $this->execute(
+            "UPDATE {$this->table} SET PROD_AVAILABILITY_STATUS = :status, PROD_UPDATED_AT = :now 
+             WHERE {$this->primaryKey} = :id",
+            ['status' => $status, 'now' => date('Y-m-d H:i:s'), 'id' => $productId]
         );
     }
     
     // Search products
     public function searchProducts($searchTerm)
     {
-        $stmt = $this->db->prepare("
+        return $this->query("
             SELECT 
                 p.*,
-                COUNT(pv.var_id) AS variant_count
+                COUNT(pv.VAR_ID) AS variant_count
             FROM 
-                product p
+                {$this->table} p
             LEFT JOIN 
-                product_variant pv ON p.prod_id = pv.prod_id
+                PRODUCT_VARIANT pv ON p.PROD_ID = pv.PROD_ID AND pv.VAR_DELETED_AT IS NULL
             WHERE 
-                p.prod_name LIKE :search_term OR
-                p.prod_description LIKE :search_term
+                (p.PROD_NAME LIKE :search_term OR
+                p.PROD_DESCRIPTION LIKE :search_term) AND
+                p.PROD_DELETED_AT IS NULL
             GROUP BY 
-                p.prod_id
+                p.PROD_ID
             ORDER BY 
-                p.prod_name
-        ");
-        $stmt->execute(['search_term' => "%$searchTerm%"]);
-        return $stmt->fetchAll();
+                p.PROD_NAME
+        ", ['search_term' => "%$searchTerm%"]);
     }
 }

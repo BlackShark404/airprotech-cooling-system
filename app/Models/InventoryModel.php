@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
-class InventoryModel extends BaseModel
+class InventoryModel extends Model
 {
     // Table names
-    protected $table = 'inventory';
-    protected $primaryKey = 'inve_id';
+    protected $table = 'INVENTORY';
+    protected $primaryKey = 'INVE_ID';
     
     // These fields can be filled
     protected $fillable = [
-        'prod_id',
-        'whouse_id',
-        'inve_type',
-        'quantity',
-        'last_updated'
+        'PROD_ID',
+        'WHOUSE_ID',
+        'INVE_TYPE',
+        'QUANTITY',
+        'LAST_UPDATED'
     ];
     
     // Date fields
@@ -22,307 +22,379 @@ class InventoryModel extends BaseModel
     protected $createdAtColumn = 'last_updated';
     protected $updatedAtColumn = 'last_updated';
     
-    // Get all inventory with product and warehouse info - FIXED
+    // Get all inventory with product and warehouse info
     public function getAllInventory()
     {
-        // Using raw query to avoid issues with query builder
         $sql = "
             SELECT DISTINCT
                 i.*,
-                p.prod_name,
-                p.prod_image,
-                p.prod_availability_status,
-                w.whouse_name,
-                pv.var_capacity
+                p.PROD_NAME,
+                p.PROD_IMAGE,
+                p.PROD_AVAILABILITY_STATUS,
+                w.WHOUSE_NAME,
+                pv.VAR_CAPACITY
             FROM {$this->table} i
-            JOIN product p ON i.prod_id = p.prod_id
-            JOIN warehouse w ON i.whouse_id = w.whouse_id
-            LEFT JOIN product_variant pv ON i.prod_id = pv.prod_id
-            ORDER BY p.prod_name, pv.var_capacity
+            JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID
+            JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
+            LEFT JOIN PRODUCT_VARIANT pv ON i.PROD_ID = pv.PROD_ID
+            WHERE
+                i.INVE_DELETED_AT IS NULL AND
+                p.PROD_DELETED_AT IS NULL AND
+                w.WHOUSE_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL
+            ORDER BY p.PROD_NAME, pv.VAR_CAPACITY
         ";
         
-        return $this->db->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->query($sql);
     }
     
-    // Get inventory by product ID - FIXED
+    // Get inventory by product ID
     public function getInventoryByProduct($productId)
     {
         $sql = "
             SELECT DISTINCT
                 i.*,
-                w.whouse_name,
-                pv.var_capacity
+                w.WHOUSE_NAME,
+                pv.VAR_CAPACITY
             FROM {$this->table} i
-            JOIN warehouse w ON i.whouse_id = w.whouse_id
-            LEFT JOIN product_variant pv ON i.prod_id = pv.prod_id
-            WHERE i.prod_id = :prod_id
-            ORDER BY w.whouse_name
+            JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
+            LEFT JOIN PRODUCT_VARIANT pv ON i.PROD_ID = pv.PROD_ID
+            WHERE 
+                i.PROD_ID = :prod_id AND
+                i.INVE_DELETED_AT IS NULL AND
+                w.WHOUSE_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL
+            ORDER BY w.WHOUSE_NAME
         ";
         
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['prod_id' => $productId]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->query($sql, ['prod_id' => $productId]);
     }
     
-    // Get inventory by warehouse ID - FIXED
+    // Get inventory by warehouse ID
     public function getInventoryByWarehouse($warehouseId)
     {
         $sql = "
             SELECT DISTINCT
                 i.*,
-                p.prod_name,
-                p.prod_image,
-                pv.var_capacity
+                p.PROD_NAME,
+                p.PROD_IMAGE,
+                pv.VAR_CAPACITY
             FROM {$this->table} i
-            JOIN product p ON i.prod_id = p.prod_id
-            LEFT JOIN product_variant pv ON i.prod_id = pv.prod_id
-            WHERE i.whouse_id = :whouse_id
-            ORDER BY p.prod_name
+            JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID
+            LEFT JOIN PRODUCT_VARIANT pv ON i.PROD_ID = pv.PROD_ID
+            WHERE 
+                i.WHOUSE_ID = :whouse_id AND
+                i.INVE_DELETED_AT IS NULL AND
+                p.PROD_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL
+            ORDER BY p.PROD_NAME
         ";
         
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['whouse_id' => $warehouseId]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->query($sql, ['whouse_id' => $warehouseId]);
     }
     
-    // Get inventory by type (Regular, Display, etc.) - FIXED
+    // Get inventory by type (Regular, Display, etc.)
     public function getInventoryByType($type)
     {
         $sql = "
             SELECT DISTINCT
                 i.*,
-                p.prod_name,
-                p.prod_image,
-                w.whouse_name,
-                pv.var_capacity
+                p.PROD_NAME,
+                p.PROD_IMAGE,
+                w.WHOUSE_NAME,
+                pv.VAR_CAPACITY
             FROM {$this->table} i
-            JOIN product p ON i.prod_id = p.prod_id
-            JOIN warehouse w ON i.whouse_id = w.whouse_id
-            LEFT JOIN product_variant pv ON i.prod_id = pv.prod_id
-            WHERE i.inve_type = :type
-            ORDER BY p.prod_name
+            JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID
+            JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
+            LEFT JOIN PRODUCT_VARIANT pv ON i.PROD_ID = pv.PROD_ID
+            WHERE 
+                i.INVE_TYPE = :type AND
+                i.INVE_DELETED_AT IS NULL AND
+                p.PROD_DELETED_AT IS NULL AND
+                w.WHOUSE_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL
+            ORDER BY p.PROD_NAME
         ";
         
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['type' => $type]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->query($sql, ['type' => $type]);
     }
     
-    // Get product list with variant count - FIXED
+    // Get product list with variant count
     public function getProductsWithVariants()
     {
         $sql = "
             SELECT 
-                p.prod_id,
-                p.prod_name,
-                p.prod_image,
-                p.prod_availability_status,
-                p.prod_description,
-                COUNT(DISTINCT pv.var_id) as variant_count,
-                COALESCE(SUM(i.quantity), 0) as total_stock
-            FROM product p
-            LEFT JOIN product_variant pv ON p.prod_id = pv.prod_id
-            LEFT JOIN {$this->table} i ON p.prod_id = i.prod_id
-            GROUP BY p.prod_id, p.prod_name, p.prod_image, p.prod_availability_status, p.prod_description
-            ORDER BY p.prod_name
+                p.PROD_ID,
+                p.PROD_NAME,
+                p.PROD_IMAGE,
+                p.PROD_AVAILABILITY_STATUS,
+                p.PROD_DESCRIPTION,
+                COUNT(DISTINCT pv.VAR_ID) as variant_count,
+                COALESCE(SUM(i.QUANTITY), 0) as total_stock
+            FROM PRODUCT p
+            LEFT JOIN PRODUCT_VARIANT pv ON p.PROD_ID = pv.PROD_ID
+            LEFT JOIN {$this->table} i ON p.PROD_ID = i.PROD_ID
+            WHERE
+                p.PROD_DELETED_AT IS NULL AND
+                (pv.VAR_DELETED_AT IS NULL OR pv.VAR_DELETED_AT IS NULL) AND
+                (i.INVE_DELETED_AT IS NULL OR i.INVE_DELETED_AT IS NULL)
+            GROUP BY p.PROD_ID, p.PROD_NAME, p.PROD_IMAGE, p.PROD_AVAILABILITY_STATUS, p.PROD_DESCRIPTION
+            ORDER BY p.PROD_NAME
         ";
         
-        return $this->db->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->query($sql);
     }
     
-    // Rest of the methods remain the same
-    
-    // Add inventory quantity - keeping the same
+    // Add inventory quantity
     public function addStock($productId, $warehouseId, $type, $quantity)
     {
-        // Check if inventory record exists
-        $inventory = $this->select('*')
-                          ->where('prod_id = :prod_id')
-                          ->where('whouse_id = :whouse_id')
-                          ->where('inve_type = :type')
-                          ->bind([
-                              'prod_id' => $productId,
-                              'whouse_id' => $warehouseId,
-                              'type' => $type
-                          ])
-                          ->first();
+        $this->beginTransaction();
         
-        if ($inventory) {
-            // Update existing inventory
-            $newQuantity = $inventory['quantity'] + $quantity;
-            return $this->update(
-                ['quantity' => $newQuantity, 'last_updated' => date('Y-m-d H:i:s')],
-                'inve_id = :inve_id',
-                ['inve_id' => $inventory['inve_id']]
+        try {
+            // Check if inventory record exists
+            $inventory = $this->queryOne("
+                SELECT * FROM {$this->table} 
+                WHERE PROD_ID = :prod_id 
+                AND WHOUSE_ID = :whouse_id 
+                AND INVE_TYPE = :type
+                AND INVE_DELETED_AT IS NULL",
+                [
+                    'prod_id' => $productId,
+                    'whouse_id' => $warehouseId,
+                    'type' => $type
+                ]
             );
-        } else {
-            // Create new inventory record
-            return $this->insert([
-                'prod_id' => $productId,
-                'whouse_id' => $warehouseId,
-                'inve_type' => $type,
-                'quantity' => $quantity,
-                'last_updated' => date('Y-m-d H:i:s')
-            ]);
+            
+            $now = date('Y-m-d H:i:s');
+            
+            if ($inventory) {
+                // Update existing inventory
+                $newQuantity = $inventory['QUANTITY'] + $quantity;
+                $this->execute(
+                    "UPDATE {$this->table} 
+                    SET QUANTITY = :quantity, LAST_UPDATED = :now, INVE_UPDATED_AT = :now
+                    WHERE INVE_ID = :inve_id",
+                    [
+                        'quantity' => $newQuantity, 
+                        'now' => $now,
+                        'inve_id' => $inventory['INVE_ID']
+                    ]
+                );
+            } else {
+                // Create new inventory record
+                $data = [
+                    'PROD_ID' => $productId,
+                    'WHOUSE_ID' => $warehouseId,
+                    'INVE_TYPE' => $type,
+                    'QUANTITY' => $quantity,
+                    'LAST_UPDATED' => $now,
+                    'INVE_CREATED_AT' => $now,
+                    'INVE_UPDATED_AT' => $now
+                ];
+                
+                $formatData = $this->formatInsertData($data);
+                $sql = "INSERT INTO {$this->table} ({$formatData['columns']}) VALUES ({$formatData['placeholders']})";
+                $this->execute($sql, $formatData['filteredData']);
+            }
+            
+            $this->commit();
+            return true;
+        } catch (\Exception $e) {
+            $this->rollback();
+            throw $e;
         }
     }
     
-    // Move stock between warehouses - keeping the same
+    // Move stock between warehouses
     public function moveStock($productId, $fromWarehouseId, $toWarehouseId, $type, $quantity)
     {
         // Begin transaction for data integrity
-        $this->db->beginTransaction();
+        $this->beginTransaction();
         
         try {
-            // Check if source has enough stock
-            $sourceStock = $this->select('*')
-                                ->where('prod_id = :prod_id')
-                                ->where('whouse_id = :whouse_id')
-                                ->where('inve_type = :type')
-                                ->bind([
-                                    'prod_id' => $productId,
-                                    'whouse_id' => $fromWarehouseId,
-                                    'type' => $type
-                                ])
-                                ->first();
+            $now = date('Y-m-d H:i:s');
             
-            if (!$sourceStock || $sourceStock['quantity'] < $quantity) {
+            // Check if source has enough stock
+            $sourceStock = $this->queryOne("
+                SELECT * FROM {$this->table}
+                WHERE PROD_ID = :prod_id
+                AND WHOUSE_ID = :whouse_id
+                AND INVE_TYPE = :type
+                AND INVE_DELETED_AT IS NULL",
+                [
+                    'prod_id' => $productId,
+                    'whouse_id' => $fromWarehouseId,
+                    'type' => $type
+                ]
+            );
+            
+            if (!$sourceStock || $sourceStock['QUANTITY'] < $quantity) {
                 // Not enough stock
-                $this->db->rollBack();
+                $this->rollback();
                 return false;
             }
             
             // Reduce from source warehouse
-            $this->update(
-                ['quantity' => $sourceStock['quantity'] - $quantity, 'last_updated' => date('Y-m-d H:i:s')],
-                'inve_id = :inve_id',
-                ['inve_id' => $sourceStock['inve_id']]
+            $this->execute(
+                "UPDATE {$this->table} 
+                SET QUANTITY = :quantity, LAST_UPDATED = :now, INVE_UPDATED_AT = :now
+                WHERE INVE_ID = :inve_id",
+                [
+                    'quantity' => $sourceStock['QUANTITY'] - $quantity, 
+                    'now' => $now,
+                    'inve_id' => $sourceStock['INVE_ID']
+                ]
             );
             
             // Add to destination warehouse
-            $destStock = $this->select('*')
-                              ->where('prod_id = :prod_id')
-                              ->where('whouse_id = :whouse_id')
-                              ->where('inve_type = :type')
-                              ->bind([
-                                  'prod_id' => $productId,
-                                  'whouse_id' => $toWarehouseId,
-                                  'type' => $type
-                              ])
-                              ->first();
+            $destStock = $this->queryOne("
+                SELECT * FROM {$this->table}
+                WHERE PROD_ID = :prod_id
+                AND WHOUSE_ID = :whouse_id
+                AND INVE_TYPE = :type
+                AND INVE_DELETED_AT IS NULL",
+                [
+                    'prod_id' => $productId,
+                    'whouse_id' => $toWarehouseId,
+                    'type' => $type
+                ]
+            );
             
             if ($destStock) {
                 // Update existing destination inventory
-                $this->update(
-                    ['quantity' => $destStock['quantity'] + $quantity, 'last_updated' => date('Y-m-d H:i:s')],
-                    'inve_id = :inve_id',
-                    ['inve_id' => $destStock['inve_id']]
+                $this->execute(
+                    "UPDATE {$this->table} 
+                    SET QUANTITY = :quantity, LAST_UPDATED = :now, INVE_UPDATED_AT = :now
+                    WHERE INVE_ID = :inve_id",
+                    [
+                        'quantity' => $destStock['QUANTITY'] + $quantity, 
+                        'now' => $now,
+                        'inve_id' => $destStock['INVE_ID']
+                    ]
                 );
             } else {
                 // Create new destination inventory record
-                $this->insert([
-                    'prod_id' => $productId,
-                    'whouse_id' => $toWarehouseId,
-                    'inve_type' => $type,
-                    'quantity' => $quantity,
-                    'last_updated' => date('Y-m-d H:i:s')
-                ]);
+                $data = [
+                    'PROD_ID' => $productId,
+                    'WHOUSE_ID' => $toWarehouseId,
+                    'INVE_TYPE' => $type,
+                    'QUANTITY' => $quantity,
+                    'LAST_UPDATED' => $now,
+                    'INVE_CREATED_AT' => $now,
+                    'INVE_UPDATED_AT' => $now
+                ];
+                
+                $formatData = $this->formatInsertData($data);
+                $sql = "INSERT INTO {$this->table} ({$formatData['columns']}) VALUES ({$formatData['placeholders']})";
+                $this->execute($sql, $formatData['filteredData']);
             }
             
             // Commit transaction
-            $this->db->commit();
+            $this->commit();
             return true;
         } catch (\Exception $e) {
             // Rollback on error
-            $this->db->rollBack();
+            $this->rollback();
             return false;
         }
     }
     
-    // Keep other methods as they are - they already use raw queries
-    
     // Get low stock products
     public function getLowStockProducts()
     {
-        return $this->db->query("
+        return $this->query("
             SELECT 
-                p.prod_id, 
-                p.prod_name, 
-                p.prod_image, 
-                pv.var_capacity, 
-                w.whouse_name,
-                i.quantity,
-                w.whouse_restock_threshold
+                p.PROD_ID, 
+                p.PROD_NAME, 
+                p.PROD_IMAGE, 
+                pv.VAR_CAPACITY, 
+                w.WHOUSE_NAME,
+                i.QUANTITY,
+                w.WHOUSE_RESTOCK_THRESHOLD
             FROM 
-                inventory i
+                {$this->table} i
             JOIN 
-                product p ON i.prod_id = p.prod_id
+                PRODUCT p ON i.PROD_ID = p.PROD_ID
             JOIN 
-                warehouse w ON i.whouse_id = w.whouse_id
+                WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
             JOIN 
-                product_variant pv ON p.prod_id = pv.prod_id
+                PRODUCT_VARIANT pv ON p.PROD_ID = pv.PROD_ID
             WHERE 
-                i.quantity <= w.whouse_restock_threshold
+                i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD AND
+                i.INVE_DELETED_AT IS NULL AND
+                p.PROD_DELETED_AT IS NULL AND
+                w.WHOUSE_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL
             ORDER BY 
-                i.quantity ASC
-        ")->fetchAll();
+                i.QUANTITY ASC
+        ");
     }
     
     // Get inventory summary for all products
     public function getInventorySummary()
     {
-        return $this->db->query("
+        return $this->query("
             SELECT 
-                p.prod_id,
-                p.prod_name,
-                p.prod_image,
-                p.prod_availability_status,
-                pv.var_id,
-                pv.var_capacity,
-                SUM(i.quantity) as total_quantity
+                p.PROD_ID,
+                p.PROD_NAME,
+                p.PROD_IMAGE,
+                p.PROD_AVAILABILITY_STATUS,
+                pv.VAR_ID,
+                pv.VAR_CAPACITY,
+                SUM(i.QUANTITY) as total_quantity
             FROM 
-                product p
+                PRODUCT p
             JOIN 
-                product_variant pv ON p.prod_id = pv.prod_id
+                PRODUCT_VARIANT pv ON p.PROD_ID = pv.PROD_ID
             LEFT JOIN 
-                inventory i ON p.prod_id = i.prod_id
+                {$this->table} i ON p.PROD_ID = i.PROD_ID
+            WHERE
+                p.PROD_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL AND
+                (i.INVE_DELETED_AT IS NULL OR i.INVE_DELETED_AT IS NULL)
             GROUP BY 
-                p.prod_id, p.prod_name, p.prod_image, p.prod_availability_status, pv.var_id, pv.var_capacity
+                p.PROD_ID, p.PROD_NAME, p.PROD_IMAGE, p.PROD_AVAILABILITY_STATUS, pv.VAR_ID, pv.VAR_CAPACITY
             ORDER BY 
-                p.prod_name, pv.var_capacity
-        ")->fetchAll();
+                p.PROD_NAME, pv.VAR_CAPACITY
+        ");
     }
     
     // Get inventory by product variant
     public function getInventoryByVariant($variantId)
     {
-        return $this->db->query("
+        return $this->query("
             SELECT 
                 i.*,
-                p.prod_name,
-                p.prod_image,
-                w.whouse_name,
-                pv.var_capacity
+                p.PROD_NAME,
+                p.PROD_IMAGE,
+                w.WHOUSE_NAME,
+                pv.VAR_CAPACITY
             FROM 
-                inventory i
+                {$this->table} i
             JOIN 
-                product p ON i.prod_id = p.prod_id
+                PRODUCT p ON i.PROD_ID = p.PROD_ID
             JOIN 
-                warehouse w ON i.whouse_id = w.whouse_id
+                WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
             JOIN 
-                product_variant pv ON p.prod_id = pv.prod_id
+                PRODUCT_VARIANT pv ON p.PROD_ID = pv.PROD_ID
             WHERE 
-                pv.var_id = :variant_id
+                pv.VAR_ID = :variant_id AND
+                i.INVE_DELETED_AT IS NULL AND
+                p.PROD_DELETED_AT IS NULL AND
+                w.WHOUSE_DELETED_AT IS NULL AND
+                pv.VAR_DELETED_AT IS NULL
             ORDER BY 
-                w.whouse_name
-        ", ['variant_id' => $variantId])->fetchAll();
+                w.WHOUSE_NAME
+        ", ['variant_id' => $variantId]);
     }
     
     // Get warehouse list
     public function getWarehouses()
     {
-        return $this->db->query("
-            SELECT * FROM warehouse ORDER BY whouse_name
-        ")->fetchAll();
+        return $this->query("
+            SELECT * FROM WAREHOUSE 
+            WHERE WHOUSE_DELETED_AT IS NULL 
+            ORDER BY WHOUSE_NAME
+        ");
     }
 }
