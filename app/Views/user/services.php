@@ -339,7 +339,7 @@
                         <p class="text-muted">Get detailed and accurate project quotations tailored to your air conditioning needs and budget.</p>
 
                         <div class="mt-3">
-                            <button class="btn btn-outline-primary service-select-btn" data-service="quotations">Select Service</button>
+                            <button class="btn btn-outline-primary service-select-btn" data-service="project-quotations">Select Service</button>
                         </div>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                                 <option value="ducting">Ducting Works</option>
                                 <option value="cleaning-pms">General Cleaning & PMS</option>
                                 <option value="survey-estimation">Survey & Estimation</option>
-                                <option value="quotations">Project Quotations</option>
+                                <option value="project-quotations">Project Quotations</option>
                             </select>
                         </div>
                         
@@ -503,7 +503,7 @@
                 }
                 
                 // Continue with form submission if validation passes
-                handleFormSubmission('serviceBookingForm', '/user/service/request');
+                handleFormSubmission('serviceBookingForm', '/user/service/request', false, e);
             });
             
             // Set minimum date for the date picker to today
