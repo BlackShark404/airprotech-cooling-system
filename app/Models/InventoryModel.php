@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Exception;
+
 class InventoryModel extends Model
 {
     protected $table = 'INVENTORY';
@@ -296,7 +298,6 @@ class InventoryModel extends Model
                 WHERE p.PROD_DELETED_AT IS NULL
                 GROUP BY p.PROD_ID, p.PROD_NAME, p.PROD_IMAGE
                 ORDER BY p.PROD_NAME";
-        
         return $this->query($sql);
     }
 }
