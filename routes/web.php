@@ -90,6 +90,17 @@ $router->map('POST', '/inventory/createProduct', 'App\Controllers\InventoryContr
 $router->map('PUT', '/inventory/updateProduct/[i:productId]', 'App\Controllers\InventoryController#updateProduct', 'inventory_update_product');
 $router->map('POST', '/inventory/deleteProduct/[i:productId]', 'App\Controllers\InventoryController#deleteProduct', 'inventory_delete_product');
 
+// Warehouse Management API Routes
+$router->map('GET', '/warehouse/getAllWarehouses', 'App\Controllers\WarehouseController#getAllWarehouses', 'warehouse_get_all');
+$router->map('GET', '/warehouse/getWarehouse/[i:warehouseId]', 'App\Controllers\WarehouseController#getWarehouse', 'warehouse_get_by_id');
+$router->map('POST', '/warehouse/createWarehouse', 'App\Controllers\WarehouseController#createWarehouse', 'warehouse_create');
+$router->map('PUT', '/warehouse/updateWarehouse/[i:warehouseId]', 'App\Controllers\WarehouseController#updateWarehouse', 'warehouse_update');
+$router->map('POST', '/warehouse/deleteWarehouse/[i:warehouseId]', 'App\Controllers\WarehouseController#deleteWarehouse', 'warehouse_delete');
+$router->map('GET', '/warehouse/getWarehouseInventory/[i:warehouseId]', 'App\Controllers\WarehouseController#getWarehouseInventory', 'warehouse_inventory');
+$router->map('GET', '/warehouse/getWarehousesWithSummary', 'App\Controllers\WarehouseController#getWarehousesWithSummary', 'warehouse_summary');
+$router->map('GET', '/warehouse/getWarehousesWithLowStock', 'App\Controllers\WarehouseController#getWarehousesWithLowStock', 'warehouse_low_stock');
+
+
 // User Management Routes 
 $router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#index', 'render-user-management');
 $router->map('GET', '/api/users', 'App\Controllers\UserManagementController#getUsers', 'api_get_users');
