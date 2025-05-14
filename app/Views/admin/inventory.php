@@ -1059,8 +1059,7 @@ ob_start();
     </div>
 </div>
 
-<link rel="stylesheet" href="assets/css/inventory.css">
-
+<script src="/assets/js/utility/toast-notifications.js"></script>
 
 <?php
 $content = ob_get_clean();
