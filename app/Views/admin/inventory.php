@@ -4,6 +4,16 @@ $activeTab = 'inventory';
 
 // Add any additional styles specific to this page
 $additionalStyles = <<<HTML
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+
 <style>
    /* Inventory Management Styles */
 
@@ -1059,7 +1069,23 @@ ob_start();
     </div>
 </div>
 
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+
 <script src="/assets/js/utility/toast-notifications.js"></script>
+<script src="/assets/js/utility/inventory.js"></script>
+<script src="/assets/js/utility/InventoryViewDataTables.js"></script>
+<script src="/assets/js/utility/ProductViewDataTables.js"></script>
+<script src="/assets/js/utility/WarehouseViewDataTables.js"></script>
 
 <?php
 $content = ob_get_clean();
