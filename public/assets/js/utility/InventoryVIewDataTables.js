@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
             success: function(response) {
                 if (response.success) {
                     const warehouses = response.data;
+                    console.log('Loaded warehouses:', warehouses);
                     
                     // Populate warehouse dropdowns
                     const addWarehouseSelect = $('#addWarehouseSelect');
@@ -240,7 +241,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     warehouseSelect.append('<option value="">Select warehouse</option>');
                     
                     warehouses.forEach(function(warehouse) {
-                        const option = `<option value="${warehouse.WHOUSE_ID}">${warehouse.WHOUSE_NAME} (${warehouse.WHOUSE_LOCATION})</option>`;
+                        // Handle both uppercase and lowercase property names
+                        const id = warehouse.WHOUSE_ID || warehouse.whouse_id || '';
+                        const name = warehouse.WHOUSE_NAME || warehouse.whouse_name || 'Unnamed Warehouse';
+                        const location = warehouse.WHOUSE_LOCATION || warehouse.whouse_location || 'No location';
+                        
+                        const option = `<option value="${id}">${name} (${location})</option>`;
                         addWarehouseSelect.append(option);
                         sourceWarehouse.append(option);
                         destinationWarehouse.append(option);
@@ -252,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             error: function(xhr, status, error) {
                 showErrorToast('Error loading warehouses: ' + error);
+                console.error('Error loading warehouses:', xhr.responseText);
             }
         });
     }

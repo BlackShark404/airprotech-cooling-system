@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load inventory statistics
     loadInventoryStats();
 
+    // Load warehouses for dropdown
+    loadWarehousesForProductForm();
+
     // View selector functionality
     const viewButtons = document.querySelectorAll('.view-selector .btn');
     const viewCards = document.querySelectorAll('.view-card');
@@ -256,6 +259,45 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
 
             variantsInventoryContainer.appendChild(inventoryItem);
+        });
+    }
+
+    // Load warehouses for the product form dropdown
+    function loadWarehousesForProductForm() {
+        $.ajax({
+            url: '/api/warehouses',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    const warehouses = response.data;
+                    console.log('Loaded warehouses for product form:', warehouses);
+
+                    // Populate warehouse dropdowns
+                    const warehouseSelect = $('#warehouseSelect'); // For product form
+
+                    warehouseSelect.empty();
+                    warehouseSelect.append('<option value="">Select warehouse</option>');
+
+                    if (warehouses && warehouses.length > 0) {
+                        warehouses.forEach(function (warehouse) {
+                            // Handle both uppercase and lowercase property names
+                            const id = warehouse.WHOUSE_ID || warehouse.whouse_id || '';
+                            const name = warehouse.WHOUSE_NAME || warehouse.whouse_name || 'Unnamed Warehouse';
+                            const location = warehouse.WHOUSE_LOCATION || warehouse.whouse_location || 'No location';
+
+                            const option = `<option value="${id}">${name} (${location})</option>`;
+                            warehouseSelect.append(option);
+                        });
+                    }
+                } else {
+                    showErrorToast(response.message || 'Failed to load warehouses');
+                }
+            },
+            error: function (xhr, status, error) {
+                showErrorToast('Error loading warehouses: ' + error);
+                console.error('Error loading warehouses for product form:', xhr.responseText);
+            }
         });
     }
 });
