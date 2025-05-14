@@ -60,11 +60,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         data.forEach(function (warehouse) {
-            // Ensure all properties exist to avoid undefined errors
-            const warehouseName = warehouse.WHOUSE_NAME || 'Unnamed Warehouse';
-            const warehouseLocation = warehouse.WHOUSE_LOCATION || 'No location';
-            const warehouseId = warehouse.WHOUSE_ID || 0;
-            const storageCapacity = warehouse.WHOUSE_STORAGE_CAPACITY || 0;
+            // Handle property names in both lowercase and uppercase
+            const warehouseName = warehouse.WHOUSE_NAME || warehouse.whouse_name || 'Unnamed Warehouse';
+            const warehouseLocation = warehouse.WHOUSE_LOCATION || warehouse.whouse_location || 'No location';
+            const warehouseId = warehouse.WHOUSE_ID || warehouse.whouse_id || 0;
+            const storageCapacity = warehouse.WHOUSE_STORAGE_CAPACITY || warehouse.whouse_storage_capacity || 0;
+            const restockThreshold = warehouse.WHOUSE_RESTOCK_THRESHOLD || warehouse.whouse_restock_threshold || 10;
             const totalItems = warehouse.total_items || 0;
             const lowStockCount = warehouse.low_stock_count || 0;
 
@@ -186,6 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
             success: function (response) {
                 if (response.success) {
                     const warehouse = response.data;
+                    console.log('Viewing warehouse details:', warehouse);
 
                     // Display warehouse details in the warehouse form
                     displayWarehouseDetails(warehouse);
@@ -198,18 +200,26 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             error: function (xhr, status, error) {
                 showErrorToast('Error loading warehouse details: ' + error);
+                console.error('Error loading warehouse details:', xhr.responseText);
             }
         });
     }
 
     // Display warehouse details in the form
     function displayWarehouseDetails(warehouse) {
+        // Handle both uppercase and lowercase property names
+        const id = warehouse.WHOUSE_ID || warehouse.whouse_id || '';
+        const name = warehouse.WHOUSE_NAME || warehouse.whouse_name || '';
+        const location = warehouse.WHOUSE_LOCATION || warehouse.whouse_location || '';
+        const capacity = warehouse.WHOUSE_STORAGE_CAPACITY || warehouse.whouse_storage_capacity || '';
+        const threshold = warehouse.WHOUSE_RESTOCK_THRESHOLD || warehouse.whouse_restock_threshold || '';
+
         // Fill in the form fields with warehouse data
-        $('#warehouseId').val(warehouse.WHOUSE_ID);
-        $('#warehouseName').val(warehouse.WHOUSE_NAME);
-        $('#warehouseLocation').val(warehouse.WHOUSE_LOCATION);
-        $('#warehouseCapacity').val(warehouse.WHOUSE_STORAGE_CAPACITY);
-        $('#warehouseThreshold').val(warehouse.WHOUSE_RESTOCK_THRESHOLD);
+        $('#warehouseId').val(id);
+        $('#warehouseName').val(name);
+        $('#warehouseLocation').val(location);
+        $('#warehouseCapacity').val(capacity);
+        $('#warehouseThreshold').val(threshold);
     }
 
     // Edit warehouse
@@ -289,19 +299,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         warehouseListTable.append('<tr><td colspan="3" class="text-center">No warehouses available</td></tr>');
                     } else {
                         warehouses.forEach(function (warehouse) {
-                            // Ensure warehouse name and location have fallback values
-                            const name = warehouse.WHOUSE_NAME || 'Unnamed Warehouse';
-                            const location = warehouse.WHOUSE_LOCATION || 'No location';
+                            // Handle property names in both lowercase and uppercase
+                            const name = warehouse.WHOUSE_NAME || warehouse.whouse_name || 'Unnamed Warehouse';
+                            const location = warehouse.WHOUSE_LOCATION || warehouse.whouse_location || 'No location';
+                            const id = warehouse.WHOUSE_ID || warehouse.whouse_id || 0;
 
                             const row = `
                                 <tr>
                                     <td>${name}</td>
                                     <td>${location}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-primary me-1 edit-warehouse-btn" data-id="${warehouse.WHOUSE_ID}">
+                                        <button class="btn btn-sm btn-outline-primary me-1 edit-warehouse-btn" data-id="${id}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger delete-warehouse-btn" data-id="${warehouse.WHOUSE_ID}">
+                                        <button class="btn btn-sm btn-outline-danger delete-warehouse-btn" data-id="${id}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -362,19 +373,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Create new warehouse
     function createWarehouse(data) {
-        // Log data for debugging
-        console.log('Creating warehouse with data:', data);
+        // Convert field names to lowercase for consistency with the API
+        const formattedData = {
+            whouse_name: data.WHOUSE_NAME,
+            whouse_location: data.WHOUSE_LOCATION,
+            whouse_storage_capacity: data.WHOUSE_STORAGE_CAPACITY,
+            whouse_restock_threshold: data.WHOUSE_RESTOCK_THRESHOLD
+        };
+
+        console.log('Creating warehouse with data:', formattedData);
 
         $.ajax({
             url: '/api/warehouses',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(data),
+            data: JSON.stringify(formattedData),
             dataType: 'json',
             success: function (response) {
                 if (response.success) {
                     // Get the newly created warehouse ID
                     const newWarehouseId = response.data.id;
+                    console.log('Warehouse created successfully with ID:', newWarehouseId);
 
                     // Show success message
                     showSuccessToast(response.message || 'Warehouse created successfully');
@@ -388,6 +407,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Reset the form only after data is refreshed
                     setTimeout(function () {
                         resetWarehouseForm();
+                        // Optionally close the modal
+                        // $('#warehouseModal').modal('hide');
                     }, 500);
                 } else {
                     showErrorToast(response.message || 'Failed to create warehouse');
@@ -395,30 +416,51 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             error: function (xhr, status, error) {
                 showErrorToast('Error creating warehouse: ' + error);
+                console.error('Error creating warehouse:', xhr.responseText);
             }
         });
     }
 
     // Update existing warehouse
     function updateWarehouse(id, data) {
+        // Convert field names to lowercase for consistency with the API
+        const formattedData = {
+            whouse_name: data.WHOUSE_NAME,
+            whouse_location: data.WHOUSE_LOCATION,
+            whouse_storage_capacity: data.WHOUSE_STORAGE_CAPACITY,
+            whouse_restock_threshold: data.WHOUSE_RESTOCK_THRESHOLD
+        };
+
+        console.log('Updating warehouse ID', id, 'with data:', formattedData);
+
         $.ajax({
             url: `/api/warehouses/${id}`,
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(data),
+            data: JSON.stringify(formattedData),
             dataType: 'json',
             success: function (response) {
                 if (response.success) {
+                    console.log('Warehouse updated successfully');
                     showSuccessToast(response.message || 'Warehouse updated successfully');
-                    resetWarehouseForm();
+
+                    // Refresh warehouse list and warehouse table
                     loadWarehouseList();
-                    loadWarehousesData(); // Refresh warehouses table
+                    loadWarehousesData();
+
+                    // Reset the form after data is refreshed
+                    setTimeout(function () {
+                        resetWarehouseForm();
+                        // Optionally close the modal
+                        // $('#warehouseModal').modal('hide');
+                    }, 500);
                 } else {
                     showErrorToast(response.message || 'Failed to update warehouse');
                 }
             },
             error: function (xhr, status, error) {
                 showErrorToast('Error updating warehouse: ' + error);
+                console.error('Error updating warehouse:', xhr.responseText);
             }
         });
     }
