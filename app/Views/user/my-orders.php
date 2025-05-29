@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?? 'My Orders & Service Requests' ?></title>
+    <title><?= $pageTitle ?? 'My Bookings & Service Requests' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
@@ -56,7 +56,7 @@
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/user/my-orders">My Orders & Service Requests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/my-orders">My Bookings & Service Requests</a></li>
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -78,13 +78,13 @@
     <!-- Main Content -->
     <section class="dashboard-area py-5">
         <div class="container">
-            <h2 class="fw-bold mb-2">My Orders & Service Requests</h2>
+            <h2 class="fw-bold mb-2">My Bookings & Service Requests</h2>
             <p class="text-muted mb-4">View and track your orders and service history</p>
 
             <!-- Tabs -->
             <ul class="nav nav-tabs" id="ordersTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="false">Orders</button>
+                    <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="false">Bookings</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="services-tab-button" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="true">Service Requests</button>
@@ -93,10 +93,10 @@
 
             <!-- Tab Content -->
             <div class="tab-content" id="ordersTabContent">
-                <!-- Orders Tab -->
+                <!-- Bookings Tab -->
                 <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
-                    <!-- ... Your existing Orders content ... -->
-                    <p class="p-4 text-center">Product orders will be displayed here.</p>
+                    <!-- ... Your existing Bookings content ... -->
+                    <p class="p-4 text-center">Product bookings will be displayed here.</p>
                 </div>
 
                 <!-- Service Requests Tab -->

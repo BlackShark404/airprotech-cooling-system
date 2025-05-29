@@ -1,29 +1,29 @@
 /**
- * OrdersManager Class
+ * ProductBookingManager Class
  * Handles creating product booking cards, managing the details modal,
  * filtering/searching bookings, and client-side pagination
  */
-class OrdersManager {
+class ProductBookingManager {
     constructor(options = {}) {
         // Default configuration
         this.config = {
-            ordersEndpoint: '/api/product-bookings',
-            containerSelector: '#orders',
-            modalId: 'orderDetailModal',
-            filterFormId: 'order-filters',
-            searchInputId: 'order-search',
-            dateFilterId: 'order-date-filter',
-            statusFilterId: 'order-status-filter',
+            bookingsEndpoint: '/api/product-bookings',
+            containerSelector: '#bookings',
+            modalId: 'bookingDetailModal',
+            filterFormId: 'booking-filters',
+            searchInputId: 'booking-search',
+            dateFilterId: 'booking-date-filter',
+            statusFilterId: 'booking-status-filter',
             cardTemplate: this.getDefaultCardTemplate(),
             itemsPerPage: 10,
-            paginationContainerSelector: '#orders-pagination-container',
+            paginationContainerSelector: '#bookings-pagination-container',
             ...options
         };
 
         // Initialize modal elements references
         this.modal = {
             element: null, // Will be initialized in init()
-            orderId: null,
+            bookingId: null,
             productName: null,
             productImage: null,
             variant: null,
@@ -31,18 +31,18 @@ class OrdersManager {
             unitPrice: null,
             totalAmount: null,
             status: null,
-            orderDate: null,
+            bookingDate: null,
             preferredDate: null,
             preferredTime: null,
             address: null
         };
 
-        // Container for order cards
+        // Container for booking cards
         this.container = null;
 
-        // Store all orders for filtering
-        this.allOrders = [];
-        this.filteredOrders = [];
+        // Store all bookings for filtering
+        this.allBookings = [];
+        this.filteredBookings = [];
 
         // Pagination state
         this.currentPage = 1;
@@ -53,7 +53,7 @@ class OrdersManager {
     }
 
     /**
-     * Initialize the OrdersManager
+     * Initialize the ProductBookingManager
      */
     init() {
         // Get container element
@@ -67,7 +67,7 @@ class OrdersManager {
         this.modal.element = document.getElementById(this.config.modalId);
 
         if (this.modal.element) {
-            this.modal.orderId = document.getElementById('modal-order-id');
+            this.modal.bookingId = document.getElementById('modal-booking-id');
             this.modal.productName = document.getElementById('modal-product-name');
             this.modal.productImage = document.getElementById('modal-product-image');
             this.modal.variant = document.getElementById('modal-variant');
@@ -75,7 +75,7 @@ class OrdersManager {
             this.modal.unitPrice = document.getElementById('modal-unit-price');
             this.modal.totalAmount = document.getElementById('modal-total-amount');
             this.modal.status = document.getElementById('modal-status');
-            this.modal.orderDate = document.getElementById('modal-order-date');
+            this.modal.bookingDate = document.getElementById('modal-booking-date');
             this.modal.preferredDate = document.getElementById('modal-preferred-date');
             this.modal.preferredTime = document.getElementById('modal-preferred-time');
             this.modal.address = document.getElementById('modal-address');
@@ -92,24 +92,24 @@ class OrdersManager {
         // Initialize filter and search
         this.initFilterAndSearch();
 
-        // Fetch and render orders
-        this.fetchAndRenderOrders();
+        // Fetch and render bookings
+        this.fetchAndRenderBookings();
     }
 
     /**
      * Default card template for product bookings
      */
     getDefaultCardTemplate() {
-        return (order) => {
+        return (booking) => {
             // Handle both upper and lowercase field names from API
-            const id = order.PB_ID || order.pb_id;
-            const orderDate = order.PB_ORDER_DATE || order.pb_order_date;
-            const productName = order.PROD_NAME || order.prod_name || 'Unknown Product';
-            const productImage = order.PROD_IMAGE || order.prod_image || '/assets/images/product-placeholder.jpg';
-            const variantCapacity = order.VAR_CAPACITY || order.var_capacity || 'N/A';
-            const totalAmount = order.PB_TOTAL_AMOUNT || order.pb_total_amount || 0;
-            const status = order.PB_STATUS || order.pb_status || 'pending';
-            const preferredDate = order.PB_PREFERRED_DATE || order.pb_preferred_date;
+            const id = booking.PB_ID || booking.pb_id;
+            const bookingDate = booking.PB_ORDER_DATE || booking.pb_order_date;
+            const productName = booking.PROD_NAME || booking.prod_name || 'Unknown Product';
+            const productImage = booking.PROD_IMAGE || booking.prod_image || '/assets/images/product-placeholder.jpg';
+            const variantCapacity = booking.VAR_CAPACITY || booking.var_capacity || 'N/A';
+            const totalAmount = booking.PB_TOTAL_AMOUNT || booking.pb_total_amount || 0;
+            const status = booking.PB_STATUS || booking.pb_status || 'pending';
+            const preferredDate = booking.PB_PREFERRED_DATE || booking.pb_preferred_date;
 
             return `
                 <div class="booking-item card shadow-sm mb-3">
@@ -118,7 +118,7 @@ class OrdersManager {
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="text-muted mb-1">PB-${id} <span class="text-muted">${new Date(orderDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
+                                    <p class="text-muted mb-1">PB-${id} <span class="text-muted">${new Date(bookingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
                                     <h5 class="fw-bold mb-1">${productName}</h5>
                                     <p class="text-muted mb-0">Model: ${variantCapacity}</p>
                                     <p class="fw-bold text-dark mb-0">$${parseFloat(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
@@ -127,7 +127,7 @@ class OrdersManager {
                                     <p class="text-muted mb-1">Preferred Date: ${new Date(preferredDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                                     <span class="badge bg-${this.getStatusBadgeClass(status)}-subtle text-${this.getStatusBadgeClass(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
                                     <div class="mt-2">
-                                        <button class="btn btn-primary view-details" data-order-id="${id}">View Details</button>
+                                        <button class="btn btn-primary view-details" data-booking-id="${id}">View Details</button>
                                     </div>
                                 </div>
                             </div>
@@ -158,8 +158,8 @@ class OrdersManager {
         // Add event listener to all "View Details" buttons
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('view-details')) {
-                const orderId = e.target.getAttribute('data-order-id');
-                this.openOrderModal(orderId);
+                const bookingId = e.target.getAttribute('data-booking-id');
+                this.openBookingModal(bookingId);
             }
         });
     }
@@ -196,9 +196,9 @@ class OrdersManager {
      * Apply all active filters and search
      */
     applyFilters() {
-        if (!this.allOrders.length) return;
+        if (!this.allBookings.length) return;
 
-        this.filteredOrders = [...this.allOrders];
+        this.filteredBookings = [...this.allBookings];
 
         // Apply date range filter
         if (this.dateFilter && this.dateFilter.value) {
@@ -224,8 +224,8 @@ class OrdersManager {
             }
 
             if (startDate) {
-                this.filteredOrders = this.filteredOrders.filter(order => {
-                    const dateField = order.PB_ORDER_DATE || order.pb_order_date;
+                this.filteredBookings = this.filteredBookings.filter(booking => {
+                    const dateField = booking.PB_ORDER_DATE || booking.pb_order_date;
                     return new Date(dateField) >= startDate;
                 });
             }
@@ -233,8 +233,8 @@ class OrdersManager {
 
         // Apply status filter
         if (this.statusFilter && this.statusFilter.value && this.statusFilter.value !== 'All Status') {
-            this.filteredOrders = this.filteredOrders.filter(order => {
-                const status = order.PB_STATUS || order.pb_status || '';
+            this.filteredBookings = this.filteredBookings.filter(booking => {
+                const status = booking.PB_STATUS || booking.pb_status || '';
                 return status.toLowerCase() === this.statusFilter.value.toLowerCase();
             });
         }
@@ -242,10 +242,10 @@ class OrdersManager {
         // Apply search filter
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
-            this.filteredOrders = this.filteredOrders.filter(order => {
-                const productName = order.PROD_NAME || order.prod_name || '';
-                const variantCapacity = order.VAR_CAPACITY || order.var_capacity || '';
-                const id = order.PB_ID || order.pb_id || '';
+            this.filteredBookings = this.filteredBookings.filter(booking => {
+                const productName = booking.PROD_NAME || booking.prod_name || '';
+                const variantCapacity = booking.VAR_CAPACITY || booking.var_capacity || '';
+                const id = booking.PB_ID || booking.pb_id || '';
 
                 return productName.toLowerCase().includes(searchTerm) ||
                     variantCapacity.toLowerCase().includes(searchTerm) ||
@@ -256,38 +256,38 @@ class OrdersManager {
         // Reset to first page when filters change
         this.currentPage = 1;
 
-        // Render filtered orders with pagination
-        this.renderOrders(this.filteredOrders);
+        // Render filtered bookings with pagination
+        this.renderBookings(this.filteredBookings);
 
         // Update results count if element exists
-        const resultsCountElement = document.getElementById('order-results-count');
+        const resultsCountElement = document.getElementById('booking-results-count');
         if (resultsCountElement) {
-            resultsCountElement.textContent = `${this.filteredOrders.length} bookings found`;
+            resultsCountElement.textContent = `${this.filteredBookings.length} bookings found`;
         }
     }
 
     /**
-     * Fetch orders from API and render them
+     * Fetch bookings from API and render them
      */
-    async fetchAndRenderOrders() {
+    async fetchAndRenderBookings() {
         try {
-            const response = await axios.get(this.config.ordersEndpoint);
+            const response = await axios.get(this.config.bookingsEndpoint);
 
             // Check for success response structure with data field
-            let orders = [];
+            let bookings = [];
             if (response.data && response.data.success && Array.isArray(response.data.data)) {
-                orders = response.data.data;
+                bookings = response.data.data;
             } else if (Array.isArray(response.data)) {
-                orders = response.data;
+                bookings = response.data;
             }
 
-            if (orders.length > 0) {
-                // Store all orders for filtering
-                this.allOrders = orders;
-                this.filteredOrders = [...orders];
+            if (bookings.length > 0) {
+                // Store all bookings for filtering
+                this.allBookings = bookings;
+                this.filteredBookings = [...bookings];
 
-                // Render first page of orders
-                this.renderOrders(this.filteredOrders);
+                // Render first page of bookings
+                this.renderBookings(this.filteredBookings);
             } else {
                 console.warn('No bookings found or invalid data format');
                 if (this.container) {
@@ -305,12 +305,12 @@ class OrdersManager {
     }
 
     /**
-     * Render order cards with pagination
+     * Render booking cards with pagination
      */
-    renderOrders(orders) {
+    renderBookings(bookings) {
         if (!this.container) return;
 
-        if (orders.length === 0) {
+        if (bookings.length === 0) {
             this.container.innerHTML = '<div class="col-12"><p class="text-center">No bookings match your filters. Try different criteria.</p></div>';
             this.renderPagination(0);
             return;
@@ -318,16 +318,16 @@ class OrdersManager {
 
         const startIndex = (this.currentPage - 1) * this.itemsPerPage;
         const endIndex = startIndex + this.itemsPerPage;
-        const paginatedOrders = orders.slice(startIndex, endIndex);
+        const paginatedBookings = bookings.slice(startIndex, endIndex);
 
         let html = '';
-        paginatedOrders.forEach(order => {
-            html += this.config.cardTemplate(order);
+        paginatedBookings.forEach(booking => {
+            html += this.config.cardTemplate(booking);
         });
 
         this.container.innerHTML = html;
 
-        this.renderPagination(orders.length);
+        this.renderPagination(bookings.length);
     }
 
     /**
@@ -345,7 +345,7 @@ class OrdersManager {
         }
 
         let paginationHTML = `
-            <nav aria-label="Order pagination">
+            <nav aria-label="Booking pagination">
                 <ul class="pagination">
                     <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
                         <a class="page-link" href="#" data-page="prev"><i class="fas fa-chevron-left"></i></a>
@@ -451,7 +451,7 @@ class OrdersManager {
      * Handle page change
      */
     handlePageChange(pageAction) {
-        const totalPages = Math.ceil(this.filteredOrders.length / this.itemsPerPage);
+        const totalPages = Math.ceil(this.filteredBookings.length / this.itemsPerPage);
 
         if (pageAction === 'prev' && this.currentPage > 1) {
             this.currentPage--;
@@ -464,26 +464,26 @@ class OrdersManager {
             }
         }
 
-        this.renderOrders(this.filteredOrders);
+        this.renderBookings(this.filteredBookings);
     }
 
     /**
-     * Open order modal with details
+     * Open booking modal with details
      */
-    async openOrderModal(orderId) {
+    async openBookingModal(bookingId) {
         try {
-            const response = await axios.get(`${this.config.ordersEndpoint}/${orderId}`);
+            const response = await axios.get(`${this.config.bookingsEndpoint}/${bookingId}`);
 
             // Handle different API response formats
-            let order;
+            let booking;
             if (response.data && response.data.success && response.data.data) {
-                order = response.data.data;
+                booking = response.data.data;
             } else {
-                order = response.data;
+                booking = response.data;
             }
 
-            this.currentOrder = order;
-            this.populateModal(order);
+            this.currentBooking = booking;
+            this.populateModal(booking);
 
             if (this.bsModal) {
                 this.bsModal.show();
@@ -501,26 +501,26 @@ class OrdersManager {
     }
 
     /**
-     * Populate modal with order details
+     * Populate modal with booking details
      */
-    populateModal(order) {
-        if (!order) return;
+    populateModal(booking) {
+        if (!booking) return;
 
         // Normalize field names (handle both upper and lowercase)
-        const orderData = {
-            id: order.PB_ID || order.pb_id,
-            variantId: order.PB_VARIANT_ID || order.pb_variant_id,
-            quantity: order.PB_QUANTITY || order.pb_quantity,
-            unitPrice: order.PB_UNIT_PRICE || order.pb_unit_price,
-            totalAmount: order.PB_TOTAL_AMOUNT || order.pb_total_amount,
-            status: order.PB_STATUS || order.pb_status,
-            orderDate: order.PB_ORDER_DATE || order.pb_order_date,
-            preferredDate: order.PB_PREFERRED_DATE || order.pb_preferred_date,
-            preferredTime: order.PB_PREFERRED_TIME || order.pb_preferred_time,
-            address: order.PB_ADDRESS || order.pb_address,
-            productName: order.PROD_NAME || order.prod_name,
-            productImage: order.PROD_IMAGE || order.prod_image,
-            variantCapacity: order.VAR_CAPACITY || order.var_capacity
+        const bookingData = {
+            id: booking.PB_ID || booking.pb_id,
+            variantId: booking.PB_VARIANT_ID || booking.pb_variant_id,
+            quantity: booking.PB_QUANTITY || booking.pb_quantity,
+            unitPrice: booking.PB_UNIT_PRICE || booking.pb_unit_price,
+            totalAmount: booking.PB_TOTAL_AMOUNT || booking.pb_total_amount,
+            status: booking.PB_STATUS || booking.pb_status,
+            bookingDate: booking.PB_ORDER_DATE || booking.pb_order_date,
+            preferredDate: booking.PB_PREFERRED_DATE || booking.pb_preferred_date,
+            preferredTime: booking.PB_PREFERRED_TIME || booking.pb_preferred_time,
+            address: booking.PB_ADDRESS || booking.pb_address,
+            productName: booking.PROD_NAME || booking.prod_name,
+            productImage: booking.PROD_IMAGE || booking.prod_image,
+            variantCapacity: booking.VAR_CAPACITY || booking.var_capacity
         };
 
         // Apply styling to modal elements
@@ -547,28 +547,28 @@ class OrdersManager {
         }
 
         // Check if modal elements exist before updating them
-        if (this.modal.orderId) {
-            this.modal.orderId.textContent = `PB-${orderData.id}`;
-            this.modal.orderId.classList.add('fw-bold');
+        if (this.modal.bookingId) {
+            this.modal.bookingId.textContent = `PB-${bookingData.id}`;
+            this.modal.bookingId.classList.add('fw-bold');
         }
 
         if (this.modal.productName) {
-            this.modal.productName.textContent = orderData.productName || 'N/A';
+            this.modal.productName.textContent = bookingData.productName || 'N/A';
             this.modal.productName.classList.add('fs-4');
             this.modal.productName.classList.add('fw-bold');
             this.modal.productName.classList.add('text-primary');
         }
 
         if (this.modal.productImage) {
-            this.modal.productImage.src = orderData.productImage || '';
-            this.modal.productImage.alt = orderData.productName || 'Product Image';
+            this.modal.productImage.src = bookingData.productImage || '';
+            this.modal.productImage.alt = bookingData.productName || 'Product Image';
             this.modal.productImage.classList.add('img-fluid');
             this.modal.productImage.classList.add('rounded');
             this.modal.productImage.classList.add('shadow-sm');
         }
 
         if (this.modal.variant) {
-            this.modal.variant.textContent = orderData.variantCapacity || 'N/A';
+            this.modal.variant.textContent = bookingData.variantCapacity || 'N/A';
             this.modal.variant.classList.add('badge');
             this.modal.variant.classList.add('bg-secondary');
             this.modal.variant.classList.add('rounded-pill');
@@ -576,48 +576,48 @@ class OrdersManager {
         }
 
         if (this.modal.quantity) {
-            this.modal.quantity.textContent = orderData.quantity;
+            this.modal.quantity.textContent = bookingData.quantity;
             this.modal.quantity.classList.add('fw-bold');
         }
 
         if (this.modal.unitPrice) {
-            this.modal.unitPrice.textContent = `$${parseFloat(orderData.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            this.modal.unitPrice.textContent = `$${parseFloat(bookingData.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             this.modal.unitPrice.classList.add('fw-bold');
         }
 
         if (this.modal.totalAmount) {
-            this.modal.totalAmount.textContent = `$${parseFloat(orderData.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            this.modal.totalAmount.textContent = `$${parseFloat(bookingData.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             this.modal.totalAmount.classList.add('fs-4');
             this.modal.totalAmount.classList.add('fw-bold');
             this.modal.totalAmount.classList.add('text-primary');
         }
 
         if (this.modal.status) {
-            const statusText = orderData.status.charAt(0).toUpperCase() + orderData.status.slice(1);
+            const statusText = bookingData.status.charAt(0).toUpperCase() + bookingData.status.slice(1);
             this.modal.status.textContent = statusText;
 
             // Add appropriate status class
             this.modal.status.className = ''; // Clear existing classes
             this.modal.status.classList.add('badge');
 
-            const statusClass = this.getStatusBadgeClass(orderData.status);
+            const statusClass = this.getStatusBadgeClass(bookingData.status);
             this.modal.status.classList.add(`bg-${statusClass}`);
             this.modal.status.classList.add('rounded-pill');
             this.modal.status.classList.add('px-3');
             this.modal.status.classList.add('py-2');
         }
 
-        if (this.modal.orderDate) {
-            this.modal.orderDate.textContent = new Date(orderData.orderDate).toLocaleDateString('en-US', {
+        if (this.modal.bookingDate) {
+            this.modal.bookingDate.textContent = new Date(bookingData.bookingDate).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
             });
-            this.modal.orderDate.classList.add('text-muted');
+            this.modal.bookingDate.classList.add('text-muted');
         }
 
         if (this.modal.preferredDate) {
-            this.modal.preferredDate.textContent = new Date(orderData.preferredDate).toLocaleDateString('en-US', {
+            this.modal.preferredDate.textContent = new Date(bookingData.preferredDate).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
@@ -628,8 +628,8 @@ class OrdersManager {
         if (this.modal.preferredTime) {
             // Format time from HH:MM:SS to HH:MM AM/PM
             let timeText = 'N/A';
-            if (orderData.preferredTime) {
-                const timeParts = orderData.preferredTime.split(':');
+            if (bookingData.preferredTime) {
+                const timeParts = bookingData.preferredTime.split(':');
                 if (timeParts.length >= 2) {
                     const hours = parseInt(timeParts[0]);
                     const minutes = timeParts[1];
@@ -643,7 +643,7 @@ class OrdersManager {
         }
 
         if (this.modal.address) {
-            this.modal.address.textContent = orderData.address || 'N/A';
+            this.modal.address.textContent = bookingData.address || 'N/A';
             this.modal.address.classList.add('text-muted');
         }
     }
