@@ -119,10 +119,5 @@ $router->map('GET', '/api/warehouses/available-space', 'App\Controllers\Warehous
 $router->map('GET', '/api/warehouses/product-distribution/[i:id]', 'App\Controllers\WarehouseController#getProductDistribution', 'get_product_distribution');
 $router->map('GET', '/api/warehouses/search', 'App\Controllers\WarehouseController#searchWarehouses', 'search_warehouses');
 
-// Technician Routes
-$router->map('GET', '/technician/dashboard', 'App\Controllers\TechnicianController#dashboard', 'technician_dashboard');
-$router->map('GET', '/api/technician/service-requests', 'App\Controllers\TechnicianController#getAssignedServiceRequests', 'technician_assigned_requests_api');
-$router->map('POST', '/api/technician/service-assignment/update', 'App\Controllers\TechnicianController#updateServiceAssignment', 'technician_update_assignment_api');
-
 
 

@@ -672,13 +672,13 @@ class ServiceRequestController extends BaseController
                     } else {
                         // New technician, add assignment
                         error_log("Adding technician: " . $techId . " with notes: " . $notes);
-                        $assignmentData = [
-                            'ba_booking_id' => $bookingId,
-                            'ba_technician_id' => $techId,
-                            'ba_status' => 'assigned',
+                    $assignmentData = [
+                        'ba_booking_id' => $bookingId,
+                        'ba_technician_id' => $techId,
+                        'ba_status' => 'assigned',
                             'ba_notes' => $notes, // Add notes here
-                            'ba_assigned_at' => date('Y-m-d H:i:s')
-                        ];
+                        'ba_assigned_at' => date('Y-m-d H:i:s')
+                    ];
                         $this->bookingAssignmentModel->addAssignment($assignmentData);
                     }
                 }
