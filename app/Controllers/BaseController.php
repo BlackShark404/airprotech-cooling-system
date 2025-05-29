@@ -143,8 +143,16 @@ class BaseController
         if ($permission === 'admin' && $role === 'admin') {
             return true;
         }
+        if ($permission === 'technician' && $role === 'technician') {
+            return true;
+        }
+        if ($permission === 'customer' && $role === 'customer') {
+            return true;
+        }
         
         // Add more complex permission logic here as needed
+        // For example, a hierarchy where admin can do everything a technician can.
+        // if ($role === 'admin') return true; // Admin has all permissions
         
         return false;
     }

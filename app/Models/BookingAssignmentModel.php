@@ -39,7 +39,7 @@ class BookingAssignmentModel extends Model
      * Get all assignments for a specific technician
      * 
      * @param int $technicianId The technician ID
-     * @param string|null $status Filter by assignment status
+     * @param string|array|null $status Filter by assignment status or array of statuses
      * @return array Array of assignment records
      */
     public function getAssignmentsForTechnician($technicianId, $status = null)
@@ -48,8 +48,20 @@ class BookingAssignmentModel extends Model
         $params = ['technicianId' => $technicianId];
         
         if ($status !== null) {
-            $sql .= " AND ba_status = :status";
-            $params['status'] = $status;
+            if (is_array($status)) {
+                if (!empty($status)) {
+                    $placeholders = implode(', ', array_fill(0, count($status), '?'));
+                    $sql .= " AND ba_status IN ({$placeholders})";
+                    $params = array_merge($params, $status);
+                } else {
+                    // If an empty array is passed, maybe return no results based on status or all if that's desired.
+                    // For now, let's assume an empty array means no status filter, though this might be an edge case to clarify.
+                }
+            } else {
+                // Single status string
+                $sql .= " AND ba_status = :status";
+                $params['status'] = $status;
+            }
         }
         
         $sql .= " ORDER BY ba_assigned_at DESC";
