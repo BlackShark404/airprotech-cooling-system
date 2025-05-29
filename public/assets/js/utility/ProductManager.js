@@ -610,15 +610,74 @@ class ProductManager {
             imagePath = '/uploads/' + imagePath;
         }
 
+        // Add custom styling to modal elements
+        if (this.modal.element) {
+            // Get the modal body and ensure it has the right styling
+            const modalBody = this.modal.element.querySelector('.modal-body');
+            if (modalBody) {
+                modalBody.classList.add('p-4');
+            }
+
+            // Add a fade-in animation to the modal
+            this.modal.element.classList.add('fade');
+
+            // Style the modal dialog for better aesthetics
+            const modalDialog = this.modal.element.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.classList.add('modal-lg');
+                modalDialog.classList.add('modal-dialog-centered');
+            }
+
+            // Add a modern header style
+            const modalHeader = this.modal.element.querySelector('.modal-header');
+            if (modalHeader) {
+                modalHeader.classList.add('bg-light');
+                modalHeader.classList.add('border-0');
+                modalHeader.classList.add('py-3');
+            }
+
+            // Style the footer
+            const modalFooter = this.modal.element.querySelector('.modal-footer');
+            if (modalFooter) {
+                modalFooter.classList.add('border-0');
+                modalFooter.classList.add('pt-0');
+                modalFooter.classList.add('pb-4');
+                modalFooter.classList.add('px-4');
+                modalFooter.classList.add('bg-white');
+            }
+        }
+
         if (this.modal.quantity) this.modal.quantity.value = 1;
 
+        // Enhance image display with responsive class
         if (this.modal.image) {
             this.modal.image.src = imagePath;
             this.modal.image.alt = productData.name || 'Product Image';
+            this.modal.image.classList.add('img-fluid');
+            this.modal.image.classList.add('rounded');
+            this.modal.image.classList.add('shadow-sm');
+
+            // Find the parent container and add styling
+            const imageContainer = this.modal.image.parentElement;
+            if (imageContainer) {
+                imageContainer.classList.add('text-center');
+                imageContainer.classList.add('mb-4');
+            }
         }
 
-        if (this.modal.name) this.modal.name.textContent = productData.name || 'N/A';
-        if (this.modal.code) this.modal.code.textContent = `PROD-${productData.id || 'N/A'}`;
+        // Enhance product name styling
+        if (this.modal.name) {
+            this.modal.name.textContent = productData.name || 'N/A';
+            this.modal.name.classList.add('fw-bold');
+            this.modal.name.classList.add('text-primary');
+            this.modal.name.classList.add('mb-3');
+        }
+
+        if (this.modal.code) {
+            this.modal.code.textContent = `PROD-${productData.id || 'N/A'}`;
+            this.modal.code.classList.add('text-muted');
+            this.modal.code.classList.add('small');
+        }
 
         // Normalize variants data (handle both upper and lowercase field names)
         const variants = product.variants || [];
@@ -633,6 +692,7 @@ class ProductManager {
 
         const hasVariants = normalizedVariants.length > 0;
 
+        // Enhance variant select styling
         if (this.modal.variantSelect) {
             if (hasVariants) {
                 let variantOptions = '';
@@ -641,90 +701,250 @@ class ProductManager {
                 });
                 this.modal.variantSelect.innerHTML = variantOptions;
                 this.modal.variantSelect.disabled = false;
+                this.modal.variantSelect.classList.add('form-select');
+                this.modal.variantSelect.classList.add('border-primary');
+
+                // Find the label for the variant select and style it
+                const variantLabel = this.modal.variantSelect.parentElement?.querySelector('label');
+                if (variantLabel) {
+                    variantLabel.classList.add('fw-bold');
+                    variantLabel.classList.add('mb-2');
+                }
             } else {
                 // No variants available
                 this.modal.variantSelect.innerHTML = '<option value="">No variants available</option>';
                 this.modal.variantSelect.disabled = true;
+                this.modal.variantSelect.classList.add('form-select');
+                this.modal.variantSelect.classList.add('bg-light');
             }
         }
 
-        // Update availability status
+        // Update availability status with badge styling
         if (this.modal.availabilityStatus) {
             this.modal.availabilityStatus.textContent = productData.status || 'N/A';
+
+            // Remove any previous badge classes
+            this.modal.availabilityStatus.className = '';
+
+            // Add badge styling based on availability
+            this.modal.availabilityStatus.classList.add('badge');
+            if (productData.status === 'Available') {
+                this.modal.availabilityStatus.classList.add('bg-success');
+            } else if (productData.status === 'Out of Stock') {
+                this.modal.availabilityStatus.classList.add('bg-danger');
+            } else {
+                this.modal.availabilityStatus.classList.add('bg-secondary');
+            }
+            this.modal.availabilityStatus.classList.add('rounded-pill');
+            this.modal.availabilityStatus.classList.add('px-3');
+            this.modal.availabilityStatus.classList.add('py-2');
         }
 
-        // Update price if we have variants
+        // Update price with attractive styling
         if (this.modal.price) {
             if (hasVariants) {
                 this.modal.price.textContent = `$${normalizedVariants[0].price}`;
+                this.modal.price.classList.add('fs-4');
+                this.modal.price.classList.add('fw-bold');
+                this.modal.price.classList.add('text-primary');
             } else {
                 this.modal.price.textContent = 'Price not available';
+                this.modal.price.classList.add('text-muted');
+                this.modal.price.classList.add('fst-italic');
             }
         }
 
-        if (this.modal.orderId) this.modal.orderId.textContent = `PB-${new Date().getFullYear()}-${String(productData.id || '0').padStart(4, '0')}`;
+        if (this.modal.orderId) {
+            this.modal.orderId.textContent = `PB-${new Date().getFullYear()}-${String(productData.id || '0').padStart(4, '0')}`;
+            this.modal.orderId.classList.add('text-muted');
+        }
+
         if (this.modal.orderDate) {
             this.modal.orderDate.textContent = new Date().toLocaleDateString('en-US', {
                 year: 'numeric', month: 'short', day: 'numeric'
             });
+            this.modal.orderDate.classList.add('text-muted');
         }
-        if (this.modal.status) this.modal.status.textContent = 'Pending';
+
+        if (this.modal.status) {
+            this.modal.status.textContent = 'Pending';
+            this.modal.status.classList.add('badge');
+            this.modal.status.classList.add('bg-warning');
+            this.modal.status.classList.add('text-dark');
+        }
+
         this.updateTotalAmount(); // Sets initial total amount
 
+        // Style the date and time inputs
         if (this.modal.preferredDate) {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             this.modal.preferredDate.value = tomorrow.toISOString().split('T')[0];
+            this.modal.preferredDate.classList.add('form-control');
+            this.modal.preferredDate.classList.add('mb-3');
+
+            // Find the label for the date input and style it
+            const dateLabel = this.modal.preferredDate.parentElement?.querySelector('label');
+            if (dateLabel) {
+                dateLabel.classList.add('fw-bold');
+                dateLabel.classList.add('mb-2');
+            }
         }
 
         if (this.modal.preferredTime) {
             this.modal.preferredTime.value = '09:00';
+            this.modal.preferredTime.classList.add('form-control');
+            this.modal.preferredTime.classList.add('mb-3');
+
+            // Find the label for the time input and style it
+            const timeLabel = this.modal.preferredTime.parentElement?.querySelector('label');
+            if (timeLabel) {
+                timeLabel.classList.add('fw-bold');
+                timeLabel.classList.add('mb-2');
+            }
         }
 
         if (this.modal.address) {
             this.modal.address.value = '';
+            this.modal.address.classList.add('form-control');
+            this.modal.address.classList.add('mb-3');
+
+            // Find the label for the address input and style it
+            const addressLabel = this.modal.address.parentElement?.querySelector('label');
+            if (addressLabel) {
+                addressLabel.classList.add('fw-bold');
+                addressLabel.classList.add('mb-2');
+            }
         }
 
+        // Style the features list
         if (this.modal.features) {
             let featuresHTML = '';
             // Normalize features array handling both upper and lowercase field names
             const features = product.features || product.FEATURES || [];
 
             if (features.length > 0) {
+                featuresHTML = '<div class="list-group list-group-flush">';
                 features.forEach(feature => {
                     const featureName = feature.FEATURE_NAME || feature.feature_name || 'Unnamed Feature';
-                    featuresHTML += `<li>• ${featureName}</li>`;
+                    featuresHTML += `<div class="list-group-item border-0 ps-0">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i> ${featureName}
+                    </div>`;
                 });
+                featuresHTML += '</div>';
             } else {
-                featuresHTML = '<li>No features listed.</li>';
+                featuresHTML = '<p class="text-muted fst-italic">No features listed.</p>';
             }
             this.modal.features.innerHTML = featuresHTML;
+
+            // Find the features section title and style it
+            const featuresTitle = this.modal.features.parentElement?.querySelector('h5, h4, h3');
+            if (featuresTitle) {
+                featuresTitle.classList.add('fw-bold');
+                featuresTitle.classList.add('mb-3');
+                featuresTitle.classList.add('border-bottom');
+                featuresTitle.classList.add('pb-2');
+            }
         }
 
+        // Style the specifications list
         if (this.modal.specifications) {
             let specsHTML = '';
             // Normalize specs array handling both upper and lowercase field names
             const specs = product.specs || product.SPECS || [];
 
             if (specs.length > 0) {
+                specsHTML = '<div class="table-responsive"><table class="table table-sm table-hover">';
+                specsHTML += '<tbody>';
                 specs.forEach(spec => {
                     const specName = spec.SPEC_NAME || spec.spec_name || 'Spec';
                     const specValue = spec.SPEC_VALUE || spec.spec_value || 'N/A';
-                    specsHTML += `<li>• ${specName}: ${specValue}</li>`;
+                    specsHTML += `<tr>
+                        <td class="fw-bold text-nowrap">${specName}</td>
+                        <td>${specValue}</td>
+                    </tr>`;
                 });
+                specsHTML += '</tbody></table></div>';
             } else {
-                specsHTML = '<li>No specifications available.</li>';
+                specsHTML = '<p class="text-muted fst-italic">No specifications available.</p>';
             }
             this.modal.specifications.innerHTML = specsHTML;
+
+            // Find the specifications section title and style it
+            const specsTitle = this.modal.specifications.parentElement?.querySelector('h5, h4, h3');
+            if (specsTitle) {
+                specsTitle.classList.add('fw-bold');
+                specsTitle.classList.add('mb-3');
+                specsTitle.classList.add('border-bottom');
+                specsTitle.classList.add('pb-2');
+            }
         }
 
-        // Disable confirm button if no variants available
+        // Style the confirm button
         if (this.modal.confirmButton) {
             this.modal.confirmButton.disabled = !hasVariants;
+            this.modal.confirmButton.classList.add('btn-lg');
+            this.modal.confirmButton.classList.add('px-4');
+
             if (!hasVariants) {
                 this.modal.confirmButton.title = "Product variants are not available for ordering";
+                this.modal.confirmButton.classList.add('btn-secondary');
             } else {
                 this.modal.confirmButton.title = "";
+                this.modal.confirmButton.classList.add('btn-primary');
+            }
+        }
+
+        // Style quantity controls
+        const quantityControls = this.modal.quantity?.parentElement;
+        if (quantityControls) {
+            quantityControls.classList.add('input-group');
+            quantityControls.classList.add('mb-3');
+
+            const decreaseBtn = document.getElementById('decrease-quantity');
+            const increaseBtn = document.getElementById('increase-quantity');
+
+            if (decreaseBtn) {
+                decreaseBtn.classList.add('btn');
+                decreaseBtn.classList.add('btn-outline-secondary');
+            }
+
+            if (increaseBtn) {
+                increaseBtn.classList.add('btn');
+                increaseBtn.classList.add('btn-outline-secondary');
+            }
+
+            if (this.modal.quantity) {
+                this.modal.quantity.classList.add('text-center');
+            }
+
+            // Find the label for the quantity input and style it
+            const quantityLabel = quantityControls.parentElement?.querySelector('label');
+            if (quantityLabel) {
+                quantityLabel.classList.add('fw-bold');
+                quantityLabel.classList.add('mb-2');
+            }
+        }
+
+        // Style the total amount
+        if (this.modal.totalAmount) {
+            const totalAmountContainer = this.modal.totalAmount.parentElement;
+            if (totalAmountContainer) {
+                totalAmountContainer.classList.add('bg-light');
+                totalAmountContainer.classList.add('p-3');
+                totalAmountContainer.classList.add('rounded');
+                totalAmountContainer.classList.add('mb-3');
+                totalAmountContainer.classList.add('border');
+
+                // Find the label for the total amount and style it
+                const totalLabel = totalAmountContainer.querySelector('label, span:not(#modal-total-amount)');
+                if (totalLabel) {
+                    totalLabel.classList.add('fw-bold');
+                }
+
+                this.modal.totalAmount.classList.add('fw-bold');
+                this.modal.totalAmount.classList.add('fs-4');
+                this.modal.totalAmount.classList.add('text-primary');
             }
         }
     }
