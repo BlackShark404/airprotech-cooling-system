@@ -448,16 +448,20 @@ class DataTablesManager {
           render: (data, type, row) => {
             const buttons = [];
 
+            // Determine the ID field to use (either id, ID, or the first column's data field)
+            const idField = 'PROD_ID' in row ? 'PROD_ID' : ('id' in row ? 'id' : (this.options.columns[0]?.data || 'id'));
+            const recordId = row[idField];
+
             if (this.options.viewRowCallback) {
-              buttons.push(`<button class="btn btn-info btn-sm view-btn" data-id="${row.id}">View</button>`);
+              buttons.push(`<button class="btn btn-info btn-sm view-btn" data-id="${recordId}">View</button>`);
             }
 
             if (this.options.editRowCallback) {
-              buttons.push(`<button class="btn btn-warning btn-sm edit-btn" data-id="${row.id}">Edit</button>`);
+              buttons.push(`<button class="btn btn-warning btn-sm edit-btn" data-id="${recordId}">Edit</button>`);
             }
 
             if (this.options.deleteRowCallback) {
-              buttons.push(`<button class="btn btn-danger btn-sm delete-btn" data-id="${row.id}">Delete</button>`);
+              buttons.push(`<button class="btn btn-danger btn-sm delete-btn" data-id="${recordId}">Delete</button>`);
             }
 
             return `<div class="action-buttons">${buttons.join(' ')}</div>`;
@@ -545,7 +549,26 @@ class DataTablesManager {
     if (!id) return null;
 
     try {
-      return this.data.find(row => row && row.id == id) || null;
+      // Define possible ID field names to check
+      const possibleIdFields = ['PROD_ID', 'id', 'ID'];
+
+      // Add the first column's data field if it exists
+      if (this.options.columns && this.options.columns[0] && this.options.columns[0].data) {
+        possibleIdFields.push(this.options.columns[0].data);
+      }
+
+      // Find the row by checking all possible ID fields
+      return this.data.find(row => {
+        if (!row) return false;
+
+        for (const field of possibleIdFields) {
+          if (field in row && row[field] == id) {
+            return true;
+          }
+        }
+
+        return false;
+      }) || null;
     } catch (error) {
       console.error('Error finding row by ID:', error);
       return null;

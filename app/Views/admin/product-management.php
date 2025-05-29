@@ -115,15 +115,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         ],
         viewRowCallback: function(rowData) {
-            // Redirect to product detail page
-            window.location.href = '/admin/add-product?id=' + rowData.PROD_ID;
+            // Show product details in modal
+            showProductDetailsModal(rowData);
         },
         editRowCallback: function(rowData) {
-            // Redirect to product edit page
-            window.location.href = '/admin/add-product?id=' + rowData.PROD_ID + '&edit=true';
+            // Show product edit modal
+            showProductEditModal(rowData);
         },
         deleteRowCallback: function(rowData) {
-            // Handle product deletion via API
+            // Show deletion confirmation in modal (already using a modal from DataTablesManager)
+            // The actual deletion will happen when confirmed
             fetch('/api/products/delete/' + rowData.PROD_ID, {
                 method: 'POST',
                 headers: {
@@ -150,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: '<i class="bi bi-plus-circle me-1"></i>Add Product',
                 className: 'btn btn-primary',
                 action: function() {
-                    window.location.href = '/admin/add-product';
+                    showAddProductModal();
                 }
             },
             refreshButton: {
@@ -162,6 +163,337 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Function to show product details modal
+    function showProductDetailsModal(product) {
+        // Set modal title
+        document.getElementById('productModalLabel').textContent = 'Product Details: ' + product.PROD_NAME;
+        
+        // Clear previous content
+        const modalBody = document.getElementById('productModalBody');
+        modalBody.innerHTML = '';
+        
+        // Create product details HTML
+        let detailsHtml = `
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <img src="\${product.PROD_IMAGE}" alt="\${product.PROD_NAME}" class="img-fluid mb-3" style="max-height: 150px;">
+                    <div class="badge bg-\${product.PROD_AVAILABILITY_STATUS === 'Available' ? 'success' : (product.PROD_AVAILABILITY_STATUS === 'Out of Stock' ? 'danger' : 'secondary')} mb-3">
+                        \${product.PROD_AVAILABILITY_STATUS}
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <h5>Product Information</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item"><strong>ID:</strong> \${product.PROD_ID}</li>
+                        <li class="list-group-item"><strong>Name:</strong> \${product.PROD_NAME}</li>
+                        <li class="list-group-item"><strong>Description:</strong> \${product.PROD_DESCRIPTION || 'No description available'}</li>
+                        <li class="list-group-item"><strong>Created:</strong> \${new Date(product.PROD_CREATED_AT).toLocaleString()}</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        // Fetch additional details if needed (variants, specs, features)
+        fetch('/api/products/' + product.PROD_ID, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const productDetails = data.data;
+                
+                // Add variants if available
+                if (productDetails.variants && productDetails.variants.length > 0) {
+                    detailsHtml += `
+                        <div class="mt-4">
+                            <h5>Product Variants</h5>
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Capacity</th>
+                                        <th>SRP Price</th>
+                                        <th>With Installation</th>
+                                        <th>Power Consumption</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    productDetails.variants.forEach(variant => {
+                        detailsHtml += `
+                            <tr>
+                                <td>\${variant.VAR_CAPACITY}</td>
+                                <td>$\${variant.VAR_SRP_PRICE}</td>
+                                <td>\${variant.VAR_PRICE_WITH_INSTALL ? '$' + variant.VAR_PRICE_WITH_INSTALL : 'N/A'}</td>
+                                <td>\${variant.VAR_POWER_CONSUMPTION || 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    detailsHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                // Add features if available
+                if (productDetails.features && productDetails.features.length > 0) {
+                    detailsHtml += `
+                        <div class="mt-3">
+                            <h5>Features</h5>
+                            <ul class="list-group">
+                    `;
+                    
+                    productDetails.features.forEach(feature => {
+                        detailsHtml += `<li class="list-group-item">\${feature.FEATURE_NAME}</li>`;
+                    });
+                    
+                    detailsHtml += `
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                // Add specifications if available
+                if (productDetails.specs && productDetails.specs.length > 0) {
+                    detailsHtml += `
+                        <div class="mt-3">
+                            <h5>Specifications</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                    `;
+                    
+                    productDetails.specs.forEach(spec => {
+                        detailsHtml += `
+                            <tr>
+                                <td><strong>\${spec.SPEC_NAME}</strong></td>
+                                <td>\${spec.SPEC_VALUE}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    detailsHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                // Update modal content
+                modalBody.innerHTML = detailsHtml;
+                
+                // Set footer buttons
+                const modalFooter = document.getElementById('productModalFooter');
+                modalFooter.innerHTML = `
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="/admin/add-product?id=\${product.PROD_ID}&edit=true" class="btn btn-warning">Edit Product</a>
+                `;
+            } else {
+                modalBody.innerHTML = '<div class="alert alert-danger">Failed to load product details</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching product details:', error);
+            modalBody.innerHTML = '<div class="alert alert-danger">Error loading product details</div>';
+        });
+        
+        // Show modal
+        const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+        productModal.show();
+    }
+    
+    // Function to show product edit modal
+    function showProductEditModal(product) {
+        // For complex forms, it's often better to redirect to a dedicated edit page
+        // But we'll set up a simple modal edit for basic fields
+        
+        // Set modal title
+        document.getElementById('productModalLabel').textContent = 'Edit Product: ' + product.PROD_NAME;
+        
+        // Create edit form
+        const modalBody = document.getElementById('productModalBody');
+        modalBody.innerHTML = `
+            <form id="editProductForm">
+                <input type="hidden" id="editProductId" value="\${product.PROD_ID}">
+                
+                <div class="mb-3">
+                    <label for="editProductName" class="form-label">Product Name</label>
+                    <input type="text" class="form-control" id="editProductName" value="\${product.PROD_NAME}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="editProductDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="editProductDescription" rows="3">\${product.PROD_DESCRIPTION || ''}</textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="editProductStatus" class="form-label">Status</label>
+                    <select class="form-select" id="editProductStatus" required>
+                        <option value="Available" \${product.PROD_AVAILABILITY_STATUS === 'Available' ? 'selected' : ''}>Available</option>
+                        <option value="Out of Stock" \${product.PROD_AVAILABILITY_STATUS === 'Out of Stock' ? 'selected' : ''}>Out of Stock</option>
+                        <option value="Discontinued" \${product.PROD_AVAILABILITY_STATUS === 'Discontinued' ? 'selected' : ''}>Discontinued</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <p>For advanced editing (variants, features, specs), please use the full editor</p>
+                </div>
+            </form>
+        `;
+        
+        // Set footer buttons
+        const modalFooter = document.getElementById('productModalFooter');
+        modalFooter.innerHTML = `
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveEditButton">Save Changes</button>
+            <a href="/admin/add-product?id=\${product.PROD_ID}&edit=true" class="btn btn-warning">Advanced Edit</a>
+        `;
+        
+        // Add event listener for save button
+        document.getElementById('saveEditButton').addEventListener('click', function() {
+            const productId = document.getElementById('editProductId').value;
+            const productData = {
+                product: {
+                    PROD_NAME: document.getElementById('editProductName').value,
+                    PROD_DESCRIPTION: document.getElementById('editProductDescription').value,
+                    PROD_AVAILABILITY_STATUS: document.getElementById('editProductStatus').value
+                }
+            };
+            
+            // Submit update via API
+            fetch('/api/products/' + productId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    productTableManager.showSuccessToast('Success', 'Product updated successfully');
+                    
+                    // Hide modal
+                    bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+                    
+                    // Refresh table
+                    productTableManager.refresh();
+                } else {
+                    productTableManager.showErrorToast('Error', data.message || 'Failed to update product');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating product:', error);
+                productTableManager.showErrorToast('Error', 'An error occurred while updating the product');
+            });
+        });
+        
+        // Show modal
+        const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+        productModal.show();
+    }
+    
+    // Function to show add product modal
+    function showAddProductModal() {
+        // Set modal title
+        document.getElementById('productModalLabel').textContent = 'Add New Product';
+        
+        // Create add form
+        const modalBody = document.getElementById('productModalBody');
+        modalBody.innerHTML = `
+            <form id="addProductForm">
+                <div class="mb-3">
+                    <label for="addProductName" class="form-label">Product Name</label>
+                    <input type="text" class="form-control" id="addProductName" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="addProductDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="addProductDescription" rows="3"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="addProductImage" class="form-label">Image URL</label>
+                    <input type="text" class="form-control" id="addProductImage" value="/assets/images/products/default.jpg">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="addProductStatus" class="form-label">Status</label>
+                    <select class="form-select" id="addProductStatus" required>
+                        <option value="Available" selected>Available</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                        <option value="Discontinued">Discontinued</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <p>For advanced product creation with variants, features, and specs, please use the full editor</p>
+                </div>
+            </form>
+        `;
+        
+        // Set footer buttons
+        const modalFooter = document.getElementById('productModalFooter');
+        modalFooter.innerHTML = `
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveAddButton">Create Product</button>
+            <a href="/admin/add-product" class="btn btn-warning">Advanced Create</a>
+        `;
+        
+        // Add event listener for save button
+        document.getElementById('saveAddButton').addEventListener('click', function() {
+            const productData = {
+                product: {
+                    PROD_NAME: document.getElementById('addProductName').value,
+                    PROD_DESCRIPTION: document.getElementById('addProductDescription').value,
+                    PROD_IMAGE: document.getElementById('addProductImage').value,
+                    PROD_AVAILABILITY_STATUS: document.getElementById('addProductStatus').value
+                }
+            };
+            
+            // Submit product via API
+            fetch('/api/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    productTableManager.showSuccessToast('Success', 'Product created successfully');
+                    
+                    // Hide modal
+                    bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+                    
+                    // Refresh table
+                    productTableManager.refresh();
+                } else {
+                    productTableManager.showErrorToast('Error', data.message || 'Failed to create product');
+                }
+            })
+            .catch(error => {
+                console.error('Error creating product:', error);
+                productTableManager.showErrorToast('Error', 'An error occurred while creating the product');
+            });
+        });
+        
+        // Show modal
+        const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+        productModal.show();
+    }
+    
+    // Load summary data
+    loadProductSummary();
 });
 </script>
 HTML;
@@ -283,6 +615,29 @@ ob_start();
                     <!-- Data will be loaded dynamically -->
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Product Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="productModalBody">
+                <!-- Content will be dynamically loaded -->
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="productModalFooter">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
