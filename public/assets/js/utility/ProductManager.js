@@ -15,17 +15,17 @@ class ProductManager {
             cardTemplate: this.getDefaultCardTemplate(),
             itemsPerPage: 9,
             paginationContainerSelector: '#pagination-container',
-            orderEndpoint: '/api/product-orders',
+            orderEndpoint: '/api/product-bookings',
             ...options
         };
-        
+
         // Container for product cards
         this.container = document.querySelector(this.config.containerSelector);
         if (!this.container) {
             console.error(`ProductManager: Products container with selector "${this.config.containerSelector}" not found.`);
             return; // Critical element missing
         }
-        
+
         // Initialize modal elements references
         this.modal = { element: document.getElementById(this.config.modalId) };
         if (this.modal.element) {
@@ -43,26 +43,29 @@ class ProductManager {
             this.modal.features = document.getElementById('modal-features');
             this.modal.specifications = document.getElementById('modal-specifications');
             this.modal.confirmButton = document.getElementById('confirm-order');
+            this.modal.preferredDate = document.getElementById('modal-preferred-date');
+            this.modal.preferredTime = document.getElementById('modal-preferred-time');
+            this.modal.address = document.getElementById('modal-address');
         } else {
             console.warn(`ProductManager: Modal with ID "${this.config.modalId}" not found. Modal functionality will be disabled.`);
         }
-        
+
         // Store all products for filtering
         this.allProducts = [];
-        
+
         // Pagination state
         this.currentPage = 1;
         this.itemsPerPage = this.config.itemsPerPage;
-        
+
         // Initialize modal controls and order confirmation if modal exists
         if (this.modal.element) {
             this.initModalControls();
         }
-        
+
         // Initialize filter and search
         this.initFilterAndSearch();
     }
-    
+
     /**
      * Default card template showing primary variant price
      */
@@ -85,7 +88,7 @@ class ProductManager {
             </div>
         `;
     }
-    
+
     /**
      * Initialize controls within the modal
      */
@@ -117,14 +120,14 @@ class ProductManager {
                 }
             });
         }
-        
+
         if (this.modal.variantSelect) {
             this.modal.variantSelect.addEventListener('change', () => {
                 this.updateModalPriceAndAvailability();
                 this.updateTotalAmount();
             });
         }
-        
+
         // Add event listener to all "Order Now" buttons (delegated to document)
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('view-details')) {
@@ -137,28 +140,28 @@ class ProductManager {
                 this.openProductModal(productId);
             }
         });
-        
+
         if (this.modal.confirmButton) {
             this.modal.confirmButton.addEventListener('click', () => {
                 this.confirmOrder();
             });
         }
     }
-    
+
     /**
      * Initialize filter and search functionality
      */
     initFilterAndSearch() {
         this.filterForm = document.getElementById(this.config.filterFormId);
         this.searchInput = document.getElementById(this.config.searchInputId);
-        
+
         if (this.filterForm) {
             this.filterForm.addEventListener('change', () => this.applyFilters());
             this.filterForm.addEventListener('reset', () => {
                 setTimeout(() => this.applyFilters(), 10); // Allow form to reset before applying
             });
         }
-        
+
         if (this.searchInput) {
             let searchTimeout;
             this.searchInput.addEventListener('input', () => {
@@ -167,69 +170,69 @@ class ProductManager {
             });
         }
     }
-    
+
     /**
      * Apply all active filters and search
      */
     applyFilters() {
         if (!this.allProducts.length && this.container) { // Check if container exists
-             this.container.innerHTML = '<div class="col-12"><p class="text-center">No products loaded to filter.</p></div>';
-             this.renderPagination(0);
-             return;
+            this.container.innerHTML = '<div class="col-12"><p class="text-center">No products loaded to filter.</p></div>';
+            this.renderPagination(0);
+            return;
         }
         if (!this.allProducts.length) return;
 
 
         let filteredProducts = [...this.allProducts];
-        
+
         const categoryFilter = this.filterForm?.querySelector('[name="category"]');
         if (categoryFilter && categoryFilter.value) {
-            filteredProducts = filteredProducts.filter(product => 
+            filteredProducts = filteredProducts.filter(product =>
                 product.category === categoryFilter.value
             );
         }
-        
+
         const minPriceFilter = this.filterForm?.querySelector('[name="min-price"]');
         const maxPriceFilter = this.filterForm?.querySelector('[name="max-price"]');
-        
+
         if (minPriceFilter && minPriceFilter.value !== '') {
             const minPrice = parseFloat(minPriceFilter.value);
-            filteredProducts = filteredProducts.filter(product => 
+            filteredProducts = filteredProducts.filter(product =>
                 product.variants.some(variant => parseFloat(variant.VAR_SRP_PRICE) >= minPrice)
             );
         }
-        
+
         if (maxPriceFilter && maxPriceFilter.value !== '') {
             const maxPrice = parseFloat(maxPriceFilter.value);
-            filteredProducts = filteredProducts.filter(product => 
+            filteredProducts = filteredProducts.filter(product =>
                 product.variants.some(variant => parseFloat(variant.VAR_SRP_PRICE) <= maxPrice)
             );
         }
-        
+
         const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
         if (availabilityFilter && availabilityFilter.value !== '') {
-            filteredProducts = filteredProducts.filter(product => 
+            filteredProducts = filteredProducts.filter(product =>
                 product.PROD_AVAILABILITY_STATUS === availabilityFilter.value
             );
         }
-        
+
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
-            filteredProducts = filteredProducts.filter(product => 
-                product.PROD_NAME.toLowerCase().includes(searchTerm) || 
+            filteredProducts = filteredProducts.filter(product =>
+                product.PROD_NAME.toLowerCase().includes(searchTerm) ||
                 (product.PROD_DESCRIPTION && product.PROD_DESCRIPTION.toLowerCase().includes(searchTerm))
             );
         }
-        
+
         this.currentPage = 1;
         this.renderProducts(filteredProducts);
-        
+
         const resultsCountElement = document.getElementById('results-count');
         if (resultsCountElement) {
             resultsCountElement.textContent = `${filteredProducts.length} products found`;
         }
     }
-    
+
     /**
      * Update total amount based on quantity and selected variant
      */
@@ -238,7 +241,7 @@ class ProductManager {
             if (this.modal.totalAmount) this.modal.totalAmount.textContent = '$0.00';
             return;
         }
-        
+
         const quantity = parseInt(this.modal.quantity.value, 10);
         const selectedVariant = this.currentProduct.variants.find(
             v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
@@ -247,7 +250,7 @@ class ProductManager {
         const total = price * quantity;
         this.modal.totalAmount.textContent = `$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
-    
+
     /**
      * Update modal price and availability based on selected variant
      */
@@ -255,23 +258,23 @@ class ProductManager {
         if (!this.currentProduct || !this.currentProduct.variants || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) {
             return;
         }
-        
+
         const selectedVariant = this.currentProduct.variants.find(
             v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
         );
 
         if (selectedVariant) {
             this.modal.price.textContent = `$${selectedVariant.VAR_SRP_PRICE}`;
-            this.modal.availabilityStatus.textContent = 
-                this.currentProduct.PROD_AVAILABILITY_STATUS === 'Available' 
-                ? `Available (${this.getAvailableQuantity(selectedVariant)} units)` 
-                : this.currentProduct.PROD_AVAILABILITY_STATUS;
+            this.modal.availabilityStatus.textContent =
+                this.currentProduct.PROD_AVAILABILITY_STATUS === 'Available'
+                    ? `Available (${this.getAvailableQuantity(selectedVariant)} units)`
+                    : this.currentProduct.PROD_AVAILABILITY_STATUS;
         } else {
             this.modal.price.textContent = '$N/A';
             this.modal.availabilityStatus.textContent = 'N/A';
         }
     }
-    
+
     /**
      * Fetch products with variants from API and render them
      */
@@ -284,7 +287,7 @@ class ProductManager {
         try {
             const response = await axios.get(this.config.productsEndpoint);
             const products = response.data;
-            
+
             if (Array.isArray(products) && products.length > 0) {
                 this.allProducts = products;
                 this.populateCategoryFilter(products);
@@ -300,29 +303,29 @@ class ProductManager {
             this.renderPagination(0);
         }
     }
-    
+
     /**
      * Populate category filter dropdown with unique categories from products
      */
     populateCategoryFilter(products) {
         const categoryFilter = this.filterForm?.querySelector('[name="category"]');
         if (!categoryFilter) return;
-        
+
         const categories = new Set();
         products.forEach(product => {
             if (product.category) {
                 categories.add(product.category);
             }
         });
-        
+
         let options = '<option value="">All Categories</option>';
         categories.forEach(category => {
             options += `<option value="${category}">${this.formatCategoryName(category)}</option>`;
         });
-        
+
         categoryFilter.innerHTML = options;
     }
-    
+
     /**
      * Format category name for display
      */
@@ -333,7 +336,7 @@ class ProductManager {
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
     }
-    
+
     /**
      * Render product cards with pagination
      */
@@ -345,27 +348,27 @@ class ProductManager {
             this.renderPagination(0);
             return;
         }
-        
+
         const startIndex = (this.currentPage - 1) * this.itemsPerPage;
         const endIndex = startIndex + this.itemsPerPage;
         const paginatedProducts = products.slice(startIndex, endIndex);
-        
+
         let html = '';
         paginatedProducts.forEach(product => {
             html += this.config.cardTemplate(product);
         });
-        
+
         this.container.innerHTML = html;
         this.renderPagination(products.length);
     }
-    
+
     /**
      * Render pagination controls
      */
     renderPagination(totalItems) {
         const paginationContainer = document.querySelector(this.config.paginationContainerSelector);
         if (!paginationContainer) return;
-        
+
         if (totalItems === 0) {
             paginationContainer.innerHTML = ''; // Clear pagination if no items
             return;
@@ -384,7 +387,7 @@ class ProductManager {
                         <a class="page-link" href="#" data-page="prev">Previous</a>
                     </li>
         `;
-        
+
         for (let i = 1; i <= totalPages; i++) {
             paginationHTML += `
                 <li class="page-item ${this.currentPage === i ? 'active' : ''}">
@@ -392,7 +395,7 @@ class ProductManager {
                 </li>
             `;
         }
-        
+
         paginationHTML += `
                     <li class="page-item ${this.currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}">
                         <a class="page-link" href="#" data-page="next">Next</a>
@@ -400,11 +403,11 @@ class ProductManager {
                 </ul>
             </nav>
         `;
-        
+
         paginationContainer.innerHTML = paginationHTML;
         this.initPaginationControls();
     }
-    
+
     /**
      * Initialize pagination controls
      */
@@ -418,7 +421,7 @@ class ProductManager {
             });
         });
     }
-    
+
     /**
      * Handle page change
      */
@@ -435,14 +438,14 @@ class ProductManager {
                 this.currentPage = pageNum;
             }
         }
-        
+
         // Re-apply filters to render the correct page.
         // applyFilters() internally resets currentPage to 1 if it's called for filtering changes,
         // but here, we are changing the page *for the current filter set*.
         // So, instead of calling applyFilters() which resets the page, we directly re-render
         // with the current filtered set and the new page.
         // To do this, we need to get the currently filtered products without resetting the page.
-        
+
         let filteredProducts = [...this.allProducts];
         const categoryFilter = this.filterForm?.querySelector('[name="category"]');
         if (categoryFilter && categoryFilter.value) {
@@ -466,7 +469,7 @@ class ProductManager {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
             filteredProducts = filteredProducts.filter(p => p.PROD_NAME.toLowerCase().includes(searchTerm) || (p.PROD_DESCRIPTION && p.PROD_DESCRIPTION.toLowerCase().includes(searchTerm)));
         }
-        
+
         this.renderProducts(filteredProducts); // Render with the new page
     }
 
@@ -500,7 +503,7 @@ class ProductManager {
         return filtered.length;
     }
 
-    
+
     /**
      * Open product modal with details
      */
@@ -513,7 +516,7 @@ class ProductManager {
         try {
             const response = await axios.get(`${this.config.productsEndpoint}/${productId}`);
             const product = response.data;
-            
+
             if (!product) {
                 console.error(`Product details not found for ID: ${productId}`);
                 alert('Product details could not be loaded.');
@@ -522,7 +525,7 @@ class ProductManager {
 
             this.currentProduct = product;
             this.populateModal(product);
-            
+
             if (this.modal.element) {
                 const bsModal = new bootstrap.Modal(this.modal.element);
                 bsModal.show();
@@ -534,7 +537,7 @@ class ProductManager {
             alert('Failed to load product details. Please try again.');
         }
     }
-    
+
     /**
      * Populate modal with product details
      */
@@ -542,14 +545,14 @@ class ProductManager {
         if (!this.modal.element || !product) return; // Modal or product not available
 
         if (this.modal.quantity) this.modal.quantity.value = 1;
-        
+
         if (this.modal.image) {
             this.modal.image.src = product.PROD_IMAGE || '';
             this.modal.image.alt = product.PROD_NAME || 'Product Image';
         }
         if (this.modal.name) this.modal.name.textContent = product.PROD_NAME || 'N/A';
         if (this.modal.code) this.modal.code.textContent = `PROD-${product.PROD_ID || 'N/A'}`;
-        
+
         if (this.modal.variantSelect && product.variants && Array.isArray(product.variants)) {
             let variantOptions = '';
             product.variants.forEach(variant => {
@@ -557,18 +560,32 @@ class ProductManager {
             });
             this.modal.variantSelect.innerHTML = variantOptions;
         }
-        
+
         this.updateModalPriceAndAvailability(); // Sets initial price/availability
-        
-        if (this.modal.orderId) this.modal.orderId.textContent = `PO-${new Date().getFullYear()}-${String(product.PROD_ID || '0').padStart(4, '0')}`;
+
+        if (this.modal.orderId) this.modal.orderId.textContent = `PB-${new Date().getFullYear()}-${String(product.PROD_ID || '0').padStart(4, '0')}`;
         if (this.modal.orderDate) {
-            this.modal.orderDate.textContent = new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', month: 'short', day: 'numeric' 
+            this.modal.orderDate.textContent = new Date().toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
             });
         }
         if (this.modal.status) this.modal.status.textContent = 'Pending';
         this.updateTotalAmount(); // Sets initial total amount
-        
+
+        if (this.modal.preferredDate) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            this.modal.preferredDate.value = tomorrow.toISOString().split('T')[0];
+        }
+
+        if (this.modal.preferredTime) {
+            this.modal.preferredTime.value = '09:00';
+        }
+
+        if (this.modal.address) {
+            this.modal.address.value = '';
+        }
+
         if (this.modal.features) {
             let featuresHTML = '';
             if (product.features && Array.isArray(product.features) && product.features.length > 0) {
@@ -580,7 +597,7 @@ class ProductManager {
             }
             this.modal.features.innerHTML = featuresHTML;
         }
-        
+
         if (this.modal.specifications) {
             let specsHTML = '';
             if (product.specifications && Array.isArray(product.specifications) && product.specifications.length > 0) {
@@ -593,7 +610,7 @@ class ProductManager {
             this.modal.specifications.innerHTML = specsHTML;
         }
     }
-    
+
     /**
      * Get available quantity from inventory
      */
@@ -602,7 +619,7 @@ class ProductManager {
         // This should ideally come from product data or a separate inventory API
         return variant?.VAR_STOCK_QUANTITY || 100; // Placeholder, use actual stock if available
     }
-    
+
     /**
      * Handle order confirmation and send to backend
      */
@@ -616,9 +633,32 @@ class ProductManager {
             alert('No product selected or product data is incomplete. Please try again.');
             return;
         }
-        
+
         if (!this.modal.variantSelect || !this.modal.quantity) {
             alert('Modal elements for order are missing. Cannot proceed.');
+            return;
+        }
+
+        if (!this.modal.preferredDate || !this.modal.preferredTime || !this.modal.address) {
+            alert('Please fill in all required booking information: preferred date, time, and address.');
+            return;
+        }
+
+        if (!this.modal.preferredDate.value) {
+            alert('Please select a preferred date for your booking.');
+            this.modal.preferredDate.focus();
+            return;
+        }
+
+        if (!this.modal.preferredTime.value) {
+            alert('Please select a preferred time for your booking.');
+            this.modal.preferredTime.focus();
+            return;
+        }
+
+        if (!this.modal.address.value.trim()) {
+            alert('Please provide your address for delivery/installation.');
+            this.modal.address.focus();
             return;
         }
 
@@ -630,50 +670,49 @@ class ProductManager {
             alert('Invalid product variant selected. Please select a valid option.');
             return;
         }
-        
+
         const orderData = {
-            // PO_CUSTOMER_ID is removed, backend will handle this
-            PO_VARIANT_ID: selectedVariant.VAR_ID,
-            PO_QUANTITY: parseInt(this.modal.quantity.value, 10),
-            PO_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE),
-            PO_STATUS: 'pending', // Or as per backend requirements
-            PO_ORDER_DATE: new Date().toISOString() // Standard ISO 8601 format
+            PB_VARIANT_ID: selectedVariant.VAR_ID,
+            PB_QUANTITY: parseInt(this.modal.quantity.value, 10),
+            PB_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE),
+            PB_STATUS: 'pending',
+            PB_ORDER_DATE: new Date().toISOString(),
+            PB_PREFERRED_DATE: this.modal.preferredDate.value,
+            PB_PREFERRED_TIME: this.modal.preferredTime.value,
+            PB_ADDRESS: this.modal.address.value.trim()
         };
-        
+
         try {
-            // Display loading state on confirm button if exists
             if (this.modal.confirmButton) {
                 this.modal.confirmButton.disabled = true;
                 this.modal.confirmButton.textContent = 'Placing Order...';
             }
 
             const response = await axios.post(this.config.orderEndpoint, orderData);
-            
-            alert('Order placed successfully! Order ID: ' + (response.data.PO_ID || response.data.id || 'N/A'));
-            
+
+            alert('Booking placed successfully! Booking ID: ' + (response.data.PB_ID || response.data.id || 'N/A'));
+
             if (this.modal.element) {
                 const bsModal = bootstrap.Modal.getInstance(this.modal.element);
                 if (bsModal) {
                     bsModal.hide();
                 }
             }
-            
-            this.fetchAndRenderProducts(); // Refresh product list (e.g., update stock)
+
+            this.fetchAndRenderProducts();
         } catch (error) {
-            console.error('Error placing order:', error.response ? error.response.data : error.message);
-            let errorMessage = 'Failed to place order. Please try again.';
-            if (error.response && error.response.status === 401) { // Unauthorized
-                errorMessage = 'You must be logged in to place an order. Please log in and try again.';
-                // Optionally, redirect to login: window.location.href = '/login';
+            console.error('Error placing booking:', error.response ? error.response.data : error.message);
+            let errorMessage = 'Failed to place booking. Please try again.';
+            if (error.response && error.response.status === 401) {
+                errorMessage = 'You must be logged in to place a booking. Please log in and try again.';
             } else if (error.response && error.response.data && error.response.data.message) {
-                errorMessage = `Failed to place order. ${error.response.data.message}`;
+                errorMessage = `Failed to place booking. ${error.response.data.message}`;
             }
             alert(errorMessage);
         } finally {
-            // Reset confirm button state
-             if (this.modal.confirmButton) {
+            if (this.modal.confirmButton) {
                 this.modal.confirmButton.disabled = false;
-                this.modal.confirmButton.textContent = 'Confirm Order';
+                this.modal.confirmButton.textContent = 'Confirm Booking';
             }
         }
     }
