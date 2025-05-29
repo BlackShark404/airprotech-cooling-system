@@ -144,9 +144,9 @@ ob_start();
 </div>
 
 <!-- Include jQuery first -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
 <!-- Toast Notifications (assuming you have this utility) -->
-<script src="/assets/js/utility/toast-notifications.js"></script>
+<!-- <script src="/assets/js/utility/toast-notifications.js"></script> -->
 
 <script>
 $(document).ready(function() {
@@ -272,7 +272,7 @@ $content = ob_get_clean();
 
 // Include the base template (assuming you have a base template for technicians or can use the admin one)
 // You might need to create a specific base for technicians if the layout differs significantly
-$baseTemplate = __DIR__ . '/../includes/admin/base.php'; // CHECK AND CHANGE IF NEEDED
+$baseTemplate = __DIR__ . '/../includes/technician/base.php'; // UPDATED to technician base
 if (file_exists($baseTemplate)) {
     include $baseTemplate;
 } else {
