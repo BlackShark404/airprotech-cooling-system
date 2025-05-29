@@ -106,12 +106,13 @@ $additionalStyles = <<<HTML
         padding: 0.75rem;
     }
     .technician-badge {
-        display: inline-block;
-        margin-right: 5px;
-        margin-bottom: 5px;
-        padding: 5px 10px;
-        border-radius: 15px;
-        background-color: #e9ecef;
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
     }
     .technician-remove {
         margin-left: 5px;
@@ -646,10 +647,11 @@ function editServiceRequest(rowData) {
                 data.technicians.forEach(tech => {
                     assignedTechnicians.push({
                         id: tech.id,
-                        name: tech.name
+                        name: tech.name,
+                        notes: tech.notes
                     });
                     
-                    addTechnicianBadge(tech.id, tech.name);
+                    addTechnicianBadge(tech.id, tech.name, tech.notes);
                 });
             }
             
@@ -706,12 +708,15 @@ function addTechnicianToList() {
 }
 
 // Create and add a technician badge to the UI
-function addTechnicianBadge(techId, techName) {
+function addTechnicianBadge(techId, techName, notes = '') {
     const techList = $('#technician-list');
     const badge = $(`
         <div class="technician-badge" data-id="${techId}">
-            ${techName}
-            <span class="technician-remove">×</span>
+            <div>
+                <span>${techName}</span>
+                <span class="technician-remove" style="cursor: pointer; margin-left: 5px;">×</span>
+            </div>
+            <textarea class="form-control mt-1 technician-notes" placeholder="Add notes for ${techName}" rows="2">${notes || ''}</textarea>
         </div>
     `);
     
@@ -734,7 +739,17 @@ function saveServiceRequest() {
     const estimatedCost = $('#edit-cost').val();
     const preferredDate = $('#edit-date').val();
     const preferredTime = $('#edit-time').val();
-    const technicianIds = assignedTechnicians.map(tech => tech.id);
+    
+    // Get technician IDs and their notes
+    const techniciansData = [];
+    $('#technician-list .technician-badge').each(function() {
+        const techId = $(this).data('id');
+        const notes = $(this).find('.technician-notes').val();
+        techniciansData.push({
+            id: techId,
+            notes: notes
+        });
+    });
     
     // Validate date and time
     const now = new Date();
@@ -753,7 +768,7 @@ function saveServiceRequest() {
         estimatedCost: estimatedCost,
         preferredDate: preferredDate,
         preferredTime: preferredTime,
-        technicians: technicianIds
+        technicians: techniciansData // Updated to send IDs and notes
     };
     
     // Send update request

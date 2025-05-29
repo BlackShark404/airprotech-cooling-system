@@ -536,7 +536,8 @@ class ServiceRequestController extends BaseController
                     'id' => $assignment['ba_technician_id'],
                     'name' => $technicianInfo['ua_first_name'] . ' ' . $technicianInfo['ua_last_name'],
                     'status' => $assignment['ba_status'],
-                    'assigned_at' => $assignment['ba_assigned_at']
+                    'assigned_at' => $assignment['ba_assigned_at'],
+                    'notes' => $assignment['ba_notes']
                 ];
             }
         }
@@ -643,32 +644,43 @@ class ServiceRequestController extends BaseController
                 
                 error_log("Current technician IDs: " . json_encode($currentTechIds));
                 
-                // Determine technicians to add and remove
-                $newTechIds = $input['technicians'];
-                $techToAdd = array_diff($newTechIds, $currentTechIds);
-                $techToRemove = array_diff($currentTechIds, $newTechIds);
+                // Extract new technician IDs from the input objects
+                $newTechnicianData = $input['technicians']; // This is an array of objects {id: x, notes: y}
+                $newTechIds = array_map(function($tech) { return $tech['id']; }, $newTechnicianData);
+
+                $techToAddUpdate = [];
+                foreach ($newTechnicianData as $techData) {
+                    $techToAddUpdate[$techData['id']] = $techData['notes'];
+                }
                 
-                error_log("Technicians to add: " . json_encode($techToAdd));
-                error_log("Technicians to remove: " . json_encode($techToRemove));
+                $techIdsToRemove = array_diff($currentTechIds, $newTechIds);
+                
+                error_log("Technicians to remove: " . json_encode($techIdsToRemove));
                 
                 // Remove assignments for technicians no longer assigned
-                foreach ($techToRemove as $techId) {
+                foreach ($techIdsToRemove as $techId) {
                     error_log("Removing technician: " . $techId);
                     $this->bookingAssignmentModel->removeAssignment($bookingId, $techId);
                 }
                 
-                // Add new assignments
-                foreach ($techToAdd as $techId) {
-                    error_log("Adding technician: " . $techId);
-                    $assignmentData = [
-                        'ba_booking_id' => $bookingId,
-                        'ba_technician_id' => $techId,
-                        'ba_status' => 'assigned',
-                        'ba_assigned_at' => date('Y-m-d H:i:s')
-                    ];
-                    
-                    $result = $this->bookingAssignmentModel->addAssignment($assignmentData);
-                    error_log("Assignment result: " . ($result ? $result : 'FALSE'));
+                // Add new assignments or update existing ones
+                foreach ($techToAddUpdate as $techId => $notes) {
+                    if (in_array($techId, $currentTechIds)) {
+                        // Technician already assigned, update notes
+                        error_log("Updating notes for technician: " . $techId);
+                        $this->bookingAssignmentModel->updateAssignmentNotes($bookingId, $techId, $notes);
+                    } else {
+                        // New technician, add assignment
+                        error_log("Adding technician: " . $techId . " with notes: " . $notes);
+                        $assignmentData = [
+                            'ba_booking_id' => $bookingId,
+                            'ba_technician_id' => $techId,
+                            'ba_status' => 'assigned',
+                            'ba_notes' => $notes, // Add notes here
+                            'ba_assigned_at' => date('Y-m-d H:i:s')
+                        ];
+                        $this->bookingAssignmentModel->addAssignment($assignmentData);
+                    }
                 }
             }
             

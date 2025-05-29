@@ -236,4 +236,32 @@ class BookingAssignmentModel extends Model
         
         return $this->queryScalar($sql, $params) > 0;
     }
+
+    /**
+     * Update notes for a specific assignment
+     * 
+     * @param int $bookingId The booking ID
+     * @param int $technicianId The technician ID
+     * @param string|null $notes The notes to update
+     * @return bool Success status
+     */
+    public function updateAssignmentNotes($bookingId, $technicianId, $notes)
+    {
+        $sql = "UPDATE {$this->table} 
+                SET ba_notes = :notes
+                WHERE ba_booking_id = :bookingId 
+                AND ba_technician_id = :technicianId
+                AND ba_status IN ('assigned', 'in-progress')"; // Ensure we only update active assignments
+                
+        $params = [
+            'notes' => $notes,
+            'bookingId' => $bookingId,
+            'technicianId' => $technicianId
+        ];
+        
+        // We expect this to affect one row if the assignment exists and is active.
+        // If no rows are affected, it could mean the assignment doesn't exist or isn't in a state to be updated.
+        // The controller should handle the logic of whether an assignment *should* exist.
+        return $this->execute($sql, $params) >= 0; // Allow 0 if notes are unchanged
+    }
 }
