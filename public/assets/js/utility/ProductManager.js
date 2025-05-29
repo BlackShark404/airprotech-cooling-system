@@ -253,17 +253,26 @@ class ProductManager {
      * Update total amount based on quantity and selected variant
      */
     updateTotalAmount() {
-        if (!this.currentProduct || !this.currentProduct.variants || !this.modal.quantity || !this.modal.variantSelect || !this.modal.totalAmount) {
+        if (!this.currentProduct || !this.modal.quantity || !this.modal.variantSelect || !this.modal.totalAmount) {
             if (this.modal.totalAmount) this.modal.totalAmount.textContent = '$0.00';
             return;
         }
 
         const quantity = parseInt(this.modal.quantity.value, 10);
-        const selectedVariant = this.currentProduct.variants.find(
-            v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
-        );
-        const price = selectedVariant ? parseFloat(selectedVariant.VAR_SRP_PRICE) : 0;
+        const variantId = parseInt(this.modal.variantSelect.value);
+
+        // Get variants from the current product and normalize them
+        const variants = this.currentProduct.variants || [];
+        const normalizedVariants = variants.map(variant => ({
+            id: variant.VAR_ID || variant.var_id,
+            price: variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00'
+        }));
+
+        // Find the selected variant
+        const selectedVariant = normalizedVariants.find(v => v.id === variantId);
+        const price = selectedVariant ? parseFloat(selectedVariant.price) : 0;
         const total = price * quantity;
+
         this.modal.totalAmount.textContent = `$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
@@ -271,20 +280,34 @@ class ProductManager {
      * Update modal price and availability based on selected variant
      */
     updateModalPriceAndAvailability() {
-        if (!this.currentProduct || !this.currentProduct.variants || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) {
+        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) {
             return;
         }
 
-        const selectedVariant = this.currentProduct.variants.find(
-            v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
-        );
+        const variantId = parseInt(this.modal.variantSelect.value);
+
+        // Get variants from the current product and normalize them
+        const variants = this.currentProduct.variants || [];
+        const normalizedVariants = variants.map(variant => ({
+            id: variant.VAR_ID || variant.var_id,
+            price: variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00'
+        }));
+
+        // Find the selected variant
+        const selectedVariant = normalizedVariants.find(v => v.id === variantId);
 
         if (selectedVariant) {
-            this.modal.price.textContent = `$${selectedVariant.VAR_SRP_PRICE}`;
+            this.modal.price.textContent = `$${selectedVariant.price}`;
+
+            // Get product status
+            const productStatus = this.currentProduct.PROD_AVAILABILITY_STATUS ||
+                this.currentProduct.prod_availability_status ||
+                'Unknown';
+
             this.modal.availabilityStatus.textContent =
-                this.currentProduct.PROD_AVAILABILITY_STATUS === 'Available'
+                productStatus === 'Available'
                     ? `Available (${this.getAvailableQuantity(selectedVariant)} units)`
-                    : this.currentProduct.PROD_AVAILABILITY_STATUS;
+                    : productStatus;
         } else {
             this.modal.price.textContent = '$N/A';
             this.modal.availabilityStatus.textContent = 'N/A';
@@ -602,13 +625,24 @@ class ProductManager {
         if (this.modal.name) this.modal.name.textContent = productData.name || 'N/A';
         if (this.modal.code) this.modal.code.textContent = `PROD-${productData.id || 'N/A'}`;
 
-        const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+        // Normalize variants data (handle both upper and lowercase field names)
+        const variants = product.variants || [];
+        const normalizedVariants = variants.map(variant => ({
+            id: variant.VAR_ID || variant.var_id,
+            capacity: variant.VAR_CAPACITY || variant.var_capacity || 'Standard',
+            price: variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00',
+            freeInstallPrice: variant.VAR_PRICE_FREE_INSTALL || variant.var_price_free_install,
+            withInstallPrice: variant.VAR_PRICE_WITH_INSTALL || variant.var_price_with_install,
+            powerConsumption: variant.VAR_POWER_CONSUMPTION || variant.var_power_consumption
+        }));
+
+        const hasVariants = normalizedVariants.length > 0;
 
         if (this.modal.variantSelect) {
             if (hasVariants) {
                 let variantOptions = '';
-                product.variants.forEach(variant => {
-                    variantOptions += `<option value="${variant.VAR_ID}">${variant.VAR_CAPACITY || 'Standard'} - $${variant.VAR_SRP_PRICE || '0.00'}</option>`;
+                normalizedVariants.forEach(variant => {
+                    variantOptions += `<option value="${variant.id}">${variant.capacity} - $${variant.price}</option>`;
                 });
                 this.modal.variantSelect.innerHTML = variantOptions;
                 this.modal.variantSelect.disabled = false;
@@ -627,7 +661,7 @@ class ProductManager {
         // Update price if we have variants
         if (this.modal.price) {
             if (hasVariants) {
-                this.modal.price.textContent = `$${product.variants[0].VAR_SRP_PRICE || '0.00'}`;
+                this.modal.price.textContent = `$${normalizedVariants[0].price}`;
             } else {
                 this.modal.price.textContent = 'Price not available';
             }
@@ -658,9 +692,13 @@ class ProductManager {
 
         if (this.modal.features) {
             let featuresHTML = '';
-            if (product.features && Array.isArray(product.features) && product.features.length > 0) {
-                product.features.forEach(feature => {
-                    featuresHTML += `<li>• ${feature.FEATURE_NAME || 'Unnamed Feature'}</li>`;
+            // Normalize features array handling both upper and lowercase field names
+            const features = product.features || product.FEATURES || [];
+
+            if (features.length > 0) {
+                features.forEach(feature => {
+                    const featureName = feature.FEATURE_NAME || feature.feature_name || 'Unnamed Feature';
+                    featuresHTML += `<li>• ${featureName}</li>`;
                 });
             } else {
                 featuresHTML = '<li>No features listed.</li>';
@@ -670,9 +708,14 @@ class ProductManager {
 
         if (this.modal.specifications) {
             let specsHTML = '';
-            if (product.specs && Array.isArray(product.specs) && product.specs.length > 0) {
-                product.specs.forEach(spec => {
-                    specsHTML += `<li>• ${spec.SPEC_NAME || 'Spec'}: ${spec.SPEC_VALUE || 'N/A'}</li>`;
+            // Normalize specs array handling both upper and lowercase field names
+            const specs = product.specs || product.SPECS || [];
+
+            if (specs.length > 0) {
+                specs.forEach(spec => {
+                    const specName = spec.SPEC_NAME || spec.spec_name || 'Spec';
+                    const specValue = spec.SPEC_VALUE || spec.spec_value || 'N/A';
+                    specsHTML += `<li>• ${specName}: ${specValue}</li>`;
                 });
             } else {
                 specsHTML = '<li>No specifications available.</li>';
@@ -695,9 +738,16 @@ class ProductManager {
      * Get available quantity from inventory
      */
     getAvailableQuantity(variant) {
-        // TODO: Implement actual inventory check based on variant
-        // This should ideally come from product data or a separate inventory API
-        return variant?.VAR_STOCK_QUANTITY || 100; // Placeholder, use actual stock if available
+        // If we have inventory data from the API, use it
+        if (this.currentProduct && this.currentProduct.inventory && Array.isArray(this.currentProduct.inventory)) {
+            // Calculate total quantity across all warehouses for this product
+            return this.currentProduct.inventory.reduce((total, inv) => {
+                return total + (parseInt(inv.quantity) || 0);
+            }, 0);
+        }
+
+        // Fallback: Use variant stock quantity if available, or default to 100
+        return variant?.VAR_STOCK_QUANTITY || variant?.var_stock_quantity || 100;
     }
 
     /**
@@ -709,8 +759,8 @@ class ProductManager {
             alert('Order placement service is currently unavailable.');
             return;
         }
-        if (!this.currentProduct || !this.currentProduct.variants) {
-            alert('No product selected or product data is incomplete. Please try again.');
+        if (!this.currentProduct) {
+            alert('No product selected. Please try again.');
             return;
         }
 
@@ -742,9 +792,19 @@ class ProductManager {
             return;
         }
 
-        const selectedVariant = this.currentProduct.variants.find(
-            v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
-        );
+        const variantId = parseInt(this.modal.variantSelect.value);
+        if (isNaN(variantId)) {
+            alert('Please select a valid product variant.');
+            this.modal.variantSelect.focus();
+            return;
+        }
+
+        // Get the original variant object from the product data
+        const variants = this.currentProduct.variants || [];
+        const selectedVariant = variants.find(v => {
+            const id = v.VAR_ID || v.var_id;
+            return id === variantId;
+        });
 
         if (!selectedVariant) {
             alert('Invalid product variant selected. Please select a valid option.');
@@ -752,9 +812,9 @@ class ProductManager {
         }
 
         const orderData = {
-            PB_VARIANT_ID: selectedVariant.VAR_ID,
+            PB_VARIANT_ID: variantId,
             PB_QUANTITY: parseInt(this.modal.quantity.value, 10),
-            PB_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE),
+            PB_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price),
             PB_STATUS: 'pending',
             PB_ORDER_DATE: new Date().toISOString(),
             PB_PREFERRED_DATE: this.modal.preferredDate.value,
