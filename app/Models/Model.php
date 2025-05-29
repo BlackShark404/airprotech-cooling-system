@@ -61,22 +61,11 @@ class Model
             $stmt->execute();
             
             // Return the results
-            $result = $fetchAll ? $stmt->fetchAll(PDO::FETCH_ASSOC) : $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Convert all keys to uppercase for consistency
-            if ($result) {
-                if ($fetchAll) {
-                    // For multiple records
-                    foreach ($result as &$row) {
-                        $row = array_change_key_case($row, CASE_UPPER);
-                    }
-                } else {
-                    // For a single record
-                    $result = array_change_key_case($result, CASE_UPPER);
-                }
+            if ($fetchAll) {
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                return $stmt->fetch(PDO::FETCH_ASSOC);
             }
-            
-            return $result;
         } catch (PDOException $e) {
             // Log the error or handle it as needed
             error_log("Database query error: " . $e->getMessage() . " - SQL: " . $sql);
@@ -256,7 +245,11 @@ class Model
      */
     public function commit()
     {
-        return $this->pdo->commit();
+        // Check if there's an active transaction before committing
+        if ($this->pdo->inTransaction()) {
+            return $this->pdo->commit();
+        }
+        return true; // Return true if there's no active transaction
     }
     
     /**
@@ -264,7 +257,11 @@ class Model
      */
     public function rollback()
     {
-        return $this->pdo->rollBack();
+        // Check if there's an active transaction before rolling back
+        if ($this->pdo->inTransaction()) {
+            return $this->pdo->rollBack();
+        }
+        return true; // Return true if there's no active transaction
     }
 
     /**
