@@ -61,11 +61,22 @@ class Model
             $stmt->execute();
             
             // Return the results
-            if ($fetchAll) {
-                return $stmt->fetchAll(PDO::FETCH_ASSOC);
-            } else {
-                return $stmt->fetch(PDO::FETCH_ASSOC);
+            $result = $fetchAll ? $stmt->fetchAll(PDO::FETCH_ASSOC) : $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Convert all keys to uppercase for consistency
+            if ($result) {
+                if ($fetchAll) {
+                    // For multiple records
+                    foreach ($result as &$row) {
+                        $row = array_change_key_case($row, CASE_UPPER);
+                    }
+                } else {
+                    // For a single record
+                    $result = array_change_key_case($result, CASE_UPPER);
+                }
             }
+            
+            return $result;
         } catch (PDOException $e) {
             // Log the error or handle it as needed
             error_log("Database query error: " . $e->getMessage() . " - SQL: " . $sql);

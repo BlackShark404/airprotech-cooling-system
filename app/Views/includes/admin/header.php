@@ -39,6 +39,15 @@ require_once __DIR__ . '/../../../../script/active_page.php';
                 <a class="nav-link <?= $activeTab === 'inventory' ? 'active' : '' ?>" href="<?= base_url('/admin/inventory') ?>">Inventory</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?= $activeTab === 'product_management' ? 'active' : '' ?>" href="<?= base_url('/admin/product-management') ?>">Products</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <?= $activeTab === 'inventory_management' ? 'active' : '' ?>" href="<?= base_url('/admin/inventory-management') ?>">Stock Manager</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <?= $activeTab === 'warehouse_management' ? 'active' : '' ?>" href="<?= base_url('/admin/warehouse-management') ?>">Warehouses</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <?= $activeTab === 'reports' ? 'active' : '' ?>" href="<?= base_url('/admin/reports') ?>">Reports</a>
             </li>
             <li class="nav-item">

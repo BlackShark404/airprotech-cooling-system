@@ -57,6 +57,10 @@ $router->map('GET', '/admin/service-requests', 'App\Controllers\AdminController#
 $router->map('GET', '/admin/inventory', 'App\Controllers\AdminController#renderInventory', 'render-inventory');
 $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#renderAddProduct', 'render-add-product');
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
+$router->map('GET', '/admin/product-management', 'App\Controllers\AdminController#renderProductManagement', 'render-product-management');
+$router->map('GET', '/admin/inventory-management', 'App\Controllers\AdminController#renderInventoryManagement', 'render-inventory-management');
+$router->map('GET', '/admin/warehouse-management', 'App\Controllers\AdminController#renderWarehouseManagement', 'render-warehouse-management');
+$router->map('GET', '/admin/product-orders', 'App\Controllers\AdminController#renderProductOrders', 'render-product-orders');
 
 // Service Request Management Routes
 $router->map('GET', '/api/user/service-bookings', 'App\Controllers\ServiceRequestController#getUserServiceBookings', 'user_service_bookings_api');
@@ -101,6 +105,7 @@ $router->map('POST', '/api/products/delete/[i:id]', 'App\Controllers\ProductCont
 $router->map('GET', '/api/products/[i:id]/variants', 'App\Controllers\ProductController#getProductVariants', 'get_product_variants');
 $router->map('GET', '/api/products/[i:id]/features', 'App\Controllers\ProductController#getProductFeatures', 'get_product_features');
 $router->map('GET', '/api/products/[i:id]/specs', 'App\Controllers\ProductController#getProductSpecs', 'get_product_specs');
+$router->map('GET', '/api/products/summary', 'App\Controllers\ProductController#getProductSummary', 'get_product_summary');
 
 // Warehouse Management API Routes
 $router->map('GET', '/api/warehouses', 'App\Controllers\WarehouseController#getAllWarehouses', 'get_all_warehouses');
