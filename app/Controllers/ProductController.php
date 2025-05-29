@@ -327,4 +327,50 @@ class ProductController extends BaseController
             'message' => 'Your booking has been received and is being processed.'
         ], 'Booking created successfully');
     }
+
+    /**
+     * Get all product bookings for the current user
+     */
+    public function getUserProductBookings()
+    {
+        // Get the current user ID from the session
+        $userId = $_SESSION['user_id'] ?? null;
+        
+        if (!$userId) {
+            $this->jsonError('You must be logged in to view your bookings', 401);
+            return;
+        }
+        
+        // Get all bookings for this customer
+        $bookings = $this->productBookingModel->getBookingsByCustomerId($userId);
+        
+        // Return the bookings as JSON
+        $this->jsonSuccess($bookings);
+    }
+    
+    /**
+     * Get details for a specific product booking
+     */
+    public function getUserProductBookingDetails($id)
+    {
+        // Get the current user ID from the session
+        $userId = $_SESSION['user_id'] ?? null;
+        
+        if (!$userId) {
+            $this->jsonError('You must be logged in to view booking details', 401);
+            return;
+        }
+        
+        // Get the booking details
+        $booking = $this->productBookingModel->getBookingById($id);
+        
+        // Check if the booking exists and belongs to this user
+        if (!$booking || $booking['PB_CUSTOMER_ID'] != $userId) {
+            $this->jsonError('Booking not found or you do not have permission to view it', 404);
+            return;
+        }
+        
+        // Return the booking details as JSON
+        $this->jsonSuccess($booking);
+    }
 } 

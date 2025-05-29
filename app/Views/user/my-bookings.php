@@ -95,8 +95,43 @@
             <div class="tab-content" id="ordersTabContent">
                 <!-- Bookings Tab -->
                 <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
-                    <!-- ... Your existing Bookings content ... -->
-                    <p class="p-4 text-center">Product bookings will be displayed here.</p>
+                    <!-- Filters for Product Bookings -->
+                    <form id="product-booking-filters" class="d-flex flex-wrap justify-content-end align-items-center mb-4 py-4">
+                        <div class="me-2 mb-2">
+                            <select class="form-select" style="width: auto;" id="product-date-filter" name="date_filter">
+                                <option value="All time" selected>All Time</option>
+                                <option value="Last 30 days">Last 30 days</option>
+                                <option value="Last 60 days">Last 60 days</option>
+                                <option value="Last 90 days">Last 90 days</option>
+                            </select>
+                        </div>
+                        <div class="me-2 mb-2">
+                            <select class="form-select" style="width: auto;" id="product-status-filter" name="status_filter">
+                                <option value="All Status" selected>All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="me-2 mb-2">
+                            <input type="text" class="form-control" placeholder="Search bookings..." style="width: 200px;" id="product-booking-search" name="search_term">
+                        </div>
+                        <div class="mb-2">
+                            <button type="reset" class="btn btn-outline-secondary">Clear</button>
+                        </div>
+                    </form>
+                    <p id="booking-results-count" class="text-muted small mb-2"></p>
+
+                    <!-- Product Booking Items Container (to be populated by JS) -->
+                    <div id="product-bookings-container">
+                        <!-- Booking items will be rendered here -->
+                    </div>
+
+                    <!-- Pagination Container (to be populated by JS) -->
+                    <div id="product-pagination-container" class="d-flex justify-content-center mt-4">
+                        <!-- Pagination will be rendered here -->
+                    </div>
                 </div>
 
                 <!-- Service Requests Tab -->
@@ -201,6 +236,72 @@
         </div>
     </div>
 
+    <!-- Product Booking Detail Modal -->
+    <div class="modal fade" id="productBookingDetailModal" tabindex="-1" aria-labelledby="productBookingDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="productBookingDetailModalLabel">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Product Booking: <span id="modal-booking-id" class="fw-bold"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4 mb-md-0">
+                            <img id="modal-product-image" src="" alt="Product Image" class="img-fluid rounded shadow-sm mb-3" style="max-height: 200px;">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h4 id="modal-product-name" class="fs-4 fw-bold text-primary mb-0"></h4>
+                                <span id="modal-status" class="badge rounded-pill px-3 py-2"></span>
+                            </div>
+                            <p class="mb-2">Model: <span id="modal-variant" class="badge bg-secondary rounded-pill px-3"></span></p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <p class="mb-0">Quantity: <span id="modal-quantity" class="fw-bold"></span></p>
+                                    <p class="mb-0">Unit Price: <span id="modal-unit-price" class="fw-bold"></span></p>
+                                </div>
+                                <div>
+                                    <p class="mb-0">Total Amount: <span id="modal-total-amount" class="fs-4 fw-bold text-primary"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Booking Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Booking Date:</strong> <span id="modal-booking-date" class="text-muted"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-truck me-2"></i>Delivery Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Preferred Date:</strong> <span id="modal-preferred-date" class="fw-bold"></span></p>
+                                    <p class="mb-2"><strong>Preferred Time:</strong> <span id="modal-preferred-time" class="fw-bold"></span></p>
+                                    <p class="mb-0"><strong>Delivery Address:</strong> <span id="modal-address" class="text-muted"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <?php require __DIR__. '/../includes/shared/footer.php' ?>
 
@@ -211,6 +312,7 @@
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
     
     <script src="/assets/js/utility/ServiceRequestsManager.js"></script>
+    <script src="/assets/js/utility/ProductBookingManager.js"></script>
 
     <script>
         AOS.init({
@@ -226,7 +328,13 @@
                 initializeServiceRequests();
             }
 
-            // Also initialize if the tab is clicked
+            // Check if we are on the "Bookings" tab
+            const ordersTab = document.getElementById('orders');
+            if (ordersTab && ordersTab.classList.contains('active')) {
+                initializeProductBookings();
+            }
+
+            // Initialize if the service requests tab is clicked
             const servicesTabButton = document.getElementById('services-tab-button');
             if (servicesTabButton) {
                 servicesTabButton.addEventListener('shown.bs.tab', function (event) {
@@ -235,9 +343,20 @@
                     }
                 });
             }
+
+            // Initialize if the bookings tab is clicked
+            const ordersTabButton = document.getElementById('orders-tab');
+            if (ordersTabButton) {
+                ordersTabButton.addEventListener('shown.bs.tab', function (event) {
+                    if (event.target.getAttribute('data-bs-target') === '#orders') {
+                        initializeProductBookings();
+                    }
+                });
+            }
         });
         
         let serviceRequestsManagerInstance = null;
+        let productBookingManagerInstance = null;
 
         function initializeServiceRequests() {
             // Prevent re-initialization if already done
@@ -262,6 +381,27 @@
             });
 
             serviceRequestsManagerInstance.fetchAndRenderServiceRequests();
+        }
+
+        function initializeProductBookings() {
+            // Prevent re-initialization if already done
+            if (productBookingManagerInstance) {
+                return;
+            }
+
+            productBookingManagerInstance = new ProductBookingManager({
+                bookingsEndpoint: '/api/user/product-bookings', // API endpoint for product bookings
+                containerSelector: '#product-bookings-container', // Where cards are rendered
+                modalId: 'productBookingDetailModal',
+                filterFormId: 'product-booking-filters',
+                searchInputId: 'product-booking-search',
+                dateFilterId: 'product-date-filter',
+                statusFilterId: 'product-status-filter',
+                itemsPerPage: 5, // Or your preferred number
+                paginationContainerSelector: '#product-pagination-container'
+            });
+
+            productBookingManagerInstance.init();
         }
     </script>
 </body>
