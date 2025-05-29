@@ -351,11 +351,12 @@
                         
                         <!-- Stock Status Filter -->
                         <div class="filter-group">
-                            <label for="stock-status" class="form-label">Availability</label>
-                            <select id="stock-status" name="stock-status" class="form-select">
+                            <label for="availability-status" class="form-label">Availability</label>
+                            <select id="availability-status" name="availability-status" class="form-select">
                                 <option value="">All</option>
-                                <option value="in-stock">In Stock</option>
-                                <option value="out-of-stock">Out of Stock</option>
+                                <option value="Available">Available</option>
+                                <option value="Out of Stock">Out of Stock</option>
+                                <option value="Discontinued">Discontinued</option>
                             </select>
                         </div>
                         
@@ -382,6 +383,9 @@
                     <p class="mt-3">Loading products...</p>
                 </div>
             </div>
+            
+            <!-- Pagination -->
+            <div id="pagination-container" class="mt-4"></div>
         </div>
     </section>
 
@@ -407,18 +411,24 @@
                         
                         <!-- Product Details -->
                         <div class="col-md-7">
-                            <h2 id="modal-product-title" class="mb-2"></h2>
+                            <h2 id="modal-product-name" class="mb-2"></h2>
                             <h3 id="modal-product-price" class="text-danger mb-4"></h3>
                             
                             <div class="d-flex align-items-center mb-4">
                                 <span class="badge bg-success rounded-pill p-2 me-2">
                                     <i class="fas fa-check"></i>
                                 </span>
-                                <span id="modal-stock-status" class="text-success fw-bold"></span>
-                                <span id="modal-stock-quantity" class="text-muted ms-2"></span>
+                                <span id="modal-availability-status" class="text-success fw-bold"></span>
                             </div>
                             
-                            <div class="mb-4">
+                            <div class="mb-3">
+                                <label for="modal-variant-select" class="form-label">Select Variant</label>
+                                <select id="modal-variant-select" class="form-select">
+                                    <!-- Variants will be added dynamically -->
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
                                 <label for="modal-quantity" class="form-label">Quantity</label>
                                 <div class="input-group w-50">
                                     <button class="btn btn-outline-secondary" type="button" id="decrease-quantity">−</button>
@@ -428,18 +438,18 @@
                             </div>
                             
                             <div class="modal-section mb-4">
-                                <h4>Order Details</h4>
-                                <div class="row">
+                                <h4>Booking Information</h4>
+                                <div class="row mb-3">
                                     <div class="col-6">
-                                        <p class="text-muted mb-1">Order ID</p>
+                                        <p class="text-muted mb-1">Booking ID</p>
                                         <p id="modal-order-id" class="fw-bold"></p>
                                     </div>
                                     <div class="col-6">
-                                        <p class="text-muted mb-1">Order Date</p>
+                                        <p class="text-muted mb-1">Booking Date</p>
                                         <p id="modal-order-date" class="fw-bold"></p>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row mb-3">
                                     <div class="col-6">
                                         <p class="text-muted mb-1">Status</p>
                                         <p id="modal-status" class="text-primary fw-bold"></p>
@@ -449,6 +459,29 @@
                                         <p id="modal-total-amount" class="fw-bold"></p>
                                     </div>
                                 </div>
+                                
+                                <!-- New fields for preferred date, time, and address -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="modal-preferred-date" class="form-label">Preferred Date*</label>
+                                        <input type="date" id="modal-preferred-date" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="modal-preferred-time" class="form-label">Preferred Time*</label>
+                                        <input type="time" id="modal-preferred-time" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="modal-address" class="form-label">Delivery/Installation Address*</label>
+                                    <textarea id="modal-address" class="form-control" rows="2" required></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-section">
+                                <h4>Features</h4>
+                                <ul id="modal-features" class="list-unstyled">
+                                    <!-- Features will be added dynamically -->
+                                </ul>
                             </div>
                             
                             <div class="modal-section">
@@ -462,7 +495,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary">Confirm Order</button>
+                    <button type="button" id="confirm-order" class="btn btn-primary">Confirm Booking</button>
                 </div>
             </div>
         </div>
@@ -496,124 +529,13 @@
     <script>
         // Initialize Product Manager when the document is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Sample product data for testing without API
-            const sampleProducts = [
-                {
-                    id: 4,
-                    title: "Commercial HVAC System",
-                    description: "Professional grade cooling system",
-                    price: "2499",
-                    image: "/assets/images/commercial-hvac.jpg",
-                      inStock: false,
-                    stock: 0,
-                    category: "commercial",
-                    code: "CHVAC-4004"
-                },
-                {
-                    id: 5,
-                    title: "LG Air Conditioning",
-                    description: "Premium cooling with advanced features",
-                    price: "1299",
-                    image: "/assets/images/lg-air-conditioning.jpg",
-                    inStock: true,
-                    stock: 12,
-                    category: "split-system",
-                    code: "LG-5005"
-                },
-                {
-                    id: 6,
-                    title: "Vibration Damper",
-                    description: "Reduce noise and vibration in AC units",
-                    price: "129",
-                    image: "/assets/images/vibration-damper.jpg",
-                    inStock: true,
-                    stock: 50,
-                    category: "accessories",
-                    code: "VD-6006"
-                },
-                {
-                    id: 7,
-                    title: "Smart Inverter AC Premium",
-                    description: "Top-of-the-line energy efficient cooling",
-                    price: "1499",
-                    image: "/assets/images/smart-inverter-ac2.jpg",
-                    inStock: true,
-                    stock: 5,
-                    category: "split-system",
-                    code: "SIP-7007"
-                },
-                {
-                    id: 8,
-                    title: "Mitsubishi Electric WiFi",
-                    description: "High-end cooling with smart controls",
-                    price: "1599",
-                    image: "/assets/images/mitsubishi-electric-wifi.jpg",
-                    inStock: true,
-                    stock: 7,
-                    category: "split-system",
-                    code: "MEW-8008"
-                },
-                {
-                    id: 9,
-                    title: "Assembly Kit AC 3/5 m",
-                    description: "Complete installation kit for AC units",
-                    price: "89",
-                    image: "/assets/images/assembly-kit-ac.jpg",
-                    inStock: true,
-                    stock: 35,
-                    category: "accessories",
-                    code: "AK-9009"
-                },
-                {
-                    id: 10,
-                    title: "Eco Smart Inverter",
-                    description: "Environmentally friendly cooling solution",
-                    price: "1399",
-                    image: "/assets/images/smart-inverter-ac3.jpg",
-                    inStock: true,
-                    stock: 9,
-                    category: "split-system",
-                    code: "ESI-1010"
-                }
-            ];
-            
-            // Create a ProductManager instance
+            // Create a ProductManager instance with our API endpoints
             const productManager = new ProductManager({
-                // Override the fetchAndRenderProducts method for demo purposes
-                productsEndpoint: '/api/products'
+                productsEndpoint: '/api/products',
+                orderEndpoint: '/api/product-bookings'
             });
             
-            // Mock the API call for demonstration
-            productManager.fetchAndRenderProducts = function() {
-                // Store all products for filtering
-                this.allProducts = sampleProducts;
-                
-                // Populate category filter
-                this.populateCategoryFilter(sampleProducts);
-                
-                // Render all products initially
-                this.renderProducts(sampleProducts);
-            };
-            
-            // Mock the openProductModal method for demonstration
-            productManager.openProductModal = function(productId) {
-                const product = this.allProducts.find(p => p.id == productId);
-                
-                if (product) {
-                    this.currentProduct = product;
-                    this.populateModal(product);
-                    
-                    // Show modal using Bootstrap's modal API
-                    const modalElement = document.getElementById(this.config.modalId);
-                    const bsModal = new bootstrap.Modal(modalElement);
-                    bsModal.show();
-                } else {
-                    console.error('Product not found:', productId);
-                    alert('Product details not available. Please try again.');
-                }
-            };
-            
-            // Initialize the product manager
+            // Initialize the product manager to fetch and display products
             productManager.fetchAndRenderProducts();
             
             // Add event listener for sorting dropdown
@@ -631,17 +553,25 @@
                     
                     switch (sortType) {
                         case 'price-low':
-                            sortedProducts.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                            sortedProducts.sort((a, b) => {
+                                const aPrice = a.variants && a.variants.length > 0 ? parseFloat(a.variants[0].VAR_SRP_PRICE) : 0;
+                                const bPrice = b.variants && b.variants.length > 0 ? parseFloat(b.variants[0].VAR_SRP_PRICE) : 0;
+                                return aPrice - bPrice;
+                            });
                             break;
                         case 'price-high':
-                            sortedProducts.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+                            sortedProducts.sort((a, b) => {
+                                const aPrice = a.variants && a.variants.length > 0 ? parseFloat(a.variants[0].VAR_SRP_PRICE) : 0;
+                                const bPrice = b.variants && b.variants.length > 0 ? parseFloat(b.variants[0].VAR_SRP_PRICE) : 0;
+                                return bPrice - aPrice;
+                            });
                             break;
                         case 'name-asc':
-                            sortedProducts.sort((a, b) => a.title.localeCompare(b.title));
+                            sortedProducts.sort((a, b) => a.PROD_NAME.localeCompare(b.PROD_NAME));
                             break;
                         default:
                             // Default sorting (by ID)
-                            sortedProducts.sort((a, b) => a.id - b.id);
+                            sortedProducts.sort((a, b) => a.PROD_ID - b.PROD_ID);
                     }
                     
                     // Render sorted products

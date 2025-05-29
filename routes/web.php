@@ -107,6 +107,9 @@ $router->map('GET', '/api/products/[i:id]/features', 'App\Controllers\ProductCon
 $router->map('GET', '/api/products/[i:id]/specs', 'App\Controllers\ProductController#getProductSpecs', 'get_product_specs');
 $router->map('GET', '/api/products/summary', 'App\Controllers\ProductController#getProductSummary', 'get_product_summary');
 
+// Product Booking API Route
+$router->map('POST', '/api/product-bookings', 'App\Controllers\ProductController#createProductBooking', 'create_product_booking');
+
 // Warehouse Management API Routes
 $router->map('GET', '/api/warehouses', 'App\Controllers\WarehouseController#getAllWarehouses', 'get_all_warehouses');
 $router->map('GET', '/api/warehouses/with-inventory', 'App\Controllers\WarehouseController#getWarehousesWithInventory', 'get_warehouses_with_inventory');

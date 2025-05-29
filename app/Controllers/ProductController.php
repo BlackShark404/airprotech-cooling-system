@@ -6,6 +6,7 @@ use App\Models\ProductModel;
 use App\Models\ProductFeatureModel;
 use App\Models\ProductSpecModel;
 use App\Models\ProductVariantModel;
+use App\Models\ProductBookingModel;
 use App\Models\InventoryModel;
 
 class ProductController extends BaseController
@@ -14,6 +15,7 @@ class ProductController extends BaseController
     private $productFeatureModel;
     private $productSpecModel;
     private $productVariantModel;
+    private $productBookingModel;
     private $inventoryModel;
 
     public function __construct()
@@ -23,6 +25,7 @@ class ProductController extends BaseController
         $this->productFeatureModel = new ProductFeatureModel();
         $this->productSpecModel = new ProductSpecModel();
         $this->productVariantModel = new ProductVariantModel();
+        $this->productBookingModel = new ProductBookingModel();
         $this->inventoryModel = new InventoryModel();
     }
 
@@ -33,22 +36,12 @@ class ProductController extends BaseController
 
     public function getAllProducts()
     {
-        if (!$this->isAjax()) {
-            $this->renderError('Bad Request', 400);
-            return;
-        }
-
         $products = $this->productModel->getAllProducts();
         $this->jsonSuccess($products);
     }
 
     public function getProduct($id)
     {
-        if (!$this->isAjax()) {
-            $this->renderError('Bad Request', 400);
-            return;
-        }
-
         $product = $this->productModel->getProductWithDetails($id);
         
         if (!$product) {
@@ -267,43 +260,71 @@ class ProductController extends BaseController
 
     public function getProductSummary()
     {
-        if (!$this->isAjax()) {
-            $this->renderError('Bad Request', 400);
+        $summary = $this->productModel->getProductSummary();
+        $this->jsonSuccess($summary);
+    }
+    
+    /**
+     * Handle product booking creation
+     */
+    public function createProductBooking()
+    {
+        // Get the booking data from the request
+        $data = $this->getJsonInput();
+        if (empty($data)) {
+            $data = $_POST; // Try to get from regular form data if JSON is empty
+        }
+        
+        // Get the current user ID from the session
+        $userId = $_SESSION['user_id'] ?? null;
+        
+        if (!$userId) {
+            $this->jsonError('You must be logged in to place a booking', 401);
             return;
         }
-
-        // Get all products
-        $products = $this->productModel->getAllProducts();
         
-        // Calculate summary statistics
-        $totalProducts = count($products);
-        $availableProducts = 0;
-        $outOfStock = 0;
-        $totalVariants = 0;
-        
-        foreach ($products as $product) {
-            if (isset($product['PROD_AVAILABILITY_STATUS'])) {
-                if ($product['PROD_AVAILABILITY_STATUS'] === 'Available') {
-                    $availableProducts++;
-                } elseif ($product['PROD_AVAILABILITY_STATUS'] === 'Out of Stock') {
-                    $outOfStock++;
-                }
-            }
-            
-            // Get variants count for this product
-            if (isset($product['PROD_ID'])) {
-                $variants = $this->productVariantModel->getVariantsByProductId($product['PROD_ID']);
-                $totalVariants += count($variants);
-            }
+        // Check if we have the necessary booking data
+        if (empty($data['PB_VARIANT_ID']) || 
+            empty($data['PB_QUANTITY']) || 
+            empty($data['PB_UNIT_PRICE']) ||
+            empty($data['PB_PREFERRED_DATE']) ||
+            empty($data['PB_PREFERRED_TIME']) ||
+            empty($data['PB_ADDRESS'])) {
+            $this->jsonError('Missing required booking information', 400);
+            return;
         }
         
-        $summary = [
-            'total_products' => $totalProducts,
-            'available_products' => $availableProducts,
-            'out_of_stock' => $outOfStock,
-            'total_variants' => $totalVariants
+        // Verify that the variant exists
+        $variant = $this->productVariantModel->getVariantById($data['PB_VARIANT_ID']);
+        if (!$variant) {
+            $this->jsonError('Selected product variant not found', 404);
+            return;
+        }
+        
+        // Create a complete booking data structure
+        $bookingData = [
+            'PB_CUSTOMER_ID' => $userId,
+            'PB_VARIANT_ID' => $data['PB_VARIANT_ID'],
+            'PB_QUANTITY' => $data['PB_QUANTITY'],
+            'PB_UNIT_PRICE' => $data['PB_UNIT_PRICE'],
+            'PB_STATUS' => 'pending',
+            'PB_PREFERRED_DATE' => $data['PB_PREFERRED_DATE'],
+            'PB_PREFERRED_TIME' => $data['PB_PREFERRED_TIME'],
+            'PB_ADDRESS' => $data['PB_ADDRESS']
         ];
         
-        $this->jsonSuccess($summary);
+        // Create the booking in the database
+        $bookingId = $this->productBookingModel->createBooking($bookingData);
+        
+        if (!$bookingId) {
+            $this->jsonError('Failed to create booking. Please try again.', 500);
+            return;
+        }
+        
+        // Return success response with the booking ID
+        $this->jsonSuccess([
+            'PB_ID' => $bookingId,
+            'message' => 'Your booking has been received and is being processed.'
+        ], 'Booking created successfully');
     }
 } 

@@ -70,23 +70,39 @@ class ProductManager {
      * Default card template showing primary variant price
      */
     getDefaultCardTemplate() {
-        return (product) => `
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="product-card" data-product-id="${product.PROD_ID}" data-category="${product.category || ''}">
-                    <div class="product-img-container">
-                        <img src="${product.PROD_IMAGE}" alt="${product.PROD_NAME}" class="product-img">
-                    </div>
-                    <div class="product-info">
-                        <h3 class="product-title">${product.PROD_NAME}</h3>
-                        <p class="product-desc">${product.PROD_DESCRIPTION || ''}</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="product-price">$${product.variants[0]?.VAR_SRP_PRICE || 'N/A'}</span>
-                            <button class="btn btn-book-now view-details" data-product-id="${product.PROD_ID}">Order Now</button>
+        return (product) => {
+            // Check if product has variants and use a default if not
+            const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+            const price = hasVariants ? product.variants[0].VAR_SRP_PRICE : 'N/A';
+
+            // Convert relative paths to absolute paths if needed
+            let imagePath = product.PROD_IMAGE || '';
+            if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
+                imagePath = '/uploads/' + imagePath;
+            }
+
+            const productId = product.PROD_ID || product.prod_id;
+            const productName = product.PROD_NAME || product.prod_name || 'Unnamed Product';
+            const productDesc = product.PROD_DESCRIPTION || product.prod_description || '';
+
+            return `
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="product-card" data-product-id="${productId}" data-category="${product.category || ''}">
+                        <div class="product-img-container">
+                            <img src="${imagePath}" alt="${productName}" class="product-img">
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-title">${productName}</h3>
+                            <p class="product-desc">${productDesc}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="product-price">$${price}</span>
+                                <button class="btn btn-book-now view-details" data-product-id="${productId}">Order Now</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+        };
     }
 
     /**
@@ -286,14 +302,23 @@ class ProductManager {
         }
         try {
             const response = await axios.get(this.config.productsEndpoint);
-            const products = response.data;
+            console.log('API Response:', response.data);
 
-            if (Array.isArray(products) && products.length > 0) {
-                this.allProducts = products;
-                this.populateCategoryFilter(products);
-                this.renderProducts(products);
+            // Check for success response structure with data field
+            if (response.data && response.data.success && Array.isArray(response.data.data)) {
+                const products = response.data.data;
+
+                if (products.length > 0) {
+                    this.allProducts = products;
+                    this.populateCategoryFilter(products);
+                    this.renderProducts(products);
+                } else {
+                    console.warn('No products found in API response.');
+                    if (this.container) this.container.innerHTML = '<div class="col-12"><p class="text-center">No products available at the moment.</p></div>';
+                    this.renderPagination(0);
+                }
             } else {
-                console.warn('No products found or invalid data format from API.');
+                console.warn('Invalid API response format:', response.data);
                 if (this.container) this.container.innerHTML = '<div class="col-12"><p class="text-center">No products available at the moment.</p></div>';
                 this.renderPagination(0);
             }
@@ -508,29 +533,37 @@ class ProductManager {
      * Open product modal with details
      */
     async openProductModal(productId) {
+        if (!productId) {
+            console.error('ProductManager: No product ID provided to openProductModal');
+            alert('Sorry, cannot load product details without a product ID.');
+            return;
+        }
+
         if (typeof axios === 'undefined' || typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
             console.error('ProductManager: Critical library (axios or Bootstrap) not available.');
             alert('Sorry, cannot load product details at the moment.');
             return;
         }
+
         try {
             const response = await axios.get(`${this.config.productsEndpoint}/${productId}`);
-            const product = response.data;
 
-            if (!product) {
+            // Check for success response structure with data field
+            if (response.data && response.data.success && response.data.data) {
+                const product = response.data.data;
+
+                this.currentProduct = product;
+                this.populateModal(product);
+
+                if (this.modal.element) {
+                    const bsModal = new bootstrap.Modal(this.modal.element);
+                    bsModal.show();
+                } else {
+                    console.error("ProductManager: Modal element is not defined, cannot show modal.");
+                }
+            } else {
                 console.error(`Product details not found for ID: ${productId}`);
                 alert('Product details could not be loaded.');
-                return;
-            }
-
-            this.currentProduct = product;
-            this.populateModal(product);
-
-            if (this.modal.element) {
-                const bsModal = new bootstrap.Modal(this.modal.element);
-                bsModal.show();
-            } else {
-                console.error("ProductManager: Modal element is not defined, cannot show modal.");
             }
         } catch (error) {
             console.error('Error fetching product details:', error);
@@ -544,26 +577,63 @@ class ProductManager {
     populateModal(product) {
         if (!this.modal.element || !product) return; // Modal or product not available
 
+        // Normalize product data - handle both uppercase and lowercase field names
+        const productData = {
+            id: product.PROD_ID || product.prod_id,
+            name: product.PROD_NAME || product.prod_name,
+            description: product.PROD_DESCRIPTION || product.prod_description,
+            image: product.PROD_IMAGE || product.prod_image,
+            status: product.PROD_AVAILABILITY_STATUS || product.prod_availability_status
+        };
+
+        // Convert relative paths to absolute paths if needed
+        let imagePath = productData.image || '';
+        if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
+            imagePath = '/uploads/' + imagePath;
+        }
+
         if (this.modal.quantity) this.modal.quantity.value = 1;
 
         if (this.modal.image) {
-            this.modal.image.src = product.PROD_IMAGE || '';
-            this.modal.image.alt = product.PROD_NAME || 'Product Image';
-        }
-        if (this.modal.name) this.modal.name.textContent = product.PROD_NAME || 'N/A';
-        if (this.modal.code) this.modal.code.textContent = `PROD-${product.PROD_ID || 'N/A'}`;
-
-        if (this.modal.variantSelect && product.variants && Array.isArray(product.variants)) {
-            let variantOptions = '';
-            product.variants.forEach(variant => {
-                variantOptions += `<option value="${variant.VAR_ID}">${variant.VAR_CAPACITY || 'Standard'} - $${variant.VAR_SRP_PRICE || '0.00'}</option>`;
-            });
-            this.modal.variantSelect.innerHTML = variantOptions;
+            this.modal.image.src = imagePath;
+            this.modal.image.alt = productData.name || 'Product Image';
         }
 
-        this.updateModalPriceAndAvailability(); // Sets initial price/availability
+        if (this.modal.name) this.modal.name.textContent = productData.name || 'N/A';
+        if (this.modal.code) this.modal.code.textContent = `PROD-${productData.id || 'N/A'}`;
 
-        if (this.modal.orderId) this.modal.orderId.textContent = `PB-${new Date().getFullYear()}-${String(product.PROD_ID || '0').padStart(4, '0')}`;
+        const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+
+        if (this.modal.variantSelect) {
+            if (hasVariants) {
+                let variantOptions = '';
+                product.variants.forEach(variant => {
+                    variantOptions += `<option value="${variant.VAR_ID}">${variant.VAR_CAPACITY || 'Standard'} - $${variant.VAR_SRP_PRICE || '0.00'}</option>`;
+                });
+                this.modal.variantSelect.innerHTML = variantOptions;
+                this.modal.variantSelect.disabled = false;
+            } else {
+                // No variants available
+                this.modal.variantSelect.innerHTML = '<option value="">No variants available</option>';
+                this.modal.variantSelect.disabled = true;
+            }
+        }
+
+        // Update availability status
+        if (this.modal.availabilityStatus) {
+            this.modal.availabilityStatus.textContent = productData.status || 'N/A';
+        }
+
+        // Update price if we have variants
+        if (this.modal.price) {
+            if (hasVariants) {
+                this.modal.price.textContent = `$${product.variants[0].VAR_SRP_PRICE || '0.00'}`;
+            } else {
+                this.modal.price.textContent = 'Price not available';
+            }
+        }
+
+        if (this.modal.orderId) this.modal.orderId.textContent = `PB-${new Date().getFullYear()}-${String(productData.id || '0').padStart(4, '0')}`;
         if (this.modal.orderDate) {
             this.modal.orderDate.textContent = new Date().toLocaleDateString('en-US', {
                 year: 'numeric', month: 'short', day: 'numeric'
@@ -600,14 +670,24 @@ class ProductManager {
 
         if (this.modal.specifications) {
             let specsHTML = '';
-            if (product.specifications && Array.isArray(product.specifications) && product.specifications.length > 0) {
-                product.specifications.forEach(spec => {
+            if (product.specs && Array.isArray(product.specs) && product.specs.length > 0) {
+                product.specs.forEach(spec => {
                     specsHTML += `<li>• ${spec.SPEC_NAME || 'Spec'}: ${spec.SPEC_VALUE || 'N/A'}</li>`;
                 });
             } else {
                 specsHTML = '<li>No specifications available.</li>';
             }
             this.modal.specifications.innerHTML = specsHTML;
+        }
+
+        // Disable confirm button if no variants available
+        if (this.modal.confirmButton) {
+            this.modal.confirmButton.disabled = !hasVariants;
+            if (!hasVariants) {
+                this.modal.confirmButton.title = "Product variants are not available for ordering";
+            } else {
+                this.modal.confirmButton.title = "";
+            }
         }
     }
 
@@ -688,9 +768,18 @@ class ProductManager {
                 this.modal.confirmButton.textContent = 'Placing Order...';
             }
 
+            console.log('Sending order data:', orderData);
             const response = await axios.post(this.config.orderEndpoint, orderData);
+            console.log('Order response:', response.data);
 
-            alert('Booking placed successfully! Booking ID: ' + (response.data.PB_ID || response.data.id || 'N/A'));
+            // Check for success response structure with data field
+            if (response.data && response.data.success) {
+                const orderData = response.data.data;
+                const orderId = orderData && orderData.PB_ID ? orderData.PB_ID : 'N/A';
+                alert('Booking placed successfully! Booking ID: ' + orderId);
+            } else {
+                alert('Booking received but no confirmation details were returned.');
+            }
 
             if (this.modal.element) {
                 const bsModal = bootstrap.Modal.getInstance(this.modal.element);

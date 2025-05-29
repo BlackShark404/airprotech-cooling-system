@@ -106,4 +106,44 @@ class ProductModel extends Model
 
         return $product;
     }
+    
+    /**
+     * Get summary statistics for products
+     */
+    public function getProductSummary()
+    {
+        // Get all products
+        $products = $this->getAllProducts();
+        
+        // Calculate summary statistics
+        $totalProducts = count($products);
+        $availableProducts = 0;
+        $outOfStock = 0;
+        $totalVariants = 0;
+        
+        $productVariantModel = new ProductVariantModel();
+        
+        foreach ($products as $product) {
+            if (isset($product['PROD_AVAILABILITY_STATUS'])) {
+                if ($product['PROD_AVAILABILITY_STATUS'] === 'Available') {
+                    $availableProducts++;
+                } elseif ($product['PROD_AVAILABILITY_STATUS'] === 'Out of Stock') {
+                    $outOfStock++;
+                }
+            }
+            
+            // Get variants count for this product
+            if (isset($product['PROD_ID'])) {
+                $variants = $productVariantModel->getVariantsByProductId($product['PROD_ID']);
+                $totalVariants += count($variants);
+            }
+        }
+        
+        return [
+            'total_products' => $totalProducts,
+            'available_products' => $availableProducts,
+            'out_of_stock' => $outOfStock,
+            'total_variants' => $totalVariants
+        ];
+    }
 } 
