@@ -11,7 +11,7 @@
                     <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'customer'): ?>
                         <li><a href="/user/services" class="text-white-50 text-decoration-none">Services</a></li>
                         <li><a href="/user/products" class="text-white-50 text-decoration-none">Products</a></li>
-                        <li><a href="/user/my-orders" class="text-white-50 text-decoration-none">My Orders and Services Request</a></li>
+                        <li><a href="/user/my-bookings" class="text-white-50 text-decoration-none">My Orders and Services Request</a></li>
                     <?php else: ?>
                         <li><a href="#hero" class="text-white-50 text-decoration-none">Home</a></li>
                         <li><a href="#our-services" class="text-white-50 text-decoration-none">Services</a></li>

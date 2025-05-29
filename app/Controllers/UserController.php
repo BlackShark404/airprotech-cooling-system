@@ -16,6 +16,6 @@ class UserController extends BaseController{
     }
 
     public function renderMyOrders() {
-        $this->render("user/my-orders");
+        $this->render("user/my-bookings");
     }
 }

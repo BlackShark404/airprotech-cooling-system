@@ -46,7 +46,7 @@ $router->map('GET', '/user/products', 'App\Controllers\UserController#renderUser
 $router->map('POST', '/user/service/request', 'App\Controllers\ServiceRequestController#bookService', 'create-service request');
 $router->map('GET', '/user/bookings', 'App\Controllers\ServiceRequestController#myBookings', 'user_bookings');
 $router->map('POST', '/user/bookings/cancel/[i:id]', 'App\Controllers\ServiceRequestController#cancelBooking', 'user_cancel_booking');
-$router->map('GET', '/user/my-orders', 'App\Controllers\UserController#renderMyOrders', 'render_my-orders');
+$router->map('GET', '/user/my-bookings', 'App\Controllers\UserController#renderMyOrders', 'render_my-orders');
 
 // Service Request API endpoints for ServiceRequestsManager.js
 

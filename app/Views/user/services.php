@@ -150,7 +150,7 @@
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/user/my-orders">My Orders & Service Requests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/my-bookings">My Bookings & Service Requests</a></li>
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">

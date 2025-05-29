@@ -50,7 +50,7 @@
                     <li class="nav-item"><a class="nav-link" href="/user/dashboard">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/user/orders-services">My Orders & Service Requests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/orders-services">My Bookings & Service Requests</a></li>
 
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">

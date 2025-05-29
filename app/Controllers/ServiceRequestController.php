@@ -173,7 +173,7 @@ class ServiceRequestController extends BaseController
         
         if ($success) {
             $this->jsonSuccess(
-                ['status' => 'pending', 'redirect_url' => '/user/my-orders'],
+                ['status' => 'pending', 'redirect_url' => '/user/my-bookings'],
                 'Your service request has been submitted successfully. We will contact you soon.'
             );
         } else {
