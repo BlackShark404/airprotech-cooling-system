@@ -256,11 +256,7 @@ class Model
      */
     public function commit()
     {
-        // Check if there's an active transaction before committing
-        if ($this->pdo->inTransaction()) {
-            return $this->pdo->commit();
-        }
-        return true; // Return true if there's no active transaction
+        return $this->pdo->commit();
     }
     
     /**
@@ -268,11 +264,7 @@ class Model
      */
     public function rollback()
     {
-        // Check if there's an active transaction before rolling back
-        if ($this->pdo->inTransaction()) {
-            return $this->pdo->rollBack();
-        }
-        return true; // Return true if there's no active transaction
+        return $this->pdo->rollBack();
     }
 
     /**
