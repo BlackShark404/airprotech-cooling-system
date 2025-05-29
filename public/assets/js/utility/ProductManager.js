@@ -71,12 +71,8 @@ class ProductManager {
      */
     getDefaultCardTemplate() {
         return (product) => {
-            // Check if product has variants and use a default if not
-            const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
-            const price = hasVariants ? product.variants[0].VAR_SRP_PRICE : 'N/A';
-
             // Convert relative paths to absolute paths if needed
-            let imagePath = product.PROD_IMAGE || '';
+            let imagePath = product.PROD_IMAGE || product.prod_image || '';
             if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
                 imagePath = '/uploads/' + imagePath;
             }
@@ -94,9 +90,8 @@ class ProductManager {
                         <div class="product-info">
                             <h3 class="product-title">${productName}</h3>
                             <p class="product-desc">${productDesc}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="product-price">$${price}</span>
-                                <button class="btn btn-book-now view-details" data-product-id="${productId}">Order Now</button>
+                            <div class="d-flex justify-content-end align-items-center">
+                                <button class="btn btn-book-now view-details" data-product-id="${productId}">Book Now</button>
                             </div>
                         </div>
                     </div>
