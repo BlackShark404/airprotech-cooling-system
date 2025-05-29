@@ -75,6 +75,8 @@ class ProductController extends BaseController
             $this->renderError('Invalid request', 400);
         }
 
+        $transactionStarted = false;
+        
         try {
             $data = $this->getJsonInput();
             
@@ -85,6 +87,7 @@ class ProductController extends BaseController
             
             // Begin transaction
             $this->productModel->beginTransaction();
+            $transactionStarted = true;
             
             // Extract and store special data arrays
             $variants = $data['variants'] ?? [];
@@ -92,11 +95,17 @@ class ProductController extends BaseController
             $specs = $data['specs'] ?? [];
             $inventory = $data['inventory'] ?? [];
             
+            // Store warehouse info for inventory
+            $warehouseId = $data['WHOUSE_ID'] ?? null;
+            $inventoryType = $data['INVE_TYPE'] ?? null;
+            
             // Remove non-product fields from data
             unset($data['variants']);
             unset($data['features']);
             unset($data['specs']);
             unset($data['inventory']);
+            unset($data['WHOUSE_ID']);  // Remove warehouse ID - not part of product table
+            unset($data['INVE_TYPE']);  // Remove inventory type - not part of product table
             
             // Create product
             $productId = $this->productModel->createProduct($data);
@@ -134,14 +143,14 @@ class ProductController extends BaseController
             
             // Process initial inventory if provided
             if (!empty($inventory) && is_array($inventory) &&
-                !empty($data['WHOUSE_ID']) && !empty($data['INVE_TYPE'])) {
+                !empty($warehouseId) && !empty($inventoryType)) {
                 
                 foreach ($inventory as $inventoryItem) {
                     if (!empty($inventoryItem['quantity']) && $inventoryItem['quantity'] > 0) {
                         $this->inventoryModel->updateProductQuantity(
                             $productId,
-                            $data['WHOUSE_ID'],
-                            $data['INVE_TYPE'],
+                            $warehouseId,
+                            $inventoryType,
                             $inventoryItem['quantity']
                         );
                     }
@@ -149,10 +158,17 @@ class ProductController extends BaseController
             }
             
             $this->productModel->commit();
+            $transactionStarted = false;
             $this->jsonSuccess(['id' => $productId], 'Product created successfully');
         } catch (\Exception $e) {
-            $this->productModel->rollback();
-            $this->jsonError($e->getMessage());
+            error_log("Error creating product: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            // Only try to rollback if we successfully started a transaction
+            if ($transactionStarted) {
+                $this->productModel->rollback();
+            }
+            
+            $this->jsonError('Error creating product: ' . $e->getMessage());
         }
     }
 
@@ -165,6 +181,8 @@ class ProductController extends BaseController
             $this->renderError('Invalid request', 400);
         }
 
+        $transactionStarted = false;
+        
         try {
             $data = $this->getJsonInput();
             
@@ -176,23 +194,32 @@ class ProductController extends BaseController
             
             // Begin transaction
             $this->productModel->beginTransaction();
+            $transactionStarted = true;
             
             // Extract and store special data arrays
             $variants = $data['variants'] ?? [];
             $features = isset($data['features']) ? $data['features'] : null;
             $specs = isset($data['specs']) ? $data['specs'] : null;
+            $inventory = $data['inventory'] ?? [];
+            
+            // Store warehouse info for inventory
+            $warehouseId = $data['WHOUSE_ID'] ?? null;
+            $inventoryType = $data['INVE_TYPE'] ?? null;
             
             // Remove non-product fields from data
             unset($data['variants']);
             unset($data['features']);
             unset($data['specs']);
             unset($data['inventory']);
+            unset($data['WHOUSE_ID']);  // Remove warehouse ID - not part of product table
+            unset($data['INVE_TYPE']);  // Remove inventory type - not part of product table
             
             // Update product
             $result = $this->productModel->updateProduct($id, $data);
             
             if (!$result) {
                 $this->productModel->rollback();
+                $transactionStarted = false;
                 $this->jsonError('Failed to update product');
             }
             
@@ -240,11 +267,34 @@ class ProductController extends BaseController
                 }
             }
             
+            // Process inventory if provided
+            if (!empty($inventory) && is_array($inventory) &&
+                !empty($warehouseId) && !empty($inventoryType)) {
+                
+                foreach ($inventory as $inventoryItem) {
+                    if (!empty($inventoryItem['quantity']) && $inventoryItem['quantity'] > 0) {
+                        $this->inventoryModel->updateProductQuantity(
+                            $id,
+                            $warehouseId,
+                            $inventoryType,
+                            $inventoryItem['quantity']
+                        );
+                    }
+                }
+            }
+            
             $this->productModel->commit();
+            $transactionStarted = false;
             $this->jsonSuccess([], 'Product updated successfully');
         } catch (\Exception $e) {
-            $this->productModel->rollback();
-            $this->jsonError($e->getMessage());
+            error_log("Error updating product: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            // Only try to rollback if we successfully started a transaction
+            if ($transactionStarted) {
+                $this->productModel->rollback();
+            }
+            
+            $this->jsonError('Error updating product: ' . $e->getMessage());
         }
     }
 
@@ -257,6 +307,8 @@ class ProductController extends BaseController
             $this->renderError('Invalid request', 400);
         }
 
+        $transactionStarted = false;
+        
         try {
             // Check if product exists
             $existingProduct = $this->productModel->getProductById($id);
@@ -264,15 +316,30 @@ class ProductController extends BaseController
                 $this->jsonError('Product not found', 404);
             }
             
+            // Begin transaction
+            $this->productModel->beginTransaction();
+            $transactionStarted = true;
+            
             $result = $this->productModel->deleteProduct($id);
             
             if ($result) {
+                $this->productModel->commit();
+                $transactionStarted = false;
                 $this->jsonSuccess([], 'Product deleted successfully');
             } else {
+                $this->productModel->rollback();
+                $transactionStarted = false;
                 $this->jsonError('Failed to delete product');
             }
         } catch (\Exception $e) {
-            $this->jsonError($e->getMessage());
+            error_log("Error deleting product: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            // Only try to rollback if we successfully started a transaction
+            if ($transactionStarted) {
+                $this->productModel->rollback();
+            }
+            
+            $this->jsonError('Error deleting product: ' . $e->getMessage());
         }
     }
 

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         columns: [
             { data: 'image', title: 'Image', orderable: false },
-            { data: 'name', title: 'Name' },
+            { data: 'PROD_NAME', title: 'Name' },
             { data: 'description', title: 'Description' },
             { data: 'variants', title: 'Variants' },
             { data: 'stock', title: 'Total Stock' },
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             productsTable.row.add({
                 'image': `<img src="${product.PROD_IMAGE || '/assets/img/no-image.png'}" width="50" height="50" style="object-fit: cover; border-radius: 4px;">`,
-                'name': product.PROD_NAME,
+                'PROD_NAME': product.PROD_NAME,
                 'description': truncateText(product.PROD_DESCRIPTION || 'No description available', 100),
                 'variants': variantsHtml,
                 'stock': totalStock,

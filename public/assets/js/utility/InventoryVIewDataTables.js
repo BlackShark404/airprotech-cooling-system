@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { data: 'variant', title: 'Variant' },
             { data: 'warehouse', title: 'Warehouse' },
             { data: 'type', title: 'Type' },
-            { data: 'quantity', title: 'Quantity' },
+            { data: 'QUANTITY', title: 'Quantity' },
             { data: 'status', title: 'Status' },
             { data: 'last_updated', title: 'Last Updated' },
             { data: 'actions', title: 'Actions', orderable: false }
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'variant': item.VAR_CAPACITY || 'Standard',
                 'warehouse': item.WHOUSE_NAME || 'Unknown Warehouse',
                 'type': `<span class="badge ${typeClass}">${item.INVE_TYPE || 'Unknown'}</span>`,
-                'quantity': item.QUANTITY,
+                'QUANTITY': item.QUANTITY,
                 'status': `<span class="badge ${statusClass}">${getStatusText(item.QUANTITY, item.threshold || 10)}</span>`,
                 'last_updated': formatDate(item.LAST_UPDATED),
                 'actions': `<div class="action-buttons">
