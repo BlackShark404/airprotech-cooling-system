@@ -362,6 +362,7 @@
                         
                         <!-- Filter Buttons -->
                         <div class="filter-buttons">
+                            <button type="submit" class="btn btn-filter btn-primary me-2">Apply Filters</button>
                             <button type="reset" class="btn btn-reset">Clear Filters</button>
                         </div>
                     </div>

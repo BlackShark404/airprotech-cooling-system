@@ -167,7 +167,16 @@ class ProductManager {
         this.searchInput = document.getElementById(this.config.searchInputId);
 
         if (this.filterForm) {
+            // Handle form submission
+            this.filterForm.addEventListener('submit', (e) => {
+                e.preventDefault(); // Prevent page reload
+                this.applyFilters();
+            });
+
+            // Optional: Handle input changes if you want live filtering
             this.filterForm.addEventListener('change', () => this.applyFilters());
+
+            // Handle form reset
             this.filterForm.addEventListener('reset', () => {
                 setTimeout(() => this.applyFilters(), 10); // Allow form to reset before applying
             });
@@ -193,7 +202,6 @@ class ProductManager {
         }
         if (!this.allProducts.length) return;
 
-
         let filteredProducts = [...this.allProducts];
 
         const categoryFilter = this.filterForm?.querySelector('[name="category"]');
@@ -208,31 +216,43 @@ class ProductManager {
 
         if (minPriceFilter && minPriceFilter.value !== '') {
             const minPrice = parseFloat(minPriceFilter.value);
-            filteredProducts = filteredProducts.filter(product =>
-                product.variants.some(variant => parseFloat(variant.VAR_SRP_PRICE) >= minPrice)
-            );
+            filteredProducts = filteredProducts.filter(product => {
+                // Check if variants exist before filtering
+                return product.variants && Array.isArray(product.variants) &&
+                    product.variants.some(variant => {
+                        const price = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
+                        return price >= minPrice;
+                    });
+            });
         }
 
         if (maxPriceFilter && maxPriceFilter.value !== '') {
             const maxPrice = parseFloat(maxPriceFilter.value);
-            filteredProducts = filteredProducts.filter(product =>
-                product.variants.some(variant => parseFloat(variant.VAR_SRP_PRICE) <= maxPrice)
-            );
+            filteredProducts = filteredProducts.filter(product => {
+                // Check if variants exist before filtering
+                return product.variants && Array.isArray(product.variants) &&
+                    product.variants.some(variant => {
+                        const price = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
+                        return price <= maxPrice;
+                    });
+            });
         }
 
         const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
         if (availabilityFilter && availabilityFilter.value !== '') {
-            filteredProducts = filteredProducts.filter(product =>
-                product.PROD_AVAILABILITY_STATUS === availabilityFilter.value
-            );
+            filteredProducts = filteredProducts.filter(product => {
+                const status = product.PROD_AVAILABILITY_STATUS || product.prod_availability_status;
+                return status === availabilityFilter.value;
+            });
         }
 
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
-            filteredProducts = filteredProducts.filter(product =>
-                product.PROD_NAME.toLowerCase().includes(searchTerm) ||
-                (product.PROD_DESCRIPTION && product.PROD_DESCRIPTION.toLowerCase().includes(searchTerm))
-            );
+            filteredProducts = filteredProducts.filter(product => {
+                const name = (product.PROD_NAME || product.prod_name || '').toLowerCase();
+                const desc = (product.PROD_DESCRIPTION || product.prod_description || '').toLowerCase();
+                return name.includes(searchTerm) || desc.includes(searchTerm);
+            });
         }
 
         this.currentPage = 1;
@@ -482,35 +502,54 @@ class ProductManager {
             }
         }
 
-        // Re-apply filters to render the correct page.
-        // applyFilters() internally resets currentPage to 1 if it's called for filtering changes,
-        // but here, we are changing the page *for the current filter set*.
-        // So, instead of calling applyFilters() which resets the page, we directly re-render
-        // with the current filtered set and the new page.
-        // To do this, we need to get the currently filtered products without resetting the page.
-
+        // Apply the same filtering logic as in applyFilters and getFilteredProductsCount,
+        // but without resetting the current page
         let filteredProducts = [...this.allProducts];
+
         const categoryFilter = this.filterForm?.querySelector('[name="category"]');
         if (categoryFilter && categoryFilter.value) {
             filteredProducts = filteredProducts.filter(p => p.category === categoryFilter.value);
         }
+
         const minPriceFilter = this.filterForm?.querySelector('[name="min-price"]');
         if (minPriceFilter && minPriceFilter.value !== '') {
             const minPrice = parseFloat(minPriceFilter.value);
-            filteredProducts = filteredProducts.filter(p => p.variants.some(v => parseFloat(v.VAR_SRP_PRICE) >= minPrice));
+            filteredProducts = filteredProducts.filter(p => {
+                return p.variants && Array.isArray(p.variants) &&
+                    p.variants.some(v => {
+                        const price = parseFloat(v.VAR_SRP_PRICE || v.var_srp_price || 0);
+                        return price >= minPrice;
+                    });
+            });
         }
+
         const maxPriceFilter = this.filterForm?.querySelector('[name="max-price"]');
         if (maxPriceFilter && maxPriceFilter.value !== '') {
             const maxPrice = parseFloat(maxPriceFilter.value);
-            filteredProducts = filteredProducts.filter(p => p.variants.some(v => parseFloat(v.VAR_SRP_PRICE) <= maxPrice));
+            filteredProducts = filteredProducts.filter(p => {
+                return p.variants && Array.isArray(p.variants) &&
+                    p.variants.some(v => {
+                        const price = parseFloat(v.VAR_SRP_PRICE || v.var_srp_price || 0);
+                        return price <= maxPrice;
+                    });
+            });
         }
+
         const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
         if (availabilityFilter && availabilityFilter.value !== '') {
-            filteredProducts = filteredProducts.filter(p => p.PROD_AVAILABILITY_STATUS === availabilityFilter.value);
+            filteredProducts = filteredProducts.filter(p => {
+                const status = p.PROD_AVAILABILITY_STATUS || p.prod_availability_status;
+                return status === availabilityFilter.value;
+            });
         }
+
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
-            filteredProducts = filteredProducts.filter(p => p.PROD_NAME.toLowerCase().includes(searchTerm) || (p.PROD_DESCRIPTION && p.PROD_DESCRIPTION.toLowerCase().includes(searchTerm)));
+            filteredProducts = filteredProducts.filter(p => {
+                const name = (p.PROD_NAME || p.prod_name || '').toLowerCase();
+                const desc = (p.PROD_DESCRIPTION || p.prod_description || '').toLowerCase();
+                return name.includes(searchTerm) || desc.includes(searchTerm);
+            });
         }
 
         this.renderProducts(filteredProducts); // Render with the new page
@@ -528,20 +567,39 @@ class ProductManager {
         const minPriceFilter = this.filterForm?.querySelector('[name="min-price"]');
         if (minPriceFilter && minPriceFilter.value !== '') {
             const minPrice = parseFloat(minPriceFilter.value);
-            filtered = filtered.filter(p => p.variants.some(v => parseFloat(v.VAR_SRP_PRICE) >= minPrice));
+            filtered = filtered.filter(p => {
+                return p.variants && Array.isArray(p.variants) &&
+                    p.variants.some(v => {
+                        const price = parseFloat(v.VAR_SRP_PRICE || v.var_srp_price || 0);
+                        return price >= minPrice;
+                    });
+            });
         }
         const maxPriceFilter = this.filterForm?.querySelector('[name="max-price"]');
         if (maxPriceFilter && maxPriceFilter.value !== '') {
             const maxPrice = parseFloat(maxPriceFilter.value);
-            filtered = filtered.filter(p => p.variants.some(v => parseFloat(v.VAR_SRP_PRICE) <= maxPrice));
+            filtered = filtered.filter(p => {
+                return p.variants && Array.isArray(p.variants) &&
+                    p.variants.some(v => {
+                        const price = parseFloat(v.VAR_SRP_PRICE || v.var_srp_price || 0);
+                        return price <= maxPrice;
+                    });
+            });
         }
         const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
         if (availabilityFilter && availabilityFilter.value !== '') {
-            filtered = filtered.filter(p => p.PROD_AVAILABILITY_STATUS === availabilityFilter.value);
+            filtered = filtered.filter(p => {
+                const status = p.PROD_AVAILABILITY_STATUS || p.prod_availability_status;
+                return status === availabilityFilter.value;
+            });
         }
         if (this.searchInput && this.searchInput.value.trim() !== '') {
             const searchTerm = this.searchInput.value.trim().toLowerCase();
-            filtered = filtered.filter(p => p.PROD_NAME.toLowerCase().includes(searchTerm) || (p.PROD_DESCRIPTION && p.PROD_DESCRIPTION.toLowerCase().includes(searchTerm)));
+            filtered = filtered.filter(p => {
+                const name = (p.PROD_NAME || p.prod_name || '').toLowerCase();
+                const desc = (p.PROD_DESCRIPTION || p.prod_description || '').toLowerCase();
+                return name.includes(searchTerm) || desc.includes(searchTerm);
+            });
         }
         return filtered.length;
     }
