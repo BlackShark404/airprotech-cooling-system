@@ -225,4 +225,157 @@ class ProductBookingModel extends Model
         
         return $this->queryOne($sql);
     }
+
+    /**
+     * Get all bookings with filters
+     */
+    public function getFilteredBookings($filters = [])
+    {
+        $whereConditions = ["pb.PB_DELETED_AT IS NULL"];
+        $params = [];
+
+        // Apply status filter
+        if (!empty($filters['status'])) {
+            $whereConditions[] = "pb.PB_STATUS = :status";
+            $params[':status'] = $filters['status'];
+        }
+
+        // Apply product filter
+        if (!empty($filters['product_id'])) {
+            $whereConditions[] = "p.PROD_ID = :product_id";
+            $params[':product_id'] = $filters['product_id'];
+        }
+
+        // Apply date range filter
+        if (!empty($filters['date_range'])) {
+            $now = new Date();
+            $dateRange = $filters['date_range'];
+            
+            switch ($dateRange) {
+                case 'today':
+                    $whereConditions[] = "DATE(pb.PB_ORDER_DATE) = CURRENT_DATE";
+                    break;
+                case 'yesterday':
+                    $whereConditions[] = "DATE(pb.PB_ORDER_DATE) = CURRENT_DATE - INTERVAL '1 day'";
+                    break;
+                case 'last7days':
+                    $whereConditions[] = "pb.PB_ORDER_DATE >= CURRENT_DATE - INTERVAL '7 days'";
+                    break;
+                case 'last30days':
+                    $whereConditions[] = "pb.PB_ORDER_DATE >= CURRENT_DATE - INTERVAL '30 days'";
+                    break;
+                case 'thisMonth':
+                    $whereConditions[] = "EXTRACT(MONTH FROM pb.PB_ORDER_DATE) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM pb.PB_ORDER_DATE) = EXTRACT(YEAR FROM CURRENT_DATE)";
+                    break;
+                case 'lastMonth':
+                    $whereConditions[] = "
+                        (EXTRACT(MONTH FROM pb.PB_ORDER_DATE) = EXTRACT(MONTH FROM CURRENT_DATE - INTERVAL '1 month') AND 
+                        EXTRACT(YEAR FROM pb.PB_ORDER_DATE) = EXTRACT(YEAR FROM CURRENT_DATE - INTERVAL '1 month'))";
+                    break;
+            }
+        }
+
+        // Apply technician filter
+        if (!empty($filters['technician_id'])) {
+            $whereConditions[] = "pa.PA_TECHNICIAN_ID = :technician_id";
+            $params[':technician_id'] = $filters['technician_id'];
+        } elseif (isset($filters['has_technician'])) {
+            if ($filters['has_technician']) {
+                $whereConditions[] = "pa.PA_ID IS NOT NULL";
+            } else {
+                $whereConditions[] = "pa.PA_ID IS NULL";
+            }
+        }
+
+        $sql = "SELECT 
+                    pb.*,
+                    ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME AS CUSTOMER_NAME,
+                    pv.VAR_CAPACITY,
+                    p.PROD_NAME,
+                    p.PROD_IMAGE
+                FROM {$this->table} pb
+                LEFT JOIN CUSTOMER c ON pb.PB_CUSTOMER_ID = c.CU_ACCOUNT_ID
+                LEFT JOIN USER_ACCOUNT ua ON c.CU_ACCOUNT_ID = ua.UA_ID
+                LEFT JOIN PRODUCT_VARIANT pv ON pb.PB_VARIANT_ID = pv.VAR_ID
+                LEFT JOIN PRODUCT p ON pv.PROD_ID = p.PROD_ID
+                LEFT JOIN PRODUCT_ASSIGNMENT pa ON pb.PB_ID = pa.PA_ORDER_ID";
+
+        if (!empty($whereConditions)) {
+            $sql .= " WHERE " . implode(" AND ", $whereConditions);
+        }
+
+        $sql .= " GROUP BY pb.PB_ID, ua.UA_ID, pv.VAR_ID, p.PROD_ID ORDER BY pb.PB_ORDER_DATE DESC";
+
+        return $this->query($sql, $params);
+    }
+
+    /**
+     * Get assigned technicians for a product booking
+     */
+    public function getAssignedTechnicians($bookingId)
+    {
+        $sql = "SELECT 
+                    pa.PA_ID,
+                    pa.PA_TECHNICIAN_ID as id,
+                    ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME as name,
+                    pa.PA_NOTES as notes,
+                    pa.PA_STATUS as status,
+                    pa.PA_ASSIGNED_AT as assigned_at
+                FROM PRODUCT_ASSIGNMENT pa
+                JOIN TECHNICIAN t ON pa.PA_TECHNICIAN_ID = t.TE_ACCOUNT_ID
+                JOIN USER_ACCOUNT ua ON t.TE_ACCOUNT_ID = ua.UA_ID
+                WHERE pa.PA_ORDER_ID = :booking_id
+                ORDER BY pa.PA_ASSIGNED_AT DESC";
+
+        return $this->query($sql, [':booking_id' => $bookingId]);
+    }
+
+    /**
+     * Remove all technicians from a product booking
+     */
+    public function removeAllTechnicians($bookingId)
+    {
+        $sql = "DELETE FROM PRODUCT_ASSIGNMENT WHERE PA_ORDER_ID = :booking_id";
+        return $this->execute($sql, [':booking_id' => $bookingId]);
+    }
+
+    /**
+     * Assign a technician to a product booking
+     */
+    public function assignTechnician($bookingId, $technicianId, $notes = '')
+    {
+        // Check if this technician is already assigned to this booking
+        $sql = "SELECT PA_ID FROM PRODUCT_ASSIGNMENT 
+                WHERE PA_ORDER_ID = :booking_id AND PA_TECHNICIAN_ID = :technician_id";
+        
+        $existing = $this->queryOne($sql, [
+            ':booking_id' => $bookingId,
+            ':technician_id' => $technicianId
+        ]);
+        
+        if ($existing) {
+            // Update notes for existing assignment
+            $sql = "UPDATE PRODUCT_ASSIGNMENT 
+                    SET PA_NOTES = :notes,
+                        PA_UPDATED_AT = CURRENT_TIMESTAMP
+                    WHERE PA_ORDER_ID = :booking_id AND PA_TECHNICIAN_ID = :technician_id";
+            
+            return $this->execute($sql, [
+                ':booking_id' => $bookingId,
+                ':technician_id' => $technicianId,
+                ':notes' => $notes
+            ]);
+        } else {
+            // Create new assignment
+            $sql = "INSERT INTO PRODUCT_ASSIGNMENT 
+                    (PA_ORDER_ID, PA_TECHNICIAN_ID, PA_STATUS, PA_NOTES)
+                    VALUES (:booking_id, :technician_id, 'assigned', :notes)";
+            
+            return $this->execute($sql, [
+                ':booking_id' => $bookingId,
+                ':technician_id' => $technicianId,
+                ':notes' => $notes
+            ]);
+        }
+    }
 } 

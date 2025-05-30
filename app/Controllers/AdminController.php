@@ -7,6 +7,10 @@ class AdminController extends BaseController {
         $this->render('admin/service-request');
     }
 
+    public function renderProductBookings() {
+        $this->render('admin/product-booking');
+    }
+
     public function renderInventory() {
         $this->render('admin/inventory');
     }

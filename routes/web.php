@@ -54,6 +54,7 @@ $router->map('GET', '/user/my-bookings', 'App\Controllers\UserController#renderM
 
 // Admin routes
 $router->map('GET', '/admin/service-requests', 'App\Controllers\AdminController#renderServiceRequest', 'render-service-request');
+$router->map('GET', '/admin/product-bookings', 'App\Controllers\AdminController#renderProductBookings', 'render-product-bookings');
 $router->map('GET', '/admin/inventory', 'App\Controllers\AdminController#renderInventory', 'render-inventory');
 $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#renderAddProduct', 'render-add-product');
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
@@ -111,6 +112,12 @@ $router->map('GET', '/api/products/summary', 'App\Controllers\ProductController#
 $router->map('POST', '/api/product-bookings', 'App\Controllers\ProductController#createProductBooking', 'create_product_booking');
 $router->map('GET', '/api/user/product-bookings', 'App\Controllers\ProductController#getUserProductBookings', 'user_product_bookings_api');
 $router->map('GET', '/api/user/product-bookings/[i:id]', 'App\Controllers\ProductController#getUserProductBookingDetails', 'user_product_booking_details_api');
+
+// Admin Product Booking API Routes
+$router->map('GET', '/api/admin/product-bookings', 'App\Controllers\ProductController#getAdminProductBookings', 'admin_product_bookings_api');
+$router->map('GET', '/api/admin/product-bookings/[i:id]', 'App\Controllers\ProductController#getAdminProductBookingDetails', 'admin_product_booking_details_api');
+$router->map('POST', '/api/admin/product-bookings/update', 'App\Controllers\ProductController#updateProductBooking', 'admin_update_product_booking_api');
+$router->map('POST', '/api/admin/product-bookings/delete/[i:id]', 'App\Controllers\ProductController#deleteProductBooking', 'admin_delete_product_booking_api');
 
 // Warehouse Management API Routes
 $router->map('GET', '/api/warehouses', 'App\Controllers\WarehouseController#getAllWarehouses', 'get_all_warehouses');

@@ -394,4 +394,171 @@ class ProductController extends BaseController
         // Fallback error if we get here
         $this->jsonError('Booking not found or you do not have permission to view it', 404);
     }
+
+    /**
+     * Get all product bookings for admin
+     */
+    public function getAdminProductBookings()
+    {
+        // Check if user is admin
+        if (!$this->isAdmin()) {
+            $this->jsonError('Unauthorized access', 401);
+            return;
+        }
+        
+        // Get filter parameters
+        $filters = [];
+        
+        if (isset($_GET['status']) && !empty($_GET['status'])) {
+            $filters['status'] = $_GET['status'];
+        }
+        
+        if (isset($_GET['product_id']) && !empty($_GET['product_id'])) {
+            $filters['product_id'] = $_GET['product_id'];
+        }
+        
+        if (isset($_GET['date_range']) && !empty($_GET['date_range'])) {
+            $filters['date_range'] = $_GET['date_range'];
+        }
+        
+        if (isset($_GET['technician_id']) && !empty($_GET['technician_id'])) {
+            $filters['technician_id'] = $_GET['technician_id'];
+        }
+        
+        if (isset($_GET['has_technician'])) {
+            $filters['has_technician'] = filter_var($_GET['has_technician'], FILTER_VALIDATE_BOOLEAN);
+        }
+        
+        // Get all bookings with filters
+        $bookings = $this->productBookingModel->getFilteredBookings($filters);
+        
+        // Return the bookings as JSON
+        $this->jsonSuccess($bookings);
+    }
+    
+    /**
+     * Get details for a specific product booking (admin)
+     */
+    public function getAdminProductBookingDetails($id)
+    {
+        // Check if user is admin
+        if (!$this->isAdmin()) {
+            $this->jsonError('Unauthorized access', 401);
+            return;
+        }
+        
+        // Get the booking details
+        $booking = $this->productBookingModel->getBookingById($id);
+        
+        if (!$booking) {
+            $this->jsonError('Booking not found', 404);
+            return;
+        }
+        
+        // Get assigned technicians for this booking
+        $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($id);
+        
+        // Return the booking details as JSON
+        $this->jsonSuccess($booking);
+    }
+    
+    /**
+     * Update a product booking (admin)
+     */
+    public function updateProductBooking()
+    {
+        // Check if user is admin
+        if (!$this->isAdmin()) {
+            $this->jsonError('Unauthorized access', 401);
+            return;
+        }
+        
+        // Get the booking data from the request
+        $data = $this->getJsonInput();
+        
+        if (empty($data) || empty($data['bookingId'])) {
+            $this->jsonError('Missing required booking information', 400);
+            return;
+        }
+        
+        $bookingId = $data['bookingId'];
+        
+        // Check if booking exists
+        $booking = $this->productBookingModel->getBookingById($bookingId);
+        if (!$booking) {
+            $this->jsonError('Booking not found', 404);
+            return;
+        }
+        
+        // Prepare update data
+        $updateData = [];
+        
+        if (!empty($data['status'])) {
+            $updateData['PB_STATUS'] = $data['status'];
+        }
+        
+        if (!empty($data['preferredDate'])) {
+            $updateData['PB_PREFERRED_DATE'] = $data['preferredDate'];
+        }
+        
+        if (!empty($data['preferredTime'])) {
+            $updateData['PB_PREFERRED_TIME'] = $data['preferredTime'];
+        }
+        
+        // Update the booking
+        $this->productBookingModel->updateBooking($bookingId, $updateData);
+        
+        // Update technician assignments if provided
+        if (!empty($data['technicians'])) {
+            // Remove current assignments
+            $this->productBookingModel->removeAllTechnicians($bookingId);
+            
+            // Add new assignments
+            foreach ($data['technicians'] as $tech) {
+                $this->productBookingModel->assignTechnician($bookingId, $tech['id'], $tech['notes'] ?? '');
+            }
+        }
+        
+        $this->jsonSuccess(null, 'Booking updated successfully');
+    }
+    
+    /**
+     * Delete a product booking (admin)
+     */
+    public function deleteProductBooking($id)
+    {
+        // Check if user is admin
+        if (!$this->isAdmin()) {
+            $this->jsonError('Unauthorized access', 401);
+            return;
+        }
+        
+        // Check if booking exists
+        $booking = $this->productBookingModel->getBookingById($id);
+        if (!$booking) {
+            $this->jsonError('Booking not found', 404);
+            return;
+        }
+        
+        // Delete the booking
+        $result = $this->productBookingModel->deleteBooking($id);
+        
+        if ($result) {
+            $this->jsonSuccess(null, 'Booking deleted successfully');
+        } else {
+            $this->jsonError('Failed to delete booking', 500);
+        }
+    }
+
+    /**
+     * Check if current user is an admin
+     */
+    private function isAdmin()
+    {
+        // Get the current user role from the session
+        $userRole = $_SESSION['user_role'] ?? null;
+        
+        // Check if user is an admin
+        return $userRole === 'admin';
+    }
 } 
