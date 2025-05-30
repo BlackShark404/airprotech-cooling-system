@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../../../script/active_page.php';
 ?>
 
 <!-- Navbar -->
-<nav class="navbar navbar-dark">
+<nav class="navbar navbar-dark sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <img src="/assets/images/logo/Air-TechLogo.png" alt="AirProtect logo" height="36" width="36">
