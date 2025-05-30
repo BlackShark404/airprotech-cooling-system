@@ -44,10 +44,9 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="/user/dashboard">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/services">Services</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user/products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/user/bookings">My Bookings & Service Requests</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user/my-bookings">My Bookings & Service Requests</a></li>
 
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
@@ -60,7 +59,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
-                            <li><a class="dropdown-item" href="/user/settings">Settings</a></li>
+                            
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
                         </ul>
@@ -142,28 +141,28 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="firstName" class="form-label">First Name</label>
-                                        <input type="text" class="form-control" id="firstName" name="first_name" value="<?=$_SESSION['first_name'] ?? ''?>">
+                                        <input type="text" class="form-control" id="firstName" name="first_name" value="<?= $_SESSION['first_name'] ?? $user['ua_first_name'] ?? '' ?>">
                                     </div>
                                     
                                     <div class="col-md-6">
                                         <label for="lastName" class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" id="lastName" name="last_name" value="<?=$_SESSION['last_name'] ?? ''?>">
+                                        <input type="text" class="form-control" id="lastName" name="last_name" value="<?= $_SESSION['last_name'] ?? $user['ua_last_name'] ?? '' ?>">
                                     </div>
                                     
                                     <div class="col-md-6">
                                         <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" name="email" value="<?=$_SESSION['email'] ?? ''?>" readonly>
+                                        <input type="email" class="form-control" id="email" name="email" value="<?= $_SESSION['email'] ?? $user['ua_email'] ?? '' ?>" readonly>
                                         <small class="text-muted">Email cannot be changed</small>
                                     </div>
                                     
                                     <div class="col-md-6">
                                         <label for="phoneNumber" class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-control" id="phoneNumber" name="phone_number" value="<?=$_SESSION['phone_number'] ?? ''?>">
+                                        <input type="tel" class="form-control" id="phoneNumber" name="phone_number" value="<?= $_SESSION['phone_number'] ?? $user['ua_phone_number'] ?? '' ?>">
                                     </div>
                                     
                                     <div class="col-12">
                                         <label for="address" class="form-label">Address</label>
-                                        <textarea class="form-control" id="address" name="address" rows="3"><?=$_SESSION['address'] ?? ''?></textarea>
+                                        <textarea class="form-control" id="address" name="address" rows="3"><?= $_SESSION['address'] ?? $user['ua_address'] ?? '' ?></textarea>
                                     </div>
                                     
                                     <div class="col-12 mt-4">
@@ -257,11 +256,6 @@
         </div>
     </div>
 
-    <!-- Toast Container for Notifications -->
-    <div class="toast-container position-fixed top-0 end-0 p-3">
-        <!-- Toasts will be inserted here dynamically -->
-    </div>
-
     <!-- JS Files -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -278,7 +272,7 @@
         // Handle form submissions
         document.addEventListener('DOMContentLoaded', function() {
             // Profile update form
-            handleFormSubmission('profileUpdateForm', '/api/users/profile/update');
+            handleFormSubmission('profileUpdateForm', '/api/users/profile/update', true);
             
             // Password update form
             handleFormSubmission('passwordUpdateForm', '/api/users/password/update');
@@ -350,20 +344,10 @@
                         // Show success message
                         showToast('Success', response.data.message, 'success');
                         
-                        // Update profile image on page (with cache-busting)
-                        const timestamp = new Date().getTime();
-                        const newImageUrl = response.data.data.profile_url + '?t=' + timestamp;
-                        
-                        // Update all profile images on the page
-                        const profileImages = document.querySelectorAll('img[alt="Profile Picture"], img[alt="Profile"]');
-                        profileImages.forEach(img => {
-                            img.src = newImageUrl;
-                        });
-                        
-                        // Reset form and restore button
-                        profileImageForm.reset();
-                        submitBtn.innerHTML = originalBtnText;
-                        submitBtn.disabled = false;
+                        // Short delay before refreshing the page to allow the toast to be seen
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
                     } else {
                         // Show error message
                         showToast('Error', response.data.message, 'danger');

@@ -83,8 +83,9 @@ class AuthController extends BaseController
         Session::set('first_name', $user['ua_first_name']);
         Session::set('last_name', $user['ua_last_name']);
         Session::set('full_name', $user['ua_first_name'] . ' ' . $user['ua_last_name']);
-        Session::set('user_email', $user['ua_email']);
+        Session::set('email', $user['ua_email']);
         Session::set('phone_number', $user['ua_phone_number']);
+        Session::set('address', $user['ua_address']);
         Session::set('user_role', $user['role_name'] ?? 'user');
 
 
@@ -230,6 +231,8 @@ class AuthController extends BaseController
                 Session::set('first_name', $user['ua_first_name']);
                 Session::set('last_name', $user['ua_last_name']);
                 Session::set('phone_number', $user['ua_phone_number']);
+                Session::set('email', $user['ua_email']);
+                Session::set('address', $user['ua_address']);
 
                 // Generate a new token for security
                 // This rotates the token on each successful auto-login

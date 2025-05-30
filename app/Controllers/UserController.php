@@ -36,12 +36,27 @@ class UserController extends BaseController{
         
         $userId = $_SESSION['user_id'];
         
+        // Get complete user data
+        $user = $this->userModel->findById($userId);
+        
+        // Make sure the session has the user's email and address
+        if ($user) {
+            if (!isset($_SESSION['email']) && isset($user['ua_email'])) {
+                $_SESSION['email'] = $user['ua_email'];
+            }
+            
+            if (!isset($_SESSION['address']) && isset($user['ua_address'])) {
+                $_SESSION['address'] = $user['ua_address'];
+            }
+        }
+        
         // Get customer statistics
         $statistics = $this->userModel->getCustomerStatistics($userId);
         
         // Add statistics to view data
         $viewData = [
-            'statistics' => $statistics
+            'statistics' => $statistics,
+            'user' => $user
         ];
         
         $this->render("user/user-profile", $viewData);
@@ -172,6 +187,10 @@ class UserController extends BaseController{
             return $this->jsonError('File size exceeds the maximum limit of 2MB', 400);
         }
         
+        // Get current profile image URL before updating
+        $user = $this->userModel->findById($userId);
+        $oldProfileUrl = $user['ua_profile_url'] ?? null;
+        
         // Create uploads directory if it doesn't exist
         $uploadsDir = $_SERVER['DOCUMENT_ROOT'] . '/uploads/profile_images';
         if (!file_exists($uploadsDir)) {
@@ -180,7 +199,7 @@ class UserController extends BaseController{
         
         // Generate unique filename
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = 'profile_' . $userId . '_' . time() . '.' . $extension;
+        $filename = 'profile_' . $userId . '.' . $extension;
         $targetPath = $uploadsDir . '/' . $filename;
         
         // Move uploaded file
@@ -196,6 +215,14 @@ class UserController extends BaseController{
             if ($result) {
                 // Update session
                 $_SESSION['profile_url'] = $profileUrl;
+                
+                // Delete old profile image if it exists and is not the default image
+                if ($oldProfileUrl && $oldProfileUrl !== '/assets/images/default-profile.jpg' && strpos($oldProfileUrl, '/uploads/profile_images/') === 0) {
+                    $oldFilePath = $_SERVER['DOCUMENT_ROOT'] . $oldProfileUrl;
+                    if (file_exists($oldFilePath)) {
+                        @unlink($oldFilePath);
+                    }
+                }
                 
                 return $this->jsonSuccess(['profile_url' => $profileUrl], 'Profile image updated successfully');
             } else {
