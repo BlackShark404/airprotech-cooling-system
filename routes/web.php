@@ -43,6 +43,10 @@ $router->map('GET', '/logout', 'App\Controllers\AuthController#logout', 'logout'
 $router->map('GET', '/user/dashboard', 'App\Controllers\UserController#renderUserDashboard', 'render_user-dashboard');
 $router->map('GET', '/user/services', 'App\Controllers\UserController#renderUserServices', 'render_user-products');
 $router->map('GET', '/user/products', 'App\Controllers\UserController#renderUserProducts', 'render_user-services');
+$router->map('GET', '/user/profile', 'App\Controllers\UserController#renderUserProfile', 'render_user_profile');
+$router->map('POST', '/api/users/profile/update', 'App\Controllers\UserController#updateProfile', 'update_user_profile');
+$router->map('POST', '/api/users/password/update', 'App\Controllers\UserController#updatePassword', 'update_user_password');
+$router->map('POST', '/api/users/profile/image', 'App\Controllers\UserController#uploadProfileImage', 'upload_profile_image');
 $router->map('POST', '/user/service/request', 'App\Controllers\ServiceRequestController#bookService', 'create-service request');
 $router->map('GET', '/user/bookings', 'App\Controllers\ServiceRequestController#myBookings', 'user_bookings');
 $router->map('POST', '/user/bookings/cancel/[i:id]', 'App\Controllers\ServiceRequestController#cancelBooking', 'user_cancel_booking');

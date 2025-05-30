@@ -16,13 +16,13 @@ function showToast(title, message, type = 'info') {
         toastContainer.style.zIndex = '1050';
         document.body.appendChild(toastContainer);
     }
-    
+
     // Create a unique ID for the toast
     const toastId = 'toast-' + Date.now();
-    
+
     // Determine icon and color based on type
     let icon, bgColor;
-    switch(type) {
+    switch (type) {
         case 'success':
             icon = '<i class="fas fa-check-circle me-2"></i>';
             bgColor = 'bg-success';
@@ -44,7 +44,7 @@ function showToast(title, message, type = 'info') {
             type = 'info'; // Normalize type
             break;
     }
-    
+
     // Create toast element
     const toastEl = document.createElement('div');
     toastEl.className = `toast align-items-center border-0 text-white ${bgColor}`;
@@ -53,7 +53,7 @@ function showToast(title, message, type = 'info') {
     toastEl.setAttribute('aria-live', 'assertive');
     toastEl.setAttribute('aria-atomic', 'true');
     toastEl.style.marginBottom = '10px'; // Add margin between stacked toasts
-    
+
     // Create toast content with icon
     toastEl.innerHTML = `
         <div class="d-flex">
@@ -63,10 +63,10 @@ function showToast(title, message, type = 'info') {
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     `;
-    
+
     // Add toast to container
     toastContainer.appendChild(toastEl);
-    
+
     // Initialize and show the toast
     const toast = new bootstrap.Toast(toastEl, {
         animation: true,
@@ -74,9 +74,9 @@ function showToast(title, message, type = 'info') {
         delay: 4000
     });
     toast.show();
-    
+
     // Remove toast from DOM after it's hidden
-    toastEl.addEventListener('hidden.bs.toast', function() {
+    toastEl.addEventListener('hidden.bs.toast', function () {
         toastEl.remove();
     });
 }

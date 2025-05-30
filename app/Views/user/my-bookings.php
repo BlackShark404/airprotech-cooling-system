@@ -42,7 +42,7 @@
         </div>
     </div>
 
-   <!-- Main Navigation -->
+   <!-- Main Navigation --> 
    <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
@@ -59,14 +59,17 @@
                     <li class="nav-item"><a class="nav-link" href="/user/my-bookings">My Bookings & Service Requests</a></li>
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
-                        <a href="#" class="d-flex align-items-center text-decoration-none" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="position-relative">
-                                <img src="<?=Session::get('profile_url')?>" alt="Profile Image" class="rounded-circle" width="30" height="30">
-                                <span class="position-absolute bottom-0 end-0 translate-middle-y bg-success rounded-circle border border-white" style="width: 8px; height: 8px;"></span>
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src=<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?> alt="Profile" class="rounded-circle me-2" width="36" height="36">
+                            <div class="d-flex flex-column lh-sm">
+                                <span class="fw-semibold small text-dark"><?=$_SESSION['full_name'] ?? 'User'?></span>
+                                <small class="text-success">● Online</small>
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            
+                            <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
+                            <li><a class="dropdown-item" href="/user/settings">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
                         </ul>
                     </li>
