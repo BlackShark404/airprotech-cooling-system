@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         detailsHtml += `
                             <tr>
                                 <td><strong>\${spec.SPEC_NAME}</strong></td>
-                                <td>\${spec.SPEC_VALUE}</td>
+                                <td>\₱{spec.SPEC_VALUE}</td>
                             </tr>
                         `;
                     });
