@@ -127,7 +127,7 @@ class ProductBookingManager {
                                     <p class="text-muted mb-1">Preferred Date: ${new Date(preferredDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                                     <span class="badge bg-${this.getStatusBadgeClass(status)}-subtle text-${this.getStatusBadgeClass(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
                                     <div class="mt-2">
-                                        <button class="btn btn-primary view-details" data-booking-id="${id}">View Details</button>
+                                        <button class="btn btn-primary view-product-details view-details" data-booking-id="${id}">View Details</button>
                                     </div>
                                 </div>
                             </div>
@@ -155,11 +155,16 @@ class ProductBookingManager {
      * Initialize controls within the modal
      */
     initModalControls() {
-        // Add event listener to all "View Details" buttons
+        // Add event listener to all "View Details" buttons using event delegation
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('view-details')) {
-                const bookingId = e.target.getAttribute('data-booking-id');
-                this.openBookingModal(bookingId);
+            // Check if the clicked element or its parent is a "view-product-details" button 
+            const viewDetailsButton = e.target.closest('.view-product-details');
+
+            if (viewDetailsButton) {
+                const bookingId = viewDetailsButton.getAttribute('data-booking-id');
+                if (bookingId) {
+                    this.openBookingModal(bookingId);
+                }
             }
         });
     }

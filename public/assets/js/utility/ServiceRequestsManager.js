@@ -98,7 +98,7 @@ class ServiceRequestsManager {
                                 <p class="text-muted mb-1">Requested on: ${new Date(service.SB_CREATED_AT).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                                 <span class="badge bg-${this.getStatusBadgeClass(service.SB_STATUS)}-subtle text-${this.getStatusBadgeClass(service.SB_STATUS)}">${service.SB_STATUS ? service.SB_STATUS.charAt(0).toUpperCase() + service.SB_STATUS.slice(1) : 'Unknown'}</span>
                                 <div class="mt-2">
-                                    <button class="btn btn-danger view-details" data-service-id="${service.SB_ID}">View Details</button>
+                                    <button class="btn btn-danger view-service-details view-details" data-service-id="${service.SB_ID}">View Details</button>
                                 </div>
                             </div>
                         </div>
@@ -130,8 +130,8 @@ class ServiceRequestsManager {
     initModalControls() {
         // Add event listener to all "View Details" buttons using event delegation
         document.addEventListener('click', (e) => {
-            // Check if the clicked element or its parent is a "view-details" button
-            const viewDetailsButton = e.target.closest('.view-details');
+            // Check if the clicked element or its parent is a "view-service-details" button
+            const viewDetailsButton = e.target.closest('.view-service-details');
             if (viewDetailsButton) {
                 const serviceId = viewDetailsButton.getAttribute('data-service-id');
                 if (serviceId) {
