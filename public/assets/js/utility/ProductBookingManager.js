@@ -7,7 +7,7 @@ class ProductBookingManager {
     constructor(options = {}) {
         // Default configuration
         this.config = {
-            bookingsEndpoint: '/api/product-bookings',
+            bookingsEndpoint: '/api/user/product-bookings',
             containerSelector: '#bookings',
             modalId: 'bookingDetailModal',
             filterFormId: 'booking-filters',
@@ -78,7 +78,7 @@ class ProductBookingManager {
             this.modal.bookingDate = document.getElementById('modal-booking-date');
             this.modal.preferredDate = document.getElementById('modal-preferred-date');
             this.modal.preferredTime = document.getElementById('modal-preferred-time');
-            this.modal.address = document.getElementById('modal-address');
+            this.modal.address = document.getElementById('modal-delivery-address');
 
             // Create Bootstrap modal instance
             this.bsModal = new bootstrap.Modal(this.modal.element);
@@ -127,7 +127,7 @@ class ProductBookingManager {
                                     <p class="text-muted mb-1">Preferred Date: ${new Date(preferredDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                                     <span class="badge bg-${this.getStatusBadgeClass(status)}-subtle text-${this.getStatusBadgeClass(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
                                     <div class="mt-2">
-                                        <button class="btn btn-primary view-product-details view-details" data-booking-id="${id}">View Details</button>
+                                        <button class="btn btn-primary view-product-details view-details" data-booking-id="${id}" onclick="console.log('Clicked booking ID:', ${id})">View Details</button>
                                     </div>
                                 </div>
                             </div>
@@ -276,7 +276,10 @@ class ProductBookingManager {
      */
     async fetchAndRenderBookings() {
         try {
+            console.log('Fetching bookings from:', this.config.bookingsEndpoint);
+
             const response = await axios.get(this.config.bookingsEndpoint);
+            console.log('Bookings API response:', response.data);
 
             // Check for success response structure with data field
             let bookings = [];
@@ -286,7 +289,12 @@ class ProductBookingManager {
                 bookings = response.data;
             }
 
+            console.log('Processed bookings:', bookings);
+
             if (bookings.length > 0) {
+                // Debug booking IDs
+                console.log('Booking IDs:', bookings.map(b => b.PB_ID || b.pb_id));
+
                 // Store all bookings for filtering
                 this.allBookings = bookings;
                 this.filteredBookings = [...bookings];
@@ -477,7 +485,14 @@ class ProductBookingManager {
      */
     async openBookingModal(bookingId) {
         try {
-            const response = await axios.get(`${this.config.bookingsEndpoint}/${bookingId}`);
+            // Debug: Log the URL being called
+            const url = `${this.config.bookingsEndpoint}/${bookingId}`;
+            console.log('Fetching booking details from:', url);
+
+            const response = await axios.get(url);
+
+            // Debug: Log the response
+            console.log('API Response:', response.data);
 
             // Handle different API response formats
             let booking;
@@ -487,6 +502,13 @@ class ProductBookingManager {
                 booking = response.data;
             }
 
+            if (!booking || (Array.isArray(booking) && booking.length === 0)) {
+                console.error('No booking data returned from API');
+                alert('Booking details could not be loaded. The booking may not exist.');
+                return;
+            }
+
+            console.log('Processed booking data:', booking);
             this.currentBooking = booking;
             this.populateModal(booking);
 
@@ -501,7 +523,23 @@ class ProductBookingManager {
             }
         } catch (error) {
             console.error('Error fetching booking details:', error);
-            alert('Failed to load booking details. Please try again.');
+
+            // Provide more specific error information
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+
+                if (error.response.status === 404) {
+                    alert('Booking not found. The booking may have been deleted or you do not have permission to view it.');
+                } else {
+                    alert(`Failed to load booking details. Server error: ${error.response.status}`);
+                }
+            } else if (error.request) {
+                console.error('Request made but no response received');
+                alert('Failed to load booking details. No response from server.');
+            } else {
+                alert(`Failed to load booking details: ${error.message}`);
+            }
         }
     }
 

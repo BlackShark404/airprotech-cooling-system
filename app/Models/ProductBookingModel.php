@@ -33,22 +33,43 @@ class ProductBookingModel extends Model
      */
     public function getBookingById($bookingId)
     {
-        $sql = "SELECT 
-                    pb.*,
-                    ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME AS CUSTOMER_NAME,
-                    ua.UA_EMAIL AS CUSTOMER_EMAIL,
-                    ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
-                    pv.VAR_CAPACITY,
-                    p.PROD_NAME,
-                    p.PROD_IMAGE
-                FROM {$this->table} pb
-                JOIN CUSTOMER c ON pb.PB_CUSTOMER_ID = c.CU_ACCOUNT_ID
-                JOIN USER_ACCOUNT ua ON c.CU_ACCOUNT_ID = ua.UA_ID
-                JOIN PRODUCT_VARIANT pv ON pb.PB_VARIANT_ID = pv.VAR_ID
-                JOIN PRODUCT p ON pv.PROD_ID = p.PROD_ID
-                WHERE pb.PB_ID = :booking_id AND pb.PB_DELETED_AT IS NULL";
-        
-        return $this->queryOne($sql, [':booking_id' => $bookingId]);
+        try {
+            error_log("Fetching booking ID: $bookingId");
+            
+            $sql = "SELECT 
+                        pb.*,
+                        ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME AS CUSTOMER_NAME,
+                        ua.UA_EMAIL AS CUSTOMER_EMAIL,
+                        ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
+                        pv.VAR_CAPACITY,
+                        p.PROD_NAME,
+                        p.PROD_IMAGE,
+                        pb.PB_CUSTOMER_ID
+                    FROM {$this->table} pb
+                    LEFT JOIN CUSTOMER c ON pb.PB_CUSTOMER_ID = c.CU_ACCOUNT_ID
+                    LEFT JOIN USER_ACCOUNT ua ON c.CU_ACCOUNT_ID = ua.UA_ID
+                    LEFT JOIN PRODUCT_VARIANT pv ON pb.PB_VARIANT_ID = pv.VAR_ID
+                    LEFT JOIN PRODUCT p ON pv.PROD_ID = p.PROD_ID
+                    WHERE pb.PB_ID = :booking_id AND pb.PB_DELETED_AT IS NULL";
+            
+            $result = $this->queryOne($sql, [':booking_id' => $bookingId]);
+            
+            if (!$result) {
+                error_log("No booking found with ID: $bookingId");
+            } else {
+                error_log("Found booking: " . json_encode($result));
+                
+                // Ensure PB_CUSTOMER_ID is set
+                if (!isset($result['PB_CUSTOMER_ID'])) {
+                    error_log("Warning: PB_CUSTOMER_ID is not set in the result");
+                }
+            }
+            
+            return $result;
+        } catch (\Exception $e) {
+            error_log("Error fetching booking: " . $e->getMessage());
+            return null;
+        }
     }
 
     /**

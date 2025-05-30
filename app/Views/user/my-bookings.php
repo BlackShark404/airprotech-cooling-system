@@ -84,17 +84,17 @@
             <!-- Tabs -->
             <ul class="nav nav-tabs" id="ordersTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="false">Bookings</button>
+                    <button class="nav-link active" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="true">Bookings</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="services-tab-button" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="true">Service Requests</button>
+                    <button class="nav-link" id="services-tab-button" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="false">Service Requests</button>
                 </li>
             </ul>
 
             <!-- Tab Content -->
             <div class="tab-content" id="ordersTabContent">
                 <!-- Bookings Tab -->
-                <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                <div class="tab-pane fade show active" id="orders" role="tabpanel" aria-labelledby="orders-tab">
                     <!-- Filters for Product Bookings -->
                     <form id="product-booking-filters" class="d-flex flex-wrap justify-content-end align-items-center mb-4 py-4">
                         <div class="me-2 mb-2">
@@ -135,7 +135,7 @@
                 </div>
 
                 <!-- Service Requests Tab -->
-                <div class="tab-pane fade show active" id="services" role="tabpanel" aria-labelledby="services-tab-button">
+                <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab-button">
                     <!-- Filters for Service Requests -->
                     <form id="service-request-filters" class="d-flex flex-wrap justify-content-end align-items-center mb-4 py-4">
                         <div class="me-2 mb-2">
@@ -289,7 +289,7 @@
                                 <div class="card-body">
                                     <p class="mb-2"><strong>Preferred Date:</strong> <span id="modal-preferred-date" class="fw-bold"></span></p>
                                     <p class="mb-2"><strong>Preferred Time:</strong> <span id="modal-preferred-time" class="fw-bold"></span></p>
-                                    <p class="mb-0"><strong>Delivery Address:</strong> <span id="modal-address" class="text-muted"></span></p>
+                                    <p class="mb-0"><strong>Delivery Address:</strong> <span id="modal-delivery-address" class="text-muted"></span></p>
                                 </div>
                             </div>
                         </div>
@@ -322,16 +322,13 @@
         });
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Product Bookings by default
+            initializeProductBookings();
+            
             // Check if we are on the "Service Requests" tab
             const servicesTab = document.getElementById('services');
             if (servicesTab && servicesTab.classList.contains('active')) {
                 initializeServiceRequests();
-            }
-
-            // Check if we are on the "Bookings" tab
-            const ordersTab = document.getElementById('orders');
-            if (ordersTab && ordersTab.classList.contains('active')) {
-                initializeProductBookings();
             }
 
             // Initialize if the service requests tab is clicked
@@ -344,7 +341,7 @@
                 });
             }
 
-            // Initialize if the bookings tab is clicked
+            // Initialize if the bookings tab is clicked (redundant now, but keeping for consistency)
             const ordersTabButton = document.getElementById('orders-tab');
             if (ordersTabButton) {
                 ordersTabButton.addEventListener('shown.bs.tab', function (event) {
