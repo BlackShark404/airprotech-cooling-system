@@ -406,14 +406,14 @@ body {
 /* Image Popup Modal Styles */
 .modal-lg {
     max-width: 800px;
-  }
-  
-  .modal-body {
+}
+
+.modal-body {
     padding: 0;
     position: relative;
-  }
-  
-  .btn-close {
+}
+
+.btn-close {
     z-index: 10;
     background-color: rgba(255, 255, 255, 0.8);
     border-radius: 50%;
@@ -421,33 +421,33 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     opacity: 0.8;
     transition: opacity 0.3s ease;
-  }
-  
-  .btn-close:hover {
+}
+
+.btn-close:hover {
     opacity: 1;
-  }
-  
-  .modal-content {
+}
+
+.modal-content {
     border: none;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  }
-  
-  /* Image zoom animation */
-  .modal.fade .modal-dialog {
+}
+
+/* Image zoom animation */
+.modal.fade .modal-dialog {
     transform: scale(0.8);
     transition: transform 0.3s ease-in-out;
-  }
-  
-  .modal.show .modal-dialog {
+}
+
+.modal.show .modal-dialog {
     transform: scale(1);
-  }
-  
-  /* Improve modal backdrop */
-  .modal-backdrop.show {
+}
+
+/* Improve modal backdrop */
+.modal-backdrop.show {
     opacity: 0.7;
-  }
+}
 
 
 /* Container adjustments for larger screens */
@@ -595,4 +595,64 @@ body {
     .navbar-nav .nav-link {
         padding: 0.5rem 1.2rem !important;
     }
+}
+
+/* Profile Image Upload Modal Styles */
+#profileImageModal .modal-content {
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+#profileImageModal .modal-header {
+    padding: 1.25rem 1.5rem;
+}
+
+#imagePreview {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+#imagePreview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.3s ease;
+}
+
+#imagePreview.active {
+    border: none !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+#imagePreview:hover {
+    transform: scale(1.02);
+    border-color: var(--primary-color) !important;
+}
+
+.profile-image-select {
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-image-select input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    height: 0;
+    width: 0;
+}
+
+/* Image zoom animation */
+.modal.fade .modal-dialog {
+    transform: scale(0.8);
+    transition: transform 0.3s ease-in-out;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+/* Improve modal backdrop */
+.modal-backdrop.show {
+    opacity: 0.7;
 }

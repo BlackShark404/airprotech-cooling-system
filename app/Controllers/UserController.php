@@ -29,7 +29,22 @@ class UserController extends BaseController{
     }
 
     public function renderUserProfile() {
-        $this->render("user/user-profile");
+        if (!isset($_SESSION['user_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        // Get customer statistics
+        $statistics = $this->userModel->getCustomerStatistics($userId);
+        
+        // Add statistics to view data
+        $viewData = [
+            'statistics' => $statistics
+        ];
+        
+        $this->render("user/user-profile", $viewData);
     }
     
     public function updateProfile() {
@@ -191,6 +206,28 @@ class UserController extends BaseController{
         } catch (\Exception $e) {
             // Remove uploaded file if an exception occurs
             @unlink($targetPath);
+            return $this->jsonError('An error occurred: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * API endpoint to get customer statistics
+     */
+    public function getCustomerStats() {
+        if (!$this->isAjax()) {
+            return $this->jsonError('Invalid request method', 405);
+        }
+        
+        if (!isset($_SESSION['user_id'])) {
+            return $this->jsonError('User not authenticated', 401);
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        try {
+            $statistics = $this->userModel->getCustomerStatistics($userId);
+            return $this->jsonSuccess($statistics, 'Statistics retrieved successfully');
+        } catch (\Exception $e) {
             return $this->jsonError('An error occurred: ' . $e->getMessage(), 500);
         }
     }

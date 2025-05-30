@@ -111,22 +111,22 @@
                             
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-muted">Active Bookings</span>
-                                <span class="fw-semibold">3</span>
+                                <span class="fw-semibold" id="active-bookings-count"><?= $statistics['active_bookings'] ?? 0 ?></span>
                             </div>
                             
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-muted">Pending Services</span>
-                                <span class="fw-semibold">2</span>
+                                <span class="fw-semibold" id="pending-services-count"><?= $statistics['pending_services'] ?? 0 ?></span>
                             </div>
                             
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-muted">Completed Services</span>
-                                <span class="fw-semibold">12</span>
+                                <span class="fw-semibold" id="completed-services-count"><?= $statistics['completed_services'] ?? 0 ?></span>
                             </div>
                             
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Product Orders</span>
-                                <span class="fw-semibold">5</span>
+                                <span class="fw-semibold" id="product-orders-count"><?= $statistics['product_orders'] ?? 0 ?></span>
                             </div>
                         </div>
                     </div>
@@ -214,29 +214,41 @@
     
     <!-- Profile Image Upload Modal -->
     <div class="modal fade" id="profileImageModal" tabindex="-1" aria-labelledby="profileImageModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="profileImageModalLabel">Update Profile Picture</h5>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-0">
+                    <h5 class="modal-title fw-bold" id="profileImageModalLabel">Update Profile Picture</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="profileImageForm" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="profileImage" class="form-label">Choose an image</label>
-                            <input class="form-control" type="file" id="profileImage" name="profile_image" accept="image/*">
-                            <div class="form-text">Maximum file size: 2MB. Supported formats: JPG, PNG, WEBP</div>
-                        </div>
-                        
-                        <div class="text-center mt-4 mb-3">
-                            <div id="imagePreview" class="d-none mb-3">
-                                <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                        <div class="mb-4 text-center">
+                            <div id="imagePreview" class="mb-4 mx-auto" style="width: 180px; height: 180px; border-radius: 50%; overflow: hidden; position: relative; background-color: #f8f9fa; border: 2px dashed #dee2e6; display: flex; align-items: center; justify-content: center;">
+                                <img src="/assets/images/default-profile.jpg" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
+                            
+                            <label for="profileImage" class="btn btn-outline-primary btn-sm px-4 mt-2">
+                                <i class="fas fa-image me-2"></i> Select Image
+                            </label>
+                            <input class="d-none" type="file" id="profileImage" name="profile_image" accept="image/*">
                         </div>
                         
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-upload me-2"></i> Upload Image
+                        <div class="bg-light p-3 rounded-3 mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                <small class="fw-medium">Image Requirements</small>
+                            </div>
+                            <ul class="small text-muted mb-0 ps-4">
+                                <li>Maximum file size: 2MB</li>
+                                <li>Supported formats: JPG, PNG, WEBP</li>
+                                <li>Square images work best</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-upload me-2"></i> Upload
                             </button>
                         </div>
                     </form>
@@ -271,18 +283,40 @@
             // Password update form
             handleFormSubmission('passwordUpdateForm', '/api/users/password/update');
             
-            // Profile image preview
-            const profileImageInput = document.getElementById('profileImage');
+            // Get references to modal elements
+            const profileImageModal = document.getElementById('profileImageModal');
             const imagePreview = document.getElementById('imagePreview');
             const previewImage = imagePreview.querySelector('img');
+            const profileImageInput = document.getElementById('profileImage');
             
+            // Initialize modal with current profile image
+            const currentProfileUrl = '<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?>';
+            
+            // Update preview when modal opens
+            profileImageModal.addEventListener('show.bs.modal', function() {
+                previewImage.src = currentProfileUrl;
+                
+                if (currentProfileUrl !== '/assets/images/default-profile.jpg') {
+                    imagePreview.classList.add('active');
+                    imagePreview.style.border = 'none';
+                } else {
+                    imagePreview.classList.remove('active');
+                    imagePreview.style.border = '2px dashed #dee2e6';
+                }
+                
+                // Reset form when modal opens
+                document.getElementById('profileImageForm').reset();
+            });
+            
+            // Profile image preview on file selection
             profileImageInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
                     const reader = new FileReader();
                     
                     reader.onload = function(e) {
                         previewImage.src = e.target.result;
-                        imagePreview.classList.remove('d-none');
+                        imagePreview.classList.add('active');
+                        imagePreview.style.border = 'none';
                     }
                     
                     reader.readAsDataURL(this.files[0]);
@@ -293,6 +327,12 @@
             const profileImageForm = document.getElementById('profileImageForm');
             profileImageForm.addEventListener('submit', function(e) {
                 e.preventDefault();
+                
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Uploading...';
+                submitBtn.disabled = true;
                 
                 const formData = new FormData(this);
                 
@@ -310,24 +350,56 @@
                         // Show success message
                         showToast('Success', response.data.message, 'success');
                         
-                        // Update profile image on page
+                        // Update profile image on page (with cache-busting)
+                        const timestamp = new Date().getTime();
+                        const newImageUrl = response.data.data.profile_url + '?t=' + timestamp;
+                        
+                        // Update all profile images on the page
                         const profileImages = document.querySelectorAll('img[alt="Profile Picture"], img[alt="Profile"]');
                         profileImages.forEach(img => {
-                            img.src = response.data.data.profile_url + '?t=' + new Date().getTime();
+                            img.src = newImageUrl;
                         });
                         
-                        // Reset form
+                        // Reset form and restore button
                         profileImageForm.reset();
-                        imagePreview.classList.add('d-none');
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
                     } else {
+                        // Show error message
                         showToast('Error', response.data.message, 'danger');
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     showToast('Error', 'Failed to upload profile image. Please try again.', 'danger');
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
                 });
             });
+            
+            // Refresh account statistics periodically
+            function refreshAccountStatistics() {
+                axios.get('/api/users/statistics')
+                    .then(response => {
+                        if (response.data.success) {
+                            const stats = response.data.data;
+                            
+                            // Update statistics on the page
+                            document.getElementById('active-bookings-count').textContent = stats.active_bookings;
+                            document.getElementById('pending-services-count').textContent = stats.pending_services;
+                            document.getElementById('completed-services-count').textContent = stats.completed_services;
+                            document.getElementById('product-orders-count').textContent = stats.product_orders;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching statistics:', error);
+                    });
+            }
+            
+            // Refresh statistics every 30 seconds
+            setInterval(refreshAccountStatistics, 30000);
         });
     </script>
 </body>

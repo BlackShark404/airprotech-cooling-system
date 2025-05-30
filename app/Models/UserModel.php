@@ -400,4 +400,89 @@ class UserModel extends Model
         
         return $this->execute($sql, $updateData['filteredData']);
     }
+
+    /**
+     * Get customer statistics for the user profile
+     * 
+     * @param int $userId The user ID
+     * @return array Customer statistics
+     */
+    public function getCustomerStatistics($userId)
+    {
+        // First check if the customer exists
+        $sql = "SELECT * FROM CUSTOMER WHERE CU_ACCOUNT_ID = :user_id";
+        $customer = $this->queryOne($sql, ['user_id' => $userId]);
+        
+        if (!$customer) {
+            return [
+                'active_bookings' => 0,
+                'pending_services' => 0,
+                'completed_services' => 0,
+                'product_orders' => 0
+            ];
+        }
+        
+        // Get counts from the database for active service bookings
+        $activeBookingsSql = "SELECT COUNT(*) FROM SERVICE_BOOKING 
+                             WHERE SB_CUSTOMER_ID = :user_id 
+                             AND SB_STATUS IN ('confirmed', 'in-progress')
+                             AND SB_DELETED_AT IS NULL";
+        $activeBookings = (int)$this->queryScalar($activeBookingsSql, ['user_id' => $userId]);
+        
+        // Get counts for pending services
+        $pendingServicesSql = "SELECT COUNT(*) FROM SERVICE_BOOKING 
+                              WHERE SB_CUSTOMER_ID = :user_id 
+                              AND SB_STATUS = 'pending'
+                              AND SB_DELETED_AT IS NULL";
+        $pendingServices = (int)$this->queryScalar($pendingServicesSql, ['user_id' => $userId]);
+        
+        // Get counts for completed services
+        $completedServicesSql = "SELECT COUNT(*) FROM SERVICE_BOOKING 
+                                WHERE SB_CUSTOMER_ID = :user_id 
+                                AND SB_STATUS = 'completed'
+                                AND SB_DELETED_AT IS NULL";
+        $completedServices = (int)$this->queryScalar($completedServicesSql, ['user_id' => $userId]);
+        
+        // Get counts for product orders
+        $productOrdersSql = "SELECT COUNT(*) FROM PRODUCT_BOOKING 
+                            WHERE PB_CUSTOMER_ID = :user_id 
+                            AND PB_DELETED_AT IS NULL";
+        $productOrders = (int)$this->queryScalar($productOrdersSql, ['user_id' => $userId]);
+        
+        // Update the customer statistics in the database
+        $updateData = [
+            'CU_ACTIVE_BOOKINGS' => $activeBookings,
+            'CU_PENDING_SERVICES' => $pendingServices,
+            'CU_COMPLETED_SERVICES' => $completedServices,
+            'CU_PRODUCT_ORDERS' => $productOrders,
+            'CU_TOTAL_BOOKINGS' => $activeBookings + $pendingServices + $completedServices
+        ];
+        
+        $updateSql = "UPDATE CUSTOMER 
+                     SET CU_ACTIVE_BOOKINGS = :active_bookings,
+                         CU_PENDING_SERVICES = :pending_services,
+                         CU_COMPLETED_SERVICES = :completed_services,
+                         CU_PRODUCT_ORDERS = :product_orders,
+                         CU_TOTAL_BOOKINGS = :total_bookings,
+                         CU_UPDATED_AT = NOW()
+                     WHERE CU_ACCOUNT_ID = :user_id";
+        
+        $params = [
+            'active_bookings' => $activeBookings,
+            'pending_services' => $pendingServices,
+            'completed_services' => $completedServices,
+            'product_orders' => $productOrders,
+            'total_bookings' => $activeBookings + $pendingServices + $completedServices,
+            'user_id' => $userId
+        ];
+        
+        $this->execute($updateSql, $params);
+        
+        return [
+            'active_bookings' => $activeBookings,
+            'pending_services' => $pendingServices,
+            'completed_services' => $completedServices,
+            'product_orders' => $productOrders
+        ];
+    }
 }

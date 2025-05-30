@@ -47,6 +47,7 @@ $router->map('GET', '/user/profile', 'App\Controllers\UserController#renderUserP
 $router->map('POST', '/api/users/profile/update', 'App\Controllers\UserController#updateProfile', 'update_user_profile');
 $router->map('POST', '/api/users/password/update', 'App\Controllers\UserController#updatePassword', 'update_user_password');
 $router->map('POST', '/api/users/profile/image', 'App\Controllers\UserController#uploadProfileImage', 'upload_profile_image');
+$router->map('GET', '/api/users/statistics', 'App\Controllers\UserController#getCustomerStats', 'get_user_statistics');
 $router->map('POST', '/user/service/request', 'App\Controllers\ServiceRequestController#bookService', 'create-service request');
 $router->map('GET', '/user/bookings', 'App\Controllers\ServiceRequestController#myBookings', 'user_bookings');
 $router->map('POST', '/user/bookings/cancel/[i:id]', 'App\Controllers\ServiceRequestController#cancelBooking', 'user_cancel_booking');
