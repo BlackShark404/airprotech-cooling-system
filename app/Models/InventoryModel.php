@@ -17,7 +17,7 @@ class InventoryModel extends Model
                 JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
                 JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID AND w.WHOUSE_DELETED_AT IS NULL
                 WHERE i.INVE_DELETED_AT IS NULL
-                ORDER BY i.LAST_UPDATED DESC";
+                ORDER BY i.INVE_UPDATED_AT DESC";
         
         return $this->query($sql);
     }
@@ -87,8 +87,8 @@ class InventoryModel extends Model
 
     public function createInventory($data)
     {
-        $sql = "INSERT INTO {$this->table} (PROD_ID, WHOUSE_ID, INVE_TYPE, QUANTITY, LAST_UPDATED)
-                VALUES (:product_id, :warehouse_id, :inventory_type, :quantity, CURRENT_TIMESTAMP)";
+        $sql = "INSERT INTO {$this->table} (PROD_ID, WHOUSE_ID, INVE_TYPE, QUANTITY)
+                VALUES (:product_id, :warehouse_id, :inventory_type, :quantity)";
         
         $params = [
             ':product_id' => $data['PROD_ID'],
@@ -105,7 +105,6 @@ class InventoryModel extends Model
     {
         $sql = "UPDATE {$this->table} SET 
                 QUANTITY = :quantity,
-                LAST_UPDATED = CURRENT_TIMESTAMP,
                 INVE_UPDATED_AT = CURRENT_TIMESTAMP
                 WHERE INVE_ID = :inventory_id AND INVE_DELETED_AT IS NULL";
         
@@ -135,8 +134,7 @@ class InventoryModel extends Model
             $params[':quantity'] = $data['QUANTITY'];
         }
 
-        // Always update the LAST_UPDATED field
-        $setClauses[] = "LAST_UPDATED = CURRENT_TIMESTAMP";
+        // Always update the timestamp
         $setClauses[] = "INVE_UPDATED_AT = CURRENT_TIMESTAMP";
         
         if (empty($setClauses)) {
