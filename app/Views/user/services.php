@@ -404,6 +404,21 @@
                 </div>
                 <div class="modal-body p-4">
                     <form id="serviceBookingForm">
+                        <!-- User Information Display -->
+                        <div class="card mb-3 bg-light">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Your Information</h6>
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?>" alt="Profile" class="rounded-circle me-3" width="48" height="48">
+                                    <div>
+                                        <div class="fw-medium"><?= Session::get('full_name') ?></div>
+                                        <div class="text-muted small"><?= Session::get('email') ?></div>
+                                        <div class="text-muted small"><?= Session::get('phone_number') ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Service Selection -->
                         <div class="mb-3">
                             <label for="serviceSelect" class="form-label">Select Service <span class="text-danger">*</span></label>
@@ -436,25 +451,14 @@
                             <textarea class="form-control" id="serviceDescription" name="serviceDescription" rows="3" placeholder="Please describe your service needs..." required></textarea>
                         </div>
                         
-                        <!-- Contact Information -->
-                        <div class="mb-3">
-                            <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="emailAddress" class="form-label">Email Address <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="emailAddress" name="emailAddress" placeholder="Enter your email address" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Enter your phone number" required>
-                        </div>
+                        <!-- Hidden user information for form submission -->
+                        <input type="hidden" id="fullName" name="fullName" value="<?= Session::get('full_name') ?>">
+                        <input type="hidden" id="emailAddress" name="emailAddress" value="<?= Session::get('email') ?>">
+                        <input type="hidden" id="phoneNumber" name="phoneNumber" value="<?= Session::get('phone_number') ?>">
                         
                         <div class="mb-3">
                             <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="address" name="address" placeholder="Enter your address" required>
+                            <input type="text" class="form-control" id="address" name="address" value="<?= Session::get('address') ?>" required>
                         </div>
                         
                         <div class="d-grid mt-4">
