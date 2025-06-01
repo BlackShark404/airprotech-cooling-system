@@ -481,12 +481,34 @@ class ServiceRequestController extends BaseController
             // Get customer information
             $customerInfo = $this->getUserInfo($booking['sb_customer_id']);
             
+            // Get assigned technicians
+            $assignedTechnicians = $this->bookingAssignmentModel->getAssignmentsForBooking($booking['sb_id']);
+            $technicians = [];
+            
+            foreach ($assignedTechnicians as $assignment) {
+                $technicianInfo = $this->getUserInfo($assignment['ba_technician_id']);
+                
+                if ($technicianInfo) {
+                    $technicians[] = [
+                        'id' => $assignment['ba_technician_id'],
+                        'name' => $technicianInfo['ua_first_name'] . ' ' . $technicianInfo['ua_last_name'],
+                        'profile_url' => $technicianInfo['ua_profile_url'] ?? '/assets/images/default-profile.jpg',
+                        'status' => $assignment['ba_status'],
+                        'notes' => $assignment['ba_notes']
+                    ];
+                }
+            }
+            
             // Add the enhanced data
             $enhancedBooking = $booking;
             $enhancedBooking['service_name'] = $serviceType ? $serviceType['st_name'] : 'Unknown';
             $enhancedBooking['customer_name'] = $customerInfo 
                 ? $customerInfo['ua_first_name'] . ' ' . $customerInfo['ua_last_name'] 
                 : 'Unknown';
+            $enhancedBooking['customer_email'] = $customerInfo ? $customerInfo['ua_email'] : '';
+            $enhancedBooking['customer_phone'] = $customerInfo ? $customerInfo['ua_phone_number'] : '';
+            $enhancedBooking['customer_profile_url'] = $customerInfo ? $customerInfo['ua_profile_url'] : '/assets/images/default-profile.jpg';
+            $enhancedBooking['technicians'] = $technicians;
             
             $enhancedBookings[] = $enhancedBooking;
         }
@@ -535,6 +557,9 @@ class ServiceRequestController extends BaseController
                 $technicians[] = [
                     'id' => $assignment['ba_technician_id'],
                     'name' => $technicianInfo['ua_first_name'] . ' ' . $technicianInfo['ua_last_name'],
+                    'profile_url' => $technicianInfo['ua_profile_url'] ?? '/assets/images/default-profile.jpg',
+                    'email' => $technicianInfo['ua_email'] ?? '',
+                    'phone' => $technicianInfo['ua_phone_number'] ?? '',
                     'status' => $assignment['ba_status'],
                     'assigned_at' => $assignment['ba_assigned_at'],
                     'notes' => $assignment['ba_notes']
@@ -544,6 +569,10 @@ class ServiceRequestController extends BaseController
         
         // Debug log for the final technicians array
         error_log("Final technicians array: " . json_encode($technicians));
+        
+        // Get customer profile URL
+        $customerInfo = $this->getUserInfo($booking['sb_customer_id']);
+        $customerProfileUrl = $customerInfo ? $customerInfo['ua_profile_url'] : '/assets/images/default-profile.jpg';
         
         // Format the response data
         $result = [
@@ -564,6 +593,7 @@ class ServiceRequestController extends BaseController
             'customer_name' => $booking['customer_first_name'] . ' ' . $booking['customer_last_name'],
             'customer_email' => $booking['customer_email'],
             'customer_phone' => $booking['customer_phone'],
+            'customer_profile_url' => $customerProfileUrl,
             'technicians' => $technicians
         ];
         

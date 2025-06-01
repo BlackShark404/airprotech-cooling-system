@@ -124,6 +124,88 @@ $additionalStyles = <<<HTML
     .add-technician-btn {
         margin-left: 10px;
     }
+    
+    /* Responsive table styles */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Table styling */
+    #serviceRequestsTable {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    #serviceRequestsTable thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        padding: 12px 8px;
+        vertical-align: middle;
+    }
+    
+    #serviceRequestsTable tbody td {
+        padding: 15px 8px;
+        vertical-align: middle;
+    }
+    
+    #serviceRequestsTable tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.03);
+    }
+    
+    /* Customer info styles */
+    .customer-info {
+        display: flex;
+        align-items: center;
+    }
+    .customer-avatar {
+        width: 43px;
+        height: 43px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+        border: 1px solid #eee;
+    }
+    .customer-details {
+        display: flex;
+        flex-direction: column;
+    }
+    .customer-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 2px;
+    }
+    .customer-contact {
+        font-size: 0.8rem;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+    
+    /* Technician badges */
+    .technician-chip {
+        display: inline-flex;
+        align-items: center;
+        background: #e9ecef;
+        border-radius: 50px;
+        padding: 4px 10px;
+        margin: 3px;
+        font-size: 0.85rem;
+        border: 1px solid #dee2e6;
+    }
+    .technician-chip img {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-right: 7px;
+        border: 1px solid #fff;
+    }
+    @media (max-width: 992px) {
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 3px;
+        }
+    }
 </style>
 HTML;
 
@@ -189,24 +271,27 @@ ob_start();
     <!-- Service Requests Table -->
     <div class="card">
         <div class="card-body">
-            <table id="serviceRequestsTable" class="table table-striped table-bordered" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Customer</th>
-                        <th>Service Type</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Status</th>
-                        <th>Priority</th>
-                        <th>Est. Cost</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Populated by DataTablesManager -->
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table id="serviceRequestsTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Service Type</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Technicians</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Est. Cost</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by DataTablesManager -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -220,10 +305,23 @@ ob_start();
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Customer Information Card -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img id="view-customer-avatar" src="/assets/images/default-profile.jpg" alt="Customer" class="rounded-circle me-3" width="80" height="80" style="border: 2px solid #eee; object-fit: cover;">
+                            <div>
+                                <h5 class="mb-1 fw-bold fs-4" id="view-customer"></h5>
+                                <div class="text-muted mb-1" id="view-customer-email"><i class="fas fa-envelope me-2"></i><span></span></div>
+                                <div class="text-muted" id="view-customer-phone"><i class="fas fa-phone me-2"></i><span></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="row">
                     <div class="col-md-6">
                         <p><strong>ID:</strong> <span id="view-id"></span></p>
-                        <p><strong>Customer:</strong> <span id="view-customer"></span></p>
                         <p><strong>Service Type:</strong> <span id="view-service-type"></span></p>
                         <p><strong>Preferred Date:</strong> <span id="view-date"></span></p>
                         <p><strong>Preferred Time:</strong> <span id="view-time"></span></p>
@@ -394,10 +492,48 @@ document.addEventListener('DOMContentLoaded', function() {
         ajaxUrl: '/api/admin/service-requests',
         columns: [
             { data: 'sb_id', title: 'ID' },
-            { data: 'customer_name', title: 'Customer' },
+            { 
+                data: null, 
+                title: 'Customer',
+                render: function(data, type, row) {
+                    const profileUrl = row.customer_profile_url || '/assets/images/default-profile.jpg';
+                    return `
+                        <div class="customer-info">
+                            <img src="${profileUrl}" alt="Profile" class="customer-avatar">
+                            <div class="customer-details">
+                                <div class="customer-name">${row.customer_name}</div>
+                                <div class="customer-contact">${row.customer_email || ''}</div>
+                                <div class="customer-contact">${row.customer_phone || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
             { data: 'service_name', title: 'Service Type' },
             { data: 'sb_preferred_date', title: 'Date' },
             { data: 'sb_preferred_time', title: 'Time' },
+            {
+                data: 'technicians',
+                title: 'Technicians',
+                render: function(data, type, row) {
+                    if (!data || data.length === 0) {
+                        return '<span class="badge bg-secondary">Unassigned</span>';
+                    }
+                    
+                    let techHtml = '';
+                    data.forEach(tech => {
+                        const profileImg = tech.profile_url || '/assets/images/default-profile.jpg';
+                        techHtml += `
+                            <div class="technician-chip" title="${tech.name}">
+                                <img src="${profileImg}" alt="${tech.name}">
+                                <span>${tech.name.split(' ')[0]}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    return techHtml;
+                }
+            },
             { 
                 data: 'sb_status', 
                 title: 'Status',
@@ -440,7 +576,8 @@ document.addEventListener('DOMContentLoaded', function() {
         dom: 'Bfrtip',
         buttons: [
             'copy', 'excel', 'pdf', 'print'
-        ]
+        ],
+        responsive: true
     });
 
     // Manually attach event listeners for action buttons
@@ -580,6 +717,9 @@ function viewServiceRequest(rowData) {
             // Populate the view modal
             $('#view-id').text(data.sb_id);
             $('#view-customer').text(data.customer_name);
+            $('#view-customer-email span').text(data.customer_email);
+            $('#view-customer-phone span').text(data.customer_phone);
+            $('#view-customer-avatar').attr('src', data.customer_profile_url || '/assets/images/default-profile.jpg');
             $('#view-service-type').text(data.service_name);
             $('#view-date').text(data.sb_preferred_date);
             $('#view-time').text(data.sb_preferred_time);
@@ -594,14 +734,25 @@ function viewServiceRequest(rowData) {
             const techContainer = $('#view-technicians');
             techContainer.empty();
             
-            console.log("Technicians data:", data.technicians); // Debug log
-            
             if (data.technicians && data.technicians.length > 0) {
-                data.technicians.forEach(tech => {
-                    techContainer.append(`<div class="technician-badge">${tech.name}</div>`);
-                });
+                const techHtml = data.technicians.map(tech => {
+                    const profileImg = tech.profile_url || '/assets/images/default-profile.jpg';
+                    return `
+                        <div class="d-flex align-items-center mb-3 p-3 bg-white rounded border">
+                            <img src="${profileImg}" alt="${tech.name}" class="rounded-circle me-3" width="48" height="48" style="border: 1px solid #eee;">
+                            <div>
+                                <div class="fw-bold fs-5">${tech.name}</div>
+                                ${tech.email ? `<div class="text-muted mt-1"><i class="fas fa-envelope me-1"></i>${tech.email}</div>` : ''}
+                                ${tech.phone ? `<div class="text-muted"><i class="fas fa-phone me-1"></i>${tech.phone}</div>` : ''}
+                                ${tech.notes ? `<div class="text-muted mt-2 border-top pt-2">${tech.notes}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                techContainer.html(techHtml);
             } else {
-                techContainer.text('No technicians assigned');
+                techContainer.html('<p class="text-muted mb-0">No technicians assigned</p>');
             }
             
             // Show the modal
