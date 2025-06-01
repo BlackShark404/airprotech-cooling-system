@@ -432,6 +432,32 @@ class ProductController extends BaseController
         // Get all bookings with filters
         $bookings = $this->productBookingModel->getFilteredBookings($filters);
         
+        // Enhance the response with additional information
+        if ($bookings) {
+            foreach ($bookings as &$booking) {
+                // Add customer information
+                $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
+                if ($customer) {
+                    $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
+                    $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
+                    $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+                }
+                
+                // Get assigned technicians for each booking
+                $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($booking['PB_ID']);
+                
+                // Add profile images to technicians
+                foreach ($booking['technicians'] as &$tech) {
+                    $techInfo = $this->getUserInfo($tech['id']);
+                    if ($techInfo) {
+                        $tech['profile_url'] = $techInfo['UA_PROFILE_URL'] ?? '';
+                        $tech['email'] = $techInfo['UA_EMAIL'] ?? '';
+                        $tech['phone'] = $techInfo['UA_PHONE_NUMBER'] ?? '';
+                    }
+                }
+            }
+        }
+        
         // Return the bookings as JSON
         $this->jsonSuccess($bookings);
     }
@@ -455,8 +481,26 @@ class ProductController extends BaseController
             return;
         }
         
+        // Add customer information
+        $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
+        if ($customer) {
+            $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
+            $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
+            $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+        }
+        
         // Get assigned technicians for this booking
         $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($id);
+        
+        // Add profile images to technicians
+        foreach ($booking['technicians'] as &$tech) {
+            $techInfo = $this->getUserInfo($tech['id']);
+            if ($techInfo) {
+                $tech['profile_url'] = $techInfo['UA_PROFILE_URL'] ?? '';
+                $tech['email'] = $techInfo['UA_EMAIL'] ?? '';
+                $tech['phone'] = $techInfo['UA_PHONE_NUMBER'] ?? '';
+            }
+        }
         
         // Return the booking details as JSON
         $this->jsonSuccess($booking);
@@ -560,5 +604,23 @@ class ProductController extends BaseController
         
         // Check if user is an admin
         return $userRole === 'admin';
+    }
+
+    /**
+     * Get user account information
+     */
+    private function getUserInfo($userId) 
+    {
+        $sql = "SELECT 
+                UA_ID,
+                UA_PROFILE_URL,
+                UA_FIRST_NAME,
+                UA_LAST_NAME,
+                UA_EMAIL,
+                UA_PHONE_NUMBER
+            FROM USER_ACCOUNT 
+            WHERE UA_ID = :userId";
+            
+        return $this->db->queryOne($sql, [':userId' => $userId]);
     }
 } 
