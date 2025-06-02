@@ -69,7 +69,18 @@
                             
                             <h5 class="fw-bold mb-1"><?=$_SESSION['full_name'] ?? 'Admin User'?></h5>
                             <p class="text-muted mb-3"><?=$_SESSION['email'] ?? ''?></p>
-                            
+                            <?php if (!empty($user['ua_last_login'])): ?>
+                                <p class="text-muted small mb-3">
+                                    <i class="fas fa-history me-1"></i> Last Login: 
+                                    <?= date('D M d, Y h:i A', strtotime($user['ua_last_login'])) ?>
+                                </p>
+                            <?php endif; ?>
+                            <?php if (!empty($user['ua_updated_at'])): ?>
+                                <p class="text-muted small mb-3">
+                                    <i class="fas fa-edit me-1"></i> Profile Updated: 
+                                    <?= date('D M d, Y h:i A', strtotime($user['ua_updated_at'])) ?>
+                                </p>
+                            <?php endif; ?>
                             <div class="d-flex justify-content-center gap-2">
                                 <span class="badge bg-danger text-white px-3 py-2">Admin</span> <!-- Changed to Admin -->
                                 <span class="badge bg-light-green text-green px-3 py-2">
@@ -107,6 +118,21 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Pending Product Orders</span>
                                 <span class="fw-semibold"><?= $statistics['total_pending_product_orders'] ?? 0 ?></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3"> <!-- Added mt-3 for spacing -->
+                                <span class="text-muted">Total Registered Users</span>
+                                <span class="fw-semibold"><?= $statistics['total_registered_users'] ?? 0 ?></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="text-muted">Total Admin Accounts</span>
+                                <span class="fw-semibold"><?= $statistics['total_admin_accounts'] ?? 0 ?></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="text-muted">Total Products</span>
+                                <span class="fw-semibold"><?= $statistics['total_products'] ?? 0 ?></span>
                             </div>
                         </div>
                     </div>
@@ -192,6 +218,48 @@
                             </form>
                         </div>
                     </div>
+
+                    <!-- Quick Actions Card -->
+                    <div class="card border-0 shadow-sm rounded-4 mt-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-4">Quick Actions</h5>
+                            <div class="list-group">
+                                <a href="/admin/user-management" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Manage Users
+                                    <i class="fas fa-users-cog opacity-75"></i>
+                                </a>
+                                <a href="/admin/service-requests" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Service Requests
+                                    <i class="fas fa-concierge-bell opacity-75"></i>
+                                </a>
+                                <a href="/admin/product-bookings" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Product Bookings
+                                    <i class="fas fa-shopping-cart opacity-75"></i>
+                                </a>
+                                <a href="/admin/product-management" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Product Management
+                                    <i class="fas fa-box-open opacity-75"></i>
+                                </a>
+                                <a href="/admin/inventory-management" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Inventory Management
+                                    <i class="fas fa-warehouse opacity-75"></i>
+                                </a>
+                                <a href="/admin/warehouse-management" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Warehouse Management
+                                    <i class="fas fa-building opacity-75"></i>
+                                </a>
+                                <a href="/admin/add-product" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Add New Product
+                                    <i class="fas fa-plus-circle opacity-75"></i>
+                                </a>
+                                <a href="/admin/reports" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    View Reports
+                                    <i class="fas fa-chart-line opacity-75"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

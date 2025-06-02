@@ -143,6 +143,25 @@ class AdminModel extends Model
                                     WHERE pb_status = 'pending' AND pb_deleted_at IS NULL";
         $stats['total_pending_product_orders'] = (int)$this->queryScalar($sqlPendingProductOrders);
 
+        // Get total registered users (not soft-deleted)
+        $sqlTotalUsers = "SELECT COUNT(ua_id) 
+                          FROM user_account 
+                          WHERE ua_deleted_at IS NULL";
+        $stats['total_registered_users'] = (int)$this->queryScalar($sqlTotalUsers);
+
+        // Get total admin accounts (not soft-deleted)
+        $sqlTotalAdmins = "SELECT COUNT(ua.ua_id) 
+                           FROM user_account ua
+                           INNER JOIN user_role ur ON ua.ua_role_id = ur.ur_id
+                           WHERE ur.ur_name = 'admin' AND ua.ua_deleted_at IS NULL";
+        $stats['total_admin_accounts'] = (int)$this->queryScalar($sqlTotalAdmins);
+
+        // Get total products (not soft-deleted)
+        $sqlTotalProducts = "SELECT COUNT(prod_id) 
+                             FROM product 
+                             WHERE prod_deleted_at IS NULL";
+        $stats['total_products'] = (int)$this->queryScalar($sqlTotalProducts);
+
         return $stats;
     }
 } 
