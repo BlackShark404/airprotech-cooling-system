@@ -134,6 +134,10 @@ class BaseController
         return $_SERVER['REQUEST_METHOD'] === 'GET';
     }
 
+    protected function isPut() {
+        return $_SERVER['REQUEST_METHOD'] === 'PUT';
+    }
+
     /**
      * Check if user has the specified permission
      * 

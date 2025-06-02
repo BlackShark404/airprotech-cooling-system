@@ -924,11 +924,11 @@ ob_start();
         
         // Function to edit warehouse (show modal with data)
         function editWarehouse(rowData) {
-            document.getElementById('editWarehouseId').value = rowData.WHOUSE_ID;
-            document.getElementById('editWarehouseName').value = rowData.WHOUSE_NAME;
-            document.getElementById('editWarehouseLocation').value = rowData.WHOUSE_LOCATION;
-            document.getElementById('editStorageCapacity').value = rowData.WHOUSE_STORAGE_CAPACITY || '';
-            document.getElementById('editRestockThreshold').value = rowData.WHOUSE_RESTOCK_THRESHOLD || '';
+            document.getElementById('editWarehouseId').value = rowData.whouse_id;
+            document.getElementById('editWarehouseName').value = rowData.whouse_name;
+            document.getElementById('editWarehouseLocation').value = rowData.whouse_location;
+            document.getElementById('editStorageCapacity').value = rowData.whouse_storage_capacity || '';
+            document.getElementById('editRestockThreshold').value = rowData.whouse_restock_threshold || '';
             $('#editWarehouseModal').modal('show');
         }
         
@@ -1138,8 +1138,30 @@ ob_start();
         
         // Function to view warehouse details (placeholder, can be expanded to a modal)
         function viewWarehouseDetails(rowData) {
-            // Example: Simple alert. Could be a modal like viewInventory.
-            alert(`Warehouse: ${rowData.WHOUSE_NAME}\nID: ${rowData.WHOUSE_ID}\nLocation: ${rowData.WHOUSE_LOCATION}\nCapacity: ${rowData.WHOUSE_STORAGE_CAPACITY || 'N/A'}\nStock: ${rowData.TOTAL_INVENTORY || 0}\nThreshold: ${rowData.WHOUSE_RESTOCK_THRESHOLD || 'N/A'}`);
+            // Populate the modal with data from rowData
+            document.getElementById('detailWhId').textContent = rowData.whouse_id || 'N/A';
+            document.getElementById('detailWhName').textContent = rowData.whouse_name || 'N/A';
+            document.getElementById('detailWhLocation').textContent = rowData.whouse_location || 'N/A';
+            document.getElementById('detailWhCapacity').textContent = rowData.whouse_storage_capacity || 'N/A';
+            document.getElementById('detailWhCurrentStock').textContent = rowData.total_inventory || '0';
+            
+            // Format Utilization Percentage with a badge
+            const utilizationPercent = parseFloat(rowData.utilization_percentage);
+            let utilizationHtml = 'N/A';
+            if (!isNaN(utilizationPercent)) {
+                let badgeType = 'success';
+                if (utilizationPercent >= 90) badgeType = 'danger';
+                else if (utilizationPercent >= 70) badgeType = 'warning';
+                utilizationHtml = `<span class="badge bg-${badgeType}">${utilizationPercent.toFixed(1)}%</span>`;
+            }
+            document.getElementById('detailWhUtilization').innerHTML = utilizationHtml;
+
+            document.getElementById('detailWhThreshold').textContent = rowData.whouse_restock_threshold || 'N/A';
+            document.getElementById('detailWhCreatedAt').textContent = rowData.whouse_created_at ? new Date(rowData.whouse_created_at).toLocaleString() : 'N/A';
+            document.getElementById('detailWhUpdatedAt').textContent = rowData.whouse_updated_at ? new Date(rowData.whouse_updated_at).toLocaleString() : 'N/A';
+
+            // Show the modal
+            $('#viewWarehouseModal').modal('show');
         }
         
         // Function to initiate restocking an item (opens Add Stock modal pre-filled)

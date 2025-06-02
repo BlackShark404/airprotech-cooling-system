@@ -33,11 +33,11 @@ class WarehouseController extends BaseController
 
         $processedWarehouses = array_map(function ($warehouse) {
             $utilization = 0;
-            if (isset($warehouse['WHOUSE_STORAGE_CAPACITY']) && $warehouse['WHOUSE_STORAGE_CAPACITY'] > 0) {
-                $totalInventory = $warehouse['TOTAL_INVENTORY'] ?? 0;
-                $utilization = round(($totalInventory * 100.0) / $warehouse['WHOUSE_STORAGE_CAPACITY'], 2);
+            if (isset($warehouse['whouse_storage_capacity']) && $warehouse['whouse_storage_capacity'] > 0) {
+                $totalInventory = $warehouse['total_inventory'] ?? 0;
+                $utilization = round(($totalInventory * 100.0) / $warehouse['whouse_storage_capacity'], 2);
             }
-            $warehouse['UTILIZATION_PERCENTAGE'] = $utilization;
+            $warehouse['utilization_percentage'] = $utilization;
             return $warehouse;
         }, $warehouses);
 
@@ -111,7 +111,7 @@ class WarehouseController extends BaseController
 
     public function updateWarehouse($id)
     {
-        if (!$this->isAjax() || !$this->isPost()) {
+        if (!$this->isAjax() || !$this->isPut()) {
             $this->renderError('Bad Request', 400);
             return;
         }
