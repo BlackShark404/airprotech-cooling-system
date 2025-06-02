@@ -93,6 +93,24 @@ $router->map('POST', '/api/users/reset-password/[i:id]', 'App\Controllers\UserMa
 $router->map('GET', '/api/users/export', 'App\Controllers\UserManagementController#exportUsers', 'api_export_users');
 
 // Inventory Management API Routes
+$router->map('GET', '/api/inventory', 'App\Controllers\InventoryController#getAllInventory', 'get_all_inventory');
+$router->map('GET', '/api/inventory/[i:id]', 'App\Controllers\InventoryController#getInventoryById', 'get_inventory_by_id');
+$router->map('GET', '/api/inventory/product/[i:id]', 'App\Controllers\InventoryController#getProductInventory', 'get_product_inventory');
+$router->map('GET', '/api/inventory/warehouse/[i:id]', 'App\Controllers\InventoryController#getWarehouseInventory', 'get_warehouse_inventory');
+$router->map('GET', '/api/inventory/low-stock', 'App\Controllers\InventoryController#getLowStockInventory', 'get_low_stock_inventory');
+$router->map('GET', '/api/inventory/summary', 'App\Controllers\InventoryController#getInventorySummary', 'get_inventory_summary');
+$router->map('POST', '/api/inventory/add-stock', 'App\Controllers\InventoryController#addStock', 'add_stock');
+$router->map('POST', '/api/inventory/move-stock', 'App\Controllers\InventoryController#moveStock', 'move_stock');
+$router->map('DELETE', '/api/inventory/[i:id]', 'App\Controllers\InventoryController#deleteInventory', 'delete_inventory');
+
+// Warehouse API Routes
+$router->map('GET', '/api/warehouses', 'App\Controllers\WarehouseController#getAllWarehouses', 'get_all_warehouses');
+$router->map('GET', '/api/warehouses/[i:id]', 'App\Controllers\WarehouseController#getWarehouse', 'get_warehouse');
+$router->map('POST', '/api/warehouses', 'App\Controllers\WarehouseController#createWarehouse', 'create_warehouse');
+$router->map('PUT', '/api/warehouses/[i:id]', 'App\Controllers\WarehouseController#updateWarehouse', 'update_warehouse');
+$router->map('DELETE', '/api/warehouses/[i:id]', 'App\Controllers\WarehouseController#deleteWarehouse', 'delete_warehouse');
+$router->map('GET', '/api/warehouses/[i:id]/utilization', 'App\Controllers\WarehouseController#getWarehouseUtilization', 'get_warehouse_utilization');
+$router->map('GET', '/api/warehouses/available', 'App\Controllers\WarehouseController#getWarehousesWithAvailableSpace', 'get_warehouses_with_available_space');
 
 // Product Management API Routes
 $router->map('GET', '/api/products', 'App\Controllers\ProductController#getAllProducts', 'get_all_products');

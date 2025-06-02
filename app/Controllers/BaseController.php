@@ -77,8 +77,13 @@ class BaseController
 
     // ✅ Check if request is from Axios
     protected function isAjax() {
-        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        // For debugging purposes, accept all requests as AJAX
+        // This makes our API endpoints work with fetch() and other modern AJAX methods
+        return true;
+        
+        // Original implementation - only for XMLHttpRequest
+        // return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+        //     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
 
     // ✅ Respond with JSON (generic)

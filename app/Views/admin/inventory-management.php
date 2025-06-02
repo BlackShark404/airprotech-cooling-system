@@ -1,0 +1,1126 @@
+<?php
+$title = 'Inventory Management - AirProtech';
+$activeTab = 'inventory_management';
+
+// Add any additional styles specific to this page
+$additionalStyles = <<<HTML
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<style>
+    .filter-card {
+        border-radius: 12px;
+        background-color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    .filter-dropdown {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 1rem;
+        width: 100%;
+    }
+    .action-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        background-color: #f8f9fa;
+        margin-right: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .action-icon:hover {
+        background-color: #e9ecef;
+    }
+    .action-icon-view {
+        color: #007bff;
+    }
+    .action-icon-edit {
+        color: #28a745;
+    }
+    .action-icon-delete {
+        color: #dc3545;
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.375rem;
+    }
+    .badge-low {
+        background-color: #dc3545;
+        color: #fff;
+    }
+    .badge-medium {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    .badge-high {
+        background-color: #198754;
+        color: #fff;
+    }
+    .inventory-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .inventory-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .stats-card {
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        background-color: white;
+    }
+    .stats-card .icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .stats-card .number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    .stats-card .label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    /* Table styling */
+    #inventoryTable, #warehouseTable, #lowStockTable {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    #inventoryTable thead th, #warehouseTable thead th, #lowStockTable thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        padding: 12px 8px;
+        vertical-align: middle;
+    }
+    
+    #inventoryTable tbody td, #warehouseTable tbody td, #lowStockTable tbody td {
+        padding: 15px 8px;
+        vertical-align: middle;
+    }
+    
+    #inventoryTable tbody tr:hover, #warehouseTable tbody tr:hover, #lowStockTable tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.03);
+    }
+</style>
+HTML;
+
+// Start output buffering for content
+ob_start();
+?>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0">Inventory Management</h1>
+            <p class="text-muted">Manage inventory across all warehouses</p>
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStockModal">
+                <i class="bi bi-plus-circle"></i> Add Stock
+            </button>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addWarehouseModal">
+                <i class="bi bi-building-add"></i> Add Warehouse
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card bg-light">
+                <div class="icon text-primary">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div class="number" id="totalProductsCount">--</div>
+                <div class="label">Total Products</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card bg-light">
+                <div class="icon text-success">
+                    <i class="bi bi-buildings"></i>
+                </div>
+                <div class="number" id="totalWarehousesCount">--</div>
+                <div class="label">Warehouses</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card bg-light">
+                <div class="icon text-info">
+                    <i class="bi bi-boxes"></i>
+                </div>
+                <div class="number" id="totalInventoryCount">--</div>
+                <div class="label">Total Items in Stock</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card bg-light">
+                <div class="icon text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="number" id="lowStockCount">--</div>
+                <div class="label">Low Stock Items</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs for Inventory and Warehouses -->
+    <ul class="nav nav-tabs mb-4" id="inventoryTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-pane" type="button" role="tab" aria-controls="inventory-pane" aria-selected="true">Inventory</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="warehouses-tab" data-bs-toggle="tab" data-bs-target="#warehouses-pane" type="button" role="tab" aria-controls="warehouses-pane" aria-selected="false">Warehouses</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="low-stock-tab" data-bs-toggle="tab" data-bs-target="#low-stock-pane" type="button" role="tab" aria-controls="low-stock-pane" aria-selected="false">Low Stock</button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="inventoryTabContent">
+        <!-- Inventory Tab -->
+        <div class="tab-pane fade show active" id="inventory-pane" role="tabpanel" aria-labelledby="inventory-tab">
+            <!-- Filters Card -->
+            <div class="card filter-card mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">Filters</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="warehouseFilter" class="form-label">Warehouse</label>
+                            <select id="warehouseFilter" class="form-select filter-dropdown">
+                                <option value="">All Warehouses</option>
+                                <!-- To be populated by AJAX -->
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="stockLevelFilter" class="form-label">Stock Level</label>
+                            <select id="stockLevelFilter" class="form-select filter-dropdown">
+                                <option value="">All Stock Levels</option>
+                                <option value="low">Low Stock</option>
+                                <option value="medium">Medium Stock</option>
+                                <option value="high">High Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="inventoryTypeFilter" class="form-label">Inventory Type</label>
+                            <select id="inventoryTypeFilter" class="form-select filter-dropdown">
+                                <option value="">All Types</option>
+                                <option value="Regular">Regular</option>
+                                <option value="Reserved">Reserved</option>
+                                <option value="Damaged">Damaged</option>
+                                <option value="Returns">Returns</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="inventoryTable" class="table table-hover" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product</th>
+                                    <th>Warehouse</th>
+                                    <th>Quantity</th>
+                                    <th>Type</th>
+                                    <th>Stock Level</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warehouses Tab -->
+        <div class="tab-pane fade" id="warehouses-pane" role="tabpanel" aria-labelledby="warehouses-tab">
+            <!-- Warehouses Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="warehouseTable" class="table table-hover" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Location</th>
+                                    <th>Storage Capacity</th>
+                                    <th>Current Inventory</th>
+                                    <th>Utilization</th>
+                                    <th>Restock Threshold</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Tab -->
+        <div class="tab-pane fade" id="low-stock-pane" role="tabpanel" aria-labelledby="low-stock-tab">
+            <!-- Low Stock Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="lowStockTable" class="table table-hover" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product</th>
+                                    <th>Warehouse</th>
+                                    <th>Current Quantity</th>
+                                    <th>Threshold</th>
+                                    <th>Restock Needed</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stock Modal -->
+<div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStockModalLabel">Add Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStockForm">
+                    <div class="mb-3">
+                        <label for="productId" class="form-label">Product</label>
+                        <select id="productId" name="product_id" class="form-select" required>
+                            <option value="">Select Product</option>
+                            <!-- Options will be loaded by AJAX -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="warehouseId" class="form-label">Warehouse</label>
+                        <select id="warehouseId" name="warehouse_id" class="form-select" required>
+                            <option value="">Select Warehouse</option>
+                            <!-- Options will be loaded by AJAX -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inventoryType" class="form-label">Inventory Type</label>
+                        <select id="inventoryType" name="inventory_type" class="form-select">
+                            <option value="Regular">Regular</option>
+                            <option value="Reserved">Reserved</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Returns">Returns</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveStockBtn">Add Stock</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Warehouse Modal -->
+<div class="modal fade" id="addWarehouseModal" tabindex="-1" aria-labelledby="addWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addWarehouseModalLabel">Add Warehouse</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addWarehouseForm">
+                    <div class="mb-3">
+                        <label for="warehouseName" class="form-label">Warehouse Name</label>
+                        <input type="text" class="form-control" id="warehouseName" name="warehouse_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="warehouseLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="warehouseLocation" name="warehouse_location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="storageCapacity" class="form-label">Storage Capacity</label>
+                        <input type="number" class="form-control" id="storageCapacity" name="storage_capacity" min="1">
+                        <small class="form-text text-muted">Maximum number of items that can be stored</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="restockThreshold" class="form-label">Restock Threshold</label>
+                        <input type="number" class="form-control" id="restockThreshold" name="restock_threshold" min="0">
+                        <small class="form-text text-muted">Minimum inventory level before restocking is required</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveWarehouseBtn">Add Warehouse</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Warehouse Modal -->
+<div class="modal fade" id="editWarehouseModal" tabindex="-1" aria-labelledby="editWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editWarehouseModalLabel">Edit Warehouse</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editWarehouseForm">
+                    <input type="hidden" id="editWarehouseId" name="warehouse_id">
+                    <div class="mb-3">
+                        <label for="editWarehouseName" class="form-label">Warehouse Name</label>
+                        <input type="text" class="form-control" id="editWarehouseName" name="warehouse_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editWarehouseLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="editWarehouseLocation" name="warehouse_location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStorageCapacity" class="form-label">Storage Capacity</label>
+                        <input type="number" class="form-control" id="editStorageCapacity" name="storage_capacity" min="1">
+                        <small class="form-text text-muted">Maximum number of items that can be stored</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRestockThreshold" class="form-label">Restock Threshold</label>
+                        <input type="number" class="form-control" id="editRestockThreshold" name="restock_threshold" min="0">
+                        <small class="form-text text-muted">Minimum inventory level before restocking is required</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="updateWarehouseBtn">Update Warehouse</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move Stock Modal -->
+<div class="modal fade" id="moveStockModal" tabindex="-1" aria-labelledby="moveStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="moveStockModalLabel">Move Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="moveStockForm">
+                    <input type="hidden" id="sourceInventoryId" name="source_inventory_id">
+                    <div class="mb-3">
+                        <label for="productDetails" class="form-label">Product</label>
+                        <input type="text" class="form-control" id="productDetails" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sourceWarehouse" class="form-label">Source Warehouse</label>
+                        <input type="text" class="form-control" id="sourceWarehouse" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="availableQuantity" class="form-label">Available Quantity</label>
+                        <input type="number" class="form-control" id="availableQuantity" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="targetWarehouseId" class="form-label">Target Warehouse</label>
+                        <select id="targetWarehouseId" name="target_warehouse_id" class="form-select" required>
+                            <option value="">Select Target Warehouse</option>
+                            <!-- Options will be loaded by AJAX -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="moveQuantity" class="form-label">Quantity to Move</label>
+                        <input type="number" class="form-control" id="moveQuantity" name="quantity" min="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="moveStockBtn">Move Stock</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Inventory Details Modal -->
+<div class="modal fade" id="viewInventoryModal" tabindex="-1" aria-labelledby="viewInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewInventoryModalLabel">Inventory Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <img id="productImage" src="" alt="Product Image" class="img-fluid rounded">
+                    </div>
+                    <div class="col-md-8">
+                        <h4 id="productName"></h4>
+                        <p id="productDescription" class="text-muted"></p>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Inventory Details</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th>Warehouse:</th>
+                                        <td id="detailWarehouse"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quantity:</th>
+                                        <td id="detailQuantity"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Type:</th>
+                                        <td id="detailType"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Last Updated:</th>
+                                        <td id="detailUpdated"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Product Details</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th>SKU:</th>
+                                        <td id="detailSku"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Category:</th>
+                                        <td id="detailCategory"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Price:</th>
+                                        <td id="detailPrice"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td id="detailStatus"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php
+// End output buffering and get the content for the main page body
+$content = ob_get_clean();
+
+// Start output buffering for additional scripts
+ob_start();
+?>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/assets/js/utility/DataTablesManager.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables
+        let inventoryTable;
+        let warehouseTable;
+        let lowStockTable;
+        
+        // Load inventory data
+        function initInventoryTable() {
+            inventoryTable = new DataTablesManager('inventoryTable', {
+                ajaxUrl: '/api/inventory',
+                columns: [
+                    { data: 'INVE_ID', title: 'ID' },
+                    { data: 'PROD_NAME', title: 'Product' },
+                    { data: 'WHOUSE_NAME', title: 'Warehouse' },
+                    { data: 'QUANTITY', title: 'Quantity' },
+                    { 
+                        data: 'INVE_TYPE', 
+                        title: 'Type',
+                        badge: {
+                            type: 'secondary',
+                            pill: true
+                        }
+                    },
+                    { 
+                        data: 'STOCK_LEVEL', 
+                        title: 'Stock Level',
+                        badge: {
+                            valueMap: {
+                                'low': { type: 'danger', display: 'Low' },
+                                'medium': { type: 'warning', display: 'Medium' },
+                                'high': { type: 'success', display: 'High' }
+                            }
+                        }
+                    },
+                    { data: 'INVE_UPDATED_AT', title: 'Last Updated' },
+                ],
+                viewRowCallback: viewInventory,
+                editRowCallback: openMoveStockModal, // Typically 'edit' action, repurposed for 'move stock'
+                deleteRowCallback: confirmDeleteInventory
+            });
+        }
+        
+        // Load warehouse data
+        function initWarehouseTable() {
+            warehouseTable = new DataTablesManager('warehouseTable', {
+                ajaxUrl: '/api/warehouses',
+                columns: [
+                    { data: 'WHOUSE_ID', title: 'ID' },
+                    { data: 'WHOUSE_NAME', title: 'Name' },
+                    { data: 'WHOUSE_LOCATION', title: 'Location' },
+                    { data: 'WHOUSE_STORAGE_CAPACITY', title: 'Capacity' },
+                    { data: 'TOTAL_INVENTORY', title: 'Current Stock' },
+                    { 
+                        data: 'UTILIZATION_PERCENTAGE', 
+                        title: 'Utilization',
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                const num = parseFloat(data);
+                                let badgeType = 'success';
+                                if (isNaN(num)) return 'N/A';
+                                if (num >= 90) badgeType = 'danger';
+                                else if (num >= 70) badgeType = 'warning';
+                                // Using DataTablesManager's internal badge generation for consistency if possible
+                                // For simplicity, directly returning HTML here. 
+                                // Or, you could call a modified _generateBadgeHtml or pass badgeConfig dynamically.
+                                return `<span class="badge bg-${badgeType}">${num.toFixed(1)}%</span>`;
+                            }
+                            return data;
+                        }
+                    },
+                    { data: 'WHOUSE_RESTOCK_THRESHOLD', title: 'Threshold' },
+                ],
+                viewRowCallback: viewWarehouseDetails,
+                editRowCallback: editWarehouse,
+                deleteRowCallback: confirmDeleteWarehouse
+            });
+        }
+        
+        // Load low stock data
+        function initLowStockTable() {
+            lowStockTable = new DataTablesManager('lowStockTable', {
+                ajaxUrl: '/api/inventory/low-stock',
+                columns: [
+                    { data: 'INVE_ID', title: 'ID' },
+                    { data: 'PROD_NAME', title: 'Product' },
+                    { data: 'WHOUSE_NAME', title: 'Warehouse' },
+                    { data: 'QUANTITY', title: 'Current Quantity' },
+                    { data: 'WHOUSE_RESTOCK_THRESHOLD', title: 'Threshold' },
+                    { 
+                        data: null, // Calculate Restock Needed
+                        title: 'Restock Needed',
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                const needed = parseInt(row.WHOUSE_RESTOCK_THRESHOLD) - parseInt(row.QUANTITY);
+                                if (needed > 0) {
+                                    return `<span class="badge bg-danger">${needed}</span>`;
+                                }
+                                return '<span class="badge bg-success">OK</span>';
+                            }
+                            return parseInt(row.WHOUSE_RESTOCK_THRESHOLD) - parseInt(row.QUANTITY);
+                        }
+                    },
+                ],
+                viewRowCallback: viewInventory,
+                editRowCallback: restockItem // Action to initiate restock for this item
+            });
+        }
+        
+        // Load summary data for dashboard
+        function loadSummaryData() {
+            fetch('/api/inventory/summary')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        document.getElementById('totalProductsCount').textContent = data.data.TOTAL_PRODUCTS || 0;
+                        document.getElementById('totalWarehousesCount').textContent = data.data.TOTAL_WAREHOUSES || 0;
+                        document.getElementById('totalInventoryCount').textContent = data.data.TOTAL_INVENTORY || 0;
+                        document.getElementById('lowStockCount').textContent = data.data.LOW_STOCK_ITEMS || 0;
+                    } else {
+                         console.warn('Failed to load summary data or no data available:', data.message);
+                         inventoryTable.showErrorToast('Warning', 'Could not load summary statistics.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading summary data:', error);
+                    inventoryTable.showErrorToast('Error', 'Failed to load summary statistics.');
+                });
+        }
+        
+        // Initialize tables and load initial data
+        if (document.getElementById('inventoryTable')) initInventoryTable();
+        if (document.getElementById('warehouseTable')) initWarehouseTable();
+        if (document.getElementById('lowStockTable')) initLowStockTable();
+        loadSummaryData();
+        
+        // Load product and warehouse dropdowns for modals
+        loadProductsForModal();
+        loadWarehousesForModalsAndFilters();
+        
+        // Event listeners for tab switching to refresh tables if needed
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(event) {
+                const targetPaneId = event.target.getAttribute('data-bs-target');
+                if (targetPaneId === '#inventory-pane' && inventoryTable) {
+                    inventoryTable.refresh();
+                } else if (targetPaneId === '#warehouses-pane' && warehouseTable) {
+                    warehouseTable.refresh();
+                } else if (targetPaneId === '#low-stock-pane' && lowStockTable) {
+                    lowStockTable.refresh();
+                }
+            });
+        });
+        
+        // Event listener for add stock form
+        document.getElementById('saveStockBtn').addEventListener('click', addStock);
+        // Event listener for add warehouse form
+        document.getElementById('saveWarehouseBtn').addEventListener('click', addWarehouse);
+        // Event listener for update warehouse form
+        document.getElementById('updateWarehouseBtn').addEventListener('click', updateWarehouse);
+        // Event listener for move stock form
+        document.getElementById('moveStockBtn').addEventListener('click', moveStock);
+        
+        // Handle filter changes for Inventory table
+        document.getElementById('warehouseFilter').addEventListener('change', applyInventoryFilters);
+        document.getElementById('stockLevelFilter').addEventListener('change', applyInventoryFilters);
+        document.getElementById('inventoryTypeFilter').addEventListener('change', applyInventoryFilters);
+        
+        // Function to load products for Add Stock modal dropdown
+        function loadProductsForModal() {
+            fetch('/api/products')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const productSelect = document.getElementById('productId');
+                        productSelect.innerHTML = '<option value="">Select Product</option>'; 
+                        data.data.forEach(product => {
+                            const option = document.createElement('option');
+                            option.value = product.PROD_ID;
+                            option.textContent = product.PROD_NAME;
+                            productSelect.appendChild(option);
+                        });
+                    } else {
+                         inventoryTable.showErrorToast('Error', 'Failed to load products for dropdown.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading products for modal:', error);
+                    inventoryTable.showErrorToast('Error', 'Failed to load products for dropdown.');
+                });
+        }
+        
+        // Function to load warehouses for dropdowns (modals and filters)
+        function loadWarehousesForModalsAndFilters() {
+            fetch('/api/warehouses')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const addStockWarehouseSelect = document.getElementById('warehouseId');
+                        const filterWarehouseSelect = document.getElementById('warehouseFilter');
+                        const moveStockTargetWarehouseSelect = document.getElementById('targetWarehouseId');
+                        
+                        // Clear previous options
+                        addStockWarehouseSelect.innerHTML = '<option value="">Select Warehouse</option>';
+                        filterWarehouseSelect.innerHTML = '<option value="">All Warehouses</option>';
+                        moveStockTargetWarehouseSelect.innerHTML = '<option value="">Select Target Warehouse</option>';
+                        
+                        data.data.forEach(warehouse => {
+                            const option = document.createElement('option');
+                            option.value = warehouse.WHOUSE_ID;
+                            option.textContent = warehouse.WHOUSE_NAME;
+                            
+                            addStockWarehouseSelect.appendChild(option.cloneNode(true));
+                            filterWarehouseSelect.appendChild(option.cloneNode(true));
+                            moveStockTargetWarehouseSelect.appendChild(option.cloneNode(true));
+                        });
+                    } else {
+                         inventoryTable.showErrorToast('Error', 'Failed to load warehouses for dropdowns.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading warehouses:', error);
+                    inventoryTable.showErrorToast('Error', 'Failed to load warehouses for dropdowns.');
+                });
+        }
+        
+        // Function to add stock
+        function addStock() {
+            const form = document.getElementById('addStockForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const data = {
+                product_id: document.getElementById('productId').value,
+                warehouse_id: document.getElementById('warehouseId').value,
+                quantity: parseInt(document.getElementById('quantity').value),
+                inventory_type: document.getElementById('inventoryType').value
+            };
+            
+            fetch('/api/inventory/add-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    $('#addStockModal').modal('hide');
+                    if(inventoryTable) inventoryTable.refresh();
+                    if(lowStockTable) lowStockTable.refresh(); // Refresh low stock if it exists
+                    inventoryTable.showSuccessToast('Success', 'Stock added successfully');
+                    form.reset();
+                    loadSummaryData();
+                } else {
+                    inventoryTable.showErrorToast('Error', result.message || 'Failed to add stock');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding stock:', error);
+                inventoryTable.showErrorToast('Error', 'An error occurred while adding stock');
+            });
+        }
+        
+        // Function to add warehouse
+        function addWarehouse() {
+            const form = document.getElementById('addWarehouseForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const data = {
+                WHOUSE_NAME: document.getElementById('warehouseName').value,
+                WHOUSE_LOCATION: document.getElementById('warehouseLocation').value,
+                WHOUSE_STORAGE_CAPACITY: document.getElementById('storageCapacity').value ? parseInt(document.getElementById('storageCapacity').value) : null,
+                WHOUSE_RESTOCK_THRESHOLD: document.getElementById('restockThreshold').value ? parseInt(document.getElementById('restockThreshold').value) : null
+            };
+            
+            fetch('/api/warehouses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    $('#addWarehouseModal').modal('hide');
+                    if(warehouseTable) warehouseTable.refresh();
+                    warehouseTable.showSuccessToast('Success', 'Warehouse added successfully');
+                    form.reset();
+                    loadWarehousesForModalsAndFilters(); // Reload warehouses in dropdowns
+                    loadSummaryData();
+                } else {
+                    warehouseTable.showErrorToast('Error', result.message || 'Failed to add warehouse');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding warehouse:', error);
+                warehouseTable.showErrorToast('Error', 'An error occurred while adding warehouse');
+            });
+        }
+        
+        // Function to edit warehouse (show modal with data)
+        function editWarehouse(rowData) {
+            document.getElementById('editWarehouseId').value = rowData.WHOUSE_ID;
+            document.getElementById('editWarehouseName').value = rowData.WHOUSE_NAME;
+            document.getElementById('editWarehouseLocation').value = rowData.WHOUSE_LOCATION;
+            document.getElementById('editStorageCapacity').value = rowData.WHOUSE_STORAGE_CAPACITY || '';
+            document.getElementById('editRestockThreshold').value = rowData.WHOUSE_RESTOCK_THRESHOLD || '';
+            $('#editWarehouseModal').modal('show');
+        }
+        
+        // Function to update warehouse
+        function updateWarehouse() {
+            const form = document.getElementById('editWarehouseForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const warehouseId = document.getElementById('editWarehouseId').value;
+            const data = {
+                WHOUSE_NAME: document.getElementById('editWarehouseName').value,
+                WHOUSE_LOCATION: document.getElementById('editWarehouseLocation').value,
+                WHOUSE_STORAGE_CAPACITY: document.getElementById('editStorageCapacity').value ? parseInt(document.getElementById('editStorageCapacity').value) : null,
+                WHOUSE_RESTOCK_THRESHOLD: document.getElementById('editRestockThreshold').value ? parseInt(document.getElementById('editRestockThreshold').value) : null
+            };
+            
+            fetch(`/api/warehouses/${warehouseId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    $('#editWarehouseModal').modal('hide');
+                    if(warehouseTable) warehouseTable.refresh();
+                    warehouseTable.showSuccessToast('Success', 'Warehouse updated successfully');
+                    loadWarehousesForModalsAndFilters(); // Refresh warehouse names in filters if changed
+                    loadSummaryData(); // Utilization might change
+                } else {
+                    warehouseTable.showErrorToast('Error', result.message || 'Failed to update warehouse');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating warehouse:', error);
+                warehouseTable.showErrorToast('Error', 'An error occurred while updating warehouse');
+            });
+        }
+        
+        // Function to delete warehouse (with confirmation)
+        function confirmDeleteWarehouse(rowData) {
+            if (confirm(`Are you sure you want to delete the warehouse "${rowData.WHOUSE_NAME}"? This action cannot be undone.`)) {
+                if (parseInt(rowData.TOTAL_INVENTORY) > 0) {
+                    warehouseTable.showWarningToast('Warning', 'Cannot delete warehouse with existing inventory. Please move or delete items first.');
+                    return;
+                }
+                fetch(`/api/warehouses/${rowData.WHOUSE_ID}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        if(warehouseTable) warehouseTable.refresh();
+                        warehouseTable.showSuccessToast('Success', 'Warehouse deleted successfully');
+                        loadWarehousesForModalsAndFilters(); 
+                        loadSummaryData();
+                    } else {
+                        warehouseTable.showErrorToast('Error', result.message || 'Failed to delete warehouse');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting warehouse:', error);
+                    warehouseTable.showErrorToast('Error', 'An error occurred while deleting warehouse');
+                });
+            }
+        }
+        
+        // Function to view inventory details
+        function viewInventory(rowData) {
+            fetch(`/api/inventory/${rowData.INVE_ID}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.data) {
+                        const item = result.data;
+                        document.getElementById('productName').textContent = item.PROD_NAME;
+                        document.getElementById('productDescription').textContent = item.PROD_DESCRIPTION || 'No description available.';
+                        document.getElementById('productImage').src = item.PROD_IMAGE_PATH || '/assets/images/placeholder.png'; // Assuming PROD_IMAGE_PATH
+                        
+                        document.getElementById('detailWarehouse').textContent = item.WHOUSE_NAME;
+                        document.getElementById('detailQuantity').textContent = item.QUANTITY;
+                        document.getElementById('detailType').textContent = item.INVE_TYPE;
+                        document.getElementById('detailUpdated').textContent = new Date(item.INVE_UPDATED_AT).toLocaleString();
+                        
+                        document.getElementById('detailSku').textContent = item.PROD_SKU || 'N/A';
+                        document.getElementById('detailCategory').textContent = item.PROD_CATEGORY_NAME || 'N/A'; // Assuming PROD_CATEGORY_NAME
+                        document.getElementById('detailPrice').textContent = item.PROD_PRICE ? `$${parseFloat(item.PROD_PRICE).toFixed(2)}` : 'N/A';
+                        document.getElementById('detailStatus').textContent = item.PROD_AVAILABILITY_STATUS || 'N/A';
+                        
+                        $('#viewInventoryModal').modal('show');
+                    } else {
+                        inventoryTable.showErrorToast('Error', result.message || 'Failed to load inventory details');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading inventory details:', error);
+                    inventoryTable.showErrorToast('Error', 'An error occurred loading inventory details');
+                });
+        }
+        
+        // Function to delete inventory (with confirmation)
+        function confirmDeleteInventory(rowData) {
+            if (confirm(`Are you sure you want to delete this inventory record for "${rowData.PROD_NAME}" in "${rowData.WHOUSE_NAME}"? Quantity: ${rowData.QUANTITY}. This cannot be undone.`)) {
+                fetch(`/api/inventory/${rowData.INVE_ID}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        if(inventoryTable) inventoryTable.refresh();
+                        inventoryTable.showSuccessToast('Success', 'Inventory record deleted');
+                        loadSummaryData();
+                        if (lowStockTable) lowStockTable.refresh();
+                    } else {
+                        inventoryTable.showErrorToast('Error', result.message || 'Failed to delete inventory');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting inventory:', error);
+                    inventoryTable.showErrorToast('Error', 'An error occurred while deleting inventory');
+                });
+            }
+        }
+        
+        // Function to prepare move stock modal
+        function openMoveStockModal(rowData) {
+            document.getElementById('sourceInventoryId').value = rowData.INVE_ID;
+            document.getElementById('productDetails').value = `${rowData.PROD_NAME} (ID: ${rowData.PROD_ID})`; // More info
+            document.getElementById('sourceWarehouse').value = rowData.WHOUSE_NAME;
+            document.getElementById('availableQuantity').value = rowData.QUANTITY;
+            document.getElementById('moveQuantity').value = '1'; // Default to 1
+            document.getElementById('moveQuantity').max = rowData.QUANTITY;
+            
+            const targetWarehouseSelect = document.getElementById('targetWarehouseId');
+            // Temporarily store current options to re-add non-source ones
+            const options = Array.from(targetWarehouseSelect.options);
+            targetWarehouseSelect.innerHTML = '<option value="">Select Target Warehouse</option>'; 
+
+            fetch('/api/warehouses') // Re-fetch or use pre-loaded ones filtered
+                .then(response => response.json())
+                .then(warehouseData => {
+                    if (warehouseData.success && warehouseData.data) {
+                         warehouseData.data.forEach(warehouse => {
+                            if (warehouse.WHOUSE_ID != rowData.WHOUSE_ID) { // Exclude source warehouse
+                                const option = document.createElement('option');
+                                option.value = warehouse.WHOUSE_ID;
+                                option.textContent = warehouse.WHOUSE_NAME;
+                                targetWarehouseSelect.appendChild(option);
+                            }
+                        });
+                    } else {
+                        inventoryTable.showErrorToast('Error', 'Could not load target warehouses.');
+                    }
+                }).catch(err => inventoryTable.showErrorToast('Error', 'Could not load target warehouses.'));
+            
+            $('#moveStockModal').modal('show');
+        }
+        
+        // Function to move stock
+        function moveStock() {
+            const form = document.getElementById('moveStockForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const quantity = parseInt(document.getElementById('moveQuantity').value);
+            const availableQuantity = parseInt(document.getElementById('availableQuantity').value);
+            
+            if (quantity <= 0) {
+                inventoryTable.showErrorToast('Error', 'Quantity to move must be positive.');
+                return;
+            }
+            if (quantity > availableQuantity) {
+                inventoryTable.showErrorToast('Error', 'Cannot move more than available quantity.');
+                return;
+            }
+            const data = {
+                source_inventory_id: document.getElementById('sourceInventoryId').value,
+                target_warehouse_id: document.getElementById('targetWarehouseId').value,
+                quantity: quantity
+            };
+            
+            fetch('/api/inventory/move-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    $('#moveStockModal').modal('hide');
+                    if(inventoryTable) inventoryTable.refresh();
+                    inventoryTable.showSuccessToast('Success', 'Stock moved successfully');
+                    if (warehouseTable) warehouseTable.refresh(); // Refresh warehouse stock levels
+                    if (lowStockTable) lowStockTable.refresh();
+                    loadSummaryData();
+                } else {
+                    inventoryTable.showErrorToast('Error', result.message || 'Failed to move stock');
+                }
+            })
+            .catch(error => {
+                console.error('Error moving stock:', error);
+                inventoryTable.showErrorToast('Error', 'An error occurred while moving stock');
+            });
+        }
+        
+        // Function to view warehouse details (placeholder, can be expanded to a modal)
+        function viewWarehouseDetails(rowData) {
+            // Example: Simple alert. Could be a modal like viewInventory.
+            alert(`Warehouse: ${rowData.WHOUSE_NAME}\nID: ${rowData.WHOUSE_ID}\nLocation: ${rowData.WHOUSE_LOCATION}\nCapacity: ${rowData.WHOUSE_STORAGE_CAPACITY || 'N/A'}\nStock: ${rowData.TOTAL_INVENTORY || 0}\nThreshold: ${rowData.WHOUSE_RESTOCK_THRESHOLD || 'N/A'}`);
+        }
+        
+        // Function to initiate restocking an item (opens Add Stock modal pre-filled)
+        function restockItem(rowData) {
+            document.getElementById('productId').value = rowData.PROD_ID;
+            document.getElementById('warehouseId').value = rowData.WHOUSE_ID;
+            const currentQuantity = parseInt(rowData.QUANTITY);
+            const threshold = parseInt(rowData.WHOUSE_RESTOCK_THRESHOLD);
+            let suggestedQuantity = 1;
+            if (!isNaN(threshold) && threshold > currentQuantity) {
+                suggestedQuantity = Math.max(threshold - currentQuantity, 1);
+            }
+            document.getElementById('quantity').value = suggestedQuantity;
+            document.getElementById('inventoryType').value = 'Regular'; // Default to Regular for restock
+            $('#addStockModal').modal('show');
+        }
+        
+        // Function to apply filters to the Inventory table
+        function applyInventoryFilters() {
+            const filters = {};
+            const warehouseId = document.getElementById('warehouseFilter').value;
+            const stockLevel = document.getElementById('stockLevelFilter').value;
+            const inventoryType = document.getElementById('inventoryTypeFilter').value;
+            
+            if (warehouseId) filters.WHOUSE_ID = warehouseId;
+            if (stockLevel) filters.STOCK_LEVEL = stockLevel; // Assumes backend handles STOCK_LEVEL filter
+            if (inventoryType) filters.INVE_TYPE = inventoryType;
+            
+            if(inventoryTable) inventoryTable.applyFilters(filters);
+        }
+    });
+</script>
+<?php
+$additionalScripts = ob_get_clean();
+
+// Include the base template
+include __DIR__ . '/../includes/admin/base.php';
+?> 
