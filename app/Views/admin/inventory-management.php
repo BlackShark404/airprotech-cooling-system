@@ -695,7 +695,7 @@ ob_start();
                 ],
                 viewRowCallback: viewWarehouseDetails,
                 editRowCallback: editWarehouse,
-                deleteRowCallback: confirmDeleteWarehouse
+                deleteRowCallback: preDeleteWarehouseChecks
             });
         }
         
@@ -814,35 +814,43 @@ ob_start();
         
         // Function to load warehouses for dropdowns (modals and filters)
         function loadWarehousesForModalsAndFilters() {
-            fetch('/api/warehouses')
+            fetch('/api/warehouses') 
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.data) {
-                        const addStockWarehouseSelect = document.getElementById('warehouseId');
-                        const filterWarehouseSelect = document.getElementById('warehouseFilter');
-                        const moveStockTargetWarehouseSelect = document.getElementById('targetWarehouseId');
-                        
-                        // Clear previous options
-                        addStockWarehouseSelect.innerHTML = '<option value="">Select Warehouse</option>';
-                        filterWarehouseSelect.innerHTML = '<option value="">All Warehouses</option>';
-                        moveStockTargetWarehouseSelect.innerHTML = '<option value="">Select Target Warehouse</option>';
-                        
-                        data.data.forEach(warehouse => {
+                    if (data.success && Array.isArray(data.data)) {
+                        const warehouses = data.data;
+                        const addStockWarehouseSelect = document.getElementById('warehouseId'); // Corrected ID for Add Stock Modal
+                        const filterWarehouseSelect = document.getElementById('warehouseFilter'); // Correct ID for inventory filter
+
+                        // Clear existing options, only if the element exists
+                        if (addStockWarehouseSelect) {
+                            addStockWarehouseSelect.innerHTML = '<option value="">Select Warehouse</option>';
+                        }
+                        if (filterWarehouseSelect) {
+                            filterWarehouseSelect.innerHTML = '<option value="">All Warehouses</option>';
+                        }
+
+                        warehouses.forEach(warehouse => {
                             const option = document.createElement('option');
-                            option.value = warehouse.WHOUSE_ID;
-                            option.textContent = warehouse.WHOUSE_NAME;
+                            option.value = warehouse.whouse_id; 
+                            option.textContent = warehouse.whouse_name; 
                             
-                            addStockWarehouseSelect.appendChild(option.cloneNode(true));
-                            filterWarehouseSelect.appendChild(option.cloneNode(true));
-                            moveStockTargetWarehouseSelect.appendChild(option.cloneNode(true));
+                            if (addStockWarehouseSelect) {
+                                addStockWarehouseSelect.appendChild(option.cloneNode(true));
+                            }
+                            if (filterWarehouseSelect) {
+                                filterWarehouseSelect.appendChild(option.cloneNode(true));
+                            }
                         });
                     } else {
-                         inventoryTable.showErrorToast('Error', 'Failed to load warehouses for dropdowns.');
+                        console.error('Failed to load warehouses for dropdowns:', data.message || 'No data returned');
+                        // Optionally show a toast or message to the user if a global toast manager is available
+                        // e.g., if (typeof globalToastManager !== 'undefined') globalToastManager.showErrorToast('Error', 'Could not load warehouses for selection.');
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading warehouses:', error);
-                    inventoryTable.showErrorToast('Error', 'Failed to load warehouses for dropdowns.');
+                    console.error('Error fetching warehouses for dropdowns:', error);
+                    // Optionally show a toast or message to the user
                 });
         }
         
@@ -970,32 +978,39 @@ ob_start();
             });
         }
         
-        // Function to delete warehouse (with confirmation)
-        function confirmDeleteWarehouse(rowData) {
-            if (confirm(`Are you sure you want to delete the warehouse "${rowData.WHOUSE_NAME}"? This action cannot be undone.`)) {
-                if (parseInt(rowData.TOTAL_INVENTORY) > 0) {
-                    warehouseTable.showWarningToast('Warning', 'Cannot delete warehouse with existing inventory. Please move or delete items first.');
-                    return;
-                }
-                fetch(`/api/warehouses/${rowData.WHOUSE_ID}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        if(warehouseTable) warehouseTable.refresh();
-                        warehouseTable.showSuccessToast('Success', 'Warehouse deleted successfully');
-                        loadWarehousesForModalsAndFilters(); 
-                        loadSummaryData();
-                    } else {
-                        warehouseTable.showErrorToast('Error', result.message || 'Failed to delete warehouse');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting warehouse:', error);
-                    warehouseTable.showErrorToast('Error', 'An error occurred while deleting warehouse');
-                });
+        // Function to perform pre-delete checks for a warehouse
+        function preDeleteWarehouseChecks(rowData, dtManager) {
+            if (parseInt(rowData.total_inventory) > 0) {
+                dtManager.showWarningToast('Action Denied', 'Cannot delete warehouse: it still contains inventory. Please move or empty the inventory first.');
+                return; // Stop if inventory exists
             }
+            // If check passes, use DataTablesManager's built-in confirmation modal
+            // The actual deletion logic will be in performWarehouseDelete, which is now the effective callback for the modal's confirm button.
+            dtManager._showDeleteConfirmationModal(rowData, performWarehouseDelete);
+        }
+
+        // Function to actually delete warehouse (called after confirmation)
+        function performWarehouseDelete(rowData, dtManager) {
+            fetch(`/api/warehouses/${rowData.whouse_id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    if(dtManager) dtManager.refresh(); // Use the passed instance to refresh
+                    else if(warehouseTable) warehouseTable.refresh(); // Fallback to global if instance not passed
+                    
+                    dtManager.showSuccessToast('Success', 'Warehouse deleted successfully');
+                    loadWarehousesForModalsAndFilters(); 
+                    loadSummaryData();
+                } else {
+                    dtManager.showErrorToast('Delete Error', result.message || 'Failed to delete warehouse');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting warehouse:', error);
+                dtManager.showErrorToast('Delete Error', 'An error occurred while deleting warehouse.');
+            });
         }
         
         // Function to view inventory details
