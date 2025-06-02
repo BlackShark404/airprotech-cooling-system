@@ -101,4 +101,48 @@ class AdminModel extends Model
         }
         return false;
     }
+
+    /**
+     * Get system-wide statistics for the admin dashboard/profile.
+     *
+     * @return array An array of statistics.
+     */
+    public function getSystemStatistics()
+    {
+        $stats = [];
+
+        // Get active customers count
+        $sqlCustomers = "SELECT COUNT(ua.ua_id) 
+                         FROM user_account ua 
+                         INNER JOIN user_role ur ON ua.ua_role_id = ur.ur_id 
+                         WHERE ur.ur_name = 'customer' AND ua.ua_is_active = TRUE AND ua.ua_deleted_at IS NULL";
+        $stats['total_active_customers'] = (int)$this->queryScalar($sqlCustomers);
+
+        // Get active technicians count
+        $sqlTechnicians = "SELECT COUNT(ua.ua_id) 
+                           FROM user_account ua 
+                           INNER JOIN user_role ur ON ua.ua_role_id = ur.ur_id 
+                           WHERE ur.ur_name = 'technician' AND ua.ua_is_active = TRUE AND ua.ua_deleted_at IS NULL";
+        $stats['total_active_technicians'] = (int)$this->queryScalar($sqlTechnicians);
+
+        // Get pending service requests count
+        $sqlPendingServices = "SELECT COUNT(sb_id) 
+                               FROM service_booking 
+                               WHERE sb_status = 'pending' AND sb_deleted_at IS NULL";
+        $stats['total_pending_service_requests'] = (int)$this->queryScalar($sqlPendingServices);
+
+        // Get in-progress service requests count
+        $sqlInProgressServices = "SELECT COUNT(sb_id) 
+                                  FROM service_booking 
+                                  WHERE sb_status = 'in-progress' AND sb_deleted_at IS NULL";
+        $stats['total_inprogress_service_requests'] = (int)$this->queryScalar($sqlInProgressServices);
+
+        // Get pending product orders count
+        $sqlPendingProductOrders = "SELECT COUNT(pb_id) 
+                                    FROM product_booking 
+                                    WHERE pb_status = 'pending' AND pb_deleted_at IS NULL";
+        $stats['total_pending_product_orders'] = (int)$this->queryScalar($sqlPendingProductOrders);
+
+        return $stats;
+    }
 } 

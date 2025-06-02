@@ -13,25 +13,6 @@
     <link rel="stylesheet" href="/assets/css/home.css"> <!-- Assuming admin shares some styles -->
 </head>
 <body>
-    <!-- Top Bar -->
-    <div class="top-bar py-2">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="contact-info">
-                <a href="tel:+1234567890" class="me-3 text-white text-decoration-none">
-                    <i class="fas fa-phone me-2"></i>+1 234 567 890
-                </a>
-                <a href="mailto:contact@apcs.com" class="text-white text-decoration-none">
-                    <i class="fas fa-envelope me-2"></i>contact@apcs.com
-                </a>
-            </div>
-            <div class="social-links">
-                <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Navigation -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
@@ -94,6 +75,38 @@
                                 <span class="badge bg-light-green text-green px-3 py-2">
                                     <i class="fas fa-check-circle me-1"></i> Verified
                                 </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Stats -->
+                    <div class="card border-0 shadow-sm rounded-4 mt-4"> <!-- Added mt-4 for spacing -->
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">System Statistics</h5>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">Active Customers</span>
+                                <span class="fw-semibold"><?= $statistics['total_active_customers'] ?? 0 ?></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">Active Technicians</span>
+                                <span class="fw-semibold"><?= $statistics['total_active_technicians'] ?? 0 ?></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">Pending Service Requests</span>
+                                <span class="fw-semibold"><?= $statistics['total_pending_service_requests'] ?? 0 ?></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">In-Progress Services</span>
+                                <span class="fw-semibold"><?= $statistics['total_inprogress_service_requests'] ?? 0 ?></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Pending Product Orders</span>
+                                <span class="fw-semibold"><?= $statistics['total_pending_product_orders'] ?? 0 ?></span>
                             </div>
                         </div>
                     </div>

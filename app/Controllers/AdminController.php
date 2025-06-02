@@ -81,8 +81,12 @@ class AdminController extends BaseController {
             return;
         }
         
+        // Get system statistics
+        $statistics = $this->adminModel->getSystemStatistics();
+
         $viewData = [
-            'user' => $adminUser // Pass the admin data to the view
+            'user' => $adminUser, // Pass the admin data to the view
+            'statistics' => $statistics // Pass system statistics to the view
         ];
         
         $this->render("admin/admin-profile", $viewData);
