@@ -108,6 +108,88 @@ class InventoryController extends BaseController
         $this->jsonSuccess($summary);
     }
 
+    public function getInventoryById($id)
+    {
+        if (!$this->isAjax()) {
+            $this->renderError('Bad Request', 400);
+            return;
+        }
+
+        $inventory = $this->inventoryModel->getInventoryById($id);
+        
+        if (!$inventory) {
+            $this->jsonError('Inventory not found', 404);
+            return;
+        }
+        
+        $this->jsonSuccess($inventory);
+    }
+
+    public function updateInventory()
+    {
+        if (!$this->isAjax() || !$this->isPost()) {
+            $this->renderError('Bad Request', 400);
+            return;
+        }
+        
+        $data = $this->getJsonInput();
+        
+        // Validate required fields
+        if (!isset($data['inventory_id']) || !isset($data['quantity'])) {
+            $this->jsonError('Missing required fields: inventory_id, quantity', 400);
+            return;
+        }
+        
+        // Check if inventory exists
+        $inventory = $this->inventoryModel->getInventoryById($data['inventory_id']);
+        if (!$inventory) {
+            $this->jsonError('Inventory not found', 404);
+            return;
+        }
+        
+        $updateData = [
+            'QUANTITY' => $data['quantity']
+        ];
+        
+        if (isset($data['inventory_type'])) {
+            $updateData['INVE_TYPE'] = $data['inventory_type'];
+        }
+        
+        $result = $this->inventoryModel->updateInventory($data['inventory_id'], $updateData);
+        
+        if ($result) {
+            $this->jsonSuccess([
+                'inventory_id' => $data['inventory_id'],
+                'quantity' => $data['quantity']
+            ], 'Inventory updated successfully');
+        } else {
+            $this->jsonError('Failed to update inventory', 500);
+        }
+    }
+    
+    public function deleteInventory($id)
+    {
+        if (!$this->isAjax() || !$this->isPost()) {
+            $this->renderError('Bad Request', 400);
+            return;
+        }
+        
+        // Check if inventory exists
+        $inventory = $this->inventoryModel->getInventoryById($id);
+        if (!$inventory) {
+            $this->jsonError('Inventory not found', 404);
+            return;
+        }
+        
+        $result = $this->inventoryModel->deleteInventory($id);
+        
+        if ($result) {
+            $this->jsonSuccess(['inventory_id' => $id], 'Inventory deleted successfully');
+        } else {
+            $this->jsonError('Failed to delete inventory', 500);
+        }
+    }
+
     public function addStock()
     {
         if (!$this->isAjax() || !$this->isPost()) {
