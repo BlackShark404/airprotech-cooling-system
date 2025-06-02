@@ -79,7 +79,8 @@ $router->map('POST', '/api/admin/service-requests/update', 'App\Controllers\Serv
 $router->map('POST', '/api/admin/service-requests/delete/[i:id]', 'App\Controllers\ServiceRequestController#deleteServiceRequest', 'admin_delete_service_request_api');
 
 // API routes for technicians and service types
-$router->map('GET', '/api/technicians', 'App\Controllers\ServiceRequestController#getTechnicians', 'technicians_api');
+$router->map('GET', '/api/technicians', 'App\\Controllers\\ServiceRequestController#getTechnicians', 'technicians_api');
+$router->map('GET', '/api/service-types', 'App\\Controllers\\ServiceRequestController#getServiceTypes', 'service_types_api');
 
 // User Management Routes 
 $router->map('GET', '/admin/user-management', 'App\Controllers\UserManagementController#index', 'render-user-management');
