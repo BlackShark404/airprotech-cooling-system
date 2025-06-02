@@ -4,9 +4,9 @@ require_once __DIR__ . '/../../../../script/active_page.php';
 ?>
 
 <!-- Navbar -->
-<nav class="navbar navbar-light bg-white sticky-top border-bottom shadow-sm">
+<nav class="navbar navbar-dark sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand text-dark" href="/">
+        <a class="navbar-brand" href="/">
             <img src="/assets/images/logo/Air-TechLogo.png" alt="AirProtect logo" height="36" width="36">
             AirPotech
         </a>
@@ -14,18 +14,13 @@ require_once __DIR__ . '/../../../../script/active_page.php';
             <div class="me-3">
             </div>
             <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36">
-                    <div class="d-flex flex-column lh-sm">
-                        <span class="fw-semibold small text-dark"><?=$_SESSION['full_name'] ?? 'User'?></span>
-                        <small>
-                            <span class="text-success">●</span> <span class="text-muted">Online</span>
-                        </small>
+                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="position-relative">
+                        <img src="<?=Session::get('profile_url')?>" alt="Profile Image" class="rounded-circle" width="30" height="30">
+                        <span class="position-absolute bottom-0 end-0 translate-middle-y bg-success rounded-circle border border-white" style="width: 8px; height: 8px;"></span>
                     </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>
