@@ -611,6 +611,31 @@ ob_start();
     </div>
 </div>
 
+<!-- Delete Warehouse Confirmation Modal -->
+<div class="modal fade" id="deleteWarehouseModal" tabindex="-1" aria-labelledby="deleteWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteWarehouseModalLabel">Confirm Warehouse Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the following warehouse? This action cannot be undone.</p>
+                <p><strong>ID:</strong> <span id="deleteWarehouseIdSpan"></span></p>
+                <p><strong>Name:</strong> <span id="deleteWarehouseNameSpan"></span></p>
+                <p><strong>Location:</strong> <span id="deleteWarehouseLocationSpan"></span></p>
+                <div id="deleteWarehouseWarningInventory" class="alert alert-warning d-none" role="alert">
+                    This warehouse still contains inventory. Deletion is not allowed.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteWarehouseBtn">Delete Warehouse</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 // End output buffering and get the content for the main page body
 $content = ob_get_clean();
@@ -692,10 +717,26 @@ ob_start();
                         }
                     },
                     { data: 'whouse_restock_threshold', title: 'Threshold' },
-                ],
-                viewRowCallback: viewWarehouseDetails,
-                editRowCallback: editWarehouse,
-                deleteRowCallback: preDeleteWarehouseChecks
+                    {
+                        data: null,
+                        title: 'Actions',
+                        orderable: false,
+                        searchable: false,
+                        render: function(data, type, row) {
+                            return `
+                                <button type="button" class="btn btn-sm btn-info view-warehouse-btn" title="View Warehouse" data-id="${row.whouse_id}">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning edit-warehouse-btn" title="Edit Warehouse" data-id="${row.whouse_id}">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger delete-warehouse-btn" title="Delete Warehouse" data-id="${row.whouse_id}">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            `;
+                        }
+                    }
+                ]
             });
         }
         
@@ -978,41 +1019,6 @@ ob_start();
             });
         }
         
-        // Function to perform pre-delete checks for a warehouse
-        function preDeleteWarehouseChecks(rowData, dtManager) {
-            if (parseInt(rowData.total_inventory) > 0) {
-                dtManager.showWarningToast('Action Denied', 'Cannot delete warehouse: it still contains inventory. Please move or empty the inventory first.');
-                return; // Stop if inventory exists
-            }
-            // If check passes, use DataTablesManager's built-in confirmation modal
-            // The actual deletion logic will be in performWarehouseDelete, which is now the effective callback for the modal's confirm button.
-            dtManager._showDeleteConfirmationModal(rowData, performWarehouseDelete);
-        }
-
-        // Function to actually delete warehouse (called after confirmation)
-        function performWarehouseDelete(rowData, dtManager) {
-            fetch(`/api/warehouses/${rowData.whouse_id}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    if(dtManager) dtManager.refresh(); // Use the passed instance to refresh
-                    else if(warehouseTable) warehouseTable.refresh(); // Fallback to global if instance not passed
-                    
-                    dtManager.showSuccessToast('Success', 'Warehouse deleted successfully');
-                    loadWarehousesForModalsAndFilters(); 
-                    loadSummaryData();
-                } else {
-                    dtManager.showErrorToast('Delete Error', result.message || 'Failed to delete warehouse');
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting warehouse:', error);
-                dtManager.showErrorToast('Delete Error', 'An error occurred while deleting warehouse.');
-            });
-        }
-        
         // Function to view inventory details
         function viewInventory(rowData) {
             fetch(`/api/inventory/${rowData.INVE_ID}`)
@@ -1206,6 +1212,88 @@ ob_start();
             if (inventoryType) filters.INVE_TYPE = inventoryType;
             
             if(inventoryTable) inventoryTable.applyFilters(filters);
+        }
+
+        // --- New/Modified Event Listeners and Functions for Warehouse Delete ---
+        $('#warehouseTable').on('click', '.view-warehouse-btn', function() {
+            const id = $(this).data('id');
+            const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
+            if(rowData) viewWarehouseDetails(rowData); // Call existing view function
+        });
+
+        $('#warehouseTable').on('click', '.edit-warehouse-btn', function() {
+            const id = $(this).data('id');
+            const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
+            if(rowData) editWarehouse(rowData); // Call existing edit function
+        });
+
+        $('#warehouseTable').on('click', '.delete-warehouse-btn', function() {
+            const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
+            if (rowData) {
+                confirmDeleteWarehouseModal(rowData);
+            }
+        });
+
+        let warehouseToDeleteData = null; // To store rowData for the delete operation
+
+        function confirmDeleteWarehouseModal(rowData) {
+            console.log("[DEBUG] confirmDeleteWarehouseModal called. rowData:", rowData);
+            warehouseToDeleteData = rowData; // Store for later use by the actual delete function
+
+            document.getElementById('deleteWarehouseIdSpan').textContent = rowData.whouse_id || 'N/A';
+            document.getElementById('deleteWarehouseNameSpan').textContent = rowData.whouse_name || 'N/A';
+            document.getElementById('deleteWarehouseLocationSpan').textContent = rowData.whouse_location || 'N/A';
+            
+            const warningDiv = document.getElementById('deleteWarehouseWarningInventory');
+            const confirmBtn = document.getElementById('confirmDeleteWarehouseBtn');
+
+            const currentStock = parseInt(rowData.total_inventory);
+            if (currentStock > 0) {
+                console.log("[DEBUG] Inventory exists (", currentStock, "), showing warning in modal.");
+                warningDiv.classList.remove('d-none');
+                confirmBtn.disabled = true;
+                $(confirmBtn).prop('title', 'Cannot delete warehouse with inventory');
+            } else {
+                console.log("[DEBUG] Inventory check passed for modal (stock <= 0).");
+                warningDiv.classList.add('d-none');
+                confirmBtn.disabled = false;
+                $(confirmBtn).prop('title', '');
+            }
+            
+            $('#deleteWarehouseModal').modal('show');
+        }
+
+        document.getElementById('confirmDeleteWarehouseBtn').addEventListener('click', function() {
+            if (warehouseToDeleteData) {
+                performActualWarehouseDelete(warehouseToDeleteData);
+            }
+        });
+        
+        // Renamed from preDeleteWarehouseChecks and performWarehouseDelete to avoid confusion
+        // This function is now called by the modal's confirm button
+        function performActualWarehouseDelete(rowData) {
+            console.log("[DEBUG] performActualWarehouseDelete called for whouse_id:", rowData.whouse_id);
+            fetch(`/api/warehouses/${rowData.whouse_id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(result => {
+                $('#deleteWarehouseModal').modal('hide');
+                if (result.success) {
+                    if(warehouseTable) warehouseTable.refresh();
+                    warehouseTable.showSuccessToast('Success', 'Warehouse deleted successfully');
+                    loadWarehousesForModalsAndFilters(); 
+                    loadSummaryData();
+                } else {
+                    warehouseTable.showErrorToast('Delete Error', result.message || 'Failed to delete warehouse');
+                }
+            })
+            .catch(error => {
+                $('#deleteWarehouseModal').modal('hide');
+                console.error('Error deleting warehouse:', error);
+                warehouseTable.showErrorToast('Delete Error', 'An error occurred while deleting warehouse.');
+            });
+            warehouseToDeleteData = null; // Clear stored data
         }
     });
 </script>

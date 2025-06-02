@@ -135,7 +135,17 @@ class BaseController
     }
 
     protected function isPut() {
-        return $_SERVER['REQUEST_METHOD'] === 'PUT';
+        return strtoupper($_SERVER['REQUEST_METHOD']) === 'PUT';
+    }
+
+    protected function isDelete()
+    {
+        return strtoupper($_SERVER['REQUEST_METHOD']) === 'DELETE';
+    }
+
+    protected function isOptions()
+    {
+        return $_SERVER['REQUEST_METHOD'] === 'OPTIONS';
     }
 
     /**

@@ -143,7 +143,7 @@ class WarehouseController extends BaseController
 
     public function deleteWarehouse($id)
     {
-        if (!$this->isAjax() || !$this->isPost()) {
+        if (!$this->isAjax() || !$this->isDelete()) {
             $this->renderError('Bad Request', 400);
             return;
         }
