@@ -29,8 +29,19 @@ class WarehouseController extends BaseController
             return;
         }
 
-        $warehouses = $this->warehouseModel->getAllWarehouses();
-        $this->jsonSuccess($warehouses);
+        $warehouses = $this->warehouseModel->getWarehousesWithInventory(); // This already joins inventory
+
+        $processedWarehouses = array_map(function ($warehouse) {
+            $utilization = 0;
+            if (isset($warehouse['WHOUSE_STORAGE_CAPACITY']) && $warehouse['WHOUSE_STORAGE_CAPACITY'] > 0) {
+                $totalInventory = $warehouse['TOTAL_INVENTORY'] ?? 0;
+                $utilization = round(($totalInventory * 100.0) / $warehouse['WHOUSE_STORAGE_CAPACITY'], 2);
+            }
+            $warehouse['UTILIZATION_PERCENTAGE'] = $utilization;
+            return $warehouse;
+        }, $warehouses);
+
+        $this->jsonSuccess($processedWarehouses);
     }
 
     public function getWarehouse($id)

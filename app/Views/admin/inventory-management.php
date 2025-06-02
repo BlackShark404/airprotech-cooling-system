@@ -554,6 +554,63 @@ ob_start();
     </div>
 </div>
 
+<!-- View Warehouse Details Modal -->
+<div class="modal fade" id="viewWarehouseModal" tabindex="-1" aria-labelledby="viewWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewWarehouseModalLabel">Warehouse Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 30%;">Warehouse ID:</th>
+                            <td id="detailWhId"></td>
+                        </tr>
+                        <tr>
+                            <th>Name:</th>
+                            <td id="detailWhName"></td>
+                        </tr>
+                        <tr>
+                            <th>Location:</th>
+                            <td id="detailWhLocation"></td>
+                        </tr>
+                        <tr>
+                            <th>Storage Capacity:</th>
+                            <td id="detailWhCapacity"></td>
+                        </tr>
+                        <tr>
+                            <th>Current Inventory (Items):</th>
+                            <td id="detailWhCurrentStock"></td>
+                        </tr>
+                        <tr>
+                            <th>Utilization:</th>
+                            <td id="detailWhUtilization"></td>
+                        </tr>
+                        <tr>
+                            <th>Restock Threshold:</th>
+                            <td id="detailWhThreshold"></td>
+                        </tr>
+                        <tr>
+                            <th>Created At:</th>
+                            <td id="detailWhCreatedAt"></td>
+                        </tr>
+                        <tr>
+                            <th>Last Updated At:</th>
+                            <td id="detailWhUpdatedAt"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 // End output buffering and get the content for the main page body
 $content = ob_get_clean();
@@ -614,13 +671,13 @@ ob_start();
             warehouseTable = new DataTablesManager('warehouseTable', {
                 ajaxUrl: '/api/warehouses',
                 columns: [
-                    { data: 'WHOUSE_ID', title: 'ID' },
-                    { data: 'WHOUSE_NAME', title: 'Name' },
-                    { data: 'WHOUSE_LOCATION', title: 'Location' },
-                    { data: 'WHOUSE_STORAGE_CAPACITY', title: 'Capacity' },
-                    { data: 'TOTAL_INVENTORY', title: 'Current Stock' },
+                    { data: 'whouse_id', title: 'ID' },
+                    { data: 'whouse_name', title: 'Name' },
+                    { data: 'whouse_location', title: 'Location' },
+                    { data: 'whouse_storage_capacity', title: 'Capacity' },
+                    { data: 'total_inventory', title: 'Current Stock' },
                     { 
-                        data: 'UTILIZATION_PERCENTAGE', 
+                        data: 'utilization_percentage', 
                         title: 'Utilization',
                         render: function(data, type, row) {
                             if (type === 'display') {
@@ -629,15 +686,12 @@ ob_start();
                                 if (isNaN(num)) return 'N/A';
                                 if (num >= 90) badgeType = 'danger';
                                 else if (num >= 70) badgeType = 'warning';
-                                // Using DataTablesManager's internal badge generation for consistency if possible
-                                // For simplicity, directly returning HTML here. 
-                                // Or, you could call a modified _generateBadgeHtml or pass badgeConfig dynamically.
                                 return `<span class="badge bg-${badgeType}">${num.toFixed(1)}%</span>`;
                             }
                             return data;
                         }
                     },
-                    { data: 'WHOUSE_RESTOCK_THRESHOLD', title: 'Threshold' },
+                    { data: 'whouse_restock_threshold', title: 'Threshold' },
                 ],
                 viewRowCallback: viewWarehouseDetails,
                 editRowCallback: editWarehouse,
