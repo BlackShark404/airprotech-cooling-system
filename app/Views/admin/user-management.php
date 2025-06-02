@@ -236,14 +236,14 @@ ob_start();
                             <label for="edit_first_name" class="form-label">First Name</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                                <input type="text" class="form-control border-start-0" id="edit_first_name" name="first_name" required>
+                                <input type="text" class="form-control border-start-0" id="edit_first_name" name="first_name" required readonly>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="edit_last_name" class="form-label">Last Name</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                                <input type="text" class="form-control border-start-0" id="edit_last_name" name="last_name" required>
+                                <input type="text" class="form-control border-start-0" id="edit_last_name" name="last_name" required readonly>
                             </div>
                         </div>
                     </div>
@@ -251,17 +251,7 @@ ob_start();
                         <label for="edit_email" class="form-label">Email Address</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
-                            <input type="email" class="form-control border-start-0" id="edit_email" name="email" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_password" class="form-label">Password (leave blank to keep current)</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-                            <input type="password" class="form-control border-start-0" id="edit_password" name="password">
-                            <button class="btn btn-outline-secondary" type="button" id="toggleEditPassword">
-                                <i class="bi bi-eye-slash"></i>
-                            </button>
+                            <input type="email" class="form-control border-start-0" id="edit_email" name="email" required readonly>
                         </div>
                     </div>
                     <div class="row">
@@ -270,22 +260,22 @@ ob_start();
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-toggle2-on text-muted"></i></span>
                                 <select class="form-select border-start-0" id="edit_is_active" name="is_active" required>
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="edit_role_id" class="form-label">Role (Read Only)</label>
+                            <label for="edit_role_id" class="form-label">Role</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield text-muted"></i></span>
-                                <select class="form-select border-start-0" id="edit_role_id" name="role_id" disabled>
+                                <select class="form-select border-start-0" id="edit_role_id" name="role_id" required disabled>
+                                    <option value="">Select Role</option>
                                     <option value="3">Admin</option>
                                     <option value="2">Technician</option>
                                     <option value="1">Customer</option>
                                 </select>
                             </div>
-                            <small class="text-muted">Role cannot be changed</small>
                         </div>
                     </div>
                 </form>

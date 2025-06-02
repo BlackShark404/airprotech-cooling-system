@@ -183,8 +183,6 @@ class UserManagementController extends BaseController
 
     public function updateUser($id)
     {
-        $avatar = new AvatarGenerator();
-
         // Check if request is AJAX
         if (!$this->isAjax()) {
             $this->jsonError('Invalid request', 400);
@@ -199,48 +197,33 @@ class UserManagementController extends BaseController
             $this->jsonError('User not found', 404);
         }
         
-        // Validate required fields
-        $requiredFields = ['first_name', 'last_name', 'email', 'is_active'];
-        foreach ($requiredFields as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
-                $this->jsonError("Missing required field: $field", 400);
-            }
-        }
-        
-        // Check email uniqueness (if changed)
-        if ($data['email'] !== $user['ua_email'] && $this->userModel->emailExists($data['email'])) {
-            $this->jsonError('Email address already in use', 400);
+        // Validate that 'is_active' is present in the input
+        if (!isset($data['is_active'])) {
+            $this->jsonError("Missing required field: is_active", 400);
         }
 
-        $oldProfileUrl = $user['ua_profile_url'];
-        $newName = $data['first_name'] . ' ' . $data['last_name'];
+        // Ensure 'is_active' is a boolean or can be cast to one
+        $isActive = filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
-        $profileUrl = $avatar->updateNameKeepBackground($oldProfileUrl, $newName);
+        if ($isActive === null) {
+             $this->jsonError("Invalid value for status. Must be true or false.", 400);
+        }
 
         try {
-            // Map input data to user model fields
+            // Only allow updating the user's active status
             $userData = [
-                'ua_profile_url' => $profileUrl,
-                'ua_first_name' => $data['first_name'],
-                'ua_last_name' => $data['last_name'],
-                'ua_email' => $data['email'],
-                'ua_is_active' => $data['is_active']
+                'ua_is_active' => $isActive
             ];
-            
-            // Add password if provided
-            if (isset($data['password']) && !empty($data['password'])) {
-                $userData['ua_hashed_password'] = $this->userModel->hashPassword($data['password']);
-            }
             
             $result = $this->userModel->updateUser($id, $userData);
             
             if ($result) {
-                $this->jsonSuccess([], 'User updated successfully');
+                $this->jsonSuccess([], 'User status updated successfully');
             } else {
-                $this->jsonError('Failed to update user', 500);
+                $this->jsonError('Failed to update user status', 500);
             }
         } catch (\Exception $e) {
-            $this->jsonError('Error updating user: ' . $e->getMessage(), 500);
+            $this->jsonError('Error updating user status: ' . $e->getMessage(), 500);
         }
     }
     
