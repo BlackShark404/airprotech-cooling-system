@@ -62,13 +62,13 @@ ob_start();
 
 <!-- Main Content -->
 <div class="container-fluid py-4 fade-in">
-    <!-- Page Header -->
-    <div class="page-header d-flex justify-content-between align-items-center">
-        <div>
-            <h3 class="mb-0 fw-bold text-dark">User Management</h3>
-            <p class="text-muted mb-0">Manage your system users and access permissions</p>
+    
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0">User Management</h1>
+            <p class="text-muted">Manage inventory across all warehouses</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="col-auto">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
                 <i class="bi bi-plus-lg me-2"></i>Add User
             </button>
