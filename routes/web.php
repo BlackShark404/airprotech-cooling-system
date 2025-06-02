@@ -93,14 +93,6 @@ $router->map('POST', '/api/users/reset-password/[i:id]', 'App\Controllers\UserMa
 $router->map('GET', '/api/users/export', 'App\Controllers\UserManagementController#exportUsers', 'api_export_users');
 
 // Inventory Management API Routes
-$router->map('GET', '/api/inventory', 'App\Controllers\InventoryController#getAllInventory', 'get_all_inventory');
-$router->map('GET', '/api/inventory/[i:id]', 'App\Controllers\InventoryController#getInventoryById', 'get_inventory_by_id');
-$router->map('GET', '/api/inventory/summary', 'App\Controllers\InventoryController#getInventoryStats', 'get_inventory_summary');
-$router->map('GET', '/api/inventory/low-stock', 'App\Controllers\InventoryController#getLowStockInventory', 'get_low_stock_inventory');
-$router->map('POST', '/api/inventory/add-stock', 'App\Controllers\InventoryController#addStock', 'add_inventory_stock');
-$router->map('POST', '/api/inventory/update', 'App\Controllers\InventoryController#updateInventory', 'update_inventory');
-$router->map('POST', '/api/inventory/delete/[i:id]', 'App\Controllers\InventoryController#deleteInventory', 'delete_inventory');
-$router->map('POST', '/api/inventory/move-stock', 'App\Controllers\InventoryController#moveStock', 'move_inventory_stock');
 
 // Product Management API Routes
 $router->map('GET', '/api/products', 'App\Controllers\ProductController#getAllProducts', 'get_all_products');
@@ -125,11 +117,6 @@ $router->map('POST', '/api/admin/product-bookings/update', 'App\Controllers\Prod
 $router->map('POST', '/api/admin/product-bookings/delete/[i:id]', 'App\Controllers\ProductController#deleteProductBooking', 'admin_delete_product_booking_api');
 
 // Warehouse Management API Routes
-$router->map('GET', '/api/warehouses', 'App\Controllers\WarehouseController#getAllWarehouses', 'get_all_warehouses');
-$router->map('GET', '/api/warehouses/[i:id]', 'App\Controllers\WarehouseController#getWarehouseById', 'get_warehouse_by_id');
-$router->map('POST', '/api/warehouses', 'App\Controllers\WarehouseController#createWarehouse', 'create_warehouse');
-$router->map('POST', '/api/warehouses/[i:id]', 'App\Controllers\WarehouseController#updateWarehouse', 'update_warehouse');
-$router->map('POST', '/api/warehouses/delete/[i:id]', 'App\Controllers\WarehouseController#deleteWarehouse', 'delete_warehouse');
 
 
 
