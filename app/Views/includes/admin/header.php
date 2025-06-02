@@ -25,7 +25,7 @@ require_once __DIR__ . '/../../../../script/active_page.php';
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                     <li>
-                        <a class="dropdown-item" href="/user/profile">
+                        <a class="dropdown-item" href="/admin/profile">
                             <i class="bi bi-person-circle"></i> Profile
                         </a>
                     </li>

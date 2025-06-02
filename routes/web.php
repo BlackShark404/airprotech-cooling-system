@@ -63,6 +63,13 @@ $router->map('GET', '/admin/product-bookings', 'App\Controllers\AdminController#
 $router->map('GET', '/admin/inventory', 'App\Controllers\AdminController#renderInventory', 'render-inventory');
 $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#renderAddProduct', 'render-add-product');
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
+
+// Admin Profile Routes
+$router->map('GET', '/admin/profile', 'App\Controllers\AdminController#renderAdminProfile', 'render_admin_profile');
+$router->map('POST', '/api/admin/profile/update', 'App\Controllers\AdminController#updateAdminProfile', 'update_admin_profile');
+$router->map('POST', '/api/admin/password/update', 'App\Controllers\AdminController#updateAdminPassword', 'update_admin_password');
+$router->map('POST', '/api/admin/profile/image', 'App\Controllers\AdminController#uploadAdminProfileImage', 'upload_admin_profile_image');
+
 $router->map('GET', '/admin/product-management', 'App\Controllers\AdminController#renderProductManagement', 'render-product-management');
 $router->map('GET', '/admin/inventory-management', 'App\Controllers\AdminController#renderInventoryManagement', 'render-inventory-management');
 $router->map('GET', '/admin/warehouse-management', 'App\Controllers\AdminController#renderWarehouseManagement', 'render-warehouse-management');

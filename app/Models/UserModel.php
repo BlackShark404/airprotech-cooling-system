@@ -81,6 +81,47 @@ class UserModel extends Model
         return $this->queryOne($sql, ['id' => $id]);
     }
 
+    public function findUserWithRoleDetails($userId, $roleName)
+    {
+        $roleName = strtolower($roleName);
+        $roleTable = '';
+        $roleTableFk = '';
+        $roleTablePk = '';
+        $roleTableAlias = '';
+
+        switch ($roleName) {
+            case 'admin':
+                $roleTable = 'admin';
+                $roleTableFk = 'ad_account_id';
+                $roleTablePk = 'ua_id'; // user_account primary key
+                $roleTableAlias = 'ad';
+                break;
+            case 'customer':
+                $roleTable = 'customer';
+                $roleTableFk = 'cu_account_id';
+                $roleTablePk = 'ua_id';
+                $roleTableAlias = 'cu';
+                break;
+            case 'technician':
+                $roleTable = 'technician';
+                $roleTableFk = 'te_account_id';
+                $roleTablePk = 'ua_id';
+                $roleTableAlias = 'te';
+                break;
+            default:
+                // Maybe throw an exception or return just basic user details
+                return $this->findById($userId); 
+        }
+
+        $sql = "SELECT ua.*, ur.ur_name AS role_name, rt.* 
+                FROM user_account ua
+                INNER JOIN user_role ur ON ua.ua_role_id = ur.ur_id
+                LEFT JOIN {$roleTable} rt ON ua.{$roleTablePk} = rt.{$roleTableFk}
+                WHERE ua.ua_id = :userId AND ur.ur_name = :roleName AND ua.ua_deleted_at IS NULL";
+
+        return $this->queryOne($sql, ['userId' => $userId, 'roleName' => $roleName]);
+    }
+
     public function findByEmail($email)
     {
         $sql = "SELECT user_account.*, user_role.ur_name AS role_name
