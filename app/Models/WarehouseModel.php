@@ -127,4 +127,15 @@ class WarehouseModel extends Model
                 
         return $this->query($sql);
     }
+
+    public function countActiveWarehouses()
+    {
+        $sql = "SELECT COUNT(WHOUSE_ID) AS total_warehouses FROM {$this->table} WHERE WHOUSE_DELETED_AT IS NULL";
+        error_log("[WarehouseModel] SQL for count: " . $sql);
+        $result = $this->queryOne($sql);
+        error_log("[WarehouseModel] Raw result from queryOne for count: " . print_r($result, true));
+        $count = ($result && isset($result['total_warehouses'])) ? (int)$result['total_warehouses'] : 0;
+        error_log("[WarehouseModel] Calculated count: " . $count);
+        return $count;
+    }
 } 

@@ -156,17 +156,35 @@ class InventoryModel extends Model
 
     public function getInventorySummary()
     {
+        error_log("[InventoryModel] getInventorySummary called.");
+        // Get total active warehouses from WarehouseModel
+        $warehouseModel = new WarehouseModel(); // Instantiate WarehouseModel
+        $totalWarehouses = $warehouseModel->countActiveWarehouses();
+        error_log("[InventoryModel] Total warehouses from WarehouseModel: " . $totalWarehouses);
+
+        // Get other inventory-specific stats
         $sql = "SELECT 
-                    COUNT(DISTINCT p.PROD_ID) AS TOTAL_PRODUCTS,
-                    COUNT(DISTINCT w.WHOUSE_ID) AS TOTAL_WAREHOUSES,
+                    COUNT(DISTINCT i.PROD_ID) AS TOTAL_PRODUCTS,
                     SUM(i.QUANTITY) AS TOTAL_INVENTORY,
-                    COUNT(DISTINCT CASE WHEN i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD THEN i.INVE_ID ELSE NULL END) AS LOW_STOCK_ITEMS
+                    COUNT(DISTINCT CASE WHEN i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD AND w.WHOUSE_RESTOCK_THRESHOLD > 0 THEN i.INVE_ID ELSE NULL END) AS LOW_STOCK_ITEMS
                 FROM {$this->table} i
-                JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
-                JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID AND w.WHOUSE_DELETED_AT IS NULL
+                LEFT JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
+                LEFT JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID AND w.WHOUSE_DELETED_AT IS NULL
                 WHERE i.INVE_DELETED_AT IS NULL";
         
-        return $this->queryOne($sql);
+        error_log("[InventoryModel] SQL for inventory stats: " . $sql);
+        $inventoryStats = $this->queryOne($sql);
+        error_log("[InventoryModel] Raw inventory stats from queryOne: " . print_r($inventoryStats, true));
+
+        // Combine the results, ensuring all are integers and default to 0 if null/not set
+        $summaryData = [
+            'TOTAL_PRODUCTS' => ($inventoryStats && isset($inventoryStats['TOTAL_PRODUCTS'])) ? (int)$inventoryStats['TOTAL_PRODUCTS'] : 0,
+            'TOTAL_WAREHOUSES' => (int)$totalWarehouses, // Already an int from WarehouseModel
+            'TOTAL_INVENTORY' => ($inventoryStats && isset($inventoryStats['TOTAL_INVENTORY'])) ? (int)$inventoryStats['TOTAL_INVENTORY'] : 0,
+            'LOW_STOCK_ITEMS' => ($inventoryStats && isset($inventoryStats['LOW_STOCK_ITEMS'])) ? (int)$inventoryStats['LOW_STOCK_ITEMS'] : 0
+        ];
+        error_log("[InventoryModel] Final summary data: " . print_r($summaryData, true));
+        return $summaryData;
     }
 
     public function getInventoryByProductAndWarehouse($productId, $warehouseId)
