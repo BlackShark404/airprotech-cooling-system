@@ -273,35 +273,40 @@ class InventoryController extends BaseController
             return;
         }
 
-        $inventoryItem = $this->inventoryModel->getInventoryById($id);
-
+        // First, add debug logging to trace the issue
+        error_log("[DEBUG] Getting inventory item with ID: " . $id);
+        
+        // Update our query to explicitly include the required product fields
+        $sql = "SELECT 
+                i.*,
+                p.PROD_NAME, 
+                p.PROD_DESCRIPTION,
+                p.PROD_IMAGE, 
+                p.PROD_AVAILABILITY_STATUS,
+                w.WHOUSE_NAME 
+            FROM INVENTORY i
+            LEFT JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID
+            LEFT JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
+            WHERE i.INVE_ID = :inventory_id 
+            AND i.INVE_DELETED_AT IS NULL";
+            
+        $inventoryItem = $this->inventoryModel->queryOne($sql, [':inventory_id' => $id]);
+        
         if (!$inventoryItem) {
             $this->jsonError('Inventory item not found', 404);
             return;
         }
-
-        // Fetch associated product details to enrich the inventory data
-        $productId = $inventoryItem['prod_id'] ?? null;
         
-        if ($productId) {
-            $product = $this->productModel->getProductById($productId);
-            
-            // Only set these fields if product exists and has the expected keys
-            if ($product) {
-                // Handle uppercase keys from ProductModel
-                $inventoryItem['prod_name'] = isset($product['PROD_NAME']) ? $product['PROD_NAME'] : null;
-                $inventoryItem['prod_description'] = isset($product['PROD_DESCRIPTION']) ? $product['PROD_DESCRIPTION'] : null;
-                $inventoryItem['prod_image'] = isset($product['PROD_IMAGE']) ? $product['PROD_IMAGE'] : null;
-                $inventoryItem['prod_availability_status'] = isset($product['PROD_AVAILABILITY_STATUS']) ? $product['PROD_AVAILABILITY_STATUS'] : null;
-            } else {
-                // Set defaults if product not found
-                $inventoryItem['prod_name'] = 'Product Not Found';
-                $inventoryItem['prod_description'] = 'No description available';
-                $inventoryItem['prod_image'] = null;
-                $inventoryItem['prod_availability_status'] = null;
-            }
+        // Debug the returned data
+        error_log("[DEBUG] Raw inventory data: " . print_r($inventoryItem, true));
+        
+        // Convert uppercase database keys to lowercase for frontend consistency
+        $normalized = [];
+        foreach ($inventoryItem as $key => $value) {
+            // Convert PROD_NAME to prod_name, etc.
+            $normalized[strtolower($key)] = $value;
         }
-
-        $this->jsonSuccess($inventoryItem);
+        
+        $this->jsonSuccess($normalized);
     }
 } 

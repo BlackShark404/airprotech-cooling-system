@@ -479,7 +479,7 @@ ob_start();
                         <p id="productDescription" class="text-muted"></p>
                         
                         <div class="row mt-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <h6>Inventory Details</h6>
                                 <table class="table table-sm">
                                     <tr>
@@ -495,29 +495,12 @@ ob_start();
                                         <td id="detailType"></td>
                                     </tr>
                                     <tr>
-                                        <th>Last Updated:</th>
-                                        <td id="detailUpdated"></td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Product Details</h6>
-                                <table class="table table-sm">
-                                    <tr>
-                                        <th>SKU:</th>
-                                        <td id="detailSku"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Category:</th>
-                                        <td id="detailCategory"></td>
-                                    </tr>
-                                    <tr>
-                                        <th>Price:</th>
-                                        <td id="detailPrice"></td>
-                                    </tr>
-                                    <tr>
                                         <th>Status:</th>
                                         <td id="detailStatus"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Last Updated:</th>
+                                        <td id="detailUpdated"></td>
                                     </tr>
                                 </table>
                             </div>
@@ -992,20 +975,30 @@ ob_start();
                 .then(result => {
                     if (result.success && result.data) {
                         const item = result.data;
+                        console.log('Inventory item data:', item); // Debug log
+                        
+                        // Product name and description
                         document.getElementById('productName').textContent = item.prod_name || 'N/A';
                         document.getElementById('productDescription').textContent = item.prod_description || 'No description available.';
-                        document.getElementById('productImage').src = item.prod_image || '/assets/images/placeholder.png';
                         
+                        // Handle product image with proper URL path
+                        if (item.prod_image) {
+                            // Ensure the image path starts with a slash if it doesn't already
+                            let imagePath = item.prod_image;
+                            if (!imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+                                imagePath = '/' + imagePath;
+                            }
+                            document.getElementById('productImage').src = imagePath;
+                        } else {
+                            document.getElementById('productImage').src = '/assets/images/placeholder.png';
+                        }
+                        
+                        // Inventory details
                         document.getElementById('detailWarehouse').textContent = item.whouse_name || 'N/A';
                         document.getElementById('detailQuantity').textContent = item.quantity || '0';
                         document.getElementById('detailType').textContent = item.inve_type || 'N/A';
-                        document.getElementById('detailUpdated').textContent = item.inve_updated_at ? new Date(item.inve_updated_at).toLocaleString() : 'N/A';
-                        
-                        // Set defaults for fields that may not exist in the schema
-                        document.getElementById('detailSku').textContent = 'N/A';
-                        document.getElementById('detailCategory').textContent = 'N/A';
-                        document.getElementById('detailPrice').textContent = 'N/A';
                         document.getElementById('detailStatus').textContent = item.prod_availability_status || 'N/A';
+                        document.getElementById('detailUpdated').textContent = item.inve_updated_at ? new Date(item.inve_updated_at).toLocaleString() : 'N/A';
                         
                         $('#viewInventoryModal').modal('show');
                     } else {
