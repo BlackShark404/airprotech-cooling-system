@@ -15,8 +15,8 @@
 <body>
     <!-- Main Navigation -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/admin/dashboard"> <!-- Link to admin dashboard -->
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/"> <!-- Link to admin dashboard -->
                 <img src="/assets/images/logo/Air-TechLogo.png" alt="Logo" class="rounded-circle me-2" width="40" height="40">
                 <span class="brand-text">AIR<span class="text-danger">PROTECH</span></span>
             </a>
@@ -47,7 +47,7 @@
 
     <!-- Admin Profile Area -->
     <div class="profile-area py-5">
-        <div class="container">
+        <div class="container-fluid">
             <div class="row">
                 <div class="col-lg-4 mb-4 mb-lg-0">
                     <!-- Profile Card -->

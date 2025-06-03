@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../../../script/active_page.php';
     <div class="container-fluid">
         <a class="navbar-brand text-dark" href="/">
             <img src="/assets/images/logo/Air-TechLogo.png" alt="AirProtect logo" height="36" width="36">
-            AirPotech
+            <span class="brand-text">AIR<span class="text-danger">PROTECH</span></span>
         </a>
         <div class="d-flex">
             <div class="me-3">
