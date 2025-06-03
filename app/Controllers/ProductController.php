@@ -226,7 +226,47 @@ class ProductController extends BaseController
             return;
         }
         
+        // Try to get data from JSON input, fallback to form data for multipart/form-data
         $data = $this->getJsonInput();
+        if (empty($data) && !empty($_POST['product'])) {
+            // Handle multipart/form-data
+            $data = [
+                'product' => json_decode($_POST['product'], true),
+                'features' => !empty($_POST['features']) ? json_decode($_POST['features'], true) : [],
+                'specs' => !empty($_POST['specs']) ? json_decode($_POST['specs'], true) : [],
+                'variants' => !empty($_POST['variants']) ? json_decode($_POST['variants'], true) : [],
+            ];
+            
+            // Handle image upload if present
+            if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
+                $uploadedImage = $_FILES['product_image'];
+                $imageName = basename($uploadedImage['name']);
+                $imageExt = strtolower(pathinfo($imageName, PATHINFO_EXTENSION));
+                
+                // Generate a unique name to prevent overwrites
+                $uniqueImageName = uniqid('prod_', true) . '.' . $imageExt;
+                $uploadDir = 'uploads/products/';
+                $absoluteUploadPath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . $uploadDir;
+                
+                if (!is_dir($absoluteUploadPath)) {
+                    if (!mkdir($absoluteUploadPath, 0777, true)) {
+                        error_log("Failed to create directory: " . $absoluteUploadPath);
+                        $this->jsonError('Failed to create image upload directory.', 500);
+                        return;
+                    }
+                }
+                
+                $targetPath = $absoluteUploadPath . $uniqueImageName;
+                
+                if (move_uploaded_file($uploadedImage['tmp_name'], $targetPath)) {
+                    $data['product']['prod_image'] = $uploadDir . $uniqueImageName;
+                } else {
+                    error_log("Failed to move uploaded file to: " . $targetPath);
+                    $this->jsonError('Failed to save product image.', 500);
+                    return;
+                }
+            }
+        }
         
         // Check if product exists
         $existingProduct = $this->productModel->getProductById($id);
@@ -241,7 +281,27 @@ class ProductController extends BaseController
         try {
             // Update product
             if (!empty($data['product'])) {
-                $this->productModel->updateProduct($id, $data['product']);
+                $productData = $data['product'];
+                
+                // Normalize product data keys to uppercase
+                if (isset($productData['prod_name'])) {
+                    $productData['PROD_NAME'] = $productData['prod_name'];
+                    unset($productData['prod_name']);
+                }
+                if (isset($productData['prod_description'])) {
+                    $productData['PROD_DESCRIPTION'] = $productData['prod_description'];
+                    unset($productData['prod_description']);
+                }
+                if (isset($productData['prod_availability_status'])) {
+                    $productData['PROD_AVAILABILITY_STATUS'] = $productData['prod_availability_status'];
+                    unset($productData['prod_availability_status']);
+                }
+                if (isset($productData['prod_image'])) {
+                    $productData['PROD_IMAGE'] = $productData['prod_image'];
+                    unset($productData['prod_image']);
+                }
+                
+                $this->productModel->updateProduct($id, $productData);
             }
             
             // Update features
@@ -251,8 +311,23 @@ class ProductController extends BaseController
                 
                 if (!empty($data['features']) && is_array($data['features'])) {
                     foreach ($data['features'] as $feature) {
-                        $feature['PROD_ID'] = $id;
-                        $this->productFeatureModel->createFeature($feature);
+                        // Normalize feature data keys to uppercase
+                        $normalizedFeature = [];
+                        $normalizedFeature['PROD_ID'] = $id;
+                        
+                        if (isset($feature['feature_name'])) {
+                            $normalizedFeature['FEATURE_NAME'] = $feature['feature_name'];
+                        } elseif (isset($feature['FEATURE_NAME'])) {
+                            $normalizedFeature['FEATURE_NAME'] = $feature['FEATURE_NAME'];
+                        }
+                        
+                        if (isset($feature['feature_id'])) {
+                            $normalizedFeature['FEATURE_ID'] = $feature['feature_id'];
+                        } elseif (isset($feature['FEATURE_ID'])) {
+                            $normalizedFeature['FEATURE_ID'] = $feature['FEATURE_ID'];
+                        }
+                        
+                        $this->productFeatureModel->createFeature($normalizedFeature);
                     }
                 }
             }
@@ -264,8 +339,29 @@ class ProductController extends BaseController
                 
                 if (!empty($data['specs']) && is_array($data['specs'])) {
                     foreach ($data['specs'] as $spec) {
-                        $spec['PROD_ID'] = $id;
-                        $this->productSpecModel->createSpec($spec);
+                        // Normalize spec data keys to uppercase
+                        $normalizedSpec = [];
+                        $normalizedSpec['PROD_ID'] = $id;
+                        
+                        if (isset($spec['spec_name'])) {
+                            $normalizedSpec['SPEC_NAME'] = $spec['spec_name'];
+                        } elseif (isset($spec['SPEC_NAME'])) {
+                            $normalizedSpec['SPEC_NAME'] = $spec['SPEC_NAME'];
+                        }
+                        
+                        if (isset($spec['spec_value'])) {
+                            $normalizedSpec['SPEC_VALUE'] = $spec['spec_value'];
+                        } elseif (isset($spec['SPEC_VALUE'])) {
+                            $normalizedSpec['SPEC_VALUE'] = $spec['SPEC_VALUE'];
+                        }
+                        
+                        if (isset($spec['spec_id'])) {
+                            $normalizedSpec['SPEC_ID'] = $spec['spec_id'];
+                        } elseif (isset($spec['SPEC_ID'])) {
+                            $normalizedSpec['SPEC_ID'] = $spec['SPEC_ID'];
+                        }
+                        
+                        $this->productSpecModel->createSpec($normalizedSpec);
                     }
                 }
             }
@@ -277,8 +373,29 @@ class ProductController extends BaseController
                 
                 if (!empty($data['variants']) && is_array($data['variants'])) {
                     foreach ($data['variants'] as $variant) {
-                        $variant['PROD_ID'] = $id;
-                        $this->productVariantModel->createVariant($variant);
+                        // Normalize variant data keys to uppercase
+                        $normalizedVariant = [];
+                        $normalizedVariant['PROD_ID'] = $id;
+                        
+                        // Map lowercase to uppercase keys
+                        $keyMap = [
+                            'var_id' => 'VAR_ID',
+                            'var_capacity' => 'VAR_CAPACITY',
+                            'var_srp_price' => 'VAR_SRP_PRICE',
+                            'var_price_free_install' => 'VAR_PRICE_FREE_INSTALL',
+                            'var_price_with_install' => 'VAR_PRICE_WITH_INSTALL',
+                            'var_power_consumption' => 'VAR_POWER_CONSUMPTION'
+                        ];
+                        
+                        foreach ($keyMap as $lowerKey => $upperKey) {
+                            if (isset($variant[$lowerKey])) {
+                                $normalizedVariant[$upperKey] = $variant[$lowerKey];
+                            } elseif (isset($variant[$upperKey])) {
+                                $normalizedVariant[$upperKey] = $variant[$upperKey];
+                            }
+                        }
+                        
+                        $this->productVariantModel->createVariant($normalizedVariant);
                     }
                 }
             }
@@ -290,7 +407,7 @@ class ProductController extends BaseController
             
         } catch (\Exception $e) {
             $this->productModel->rollback();
-            error_log("Error updating product: " . $e->getMessage());
+            error_log("Error updating product: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             $this->jsonError('Failed to update product: ' . $e->getMessage(), 500);
         }
     }
