@@ -992,18 +992,19 @@ ob_start();
                 .then(result => {
                     if (result.success && result.data) {
                         const item = result.data;
-                        document.getElementById('productName').textContent = item.prod_name;
+                        document.getElementById('productName').textContent = item.prod_name || 'N/A';
                         document.getElementById('productDescription').textContent = item.prod_description || 'No description available.';
-                        document.getElementById('productImage').src = item.prod_image_path || '/assets/images/placeholder.png'; // Assuming PROD_IMAGE_PATH
+                        document.getElementById('productImage').src = item.prod_image || '/assets/images/placeholder.png';
                         
-                        document.getElementById('detailWarehouse').textContent = item.whouse_name;
-                        document.getElementById('detailQuantity').textContent = item.quantity;
-                        document.getElementById('detailType').textContent = item.inve_type;
-                        document.getElementById('detailUpdated').textContent = new Date(item.inve_updated_at).toLocaleString();
+                        document.getElementById('detailWarehouse').textContent = item.whouse_name || 'N/A';
+                        document.getElementById('detailQuantity').textContent = item.quantity || '0';
+                        document.getElementById('detailType').textContent = item.inve_type || 'N/A';
+                        document.getElementById('detailUpdated').textContent = item.inve_updated_at ? new Date(item.inve_updated_at).toLocaleString() : 'N/A';
                         
-                        document.getElementById('detailSku').textContent = item.prod_sku || 'N/A';
-                        document.getElementById('detailCategory').textContent = item.prod_category_name || 'N/A'; // Assuming PROD_CATEGORY_NAME
-                        document.getElementById('detailPrice').textContent = item.prod_price ? `$${parseFloat(item.prod_price).toFixed(2)}` : 'N/A';
+                        // Set defaults for fields that may not exist in the schema
+                        document.getElementById('detailSku').textContent = 'N/A';
+                        document.getElementById('detailCategory').textContent = 'N/A';
+                        document.getElementById('detailPrice').textContent = 'N/A';
                         document.getElementById('detailStatus').textContent = item.prod_availability_status || 'N/A';
                         
                         $('#viewInventoryModal').modal('show');

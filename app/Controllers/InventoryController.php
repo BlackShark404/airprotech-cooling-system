@@ -281,17 +281,25 @@ class InventoryController extends BaseController
         }
 
         // Fetch associated product details to enrich the inventory data
-        $product = $this->productModel->getProductById($inventoryItem['PROD_ID']);
-        if ($product) {
-            // Merge product details into the inventory item
-            // Be careful not to overwrite INVE_ID with PROD_ID if names are generic like 'id'
-            $inventoryItem['PROD_NAME'] = $product['PROD_NAME'];
-            $inventoryItem['PROD_DESCRIPTION'] = $product['PROD_DESCRIPTION'];
-            $inventoryItem['PROD_IMAGE_PATH'] = $product['PROD_IMAGE']; // Assuming PROD_IMAGE stores the path
-            $inventoryItem['PROD_SKU'] = $product['PROD_SKU'] ?? null; // Assuming SKU might exist
-            $inventoryItem['PROD_CATEGORY_NAME'] = $product['PROD_CATEGORY_NAME'] ?? null; // Assuming category name might exist
-            $inventoryItem['PROD_PRICE'] = $product['PROD_PRICE'] ?? null; // Assuming price might exist
-            $inventoryItem['PROD_AVAILABILITY_STATUS'] = $product['PROD_AVAILABILITY_STATUS'] ?? null;
+        $productId = $inventoryItem['prod_id'] ?? null;
+        
+        if ($productId) {
+            $product = $this->productModel->getProductById($productId);
+            
+            // Only set these fields if product exists and has the expected keys
+            if ($product) {
+                // Handle uppercase keys from ProductModel
+                $inventoryItem['prod_name'] = isset($product['PROD_NAME']) ? $product['PROD_NAME'] : null;
+                $inventoryItem['prod_description'] = isset($product['PROD_DESCRIPTION']) ? $product['PROD_DESCRIPTION'] : null;
+                $inventoryItem['prod_image'] = isset($product['PROD_IMAGE']) ? $product['PROD_IMAGE'] : null;
+                $inventoryItem['prod_availability_status'] = isset($product['PROD_AVAILABILITY_STATUS']) ? $product['PROD_AVAILABILITY_STATUS'] : null;
+            } else {
+                // Set defaults if product not found
+                $inventoryItem['prod_name'] = 'Product Not Found';
+                $inventoryItem['prod_description'] = 'No description available';
+                $inventoryItem['prod_image'] = null;
+                $inventoryItem['prod_availability_status'] = null;
+            }
         }
 
         $this->jsonSuccess($inventoryItem);
