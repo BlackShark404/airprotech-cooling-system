@@ -349,8 +349,21 @@ class InventoryModel extends Model
                 $targetQuantity = isset($targetInventory['QUANTITY']) ? intval($targetInventory['QUANTITY']) : 0;
                 $newTargetQuantity = $targetQuantity + $quantity;
                 error_log("[DEBUG] moveStock in Model - Updating target inventory. New quantity: " . $newTargetQuantity);
+                
+                // Get target inventory ID with case sensitivity check
+                $targetInventoryId = null;
+                if (isset($targetInventory['INVE_ID'])) {
+                    $targetInventoryId = $targetInventory['INVE_ID'];
+                } else if (isset($targetInventory['inve_id'])) {
+                    $targetInventoryId = $targetInventory['inve_id'];
+                } else {
+                    error_log("[ERROR] moveStock in Model - Target inventory exists but INVE_ID not found: " . print_r($targetInventory, true));
+                    $this->rollback();
+                    return false;
+                }
+                
                 $this->updateInventoryQuantity(
-                    $targetInventory['INVE_ID'], 
+                    $targetInventoryId, 
                     $newTargetQuantity
                 );
             } else {

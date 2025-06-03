@@ -91,9 +91,48 @@ class BaseController
         // Disable error reporting during JSON output to prevent PHP warnings/notices from breaking JSON
         $previousErrorReporting = error_reporting(0);
         
+        // Buffer output to catch any PHP warnings/errors
+        ob_start();
+        
         http_response_code($statusCode);
         header('Content-Type: application/json');
-        echo json_encode($data);
+        
+        // Encode data with error handling
+        $jsonData = json_encode($data);
+        if ($jsonData === false) {
+            // Log JSON encoding error
+            error_log("JSON encoding error: " . json_last_error_msg());
+            // Provide a fallback valid JSON response
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error encoding response',
+                'error' => json_last_error_msg()
+            ]);
+        } else {
+            echo $jsonData;
+        }
+        
+        // Get any warning messages that might have been generated
+        $output = ob_get_clean();
+        
+        // If there were any PHP warnings/errors, log them instead of sending to client
+        if (preg_match('/<br\s*\/?>/i', $output) || strpos($output, '<b>Warning</b>:') !== false) {
+            error_log("PHP warnings during JSON output: " . $output);
+            // Only output the JSON part
+            $jsonStart = strpos($output, '{');
+            if ($jsonStart !== false) {
+                echo substr($output, $jsonStart);
+            } else {
+                // If we can't find the JSON start, return a clean error response
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error in response generation'
+                ]);
+            }
+        } else {
+            // Output was clean, send it
+            echo $output;
+        }
         
         // Restore previous error reporting level
         error_reporting($previousErrorReporting);

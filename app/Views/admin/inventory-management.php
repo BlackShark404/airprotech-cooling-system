@@ -1126,7 +1126,19 @@ ob_start();
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
+            .then(response => {
+                // Check if the response is valid JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // If not JSON, get the text and throw an error with the text content
+                    return response.text().then(text => {
+                        console.error("Non-JSON response:", text);
+                        throw new Error('Invalid server response: ' + (text.substring(0, 100) + '...'));
+                    });
+                }
+            })
             .then(result => {
                 console.log("Move stock API response:", result);
                 if (result.success) {
@@ -1142,7 +1154,7 @@ ob_start();
             })
             .catch(error => {
                 console.error('Error moving stock:', error);
-                inventoryTable.showErrorToast('Error', 'An error occurred while moving stock');
+                inventoryTable.showErrorToast('Error', 'An error occurred while moving stock. ' + error.message);
             });
         }
         
