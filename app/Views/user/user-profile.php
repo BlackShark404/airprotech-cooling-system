@@ -18,10 +18,10 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="contact-info">
                 <a href="tel:+1234567890" class="me-3 text-white text-decoration-none">
-                    <i class="fas fa-phone me-2"></i>+1 234 567 890
+                    <i class="fas fa-phone me-2"></i>09338525313
                 </a>
-                <a href="mailto:contact@apcs.com" class="text-white text-decoration-none">
-                    <i class="fas fa-envelope me-2"></i>contact@apcs.com
+                <a href="mailto:airprotechaircon123@gmail.com" class="text-white text-decoration-none">
+                    <i class="fas fa-envelope me-2"></i>airprotechaircon123@gmail.com
                 </a>
             </div>
             <div class="social-links">
