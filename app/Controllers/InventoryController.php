@@ -191,8 +191,8 @@ class InventoryController extends BaseController
             return;
         }
         
-        // Check if source has enough quantity
-        if ($sourceInventory['QUANTITY'] < $data['quantity']) {
+        // Check if source has enough quantity (with validation to avoid PHP warning)
+        if (!isset($sourceInventory['QUANTITY']) || $sourceInventory['QUANTITY'] < $data['quantity']) {
             $this->jsonError('Not enough stock available to move', 400);
             return;
         }

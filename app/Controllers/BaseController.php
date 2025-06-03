@@ -88,9 +88,15 @@ class BaseController
 
     // ✅ Respond with JSON (generic)
     protected function json($data = [], $statusCode = 200) {
+        // Disable error reporting during JSON output to prevent PHP warnings/notices from breaking JSON
+        $previousErrorReporting = error_reporting(0);
+        
         http_response_code($statusCode);
         header('Content-Type: application/json');
         echo json_encode($data);
+        
+        // Restore previous error reporting level
+        error_reporting($previousErrorReporting);
         exit;
     }
 
