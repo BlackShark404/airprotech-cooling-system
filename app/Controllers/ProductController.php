@@ -57,16 +57,95 @@ class ProductController extends BaseController
 
     public function createProduct()
     {
-        if (!$this->isAjax() || !$this->isPost()) {
-            $this->renderError('Bad Request', 400);
+        if (!$this->isPost()) {
+            $this->renderError('Bad Request: Expected POST', 400);
             return;
         }
         
-        $data = $this->getJsonInput();
+        $payload = [];
         
-        // Validate required fields
-        if (empty($data['product']['PROD_NAME']) || empty($data['product']['PROD_AVAILABILITY_STATUS'])) {
-            $this->jsonError('Missing required product fields', 400);
+        // 1. Get and decode the 'product' JSON string
+        $productJson = $this->request('product');
+        if (empty($productJson)) {
+            $this->jsonError('Missing product data field.', 400);
+            return;
+        }
+        $payload['product'] = json_decode($productJson, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->jsonError('Invalid product JSON data: ' . json_last_error_msg(), 400);
+            return;
+        }
+
+        // 2. Handle 'product_image' file upload
+        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
+            $uploadedImage = $_FILES['product_image'];
+            $imageName = basename($uploadedImage['name']);
+            $imageExt = strtolower(pathinfo($imageName, PATHINFO_EXTENSION));
+            $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+            if (!in_array($imageExt, $allowedExts)) {
+                $this->jsonError('Invalid image file type. Allowed types: ' . implode(', ', $allowedExts), 400);
+                return;
+            }
+
+            // Define upload path - relative to the public directory
+            // Assumes your web root is 'public' and this controller is accessed via index.php in public
+            $uploadDir = 'uploads/products/'; 
+            $absoluteUploadPath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . $uploadDir;
+
+            if (!is_dir($absoluteUploadPath)) {
+                if (!mkdir($absoluteUploadPath, 0777, true)) {
+                    error_log("Failed to create directory: " . $absoluteUploadPath);
+                    $this->jsonError('Failed to create image upload directory.', 500);
+                    return;
+                }
+            }
+            
+            // Generate a unique name to prevent overwrites
+            $uniqueImageName = uniqid('prod_', true) . '.' . $imageExt;
+            $targetPath = $absoluteUploadPath . $uniqueImageName;
+
+            if (move_uploaded_file($uploadedImage['tmp_name'], $targetPath)) {
+                $payload['product']['PROD_IMAGE'] = $uploadDir . $uniqueImageName; // Store relative path for DB
+            } else {
+                error_log("Failed to move uploaded file to: " . $targetPath);
+                $this->jsonError('Failed to save product image.', 500);
+                return;
+            }
+        } else {
+            // If PROD_IMAGE is already set in the JSON (e.g., as a URL or base64 for update, or if optional)
+            // Or if it's truly missing for a new product where it's required by DB.
+            // The validation below will catch it if it's still empty and required.
+            if (!isset($payload['product']['PROD_IMAGE'])) {
+                 $payload['product']['PROD_IMAGE'] = null; 
+            }
+        }
+
+        // 3. Get and decode 'features', 'specs', 'variants' JSON strings
+        $featuresJson = $this->request('features');
+        $payload['features'] = $featuresJson ? json_decode($featuresJson, true) : [];
+        if ($featuresJson && json_last_error() !== JSON_ERROR_NONE) {
+            $this->jsonError('Invalid features JSON data: ' . json_last_error_msg(), 400);
+            return;
+        }
+
+        $specsJson = $this->request('specs');
+        $payload['specs'] = $specsJson ? json_decode($specsJson, true) : [];
+        if ($specsJson && json_last_error() !== JSON_ERROR_NONE) {
+            $this->jsonError('Invalid specs JSON data: ' . json_last_error_msg(), 400);
+            return;
+        }
+
+        $variantsJson = $this->request('variants');
+        $payload['variants'] = $variantsJson ? json_decode($variantsJson, true) : [];
+        if ($variantsJson && json_last_error() !== JSON_ERROR_NONE) {
+            $this->jsonError('Invalid variants JSON data: ' . json_last_error_msg(), 400);
+            return;
+        }
+        
+        // Validate required product fields (PROD_IMAGE is now populated if uploaded)
+        if (empty($payload['product']['PROD_NAME']) || empty($payload['product']['PROD_AVAILABILITY_STATUS']) || empty($payload['product']['PROD_IMAGE'])) {
+            $this->jsonError('Missing required product fields: Name, Availability Status, or Image.', 400);
             return;
         }
         
@@ -75,41 +154,55 @@ class ProductController extends BaseController
         
         try {
             // Create product
-            $productId = $this->productModel->createProduct($data['product']);
+            $productId = $this->productModel->createProduct($payload['product']);
             
             if (!$productId) {
-                throw new \Exception("Failed to create product");
+                throw new \Exception("Failed to create product entry in database");
             }
             
             // Create features if provided
-            if (!empty($data['features']) && is_array($data['features'])) {
-                foreach ($data['features'] as $feature) {
-                    $feature['PROD_ID'] = $productId;
-                    $this->productFeatureModel->createFeature($feature);
+            if (!empty($payload['features']) && is_array($payload['features'])) {
+                foreach ($payload['features'] as $feature) {
+                    $featureData = is_array($feature) ? $feature : ['FEATURE_NAME' => $feature];
+                    $featureData['PROD_ID'] = $productId;
+                    if (empty($featureData['FEATURE_NAME'])) continue; // Skip empty features
+                    $this->productFeatureModel->createFeature($featureData);
                 }
             }
             
             // Create specs if provided
-            if (!empty($data['specs']) && is_array($data['specs'])) {
-                foreach ($data['specs'] as $spec) {
+            if (!empty($payload['specs']) && is_array($payload['specs'])) {
+                foreach ($payload['specs'] as $spec) {
                     $spec['PROD_ID'] = $productId;
+                    if (empty($spec['SPEC_NAME']) || !isset($spec['SPEC_VALUE'])) continue; // Skip incomplete specs
                     $this->productSpecModel->createSpec($spec);
                 }
             }
             
             // Create variants if provided
-            if (!empty($data['variants']) && is_array($data['variants'])) {
-                foreach ($data['variants'] as $variant) {
+            if (!empty($payload['variants']) && is_array($payload['variants'])) {
+                foreach ($payload['variants'] as $variant) {
                     $variant['PROD_ID'] = $productId;
+                    // Add validation for required variant fields if necessary here
+                    if (empty($variant['VAR_CAPACITY']) || empty($variant['VAR_SRP_PRICE'])) {
+                         error_log("Skipping variant due to missing capacity or SRP price: " . json_encode($variant));
+                         continue; 
+                    }
                     $this->productVariantModel->createVariant($variant);
                 }
             }
             
-            // Add inventory if provided
-            if (!empty($data['inventory']) && is_array($data['inventory'])) {
-                foreach ($data['inventory'] as $inventory) {
-                    $inventory['PROD_ID'] = $productId;
-                    $this->inventoryModel->createInventory($inventory);
+            // Add inventory if provided (assuming it comes similarly, or within 'product' data)
+            // If 'inventory' is also a separate JSON string:
+            // $inventoryJson = $this->request('inventory');
+            // $payload['inventory'] = $inventoryJson ? json_decode($inventoryJson, true) : [];
+            // if ($inventoryJson && json_last_error() !== JSON_ERROR_NONE) { /* error handling */ }
+
+            if (!empty($payload['inventory']) && is_array($payload['inventory'])) { // Assuming inventory might be part of the 'product' field for now or handled separately
+                foreach ($payload['inventory'] as $inventoryItem) {
+                    $inventoryItem['PROD_ID'] = $productId;
+                    // Add validation for required inventory fields
+                    $this->inventoryModel->createInventory($inventoryItem);
                 }
             }
             
@@ -120,8 +213,9 @@ class ProductController extends BaseController
             
         } catch (\Exception $e) {
             $this->productModel->rollback();
-            error_log("Error creating product: " . $e->getMessage());
-            $this->jsonError('Failed to create product: ' . $e->getMessage(), 500);
+            error_log("Error creating product: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+            // Provide a more generic error to the client for security
+            $this->jsonError('An unexpected error occurred while creating the product. Please check server logs.', 500);
         }
     }
 
