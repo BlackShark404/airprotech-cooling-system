@@ -52,6 +52,9 @@ require_once __DIR__ . '/../../../../script/active_page.php';
                 <a class="nav-link <?= $activeTab === 'product_bookings' ? 'active' : '' ?>" href="<?= base_url('/admin/product-bookings') ?>">Product Bookings</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?= $activeTab === 'product_management' ? 'active' : '' ?>" href="<?= base_url('/admin/product-management') ?>">Products</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <?= $activeTab === 'inventory_management' ? 'active' : '' ?>" href="<?= base_url('/admin/inventory-management') ?>">Inventory</a>
             </li>
             <li class="nav-item">
