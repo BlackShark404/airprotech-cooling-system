@@ -86,7 +86,7 @@
             <!-- Tabs -->
             <ul class="nav nav-tabs" id="ordersTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="true">Bookings</button>
+                    <button class="nav-link active" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="true">Product Bookings</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="services-tab-button" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="false">Service Requests</button>
@@ -112,6 +112,7 @@
                                 <option value="All Status" selected>All Status</option>
                                 <option value="pending">Pending</option>
                                 <option value="confirmed">Confirmed</option>
+                                <option value="in-progress">In-Progress</option>
                                 <option value="completed">Completed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>

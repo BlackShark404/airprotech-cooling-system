@@ -144,7 +144,8 @@ class ProductBookingManager {
     getStatusBadgeClass(status) {
         switch (status.toLowerCase()) {
             case 'pending': return 'warning';
-            case 'confirmed':
+            case 'confirmed': return 'primary';
+            case 'in-progress': return 'primary';
             case 'completed': return 'success';
             case 'cancelled': return 'danger';
             default: return 'secondary';
