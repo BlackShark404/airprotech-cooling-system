@@ -221,52 +221,53 @@ ob_start();
 
     <!-- Filters Card -->
     <div class="card filter-card mb-4">
-        <div class="card-body">
-            <h5 class="mb-3">Filters</h5>
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label for="statusFilter" class="form-label">Status</label>
-                    <select id="statusFilter" class="form-select filter-dropdown">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="typeFilter" class="form-label">Service Type</label>
-                    <select id="typeFilter" class="form-select filter-dropdown">
-                        <option value="">All Types</option>
-                        <!-- To be populated by AJAX -->
-                    </select>
-                </div>
-                <div class="col-md-2 mb-3">
-                    <label for="priorityFilter" class="form-label">Priority</label>
-                    <select id="priorityFilter" class="form-select filter-dropdown">
-                        <option value="">All Priorities</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="normal">Normal</option>
-                    </select>
-                </div>
-                <div class="col-md-2 mb-3">
-                    <label for="technicianFilter" class="form-label">Technician</label>
-                    <select id="technicianFilter" class="form-select filter-dropdown">
-                        <option value="">All Technicians</option>
-                        <option value="assigned">Assigned</option>
-                        <option value="unassigned">Unassigned</option>
-                        <!-- More options populated by AJAX -->
-                    </select>
-                </div>
+    <div class="card-body">
+        <h5 class="mb-3">Filters</h5>
+        <div class="row align-items-end">
+            <div class="col-md-3 mb-3">
+                <label for="statusFilter" class="form-label">Status</label>
+                <select id="statusFilter" class="form-select filter-dropdown">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
             </div>
-            <div class="row">
-                <div class="col-md-6 d-flex align-items-end mb-3">
-                    <button id="resetFilters" class="btn btn-secondary">Reset</button>
-                </div>
+            <div class="col-md-3 mb-3">
+                <label for="typeFilter" class="form-label">Service Type</label>
+                <select id="typeFilter" class="form-select filter-dropdown">
+                    <option value="">All Types</option>
+                    <!-- To be populated by AJAX -->
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="priorityFilter" class="form-label">Priority</label>
+                <select id="priorityFilter" class="form-select filter-dropdown">
+                    <option value="">All Priorities</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="normal">Normal</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="technicianFilter" class="form-label">Technician</label>
+                <select id="technicianFilter" class="form-select filter-dropdown">
+                    <option value="">All Technicians</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="unassigned">Unassigned</option>
+                    <!-- More options populated by AJAX -->
+                </select>
+            </div>
+            <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Filters
+                </button>
             </div>
         </div>
     </div>
+</div>
+
 
     <!-- Service Requests Table -->
     <div class="card">

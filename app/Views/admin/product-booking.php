@@ -244,11 +244,11 @@ ob_start();
                         <!-- More options populated by AJAX -->
                     </select>
                 </div>
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+                <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Filters
+                </button>
             </div>
-            <div class="row">
-                <div class="col-md-6 d-flex align-items-end mb-3">
-                    <button id="resetFilters" class="btn btn-secondary">Reset</button>
-                </div>
             </div>
         </div>
     </div>
