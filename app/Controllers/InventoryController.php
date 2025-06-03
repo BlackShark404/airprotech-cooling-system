@@ -227,6 +227,19 @@ class InventoryController extends BaseController
             return;
         }
         
+        // Can't move to the same warehouse
+        $sourceWarehouseId = null;
+        if (isset($sourceInventory['WHOUSE_ID'])) {
+            $sourceWarehouseId = intval($sourceInventory['WHOUSE_ID']);
+        } else if (isset($sourceInventory['whouse_id'])) {
+            $sourceWarehouseId = intval($sourceInventory['whouse_id']);
+        }
+        
+        if ($sourceWarehouseId === $targetWarehouseId) {
+            $this->jsonError('Source and target warehouses cannot be the same', 400);
+            return;
+        }
+        
         // Move stock
         $result = $this->inventoryModel->moveStock(
             $sourceInventoryId,
@@ -235,13 +248,29 @@ class InventoryController extends BaseController
         );
         
         if ($result) {
+            // Get updated quantities for both warehouses to return to client
+            $updatedSource = $this->inventoryModel->getInventoryById($sourceInventoryId);
+            $sourceQty = isset($updatedSource['QUANTITY']) ? $updatedSource['QUANTITY'] : 
+                        (isset($updatedSource['quantity']) ? $updatedSource['quantity'] : 0);
+            
+            // Get the product ID from source inventory
+            $productId = isset($sourceInventory['PROD_ID']) ? $sourceInventory['PROD_ID'] : 
+                        (isset($sourceInventory['prod_id']) ? $sourceInventory['prod_id'] : null);
+            
+            // Try to find the target inventory record
+            $targetInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($productId, $targetWarehouseId);
+            $targetQty = isset($targetInventory['QUANTITY']) ? $targetInventory['QUANTITY'] : 
+                        (isset($targetInventory['quantity']) ? $targetInventory['quantity'] : 0);
+            
             $this->jsonSuccess([
                 'source_inventory_id' => $sourceInventoryId,
                 'target_warehouse_id' => $targetWarehouseId,
                 'moved_quantity' => $quantity,
+                'source_remaining' => $sourceQty,
+                'target_quantity' => $targetQty
             ], 'Stock moved successfully');
         } else {
-            $this->jsonError('Failed to move stock', 500);
+            $this->jsonError('Failed to move stock. Transaction could not be completed.', 500);
         }
     }
 

@@ -1115,6 +1115,9 @@ ob_start();
                 available_quantity: availableQuantity
             });
             
+            // Store original quantity for verification
+            const originalQuantity = availableQuantity;
+            
             const data = {
                 source_inventory_id: sourceInventoryId,
                 target_warehouse_id: targetWarehouseId,
@@ -1142,6 +1145,23 @@ ob_start();
             .then(result => {
                 console.log("Move stock API response:", result);
                 if (result.success) {
+                    // Verify that quantities are correct
+                    if (result.data && result.data.source_remaining !== undefined && result.data.target_quantity !== undefined) {
+                        console.log("Quantity verification:", {
+                            original_quantity: originalQuantity,
+                            moved_quantity: quantity,
+                            source_remaining: result.data.source_remaining,
+                            target_quantity: result.data.target_quantity,
+                            total_after: result.data.source_remaining + result.data.target_quantity
+                        });
+                        
+                        // Check if total quantity after move matches expected total
+                        const totalAfter = parseInt(result.data.source_remaining) + parseInt(result.data.target_quantity);
+                        if (totalAfter !== originalQuantity) {
+                            console.warn("Quantity mismatch after move! Original:", originalQuantity, "Total after:", totalAfter);
+                        }
+                    }
+                    
                     $('#moveStockModal').modal('hide');
                     if(inventoryTable) inventoryTable.refresh();
                     inventoryTable.showSuccessToast('Success', 'Stock moved successfully');

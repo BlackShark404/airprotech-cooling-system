@@ -273,16 +273,41 @@ class InventoryModel extends Model
         
         error_log("[DEBUG] moveStock in Model - Parameters: sourceId={$sourceInventoryId}, targetId={$targetWarehouseId}, quantity={$quantity}");
         
-        // Start a transaction
+        // Start a transaction - ensure we're not already in one
+        if ($this->pdo->inTransaction()) {
+            $this->pdo->commit(); // Commit any existing transaction to start fresh
+            error_log("[DEBUG] moveStock in Model - Committed existing transaction before starting new one");
+        }
+        
         $this->beginTransaction();
+        error_log("[DEBUG] moveStock in Model - Transaction started");
         
         try {
-            // Get source inventory record
-            $sourceInventory = $this->getInventoryById($sourceInventoryId);
-            error_log("[DEBUG] moveStock in Model - Source inventory: " . print_r($sourceInventory, true));
+            // Get source inventory record with fresh query to avoid stale data
+            $sql = "SELECT * FROM {$this->table} 
+                    WHERE INVE_ID = :inventory_id 
+                    AND INVE_DELETED_AT IS NULL 
+                    FOR UPDATE"; // Add FOR UPDATE to lock the row during transaction
+            
+            $sourceInventory = $this->queryOne($sql, [':inventory_id' => $sourceInventoryId]);
+            error_log("[DEBUG] moveStock in Model - Source inventory (fresh query): " . print_r($sourceInventory, true));
             
             if (!$sourceInventory) {
                 error_log("[DEBUG] moveStock in Model - Source inventory not found");
+                $this->rollback();
+                return false;
+            }
+            
+            // Get product ID with case insensitivity check before checking quantity
+            $prodId = null;
+            if (isset($sourceInventory['PROD_ID'])) {
+                $prodId = $sourceInventory['PROD_ID'];
+            } else if (isset($sourceInventory['prod_id'])) {
+                $prodId = $sourceInventory['prod_id'];
+            }
+            
+            if (!$prodId) {
+                error_log("[DEBUG] moveStock in Model - Product ID not found in source inventory");
                 $this->rollback();
                 return false;
             }
@@ -309,25 +334,6 @@ class InventoryModel extends Model
                 return false; // Not enough stock to move
             }
             
-            // Update source inventory quantity
-            $newSourceQuantity = $sourceQuantity - $quantity;
-            error_log("[DEBUG] moveStock in Model - Updating source inventory. New quantity: " . $newSourceQuantity);
-            $this->updateInventoryQuantity($sourceInventoryId, $newSourceQuantity);
-            
-            // Get product ID with case insensitivity check
-            $prodId = null;
-            if (isset($sourceInventory['PROD_ID'])) {
-                $prodId = $sourceInventory['PROD_ID'];
-            } else if (isset($sourceInventory['prod_id'])) {
-                $prodId = $sourceInventory['prod_id'];
-            }
-            
-            if (!$prodId) {
-                error_log("[DEBUG] moveStock in Model - Product ID not found in source inventory");
-                $this->rollback();
-                return false;
-            }
-            
             // Get inventory type with case insensitivity check
             $inventoryType = 'Regular'; // Default
             if (isset($sourceInventory['INVE_TYPE'])) {
@@ -336,19 +342,29 @@ class InventoryModel extends Model
                 $inventoryType = $sourceInventory['inve_type'];
             }
             
-            // Check if there's already inventory for this product in the target warehouse
-            $targetInventory = $this->getInventoryByProductAndWarehouse(
-                $prodId, 
-                $targetWarehouseId
-            );
+            // First, check if target warehouse inventory already exists
+            $targetSql = "SELECT * FROM {$this->table} 
+                         WHERE PROD_ID = :product_id 
+                         AND WHOUSE_ID = :warehouse_id 
+                         AND INVE_DELETED_AT IS NULL
+                         FOR UPDATE";
+            
+            $targetInventory = $this->queryOne($targetSql, [
+                ':product_id' => $prodId,
+                ':warehouse_id' => $targetWarehouseId
+            ]);
             
             error_log("[DEBUG] moveStock in Model - Target inventory: " . print_r($targetInventory, true));
             
+            // Begin with update to target warehouse (to ensure we don't lose stock if source update succeeds but target fails)
             if ($targetInventory) {
-                // Update existing inventory at target
-                $targetQuantity = isset($targetInventory['QUANTITY']) ? intval($targetInventory['QUANTITY']) : 0;
-                $newTargetQuantity = $targetQuantity + $quantity;
-                error_log("[DEBUG] moveStock in Model - Updating target inventory. New quantity: " . $newTargetQuantity);
+                // Get target inventory quantity with case sensitivity check
+                $targetQuantity = 0;
+                if (isset($targetInventory['QUANTITY'])) {
+                    $targetQuantity = intval($targetInventory['QUANTITY']);
+                } else if (isset($targetInventory['quantity'])) {
+                    $targetQuantity = intval($targetInventory['quantity']);
+                }
                 
                 // Get target inventory ID with case sensitivity check
                 $targetInventoryId = null;
@@ -362,28 +378,91 @@ class InventoryModel extends Model
                     return false;
                 }
                 
-                $this->updateInventoryQuantity(
-                    $targetInventoryId, 
-                    $newTargetQuantity
-                );
+                $newTargetQuantity = $targetQuantity + $quantity;
+                error_log("[DEBUG] moveStock in Model - Updating target inventory. Old quantity: " . $targetQuantity . ", New quantity: " . $newTargetQuantity);
+                
+                $updateTargetSql = "UPDATE {$this->table} SET 
+                                  QUANTITY = :quantity,
+                                  INVE_UPDATED_AT = CURRENT_TIMESTAMP
+                                  WHERE INVE_ID = :inventory_id 
+                                  AND INVE_DELETED_AT IS NULL";
+                
+                $targetUpdateResult = $this->execute($updateTargetSql, [
+                    ':quantity' => $newTargetQuantity,
+                    ':inventory_id' => $targetInventoryId
+                ]);
+                
+                error_log("[DEBUG] moveStock in Model - Target update result: " . ($targetUpdateResult ? 'Success' : 'Failed'));
+                
+                if (!$targetUpdateResult) {
+                    error_log("[ERROR] moveStock in Model - Failed to update target inventory");
+                    $this->rollback();
+                    return false;
+                }
             } else {
                 // Create new inventory at target
-                error_log("[DEBUG] moveStock in Model - Creating new inventory at target warehouse");
-                $this->createInventory([
-                    'PROD_ID' => $prodId,
-                    'WHOUSE_ID' => $targetWarehouseId,
-                    'INVE_TYPE' => $inventoryType,
-                    'QUANTITY' => $quantity
+                error_log("[DEBUG] moveStock in Model - Creating new inventory at target warehouse with quantity: " . $quantity);
+                
+                $insertSql = "INSERT INTO {$this->table} (PROD_ID, WHOUSE_ID, INVE_TYPE, QUANTITY, INVE_CREATED_AT, INVE_UPDATED_AT)
+                            VALUES (:product_id, :warehouse_id, :inventory_type, :quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                
+                $insertResult = $this->execute($insertSql, [
+                    ':product_id' => $prodId,
+                    ':warehouse_id' => $targetWarehouseId,
+                    ':inventory_type' => $inventoryType,
+                    ':quantity' => $quantity
                 ]);
+                
+                error_log("[DEBUG] moveStock in Model - Insert result: " . ($insertResult ? 'Success' : 'Failed'));
+                
+                if (!$insertResult) {
+                    error_log("[ERROR] moveStock in Model - Failed to create target inventory");
+                    $this->rollback();
+                    return false;
+                }
             }
             
+            // Now update source inventory quantity after target is updated successfully
+            $newSourceQuantity = $sourceQuantity - $quantity;
+            error_log("[DEBUG] moveStock in Model - Updating source inventory. Old quantity: " . $sourceQuantity . ", New quantity: " . $newSourceQuantity);
+            
+            $updateSourceSql = "UPDATE {$this->table} SET 
+                               QUANTITY = :quantity,
+                               INVE_UPDATED_AT = CURRENT_TIMESTAMP
+                               WHERE INVE_ID = :inventory_id 
+                               AND INVE_DELETED_AT IS NULL";
+            
+            $sourceUpdateResult = $this->execute($updateSourceSql, [
+                ':quantity' => $newSourceQuantity,
+                ':inventory_id' => $sourceInventoryId
+            ]);
+            
+            error_log("[DEBUG] moveStock in Model - Source update result: " . ($sourceUpdateResult ? 'Success' : 'Failed'));
+            
+            if (!$sourceUpdateResult) {
+                error_log("[ERROR] moveStock in Model - Failed to update source inventory");
+                $this->rollback();
+                return false;
+            }
+            
+            // Verify both updates worked
+            $verifySourceSql = "SELECT QUANTITY FROM {$this->table} WHERE INVE_ID = :inventory_id AND INVE_DELETED_AT IS NULL";
+            $sourceVerifyResult = $this->queryOne($verifySourceSql, [':inventory_id' => $sourceInventoryId]);
+            
+            $verifyTargetSql = "SELECT SUM(QUANTITY) as total_quantity FROM {$this->table} WHERE PROD_ID = :product_id AND INVE_DELETED_AT IS NULL";
+            $targetVerifyResult = $this->queryOne($verifyTargetSql, [':product_id' => $prodId]);
+            
+            error_log("[DEBUG] moveStock in Model - Source verification: " . print_r($sourceVerifyResult, true));
+            error_log("[DEBUG] moveStock in Model - Total quantity verification: " . print_r($targetVerifyResult, true));
+            
             // Commit the transaction
-            $this->commit();
-            error_log("[DEBUG] moveStock in Model - Transaction committed successfully");
+            $commitResult = $this->commit();
+            error_log("[DEBUG] moveStock in Model - Transaction committed: " . ($commitResult ? 'Success' : 'Failed'));
+            
             return true;
         } catch (Exception $e) {
             $this->rollback();
-            error_log("Error moving stock: " . $e->getMessage());
+            error_log("[ERROR] Error moving stock: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             return false;
         }
     }
