@@ -839,8 +839,8 @@ ob_start();
                         productSelect.innerHTML = '<option value="">Select Product</option>'; 
                         data.data.forEach(product => {
                             const option = document.createElement('option');
-                            option.value = product.PROD_ID;
-                            option.textContent = product.PROD_NAME;
+                            option.value = product.prod_id;
+                            option.textContent = product.prod_name;
                             productSelect.appendChild(option);
                         });
                     } else {
