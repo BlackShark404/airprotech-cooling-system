@@ -413,6 +413,42 @@ class DataTablesManager {
    */
   initialize() {
     try {
+      // First check if table element exists
+      if (!this.tableElement) {
+        console.error(`DataTablesManager: Table element with ID '${this.tableId}' not found`);
+        return;
+      }
+
+      // Check if the table has the basic required structure
+      const thead = this.tableElement.querySelector('thead');
+      const tbody = this.tableElement.querySelector('tbody');
+
+      if (!thead || !tbody) {
+        console.error(`DataTablesManager: Table with ID '${this.tableId}' is missing thead or tbody elements`);
+
+        // Try to add missing elements if they don't exist
+        if (!thead) {
+          const theadEl = document.createElement('thead');
+          // Create a row with empty cells based on columns
+          const headerRow = document.createElement('tr');
+
+          // Add headers based on columns config
+          this.options.columns.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col.title || '';
+            headerRow.appendChild(th);
+          });
+
+          theadEl.appendChild(headerRow);
+          this.tableElement.appendChild(theadEl);
+        }
+
+        if (!tbody) {
+          const tbodyEl = document.createElement('tbody');
+          this.tableElement.appendChild(tbodyEl);
+        }
+      }
+
       // If initialize is explicitly set to false, skip initialization
       if (this.options.initialize === false) {
         // Skip DataTable initialization but still attach event listeners
@@ -476,39 +512,83 @@ class DataTablesManager {
         });
       }
 
-      // Initialize DataTable with jQuery (since DataTables is jQuery-based)
-      this.dataTable = $(`#${this.tableId}`).DataTable({
-        columns,
-        responsive: true,
-        processing: true,
-        dom: this.options.dom || 'Bfrtip',
-        buttons: this.options.buttons || [],
-        lengthMenu: this.options.lengthMenu || [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        pageLength: this.options.pageLength || 10,
-        ajax: {
-          url: this.options.ajaxUrl,
-          dataSrc: (json) => {
-            this.data = json.data || json;
-            return this.data;
-          },
-          error: (xhr, error, thrown) => {
-            this.showErrorToast('Data Loading Error', 'Failed to load table data. ' + thrown);
-            console.error('DataTables AJAX error:', error, thrown);
-            return [];
-          }
-        },
-        language: {
-          searchPlaceholder: "Search records",
-          emptyTable: "No data available",
-          lengthMenu: this.options.lengthMenuText || "Show _MENU_ entries"
-        }
-      });
+      // Check if jQuery and DataTable are available
+      if (typeof $ === 'undefined' || !$.fn.DataTable) {
+        throw new Error('jQuery or DataTables plugin is not loaded');
+      }
 
-      // Attach event listeners with delegation for better performance
-      this._attachEventListeners();
+      // Force the reflow of the table to ensure it's properly in the DOM
+      void this.tableElement.offsetHeight;
+
+      // Get the jQuery instance with a small delay to ensure DOM is ready
+      setTimeout(() => {
+        try {
+          // Initialize DataTable with jQuery (since DataTables is jQuery-based)
+          const $table = $(`#${this.tableId}`);
+
+          // Verify the table element is accessible and has proper structure
+          if ($table.length === 0) {
+            throw new Error(`jQuery cannot find table with ID '${this.tableId}'`);
+          }
+
+          // Ensure the table has visible dimensions
+          const tableEl = $table[0];
+          if (tableEl.offsetWidth === 0 || tableEl.offsetHeight === 0) {
+            console.warn(`Table #${this.tableId} has zero dimensions, this may cause rendering issues`);
+          }
+
+          this.dataTable = $table.DataTable({
+            columns,
+            responsive: true,
+            processing: true,
+            dom: this.options.dom || 'Bfrtip',
+            buttons: this.options.buttons || [],
+            lengthMenu: this.options.lengthMenu || [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            pageLength: this.options.pageLength || 10,
+            ajax: {
+              url: this.options.ajaxUrl,
+              dataSrc: (json) => {
+                this.data = json.data || json;
+                return this.data;
+              },
+              error: (xhr, error, thrown) => {
+                this.showErrorToast('Data Loading Error', 'Failed to load table data. ' + thrown);
+                console.error('DataTables AJAX error:', error, thrown);
+                return [];
+              }
+            },
+            language: {
+              searchPlaceholder: "Search records",
+              emptyTable: "No data available",
+              lengthMenu: this.options.lengthMenuText || "Show _MENU_ entries"
+            }
+          });
+
+          // Attach event listeners with delegation for better performance
+          this._attachEventListeners();
+
+        } catch (innerError) {
+          console.error('Error in DataTable initialization:', innerError);
+          try {
+            this.showErrorToast('Initialization Error', 'Failed to initialize table: ' + innerError.message);
+          } catch (toastError) {
+            console.error('Error showing toast notification:', toastError);
+            alert('Failed to initialize table: ' + innerError.message);
+          }
+        }
+      }, 0);
+
     } catch (error) {
       console.error('Error initializing DataTable:', error);
-      this.showErrorToast('Initialization Error', 'Failed to initialize table: ' + error.message);
+      // Mark initialization as failed
+      this.initializationFailed = true;
+      // Try to use showErrorToast but handle the case where it might fail
+      try {
+        this.showErrorToast('Initialization Error', 'Failed to initialize table: ' + error.message);
+      } catch (toastError) {
+        console.error('Error showing toast notification:', toastError);
+        alert('Failed to initialize table: ' + error.message);
+      }
     }
   }
 
@@ -654,6 +734,11 @@ class DataTablesManager {
    */
   refresh(newData = null) {
     try {
+      // Check if DataTable is initialized
+      if (!this.dataTable) {
+        throw new Error('DataTable is not initialized');
+      }
+
       if (newData) {
         this.data = newData;
         this.dataTable.clear().rows.add(newData).draw();
@@ -662,7 +747,11 @@ class DataTablesManager {
       }
     } catch (error) {
       console.error('Error refreshing table:', error);
-      this.showErrorToast('Refresh Error', `Failed to refresh table: ${error.message}`);
+      try {
+        this.showErrorToast('Refresh Error', `Failed to refresh table: ${error.message}`);
+      } catch (toastError) {
+        console.error('Error showing toast notification:', toastError);
+      }
     }
 
     return this;

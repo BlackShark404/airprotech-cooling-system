@@ -386,4 +386,28 @@ class InventoryController extends BaseController
         
         $this->jsonSuccess($normalized);
     }
+
+    public function deleteInventory($id)
+    {
+        if (!$this->isAjax()) {
+            $this->renderError('Bad Request', 400);
+            return;
+        }
+
+        // First check if the inventory item exists
+        $inventoryItem = $this->inventoryModel->getInventoryById($id);
+        if (!$inventoryItem) {
+            $this->jsonError('Inventory item not found', 404);
+            return;
+        }
+
+        // Attempt to delete the inventory item
+        $result = $this->inventoryModel->deleteInventory($id);
+        
+        if ($result) {
+            $this->jsonSuccess([], 'Inventory record deleted successfully');
+        } else {
+            $this->jsonError('Failed to delete inventory record', 500);
+        }
+    }
 } 
