@@ -461,10 +461,13 @@ document.addEventListener('DOMContentLoaded', function() {
         order: [[5, 'desc']] // Sort by Created At column by default
     });
     
-    // Create a DataTablesManager instance for more advanced features
+    // Create a DataTablesManager instance WITHOUT initializing the table again
     const productsManager = new DataTablesManager('productsTable', {
-        dataTable: productsTable // Assign the existing DataTable instance
+        initialize: false  // Prevent the manager from initializing a new DataTable
     });
+    
+    // Manually set the dataTable property
+    productsManager.dataTable = productsTable;
     
     // Handle row expand/collapse for details
     $('#productsTable tbody').on('click', 'td.details-control', function() {

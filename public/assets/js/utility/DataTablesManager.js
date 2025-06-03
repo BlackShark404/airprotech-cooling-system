@@ -413,6 +413,13 @@ class DataTablesManager {
    */
   initialize() {
     try {
+      // If initialize is explicitly set to false, skip initialization
+      if (this.options.initialize === false) {
+        // Skip DataTable initialization but still attach event listeners
+        this._attachEventListeners();
+        return;
+      }
+
       // Process columns to add badge rendering if configured
       const processedColumns = this.options.columns.map(column => {
         // Check if column has badge configuration
