@@ -378,11 +378,21 @@ ob_start();
 <!-- JavaScript for Product Management -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Debug: Log the first data item to see the actual property names
+    fetch('/api/products')
+        .then(response => response.json())
+        .then(result => {
+            if (result.data && result.data.length > 0) {
+                console.log('First product data object:', result.data[0]);
+            }
+        })
+        .catch(error => console.error('Error fetching products:', error));
+    
     // Initialize DataTable
     let productsTable = $('#productsTable').DataTable({
         ajax: {
             url: '/api/products',
-            dataSrc: ''
+            dataSrc: 'data'
         },
         columns: [
             {
@@ -393,20 +403,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 width: '30px'
             },
             { 
-                data: 'PROD_IMAGE',
+                data: 'prod_image',
                 render: function(data) {
-                    return '<img src="/assets/uploads/products/' + data + '" class="product-image" alt="Product Image">';
+                    return data ? '<img src="/' + data + '" class="product-image" alt="Product Image">' : 'No Image';
                 }
             },
-            { data: 'PROD_NAME' },
+            { data: 'prod_name' },
             { 
-                data: 'PROD_DESCRIPTION',
+                data: 'prod_description',
                 render: function(data) {
                     return data ? (data.length > 100 ? data.substring(0, 100) + '...' : data) : 'N/A';
                 }
             },
             { 
-                data: 'PROD_AVAILABILITY_STATUS',
+                data: 'prod_availability_status',
                 render: function(data) {
                     let badgeClass = 'badge-available';
                     if (data === 'Out of Stock') {
@@ -414,19 +424,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (data === 'Discontinued') {
                         badgeClass = 'badge-discontinued';
                     }
-                    return '<span class="badge ' + badgeClass + '">' + data + '</span>';
+                    return '<span class="badge ' + badgeClass + '">' + (data || 'N/A') + '</span>';
                 }
             },
             { 
-                data: 'PROD_CREATED_AT',
+                data: 'prod_created_at',
                 render: function(data) {
-                    return new Date(data).toLocaleDateString();
+                    return data ? new Date(data).toLocaleDateString() : 'N/A';
                 }
             },
             { 
-                data: 'PROD_UPDATED_AT',
+                data: 'prod_updated_at',
                 render: function(data) {
-                    return new Date(data).toLocaleDateString();
+                    return data ? new Date(data).toLocaleDateString() : 'N/A';
                 }
             },
             {
@@ -435,13 +445,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 render: function(data) {
                     return `
                         <div class="d-flex">
-                            <button class="action-icon action-icon-view view-product" data-id="${data.PROD_ID}">
+                            <button class="action-icon action-icon-view view-product" data-id="${data.prod_id}">
                                 <i class="bi bi-eye"></i>
                             </button>
-                            <button class="action-icon action-icon-edit edit-product" data-id="${data.PROD_ID}">
+                            <button class="action-icon action-icon-edit edit-product" data-id="${data.prod_id}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="action-icon action-icon-delete delete-product" data-id="${data.PROD_ID}">
+                            <button class="action-icon action-icon-delete delete-product" data-id="${data.prod_id}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -465,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
             icon.removeClass('bi-chevron-up').addClass('bi-chevron-down');
         } else {
             // Open this row
-            let productId = row.data().PROD_ID;
+            let productId = row.data().prod_id;
             fetchProductDetails(productId, function(details) {
                 row.child(formatProductDetails(details)).show();
                 tr.addClass('shown');
@@ -576,12 +586,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         fetchProductDetails(productId, function(product) {
             // Fill in product details
-            $('#productName').val(product.PROD_NAME);
-            $('#productDescription').val(product.PROD_DESCRIPTION);
-            $('#productStatus').val(product.PROD_AVAILABILITY_STATUS);
+            $('#productName').val(product.prod_name);
+            $('#productDescription').val(product.prod_description);
+            $('#productStatus').val(product.prod_availability_status);
             
-            if (product.PROD_IMAGE) {
-                $('#imagePreview').html(`<img src="/assets/uploads/products/${product.PROD_IMAGE}" class="preview-image" alt="Product Image">`);
+            if (product.prod_image) {
+                $('#imagePreview').html(`<img src="/' + product.prod_image + '" class="preview-image" alt="Product Image">`);
             }
             
             // Add features
@@ -664,9 +674,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add product details
         const productData = {
-            PROD_NAME: $('#productName').val(),
-            PROD_DESCRIPTION: $('#productDescription').val(),
-            PROD_AVAILABILITY_STATUS: $('#productStatus').val()
+            prod_name: $('#productName').val(),
+            prod_description: $('#productDescription').val(),
+            prod_availability_status: $('#productStatus').val()
         };
         
         formData.append('product', JSON.stringify(productData));
