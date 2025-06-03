@@ -660,12 +660,12 @@ ob_start();
             inventoryTable = new DataTablesManager('inventoryTable', {
                 ajaxUrl: '/api/inventory',
                 columns: [
-                    { data: 'INVE_ID', title: 'ID' },
-                    { data: 'PROD_NAME', title: 'Product' },
-                    { data: 'WHOUSE_NAME', title: 'Warehouse' },
-                    { data: 'QUANTITY', title: 'Quantity' },
+                    { data: 'inve_id', title: 'ID' },
+                    { data: 'prod_name', title: 'Product' },
+                    { data: 'whouse_name', title: 'Warehouse' },
+                    { data: 'quantity', title: 'Quantity' },
                     { 
-                        data: 'INVE_TYPE', 
+                        data: 'inve_type', 
                         title: 'Type',
                         badge: {
                             type: 'secondary',
@@ -673,7 +673,7 @@ ob_start();
                         }
                     },
                     { 
-                        data: 'STOCK_LEVEL', 
+                        data: 'stock_level', 
                         title: 'Stock Level',
                         badge: {
                             valueMap: {
@@ -683,7 +683,7 @@ ob_start();
                             }
                         }
                     },
-                    { data: 'INVE_UPDATED_AT', title: 'Last Updated' },
+                    { data: 'inve_updated_at', title: 'Last Updated' },
                 ],
                 viewRowCallback: viewInventory,
                 editRowCallback: openMoveStockModal, // Typically 'edit' action, repurposed for 'move stock'
@@ -745,23 +745,23 @@ ob_start();
             lowStockTable = new DataTablesManager('lowStockTable', {
                 ajaxUrl: '/api/inventory/low-stock',
                 columns: [
-                    { data: 'INVE_ID', title: 'ID' },
-                    { data: 'PROD_NAME', title: 'Product' },
-                    { data: 'WHOUSE_NAME', title: 'Warehouse' },
-                    { data: 'QUANTITY', title: 'Current Quantity' },
-                    { data: 'WHOUSE_RESTOCK_THRESHOLD', title: 'Threshold' },
+                    { data: 'inve_id', title: 'ID' },
+                    { data: 'prod_name', title: 'Product' },
+                    { data: 'whouse_name', title: 'Warehouse' },
+                    { data: 'quantity', title: 'Current Quantity' },
+                    { data: 'whouse_restock_threshold', title: 'Threshold' },
                     { 
                         data: null, // Calculate Restock Needed
                         title: 'Restock Needed',
                         render: function(data, type, row) {
                             if (type === 'display') {
-                                const needed = parseInt(row.WHOUSE_RESTOCK_THRESHOLD) - parseInt(row.QUANTITY);
+                                const needed = parseInt(row.whouse_restock_threshold) - parseInt(row.quantity);
                                 if (needed > 0) {
                                     return `<span class="badge bg-danger">${needed}</span>`;
                                 }
                                 return '<span class="badge bg-success">OK</span>';
                             }
-                            return parseInt(row.WHOUSE_RESTOCK_THRESHOLD) - parseInt(row.QUANTITY);
+                            return parseInt(row.whouse_restock_threshold) - parseInt(row.quantity);
                         }
                     },
                 ],
@@ -1021,24 +1021,24 @@ ob_start();
         
         // Function to view inventory details
         function viewInventory(rowData) {
-            fetch(`/api/inventory/${rowData.INVE_ID}`)
+            fetch(`/api/inventory/${rowData.inve_id}`)
                 .then(response => response.json())
                 .then(result => {
                     if (result.success && result.data) {
                         const item = result.data;
-                        document.getElementById('productName').textContent = item.PROD_NAME;
-                        document.getElementById('productDescription').textContent = item.PROD_DESCRIPTION || 'No description available.';
-                        document.getElementById('productImage').src = item.PROD_IMAGE_PATH || '/assets/images/placeholder.png'; // Assuming PROD_IMAGE_PATH
+                        document.getElementById('productName').textContent = item.prod_name;
+                        document.getElementById('productDescription').textContent = item.prod_description || 'No description available.';
+                        document.getElementById('productImage').src = item.prod_image_path || '/assets/images/placeholder.png'; // Assuming PROD_IMAGE_PATH
                         
-                        document.getElementById('detailWarehouse').textContent = item.WHOUSE_NAME;
-                        document.getElementById('detailQuantity').textContent = item.QUANTITY;
-                        document.getElementById('detailType').textContent = item.INVE_TYPE;
-                        document.getElementById('detailUpdated').textContent = new Date(item.INVE_UPDATED_AT).toLocaleString();
+                        document.getElementById('detailWarehouse').textContent = item.whouse_name;
+                        document.getElementById('detailQuantity').textContent = item.quantity;
+                        document.getElementById('detailType').textContent = item.inve_type;
+                        document.getElementById('detailUpdated').textContent = new Date(item.inve_updated_at).toLocaleString();
                         
-                        document.getElementById('detailSku').textContent = item.PROD_SKU || 'N/A';
-                        document.getElementById('detailCategory').textContent = item.PROD_CATEGORY_NAME || 'N/A'; // Assuming PROD_CATEGORY_NAME
-                        document.getElementById('detailPrice').textContent = item.PROD_PRICE ? `$${parseFloat(item.PROD_PRICE).toFixed(2)}` : 'N/A';
-                        document.getElementById('detailStatus').textContent = item.PROD_AVAILABILITY_STATUS || 'N/A';
+                        document.getElementById('detailSku').textContent = item.prod_sku || 'N/A';
+                        document.getElementById('detailCategory').textContent = item.prod_category_name || 'N/A'; // Assuming PROD_CATEGORY_NAME
+                        document.getElementById('detailPrice').textContent = item.prod_price ? `$${parseFloat(item.prod_price).toFixed(2)}` : 'N/A';
+                        document.getElementById('detailStatus').textContent = item.prod_availability_status || 'N/A';
                         
                         $('#viewInventoryModal').modal('show');
                     } else {
@@ -1053,8 +1053,8 @@ ob_start();
         
         // Function to delete inventory (with confirmation)
         function confirmDeleteInventory(rowData) {
-            if (confirm(`Are you sure you want to delete this inventory record for "${rowData.PROD_NAME}" in "${rowData.WHOUSE_NAME}"? Quantity: ${rowData.QUANTITY}. This cannot be undone.`)) {
-                fetch(`/api/inventory/${rowData.INVE_ID}`, {
+            if (confirm(`Are you sure you want to delete this inventory record for "${rowData.prod_name}" in "${rowData.whouse_name}"? Quantity: ${rowData.quantity}. This cannot be undone.`)) {
+                fetch(`/api/inventory/${rowData.inve_id}`, {
                     method: 'DELETE'
                 })
                 .then(response => response.json())
@@ -1077,12 +1077,12 @@ ob_start();
         
         // Function to prepare move stock modal
         function openMoveStockModal(rowData) {
-            document.getElementById('sourceInventoryId').value = rowData.INVE_ID;
-            document.getElementById('productDetails').value = `${rowData.PROD_NAME} (ID: ${rowData.PROD_ID})`; // More info
-            document.getElementById('sourceWarehouse').value = rowData.WHOUSE_NAME;
-            document.getElementById('availableQuantity').value = rowData.QUANTITY;
+            document.getElementById('sourceInventoryId').value = rowData.inve_id;
+            document.getElementById('productDetails').value = `${rowData.prod_name} (ID: ${rowData.prod_id})`; // More info
+            document.getElementById('sourceWarehouse').value = rowData.whouse_name;
+            document.getElementById('availableQuantity').value = rowData.quantity;
             document.getElementById('moveQuantity').value = '1'; // Default to 1
-            document.getElementById('moveQuantity').max = rowData.QUANTITY;
+            document.getElementById('moveQuantity').max = rowData.quantity;
             
             const targetWarehouseSelect = document.getElementById('targetWarehouseId');
             // Temporarily store current options to re-add non-source ones
@@ -1094,10 +1094,10 @@ ob_start();
                 .then(warehouseData => {
                     if (warehouseData.success && warehouseData.data) {
                          warehouseData.data.forEach(warehouse => {
-                            if (warehouse.WHOUSE_ID != rowData.WHOUSE_ID) { // Exclude source warehouse
+                            if (warehouse.whouse_id != rowData.whouse_id) { // Exclude source warehouse
                                 const option = document.createElement('option');
-                                option.value = warehouse.WHOUSE_ID;
-                                option.textContent = warehouse.WHOUSE_NAME;
+                                option.value = warehouse.whouse_id;
+                                option.textContent = warehouse.whouse_name;
                                 targetWarehouseSelect.appendChild(option);
                             }
                         });
@@ -1187,10 +1187,10 @@ ob_start();
         
         // Function to initiate restocking an item (opens Add Stock modal pre-filled)
         function restockItem(rowData) {
-            document.getElementById('productId').value = rowData.PROD_ID;
-            document.getElementById('warehouseId').value = rowData.WHOUSE_ID;
-            const currentQuantity = parseInt(rowData.QUANTITY);
-            const threshold = parseInt(rowData.WHOUSE_RESTOCK_THRESHOLD);
+            document.getElementById('productId').value = rowData.prod_id;
+            document.getElementById('warehouseId').value = rowData.whouse_id;
+            const currentQuantity = parseInt(rowData.quantity);
+            const threshold = parseInt(rowData.whouse_restock_threshold);
             let suggestedQuantity = 1;
             if (!isNaN(threshold) && threshold > currentQuantity) {
                 suggestedQuantity = Math.max(threshold - currentQuantity, 1);
@@ -1207,9 +1207,9 @@ ob_start();
             const stockLevel = document.getElementById('stockLevelFilter').value;
             const inventoryType = document.getElementById('inventoryTypeFilter').value;
             
-            if (warehouseId) filters.WHOUSE_ID = warehouseId;
-            if (stockLevel) filters.STOCK_LEVEL = stockLevel; // Assumes backend handles STOCK_LEVEL filter
-            if (inventoryType) filters.INVE_TYPE = inventoryType;
+            if (warehouseId) filters.whouse_id = warehouseId;
+            if (stockLevel) filters.stock_level = stockLevel; // Assumes backend handles stock_level filter
+            if (inventoryType) filters.inve_type = inventoryType;
             
             if(inventoryTable) inventoryTable.applyFilters(filters);
         }
