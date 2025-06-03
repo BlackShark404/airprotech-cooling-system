@@ -215,7 +215,7 @@ ob_start();
                             </select>
                         </div>
                         <div class="col-md-4 mb-3 d-flex align-items-end">
-                            <button id="resetFiltersBtn" class="btn btn-outline-secondary" onclick="clearInventoryFilters()">
+                            <button id="resetFiltersBtn" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle me-1"></i> Reset Filters
                             </button>
                         </div>
@@ -647,9 +647,17 @@ ob_start();
 <script>
     // Global variable to hold reference to the inventoryTable
     let globalInventoryTable;
+    // Flag to prevent duplicate toast notifications
+    let isResettingFilters = false;
 
     // Global function for Reset Filters button
     function clearInventoryFilters() {
+        // If already in the process of resetting filters, return early
+        if (isResettingFilters) return;
+        
+        // Set flag to prevent duplicate notifications
+        isResettingFilters = true;
+        
         const warehouseFilter = document.getElementById('warehouseFilter');
         const inventoryTypeFilter = document.getElementById('inventoryTypeFilter');
         
@@ -663,14 +671,15 @@ ob_start();
         }
         
         // Clear custom filters if they exist
-        if ($.fn.dataTable.ext.search.length > 0) {
+        if ($.fn.dataTable && $.fn.dataTable.ext && $.fn.dataTable.ext.search.length > 0) {
             $.fn.dataTable.ext.search.pop();
         }
         
-        // Access the globally stored reference to inventoryTable
-        if (globalInventoryTable) {
-            globalInventoryTable.applyFilters({});
-            console.log('Filters cleared using globalInventoryTable reference');
+        // Use direct DataTable methods instead of our wrapper for silent operation
+        if (globalInventoryTable && globalInventoryTable.dataTable) {
+            // Just redraw the table without using the applyFilters method that shows notifications
+            globalInventoryTable.dataTable.draw();
+            console.log('Filters cleared using direct table redraw');
         } else {
             // Fallback if globalInventoryTable is not set yet
             const dataTable = $('#inventoryTable').DataTable();
@@ -679,6 +688,11 @@ ob_start();
                 console.log('Filters cleared using direct DataTable reference');
             }
         }
+        
+        // Reset the flag after a short delay
+        setTimeout(() => {
+            isResettingFilters = false;
+        }, 500);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1046,7 +1060,59 @@ ob_start();
             if (resetFiltersBtn) {
                 resetFiltersBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    clearInventoryFilters();
+                    
+                    // Show our custom notification to avoid duplicate toasts
+                    if (inventoryTable) {
+                        // Define a custom version of applyFilters that doesn't show a notification
+                        const originalApplyFilters = inventoryTable.applyFilters;
+                        inventoryTable.applyFilters = function(filters) {
+                            try {
+                                // Clear existing custom filters
+                                $.fn.dataTable.ext.search.pop();
+                                
+                                // Add custom filter function if filters exist
+                                if (filters && Object.keys(filters).length > 0) {
+                                    $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
+                                        // Check if this is our table
+                                        if (settings.nTable.id !== this.tableId) {
+                                            return true; // Skip filtering for other tables
+                                        }
+                                        
+                                        // Check all filter criteria
+                                        for (const [key, value] of Object.entries(filters)) {
+                                            if (rowData[key] !== value) {
+                                                return false;
+                                            }
+                                        }
+                                        return true;
+                                    });
+                                }
+                                
+                                // No toast notification here
+                                
+                                // Redraw the table
+                                this.dataTable.draw();
+                            } catch (error) {
+                                console.error('Error applying filters:', error);
+                            }
+                            
+                            return this;
+                        };
+                        
+                        // Call our clearInventoryFilters function
+                        clearInventoryFilters();
+                        
+                        // Only show one notification
+                        inventoryTable.showInfoToast('Filters Removed', 'All filters have been cleared');
+                        
+                        // Restore the original method after a delay
+                        setTimeout(() => {
+                            inventoryTable.applyFilters = originalApplyFilters;
+                        }, 1000);
+                    } else {
+                        // Fall back to the regular function if inventoryTable is not available
+                        clearInventoryFilters();
+                    }
                 });
             }
             
