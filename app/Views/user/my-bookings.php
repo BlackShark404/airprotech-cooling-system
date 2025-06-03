@@ -260,7 +260,7 @@
                                 <h4 id="modal-product-name" class="fs-4 fw-bold text-primary mb-0"></h4>
                                 <span id="modal-status" class="badge rounded-pill px-3 py-2"></span>
                             </div>
-                            <p class="mb-2">Model: <span id="modal-variant" class="badge bg-secondary rounded-pill px-3"></span></p>
+                            <p class="mb-2">Variant: <span id="modal-variant" class="badge bg-secondary rounded-pill px-3"></span></p>
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
                                     <p class="mb-0">Quantity: <span id="modal-quantity" class="fw-bold"></span></p>

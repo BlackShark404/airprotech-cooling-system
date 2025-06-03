@@ -120,8 +120,8 @@ class ProductBookingManager {
                                 <div>
                                     <p class="text-muted mb-1">PB-${id} <span class="text-muted">${new Date(bookingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
                                     <h5 class="fw-bold mb-1">${productName}</h5>
-                                    <p class="text-muted mb-0">Model: ${variantCapacity}</p>
-                                    <p class="fw-bold text-dark mb-0">$${parseFloat(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                    <p class="text-muted mb-0">Variant: ${variantCapacity}</p>
+                                    <p class="fw-bold text-dark mb-0">₱${parseFloat(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                 </div>
                                 <div class="text-end">
                                     <p class="text-muted mb-1">Preferred Date: ${new Date(preferredDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
@@ -625,12 +625,12 @@ class ProductBookingManager {
         }
 
         if (this.modal.unitPrice) {
-            this.modal.unitPrice.textContent = `$${parseFloat(bookingData.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            this.modal.unitPrice.textContent = `₱${parseFloat(bookingData.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             this.modal.unitPrice.classList.add('fw-bold');
         }
 
         if (this.modal.totalAmount) {
-            this.modal.totalAmount.textContent = `$${parseFloat(bookingData.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            this.modal.totalAmount.textContent = `₱${parseFloat(bookingData.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             this.modal.totalAmount.classList.add('fs-4');
             this.modal.totalAmount.classList.add('fw-bold');
             this.modal.totalAmount.classList.add('text-primary');

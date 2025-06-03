@@ -399,7 +399,7 @@ ob_start();
                         <div class="col-md-6">
                             <label for="edit-cost" class="form-label">Estimated Cost</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₱</span>
                                 <input type="number" class="form-control" id="edit-cost" name="estimatedCost" step="0.01" min="0">
                             </div>
                         </div>
@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             },
             { data: 'sb_estimated_cost', title: 'Est. Cost', render: function(data) {
-                return data ? '$' + parseFloat(data).toFixed(2) : '-';
+                return data ? '₱' + parseFloat(data).toFixed(2) : '-';
             }},
             {
                 data: null,
@@ -732,7 +732,7 @@ function viewServiceRequest(rowData) {
             $('#view-time').text(data.sb_preferred_time);
             $('#view-status').text(data.sb_status.charAt(0).toUpperCase() + data.sb_status.slice(1));
             $('#view-priority').text(data.sb_priority.charAt(0).toUpperCase() + data.sb_priority.slice(1));
-            $('#view-cost').text(data.sb_estimated_cost ? '$' + parseFloat(data.sb_estimated_cost).toFixed(2) : '-');
+            $('#view-cost').text(data.sb_estimated_cost ? '₱' + parseFloat(data.sb_estimated_cost).toFixed(2) : '-');
             $('#view-created').text(data.sb_created_at);
             $('#view-address').text(data.sb_address);
             $('#view-description').text(data.sb_description);

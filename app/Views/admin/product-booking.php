@@ -690,8 +690,8 @@ function viewProductBooking(rowData) {
             $('#view-product-variant').text(data.var_capacity);
             $('#view-product-image').attr('src', data.prod_image || '/assets/images/product-placeholder.jpg');
             $('#view-quantity').text(data.pb_quantity);
-            $('#view-unit-price').text(data.pb_unit_price ? '$' + parseFloat(data.pb_unit_price).toFixed(2) : '-');
-            $('#view-total-amount').text(data.pb_total_amount ? '$' + parseFloat(data.pb_total_amount).toFixed(2) : '-');
+            $('#view-unit-price').text(data.pb_unit_price ? '₱' + parseFloat(data.pb_unit_price).toFixed(2) : '-');
+            $('#view-total-amount').text(data.pb_total_amount ? '₱' + parseFloat(data.pb_total_amount).toFixed(2) : '-');
             $('#view-status').text(data.pb_status.charAt(0).toUpperCase() + data.pb_status.slice(1));
             $('#view-order-date').text(data.pb_order_date);
             $('#view-delivery-date').text(data.pb_preferred_date);

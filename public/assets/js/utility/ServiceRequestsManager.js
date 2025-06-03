@@ -90,7 +90,7 @@ class ServiceRequestsManager {
                                 <p class="text-muted mb-0">Service: ${service.ST_DESCRIPTION || 'N/A'}</p>
                                 <p class="fw-bold text-dark mb-0">
                                     ${service.SB_ESTIMATED_COST && parseFloat(service.SB_ESTIMATED_COST) !== 0
-                ? 'Cost: $' + parseFloat(service.SB_ESTIMATED_COST).toFixed(2)
+                ? 'Cost: ₱' + parseFloat(service.SB_ESTIMATED_COST).toFixed(2)
                 : 'Cost pending'}
                                 </p>
                             </div>
@@ -704,7 +704,7 @@ class ServiceRequestsManager {
         if (this.modal.estimatedCost) {
             this.modal.estimatedCost.textContent =
                 service.SB_ESTIMATED_COST && parseFloat(service.SB_ESTIMATED_COST) !== 0
-                    ? `$${parseFloat(service.SB_ESTIMATED_COST).toFixed(2)}`
+                    ? `₱${parseFloat(service.SB_ESTIMATED_COST).toFixed(2)}`
                     : 'Estimate pending';
         }
 
