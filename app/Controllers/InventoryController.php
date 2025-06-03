@@ -172,33 +172,56 @@ class InventoryController extends BaseController
         
         $data = $this->getJsonInput();
         
+        // Debug log the received data
+        error_log("[DEBUG] moveStock data received: " . print_r($data, true));
+        
         // Validate required fields
         if (!isset($data['source_inventory_id']) || !isset($data['target_warehouse_id']) || !isset($data['quantity'])) {
             $this->jsonError('Missing required fields: source_inventory_id, target_warehouse_id, quantity', 400);
             return;
         }
         
+        // Convert values to proper types to avoid string comparison issues
+        $sourceInventoryId = intval($data['source_inventory_id']);
+        $targetWarehouseId = intval($data['target_warehouse_id']);
+        $quantity = intval($data['quantity']);
+        
         // Validate quantity is positive
-        if ($data['quantity'] <= 0) {
+        if ($quantity <= 0) {
             $this->jsonError('Quantity must be greater than zero', 400);
             return;
         }
         
         // Check if source inventory exists
-        $sourceInventory = $this->inventoryModel->getInventoryById($data['source_inventory_id']);
+        $sourceInventory = $this->inventoryModel->getInventoryById($sourceInventoryId);
+        error_log("[DEBUG] Source inventory: " . print_r($sourceInventory, true));
+        
         if (!$sourceInventory) {
             $this->jsonError('Source inventory not found', 404);
             return;
         }
         
-        // Check if source has enough quantity (with validation to avoid PHP warning)
-        if (!isset($sourceInventory['QUANTITY']) || $sourceInventory['QUANTITY'] < $data['quantity']) {
+        // Extract quantity, handling both lowercase and uppercase keys
+        $availableQuantity = 0;
+        if (isset($sourceInventory['QUANTITY'])) {
+            $availableQuantity = intval($sourceInventory['QUANTITY']);
+        } else if (isset($sourceInventory['quantity'])) {
+            $availableQuantity = intval($sourceInventory['quantity']);
+        }
+        
+        // Debug the source inventory quantity check
+        error_log("[DEBUG] Source quantity: " . $availableQuantity);
+        error_log("[DEBUG] Quantity to move: " . $quantity);
+        
+        // Check if source has enough quantity
+        if ($availableQuantity < $quantity) {
+            error_log("[DEBUG] Not enough stock available to move. Available: " . $availableQuantity . ", Requested: " . $quantity);
             $this->jsonError('Not enough stock available to move', 400);
             return;
         }
         
         // Check if target warehouse exists
-        $targetWarehouse = $this->warehouseModel->getWarehouseById($data['target_warehouse_id']);
+        $targetWarehouse = $this->warehouseModel->getWarehouseById($targetWarehouseId);
         if (!$targetWarehouse) {
             $this->jsonError('Target warehouse not found', 404);
             return;
@@ -206,16 +229,16 @@ class InventoryController extends BaseController
         
         // Move stock
         $result = $this->inventoryModel->moveStock(
-            $data['source_inventory_id'],
-            $data['target_warehouse_id'],
-            $data['quantity']
+            $sourceInventoryId,
+            $targetWarehouseId,
+            $quantity
         );
         
         if ($result) {
             $this->jsonSuccess([
-                'source_inventory_id' => $data['source_inventory_id'],
-                'target_warehouse_id' => $data['target_warehouse_id'],
-                'moved_quantity' => $data['quantity'],
+                'source_inventory_id' => $sourceInventoryId,
+                'target_warehouse_id' => $targetWarehouseId,
+                'moved_quantity' => $quantity,
             ], 'Stock moved successfully');
         } else {
             $this->jsonError('Failed to move stock', 500);

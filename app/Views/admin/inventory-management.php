@@ -1103,9 +1103,21 @@ ob_start();
                 inventoryTable.showErrorToast('Error', 'Cannot move more than available quantity.');
                 return;
             }
+            
+            // Log the data being sent for debugging
+            const sourceInventoryId = document.getElementById('sourceInventoryId').value;
+            const targetWarehouseId = document.getElementById('targetWarehouseId').value;
+            
+            console.log("Moving stock with parameters:", {
+                source_inventory_id: sourceInventoryId,
+                target_warehouse_id: targetWarehouseId, 
+                quantity: quantity,
+                available_quantity: availableQuantity
+            });
+            
             const data = {
-                source_inventory_id: document.getElementById('sourceInventoryId').value,
-                target_warehouse_id: document.getElementById('targetWarehouseId').value,
+                source_inventory_id: sourceInventoryId,
+                target_warehouse_id: targetWarehouseId,
                 quantity: quantity
             };
             
@@ -1116,6 +1128,7 @@ ob_start();
             })
             .then(response => response.json())
             .then(result => {
+                console.log("Move stock API response:", result);
                 if (result.success) {
                     $('#moveStockModal').modal('hide');
                     if(inventoryTable) inventoryTable.refresh();

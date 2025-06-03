@@ -24,6 +24,8 @@ class InventoryModel extends Model
 
     public function getInventoryById($inventoryId)
     {
+        error_log("[DEBUG] getInventoryById called with ID: " . $inventoryId);
+        
         $sql = "SELECT 
                     i.*,
                     p.PROD_NAME,
@@ -34,7 +36,19 @@ class InventoryModel extends Model
                 JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
                 WHERE i.INVE_ID = :inventory_id AND i.INVE_DELETED_AT IS NULL";
         
-        return $this->queryOne($sql, [':inventory_id' => $inventoryId]);
+        $result = $this->queryOne($sql, [':inventory_id' => $inventoryId]);
+        
+        if ($result) {
+            error_log("[DEBUG] getInventoryById result: " . print_r($result, true));
+            // Ensure the result has the QUANTITY field as uppercase (original DB format)
+            if (!isset($result['QUANTITY']) && isset($result['quantity'])) {
+                $result['QUANTITY'] = $result['quantity'];
+            }
+        } else {
+            error_log("[DEBUG] getInventoryById returned no result for ID: " . $inventoryId);
+        }
+        
+        return $result;
     }
 
     public function getProductInventory($productId)
@@ -252,44 +266,107 @@ class InventoryModel extends Model
 
     public function moveStock($sourceInventoryId, $targetWarehouseId, $quantity)
     {
+        // Ensure parameters are integers
+        $sourceInventoryId = intval($sourceInventoryId);
+        $targetWarehouseId = intval($targetWarehouseId);
+        $quantity = intval($quantity);
+        
+        error_log("[DEBUG] moveStock in Model - Parameters: sourceId={$sourceInventoryId}, targetId={$targetWarehouseId}, quantity={$quantity}");
+        
         // Start a transaction
         $this->beginTransaction();
         
         try {
             // Get source inventory record
             $sourceInventory = $this->getInventoryById($sourceInventoryId);
-            if (!$sourceInventory || $sourceInventory['QUANTITY'] < $quantity) {
+            error_log("[DEBUG] moveStock in Model - Source inventory: " . print_r($sourceInventory, true));
+            
+            if (!$sourceInventory) {
+                error_log("[DEBUG] moveStock in Model - Source inventory not found");
+                $this->rollback();
+                return false;
+            }
+            
+            // Check if we have source inventory and enough quantity
+            // First check if QUANTITY exists (uppercase) - database convention
+            if (isset($sourceInventory['QUANTITY'])) {
+                $sourceQuantity = intval($sourceInventory['QUANTITY']);
+            } 
+            // Then check if quantity exists (lowercase) - might be normalized in the model
+            else if (isset($sourceInventory['quantity'])) {
+                $sourceQuantity = intval($sourceInventory['quantity']);
+            } 
+            // If neither exists, set to 0
+            else {
+                $sourceQuantity = 0;
+            }
+            
+            error_log("[DEBUG] moveStock in Model - Source quantity: " . $sourceQuantity . ", Quantity to move: " . $quantity);
+            
+            if ($sourceQuantity < $quantity) {
+                error_log("[DEBUG] moveStock in Model - Not enough stock. Available: " . $sourceQuantity . ", Requested: " . $quantity);
                 $this->rollback();
                 return false; // Not enough stock to move
             }
             
             // Update source inventory quantity
-            $this->updateInventoryQuantity($sourceInventoryId, $sourceInventory['QUANTITY'] - $quantity);
+            $newSourceQuantity = $sourceQuantity - $quantity;
+            error_log("[DEBUG] moveStock in Model - Updating source inventory. New quantity: " . $newSourceQuantity);
+            $this->updateInventoryQuantity($sourceInventoryId, $newSourceQuantity);
+            
+            // Get product ID with case insensitivity check
+            $prodId = null;
+            if (isset($sourceInventory['PROD_ID'])) {
+                $prodId = $sourceInventory['PROD_ID'];
+            } else if (isset($sourceInventory['prod_id'])) {
+                $prodId = $sourceInventory['prod_id'];
+            }
+            
+            if (!$prodId) {
+                error_log("[DEBUG] moveStock in Model - Product ID not found in source inventory");
+                $this->rollback();
+                return false;
+            }
+            
+            // Get inventory type with case insensitivity check
+            $inventoryType = 'Regular'; // Default
+            if (isset($sourceInventory['INVE_TYPE'])) {
+                $inventoryType = $sourceInventory['INVE_TYPE'];
+            } else if (isset($sourceInventory['inve_type'])) {
+                $inventoryType = $sourceInventory['inve_type'];
+            }
             
             // Check if there's already inventory for this product in the target warehouse
             $targetInventory = $this->getInventoryByProductAndWarehouse(
-                $sourceInventory['PROD_ID'], 
+                $prodId, 
                 $targetWarehouseId
             );
             
+            error_log("[DEBUG] moveStock in Model - Target inventory: " . print_r($targetInventory, true));
+            
             if ($targetInventory) {
                 // Update existing inventory at target
+                $targetQuantity = isset($targetInventory['QUANTITY']) ? intval($targetInventory['QUANTITY']) : 0;
+                $newTargetQuantity = $targetQuantity + $quantity;
+                error_log("[DEBUG] moveStock in Model - Updating target inventory. New quantity: " . $newTargetQuantity);
                 $this->updateInventoryQuantity(
                     $targetInventory['INVE_ID'], 
-                    $targetInventory['QUANTITY'] + $quantity
+                    $newTargetQuantity
                 );
             } else {
                 // Create new inventory at target
+                error_log("[DEBUG] moveStock in Model - Creating new inventory at target warehouse");
                 $this->createInventory([
-                    'PROD_ID' => $sourceInventory['PROD_ID'],
+                    'PROD_ID' => $prodId,
                     'WHOUSE_ID' => $targetWarehouseId,
-                    'INVE_TYPE' => $sourceInventory['INVE_TYPE'],
+                    'INVE_TYPE' => $inventoryType,
                     'QUANTITY' => $quantity
                 ]);
             }
             
             // Commit the transaction
             $this->commit();
+            error_log("[DEBUG] moveStock in Model - Transaction committed successfully");
             return true;
         } catch (Exception $e) {
             $this->rollback();

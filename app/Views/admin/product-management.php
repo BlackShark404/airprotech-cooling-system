@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#productStatus').val(product.prod_availability_status);
             
             if (product.prod_image) {
-                $('#imagePreview').html(`<img src="/' + product.prod_image + '" class="preview-image" alt="Product Image">`);
+                $('#imagePreview').html(`<img src="/${product.prod_image}" class="preview-image" alt="Product Image">`);
             }
             
             // Add features
@@ -629,6 +629,61 @@ document.addEventListener('DOMContentLoaded', function() {
                     );
                 });
             }
+            
+            $('#productModal').modal('show');
+        });
+    });
+    
+    // View Product Button
+    $(document).on('click', '.view-product', function() {
+        const productId = $(this).data('id');
+        
+        fetchProductDetails(productId, function(product) {
+            // Fill in product details in read-only mode
+            $('#productModalLabel').text('View Product');
+            $('#productId').val(productId);
+            
+            $('#productName').val(product.prod_name).prop('readonly', true);
+            $('#productDescription').val(product.prod_description).prop('readonly', true);
+            $('#productStatus').val(product.prod_availability_status).prop('disabled', true);
+            $('#productImage').prop('disabled', true);
+            
+            if (product.prod_image) {
+                $('#imagePreview').html(`<img src="/${product.prod_image}" class="preview-image" alt="Product Image">`);
+            }
+            
+            // Add features in read-only mode
+            if (product.features && product.features.length > 0) {
+                product.features.forEach(function(feature) {
+                    addFeatureRow(feature.feature_name, feature.feature_id, true);
+                });
+            }
+            
+            // Add specs in read-only mode
+            if (product.specs && product.specs.length > 0) {
+                product.specs.forEach(function(spec) {
+                    addSpecRow(spec.spec_name, spec.spec_value, spec.spec_id, true);
+                });
+            }
+            
+            // Add variants in read-only mode
+            if (product.variants && product.variants.length > 0) {
+                product.variants.forEach(function(variant) {
+                    addVariantRow(
+                        variant.var_id,
+                        variant.var_capacity,
+                        variant.var_srp_price,
+                        variant.var_price_free_install,
+                        variant.var_price_with_install,
+                        variant.var_power_consumption,
+                        true
+                    );
+                });
+            }
+            
+            // Hide save button and show close button
+            $('#saveProductBtn').hide();
+            $('#productModal .modal-footer .btn-secondary').text('Close');
             
             $('#productModal').modal('show');
         });
@@ -665,6 +720,189 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 productsManager.showErrorToast('An error occurred while deleting the product');
             });
+    });
+    
+    // Reset product form
+    function resetProductForm() {
+        $('#productForm')[0].reset();
+        $('#productId').val('');
+        $('#imagePreview').empty();
+        $('#featuresContainer').empty();
+        $('#specsContainer').empty();
+        $('#variantsContainer').empty();
+        $('#details-tab').tab('show');
+        
+        // Reset form controls to editable state
+        $('#productName').prop('readonly', false);
+        $('#productDescription').prop('readonly', false);
+        $('#productStatus').prop('disabled', false);
+        $('#productImage').prop('disabled', false);
+        
+        // Show save button again
+        $('#saveProductBtn').show();
+        $('#productModal .modal-footer .btn-secondary').text('Cancel');
+    }
+    
+    // Reset form when modal is closed
+    $('#productModal').on('hidden.bs.modal', function() {
+        resetProductForm();
+    });
+    
+    // Validate product form
+    function validateProductForm() {
+        if (!$('#productName').val()) {
+            productsManager.showErrorToast('Validation Error', 'Please enter a product name');
+            $('#details-tab').tab('show');
+            return false;
+        }
+        
+        if (!$('#productStatus').val()) {
+            productsManager.showErrorToast('Validation Error', 'Please select an availability status');
+            $('#details-tab').tab('show');
+            return false;
+        }
+        
+        const productId = $('#productId').val();
+        const isEditMode = productId !== '';
+        
+        // For new products, require an image
+        if (!isEditMode && !$('#productImage').val() && !$('#imagePreview img').length) {
+            productsManager.showErrorToast('Validation Error', 'Please select a product image');
+            $('#details-tab').tab('show');
+            return false;
+        }
+        
+        // Require at least one variant
+        if ($('.variant-row').length === 0) {
+            productsManager.showErrorToast('Validation Error', 'Please add at least one product variant');
+            $('#variants-tab').tab('show');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Add Feature Row
+    $('#addFeatureBtn').on('click', function() {
+        addFeatureRow();
+    });
+    
+    function addFeatureRow(featureName = '', featureId = null, readOnly = false) {
+        const featureRow = `
+            <div class="feature-row row mb-2" ${featureId ? `data-id="${featureId}"` : ''}>
+                <div class="col-${readOnly ? '12' : '10'}">
+                    <input type="text" class="form-control feature-name" placeholder="Feature" value="${featureName}" ${readOnly ? 'readonly' : ''}>
+                </div>
+                ${readOnly ? '' : `
+                <div class="col-2">
+                    <button type="button" class="btn btn-outline-danger feature-remove">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                `}
+            </div>
+        `;
+        
+        $('#featuresContainer').append(featureRow);
+    }
+    
+    // Remove Feature Row
+    $(document).on('click', '.feature-remove', function() {
+        $(this).closest('.feature-row').remove();
+    });
+    
+    // Add Spec Row
+    $('#addSpecBtn').on('click', function() {
+        addSpecRow();
+    });
+    
+    function addSpecRow(specName = '', specValue = '', specId = null, readOnly = false) {
+        const specRow = `
+            <div class="spec-row row mb-2" ${specId ? `data-id="${specId}"` : ''}>
+                <div class="col-${readOnly ? '6' : '5'}">
+                    <input type="text" class="form-control spec-name" placeholder="Specification Name" value="${specName}" ${readOnly ? 'readonly' : ''}>
+                </div>
+                <div class="col-${readOnly ? '6' : '5'}">
+                    <input type="text" class="form-control spec-value" placeholder="Specification Value" value="${specValue}" ${readOnly ? 'readonly' : ''}>
+                </div>
+                ${readOnly ? '' : `
+                <div class="col-2">
+                    <button type="button" class="btn btn-outline-danger spec-remove">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                `}
+            </div>
+        `;
+        
+        $('#specsContainer').append(specRow);
+    }
+    
+    // Remove Spec Row
+    $(document).on('click', '.spec-remove', function() {
+        $(this).closest('.spec-row').remove();
+    });
+    
+    // Add Variant Row
+    $('#addVariantBtn').on('click', function() {
+        addVariantRow();
+    });
+    
+    function addVariantRow(variantId = null, capacity = '', srpPrice = '', freeInstallPrice = '', withInstallPrice = '', powerConsumption = '', readOnly = false) {
+        const variantRow = `
+            <div class="variant-row card mb-3" ${variantId ? `data-id="${variantId}"` : ''}>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-${readOnly ? '12' : '10'}">
+                            <h6>Product Variant</h6>
+                        </div>
+                        ${readOnly ? '' : `
+                        <div class="col-2 text-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm variant-remove">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        `}
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Capacity (HP/BTU) *</label>
+                            <input type="text" class="form-control variant-capacity" placeholder="e.g., 1.0 HP or 9000 BTU" value="${capacity}" ${readOnly ? 'readonly' : ''}>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SRP Price (₱) *</label>
+                            <input type="number" class="form-control variant-srp-price" min="0" step="0.01" placeholder="e.g., 25000" value="${srpPrice}" ${readOnly ? 'readonly' : ''}>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Price with Free Installation (₱)</label>
+                            <input type="number" class="form-control variant-free-install-price" min="0" step="0.01" placeholder="e.g., 27000" value="${freeInstallPrice}" ${readOnly ? 'readonly' : ''}>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Price with Installation (₱)</label>
+                            <input type="number" class="form-control variant-with-install-price" min="0" step="0.01" placeholder="e.g., 30000" value="${withInstallPrice}" ${readOnly ? 'readonly' : ''}>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Power Consumption</label>
+                            <input type="text" class="form-control variant-power-consumption" placeholder="e.g., 800W" value="${powerConsumption}" ${readOnly ? 'readonly' : ''}>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#variantsContainer').append(variantRow);
+    }
+    
+    // Remove Variant Row
+    $(document).on('click', '.variant-remove', function() {
+        $(this).closest('.variant-row').remove();
     });
     
     // Save Product Button
@@ -774,168 +1012,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
     
-    // Reset product form
-    function resetProductForm() {
-        $('#productForm')[0].reset();
-        $('#productId').val('');
-        $('#imagePreview').empty();
-        $('#featuresContainer').empty();
-        $('#specsContainer').empty();
-        $('#variantsContainer').empty();
-        $('#details-tab').tab('show');
-    }
-    
-    // Validate product form
-    function validateProductForm() {
-        if (!$('#productName').val()) {
-            productsManager.showErrorToast('Validation Error', 'Please enter a product name');
-            $('#details-tab').tab('show');
-            return false;
-        }
-        
-        if (!$('#productStatus').val()) {
-            productsManager.showErrorToast('Validation Error', 'Please select an availability status');
-            $('#details-tab').tab('show');
-            return false;
-        }
-        
-        const productId = $('#productId').val();
-        const isEditMode = productId !== '';
-        
-        // For new products, require an image
-        if (!isEditMode && !$('#productImage').val() && !$('#imagePreview img').length) {
-            productsManager.showErrorToast('Validation Error', 'Please select a product image');
-            $('#details-tab').tab('show');
-            return false;
-        }
-        
-        // Require at least one variant
-        if ($('.variant-row').length === 0) {
-            productsManager.showErrorToast('Validation Error', 'Please add at least one product variant');
-            $('#variants-tab').tab('show');
-            return false;
-        }
-        
-        return true;
-    }
-    
-    // Add Feature Row
-    $('#addFeatureBtn').on('click', function() {
-        addFeatureRow();
-    });
-    
-    function addFeatureRow(featureName = '', featureId = null) {
-        const featureRow = `
-            <div class="feature-row row mb-2" ${featureId ? `data-id="${featureId}"` : ''}>
-                <div class="col-10">
-                    <input type="text" class="form-control feature-name" placeholder="Feature" value="${featureName}">
-                </div>
-                <div class="col-2">
-                    <button type="button" class="btn btn-outline-danger feature-remove">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        $('#featuresContainer').append(featureRow);
-    }
-    
-    // Remove Feature Row
-    $(document).on('click', '.feature-remove', function() {
-        $(this).closest('.feature-row').remove();
-    });
-    
-    // Add Spec Row
-    $('#addSpecBtn').on('click', function() {
-        addSpecRow();
-    });
-    
-    function addSpecRow(specName = '', specValue = '', specId = null) {
-        const specRow = `
-            <div class="spec-row row mb-2" ${specId ? `data-id="${specId}"` : ''}>
-                <div class="col-5">
-                    <input type="text" class="form-control spec-name" placeholder="Specification Name" value="${specName}">
-                </div>
-                <div class="col-5">
-                    <input type="text" class="form-control spec-value" placeholder="Specification Value" value="${specValue}">
-                </div>
-                <div class="col-2">
-                    <button type="button" class="btn btn-outline-danger spec-remove">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        $('#specsContainer').append(specRow);
-    }
-    
-    // Remove Spec Row
-    $(document).on('click', '.spec-remove', function() {
-        $(this).closest('.spec-row').remove();
-    });
-    
-    // Add Variant Row
-    $('#addVariantBtn').on('click', function() {
-        addVariantRow();
-    });
-    
-    function addVariantRow(variantId = null, capacity = '', srpPrice = '', freeInstallPrice = '', withInstallPrice = '', powerConsumption = '') {
-        const variantRow = `
-            <div class="variant-row card mb-3" ${variantId ? `data-id="${variantId}"` : ''}>
-                <div class="card-body">
-                    <div class="row mb-2">
-                        <div class="col-10">
-                            <h6>Product Variant</h6>
-                        </div>
-                        <div class="col-2 text-end">
-                            <button type="button" class="btn btn-outline-danger btn-sm variant-remove">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-2">
-                        <div class="col-md-6">
-                            <label class="form-label">Capacity (HP/BTU) *</label>
-                            <input type="text" class="form-control variant-capacity" placeholder="e.g., 1.0 HP or 9000 BTU" value="${capacity}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">SRP Price (₱) *</label>
-                            <input type="number" class="form-control variant-srp-price" min="0" step="0.01" placeholder="e.g., 25000" value="${srpPrice}">
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-2">
-                        <div class="col-md-6">
-                            <label class="form-label">Price with Free Installation (₱)</label>
-                            <input type="number" class="form-control variant-free-install-price" min="0" step="0.01" placeholder="e.g., 27000" value="${freeInstallPrice}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Price with Installation (₱)</label>
-                            <input type="number" class="form-control variant-with-install-price" min="0" step="0.01" placeholder="e.g., 30000" value="${withInstallPrice}">
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label class="form-label">Power Consumption</label>
-                            <input type="text" class="form-control variant-power-consumption" placeholder="e.g., 800W" value="${powerConsumption}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        $('#variantsContainer').append(variantRow);
-    }
-    
-    // Remove Variant Row
-    $(document).on('click', '.variant-remove', function() {
-        $(this).closest('.variant-row').remove();
-    });
-    
     // Preview product image
     $('#productImage').on('change', function() {
         const file = this.files[0];
@@ -958,4 +1034,4 @@ $content = ob_get_clean();
 
 // Include the admin template and pass in variables
 include_once __DIR__ . '/../includes/admin/base.php';
-?> 
+?>
