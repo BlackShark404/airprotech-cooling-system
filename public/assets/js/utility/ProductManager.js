@@ -74,7 +74,7 @@ class ProductManager {
             // Convert relative paths to absolute paths if needed
             let imagePath = product.PROD_IMAGE || product.prod_image || '';
             if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
-                imagePath = '/uploads/' + imagePath;
+                imagePath = '/' + imagePath;
             }
 
             const productId = product.PROD_ID || product.prod_id;
@@ -665,7 +665,7 @@ class ProductManager {
         // Convert relative paths to absolute paths if needed
         let imagePath = productData.image || '';
         if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
-            imagePath = '/uploads/' + imagePath;
+            imagePath = '/' + imagePath;
         }
 
         // Add custom styling to modal elements
