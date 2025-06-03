@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { 
                 data: 'PROD_IMAGE',
                 render: function(data) {
-                    return '<img src="/assets/uploads/products/' + data + '" class="product-image" alt="Product Image">';
+                    return '<img src="/uploads/products/' + data + '" class="product-image" alt="Product Image">';
                 }
             },
             { data: 'PROD_NAME' },
@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#productStatus').val(product.PROD_AVAILABILITY_STATUS);
             
             if (product.PROD_IMAGE) {
-                $('#imagePreview').html(`<img src="/assets/uploads/products/${product.PROD_IMAGE}" class="preview-image" alt="Product Image">`);
+                $('#imagePreview').html(`<img src="/uploads/products/${product.PROD_IMAGE}" class="preview-image" alt="Product Image">`);
             }
             
             // Add features
