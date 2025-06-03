@@ -214,6 +214,11 @@ ob_start();
                                 <option value="Returns">Returns</option>
                             </select>
                         </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                            <button id="resetFiltersBtn" class="btn btn-outline-secondary" onclick="clearInventoryFilters()">
+                                <i class="bi bi-x-circle me-1"></i> Reset Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -604,6 +609,29 @@ ob_start();
     </div>
 </div>
 
+<!-- Delete Inventory Confirmation Modal -->
+<div class="modal fade" id="deleteInventoryModal" tabindex="-1" aria-labelledby="deleteInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteInventoryModalLabel">Confirm Inventory Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the following inventory item? This action cannot be undone.</p>
+                <p><strong>Product:</strong> <span id="deleteInventoryProductSpan"></span></p>
+                <p><strong>Warehouse:</strong> <span id="deleteInventoryWarehouseSpan"></span></p>
+                <p><strong>Quantity:</strong> <span id="deleteInventoryQuantitySpan"></span></p>
+                <p><strong>Type:</strong> <span id="deleteInventoryTypeSpan"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteInventoryBtn">Delete Inventory</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 // End output buffering and get the content for the main page body
 $content = ob_get_clean();
@@ -679,31 +707,56 @@ ob_start();
                             columns: [
                                 { data: 'inve_id', title: 'ID' },
                                 { data: 'prod_name', title: 'Product' },
-                                { data: 'whouse_name', title: 'Warehouse' },
-                                { data: 'quantity', title: 'Quantity' },
                                 { 
-                                    data: 'inve_type', 
-                                    title: 'Type',
-                                    badge: {
-                                        type: 'secondary',
-                                        pill: true
+                                    data: null, 
+                                    title: 'Warehouse', 
+                                    render: function(data, type, row) {
+                                        // Handle both uppercase and lowercase field names
+                                        return row.whouse_name || row.WHOUSE_NAME || 'N/A';
                                     }
                                 },
-                                { data: 'inve_updated_at', title: 'Last Updated' },
+                                { 
+                                    data: null, 
+                                    title: 'Quantity',
+                                    render: function(data, type, row) {
+                                        // Handle both uppercase and lowercase field names
+                                        return row.quantity || row.QUANTITY || '0';
+                                    }
+                                },
+                                { 
+                                    data: null,
+                                    title: 'Type',
+                                    render: function(data, type, row) {
+                                        // Handle both uppercase and lowercase field names
+                                        const typeValue = row.inve_type || row.INVE_TYPE || 'N/A';
+                                        return `<span class="badge bg-secondary rounded-pill">${typeValue}</span>`;
+                                    }
+                                },
+                                { 
+                                    data: null, 
+                                    title: 'Last Updated',
+                                    render: function(data, type, row) {
+                                        // Handle both uppercase and lowercase field names
+                                        const date = row.inve_updated_at || row.INVE_UPDATED_AT;
+                                        return date ? new Date(date).toLocaleString() : 'N/A';
+                                    }
+                                },
                                 {
                                     data: null,
                                     title: 'Actions',
                                     orderable: false,
                                     searchable: false,
                                     render: function(data, type, row) {
+                                        // Ensure we have the inventory ID in a consistent format
+                                        const inventoryId = row.inve_id || row.INVE_ID;
                                         return `
-                                            <button type="button" class="btn btn-sm btn-info view-inventory-btn" title="View Details" data-id="${row.inve_id}">
+                                            <button type="button" class="btn btn-sm btn-info view-inventory-btn" title="View Details" data-id="${inventoryId}">
                                                 <i class="bi bi-eye-fill"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-warning move-stock-btn" title="Move Stock" data-id="${row.inve_id}">
+                                            <button type="button" class="btn btn-sm btn-warning move-stock-btn" title="Move Stock" data-id="${inventoryId}">
                                                 <i class="bi bi-arrows-move"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-danger delete-inventory-btn" title="Delete Inventory" data-id="${row.inve_id}">
+                                            <button type="button" class="btn btn-sm btn-danger delete-inventory-btn" title="Delete Inventory" data-id="${inventoryId}">
                                                 <i class="bi bi-trash-fill"></i>
                                             </button>
                                         `;
@@ -996,17 +1049,30 @@ ob_start();
                             }
 
                             warehouses.forEach(warehouse => {
-                                const option = document.createElement('option');
-                                option.value = warehouse.whouse_id; 
-                                option.textContent = warehouse.whouse_name; 
+                                // Get warehouse ID using either lowercase or uppercase field name
+                                const warehouseId = warehouse.whouse_id || warehouse.WHOUSE_ID;
+                                // Get warehouse name using either lowercase or uppercase field name
+                                const warehouseName = warehouse.whouse_name || warehouse.WHOUSE_NAME;
                                 
-                                if (addStockWarehouseSelect) {
-                                    addStockWarehouseSelect.appendChild(option.cloneNode(true));
-                                }
-                                if (filterWarehouseSelect) {
-                                    filterWarehouseSelect.appendChild(option.cloneNode(true));
+                                if (warehouseId && warehouseName) {
+                                    const option = document.createElement('option');
+                                    option.value = warehouseId; 
+                                    option.textContent = warehouseName; 
+                                    
+                                    if (addStockWarehouseSelect) {
+                                        addStockWarehouseSelect.appendChild(option.cloneNode(true));
+                                    }
+                                    if (filterWarehouseSelect) {
+                                        filterWarehouseSelect.appendChild(option.cloneNode(true));
+                                    }
                                 }
                             });
+                            
+                            // Debug log to check if options were added correctly
+                            console.log(`Loaded ${warehouses.length} warehouses into filter dropdown`);
+                            if (filterWarehouseSelect) {
+                                console.log(`Filter dropdown now has ${filterWarehouseSelect.options.length} options`);
+                            }
                         } else {
                             console.error('Failed to load warehouses for dropdowns:', data.message || 'No data returned');
                             // Optionally show a toast or message to the user if a global toast manager is available
@@ -1210,27 +1276,45 @@ ob_start();
             
             // Function to delete inventory (with confirmation)
             function confirmDeleteInventory(rowData) {
-                if (confirm(`Are you sure you want to delete this inventory record for "${rowData.prod_name}" in "${rowData.whouse_name}"? Quantity: ${rowData.quantity}. This cannot be undone.`)) {
-                    fetch(`/api/inventory/${rowData.inve_id}`, {
-                        method: 'DELETE'
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.success) {
-                            if(inventoryTable) inventoryTable.refresh();
-                            inventoryTable.showSuccessToast('Success', 'Inventory record deleted');
-                            loadSummaryData();
-                            if (lowStockTable) lowStockTable.refresh();
-                        } else {
-                            inventoryTable.showErrorToast('Error', result.message || 'Failed to delete inventory');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error deleting inventory:', error);
-                        inventoryTable.showErrorToast('Error', 'An error occurred while deleting inventory');
-                    });
-                }
+                // Populate the modal with inventory data
+                document.getElementById('deleteInventoryProductSpan').textContent = rowData.prod_name || 'N/A';
+                document.getElementById('deleteInventoryWarehouseSpan').textContent = rowData.whouse_name || 'N/A';
+                document.getElementById('deleteInventoryQuantitySpan').textContent = rowData.quantity || '0';
+                document.getElementById('deleteInventoryTypeSpan').textContent = rowData.inve_type || 'N/A';
+                
+                // Store the inventory item ID for the delete operation
+                document.getElementById('confirmDeleteInventoryBtn').setAttribute('data-inventory-id', rowData.inve_id);
+                
+                // Show the modal
+                $('#deleteInventoryModal').modal('show');
             }
+            
+            // Event listener for the confirm delete button
+            document.getElementById('confirmDeleteInventoryBtn').addEventListener('click', function() {
+                const inventoryId = this.getAttribute('data-inventory-id');
+                if (!inventoryId) return;
+                
+                fetch(`/api/inventory/${inventoryId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(result => {
+                    $('#deleteInventoryModal').modal('hide');
+                    if (result.success) {
+                        if(inventoryTable) inventoryTable.refresh();
+                        inventoryTable.showSuccessToast('Success', 'Inventory record deleted');
+                        loadSummaryData();
+                        if (lowStockTable) lowStockTable.refresh();
+                    } else {
+                        inventoryTable.showErrorToast('Error', result.message || 'Failed to delete inventory');
+                    }
+                })
+                .catch(error => {
+                    $('#deleteInventoryModal').modal('hide');
+                    console.error('Error deleting inventory:', error);
+                    inventoryTable.showErrorToast('Error', 'An error occurred while deleting inventory');
+                });
+            });
             
             // Function to prepare move stock modal
             function openMoveStockModal(rowData) {
@@ -1408,10 +1492,108 @@ ob_start();
                 const warehouseId = document.getElementById('warehouseFilter').value;
                 const inventoryType = document.getElementById('inventoryTypeFilter').value;
                 
-                if (warehouseId) filters.whouse_id = warehouseId;
+                console.log('Applying filters:', { warehouseId, inventoryType });
+                
+                if (warehouseId) {
+                    // Use a custom filtering function that checks multiple possible field names for warehouse ID
+                    $.fn.dataTable.ext.search.pop(); // Remove any existing filters
+                    $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
+                        // Skip filtering for other tables
+                        if (settings.nTable.id !== 'inventoryTable') {
+                            return true;
+                        }
+                        
+                        // Debug log first row to see what fields are available
+                        if (dataIndex === 0) {
+                            console.log('First row data for filtering:', rowData);
+                        }
+                        
+                        // Check if we need to filter by warehouse
+                        if (warehouseId) {
+                            // Check all possible field names for warehouse ID
+                            const rowWarehouseId = rowData.whouse_id || rowData.WHOUSE_ID;
+                            if (dataIndex < 3) {
+                                console.log(`Row ${dataIndex} warehouse ID: ${rowWarehouseId}, filter value: ${warehouseId}, match: ${rowWarehouseId == warehouseId}`);
+                            }
+                            if (rowWarehouseId != warehouseId) { // Intentional loose comparison for string/number handling
+                                return false;
+                            }
+                        }
+                        
+                        // Check if we need to filter by inventory type
+                        if (inventoryType) {
+                            const rowInventoryType = rowData.inve_type || rowData.INVE_TYPE;
+                            if (rowInventoryType !== inventoryType) {
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    });
+                    
+                    if(inventoryTable) {
+                        console.log('Drawing table with custom filters');
+                        inventoryTable.dataTable.draw();
+                    }
+                    
+                    // Add a filter notice
+                    const filteredElement = document.getElementById('inventoryFilteredNotice');
+                    if (filteredElement) {
+                        filteredElement.textContent = `Filtered by warehouse: ${$('#warehouseFilter option:selected').text()}`;
+                        filteredElement.classList.remove('d-none');
+                    } else {
+                        // Create a notice if it doesn't exist
+                        const notice = document.createElement('div');
+                        notice.id = 'inventoryFilteredNotice';
+                        notice.className = 'alert alert-info mt-2';
+                        notice.innerHTML = `
+                            <strong>Filtered:</strong> Warehouse = ${$('#warehouseFilter option:selected').text()}
+                            <button type="button" class="btn-close float-end" onclick="clearInventoryFilters()"></button>
+                        `;
+                        
+                        // Insert after the filter card
+                        const filterCard = document.querySelector('.filter-card');
+                        if (filterCard && filterCard.parentNode) {
+                            filterCard.parentNode.insertBefore(notice, filterCard.nextSibling);
+                        }
+                    }
+                    
+                    return;
+                }
+                
+                // If no warehouse filter, use the standard approach
                 if (inventoryType) filters.inve_type = inventoryType;
                 
-                if(inventoryTable) inventoryTable.applyFilters(filters);
+                // Hide the filter notice if no warehouse filter
+                const filteredElement = document.getElementById('inventoryFilteredNotice');
+                if (filteredElement) {
+                    filteredElement.classList.add('d-none');
+                }
+                
+                if(inventoryTable) {
+                    console.log('Applying standard filters:', filters);
+                    inventoryTable.applyFilters(filters);
+                }
+            }
+
+            // Function to clear inventory filters
+            function clearInventoryFilters() {
+                document.getElementById('warehouseFilter').value = '';
+                document.getElementById('inventoryTypeFilter').value = '';
+                
+                // Hide the filter notice
+                const filteredElement = document.getElementById('inventoryFilteredNotice');
+                if (filteredElement) {
+                    filteredElement.classList.add('d-none');
+                }
+                
+                // Clear custom filters
+                $.fn.dataTable.ext.search.pop();
+                
+                // Refresh the table
+                if(inventoryTable) {
+                    inventoryTable.applyFilters({});
+                }
             }
 
             // --- New/Modified Event Listeners and Functions for Warehouse Delete ---
