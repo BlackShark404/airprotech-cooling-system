@@ -167,12 +167,11 @@ class InventoryModel extends Model
         $totalProducts = $productModel->countActiveProducts();
         error_log("[InventoryModel] Total products from ProductModel: " . $totalProducts);
 
-        // Get inventory-specific stats
+        // Get a direct count of total inventory and low stock items
         $sql = "SELECT 
-                    COALESCE(SUM(i.QUANTITY), 0) AS TOTAL_INVENTORY,
-                    COUNT(DISTINCT CASE WHEN i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD AND w.WHOUSE_RESTOCK_THRESHOLD > 0 THEN i.INVE_ID ELSE NULL END) AS LOW_STOCK_ITEMS
+                    COALESCE(SUM(i.QUANTITY), 0) AS total_inventory,
+                    COUNT(DISTINCT CASE WHEN i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD AND w.WHOUSE_RESTOCK_THRESHOLD > 0 THEN i.INVE_ID END) AS low_stock_items
                 FROM {$this->table} i
-                LEFT JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
                 LEFT JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID AND w.WHOUSE_DELETED_AT IS NULL
                 WHERE i.INVE_DELETED_AT IS NULL";
         
@@ -180,13 +179,40 @@ class InventoryModel extends Model
         $inventoryStats = $this->queryOne($sql);
         error_log("[InventoryModel] Raw inventory stats from queryOne: " . print_r($inventoryStats, true));
 
+        // Debug the case of the returned column names
+        $keysString = '';
+        if ($inventoryStats) {
+            $keysString = implode(', ', array_keys($inventoryStats));
+        }
+        error_log("[InventoryModel] Keys in inventory stats: " . $keysString);
+
         // Combine the results, ensuring all are integers and default to 0 if null/not set
+        // Using lowercase keys to match what's returned from the database
+        $totalInventory = 0;
+        $lowStockItems = 0;
+        
+        if ($inventoryStats) {
+            // Try both uppercase and lowercase keys to be safe
+            if (isset($inventoryStats['total_inventory'])) {
+                $totalInventory = (int)$inventoryStats['total_inventory'];
+            } elseif (isset($inventoryStats['TOTAL_INVENTORY'])) {
+                $totalInventory = (int)$inventoryStats['TOTAL_INVENTORY']; 
+            }
+            
+            if (isset($inventoryStats['low_stock_items'])) {
+                $lowStockItems = (int)$inventoryStats['low_stock_items'];
+            } elseif (isset($inventoryStats['LOW_STOCK_ITEMS'])) {
+                $lowStockItems = (int)$inventoryStats['LOW_STOCK_ITEMS'];
+            }
+        }
+        
         $summaryData = [
             'TOTAL_PRODUCTS' => (int)$totalProducts,
-            'TOTAL_WAREHOUSES' => (int)$totalWarehouses, // Already an int from WarehouseModel
-            'TOTAL_INVENTORY' => ($inventoryStats && isset($inventoryStats['TOTAL_INVENTORY'])) ? (int)$inventoryStats['TOTAL_INVENTORY'] : 0,
-            'LOW_STOCK_ITEMS' => ($inventoryStats && isset($inventoryStats['LOW_STOCK_ITEMS'])) ? (int)$inventoryStats['LOW_STOCK_ITEMS'] : 0
+            'TOTAL_WAREHOUSES' => (int)$totalWarehouses,
+            'TOTAL_INVENTORY' => $totalInventory,
+            'LOW_STOCK_ITEMS' => $lowStockItems
         ];
+        
         error_log("[InventoryModel] Final summary data: " . print_r($summaryData, true));
         return $summaryData;
     }

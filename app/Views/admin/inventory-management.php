@@ -726,13 +726,29 @@ ob_start();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.data) {
-                        document.getElementById('totalProductsCount').textContent = data.data.TOTAL_PRODUCTS || 0;
-                        document.getElementById('totalWarehousesCount').textContent = data.data.TOTAL_WAREHOUSES || 0;
-                        document.getElementById('totalInventoryCount').textContent = data.data.TOTAL_INVENTORY || 0;
-                        document.getElementById('lowStockCount').textContent = data.data.LOW_STOCK_ITEMS || 0;
+                        console.log('Summary data received:', data.data); // Debug log
+                        
+                        // Handle both upper and lowercase keys for robustness
+                        const summaryData = data.data;
+                        
+                        // Total Products
+                        document.getElementById('totalProductsCount').textContent = 
+                            summaryData.TOTAL_PRODUCTS || summaryData.total_products || 0;
+                        
+                        // Total Warehouses
+                        document.getElementById('totalWarehousesCount').textContent = 
+                            summaryData.TOTAL_WAREHOUSES || summaryData.total_warehouses || 0;
+                        
+                        // Total Inventory
+                        document.getElementById('totalInventoryCount').textContent = 
+                            summaryData.TOTAL_INVENTORY || summaryData.total_inventory || 0;
+                        
+                        // Low Stock Items
+                        document.getElementById('lowStockCount').textContent = 
+                            summaryData.LOW_STOCK_ITEMS || summaryData.low_stock_items || 0;
                     } else {
-                         console.warn('Failed to load summary data or no data available:', data.message);
-                         inventoryTable.showErrorToast('Warning', 'Could not load summary statistics.');
+                        console.warn('Failed to load summary data or no data available:', data.message);
+                        inventoryTable.showErrorToast('Warning', 'Could not load summary statistics.');
                     }
                 })
                 .catch(error => {
