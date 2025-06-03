@@ -379,7 +379,7 @@ ob_start();
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize DataTable
-    let productsTable = new DataTablesManager('productsTable', {
+    let productsTable = new DataTablesManager('#productsTable', {
         ajax: {
             url: '/api/products',
             dataSrc: ''
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { 
                 data: 'PROD_IMAGE',
                 render: function(data) {
-                    return '<img src="/uploads/products/' + data + '" class="product-image" alt="Product Image">';
+                    return '<img src="/assets/uploads/products/' + data + '" class="product-image" alt="Product Image">';
                 }
             },
             { data: 'PROD_NAME' },
@@ -455,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle row expand/collapse for details
     $('#productsTable tbody').on('click', 'td.details-control', function() {
         let tr = $(this).closest('tr');
-        let row = productsTable.dataTable.row(tr);
+        let row = productsTable.getApiInstance().row(tr);
         let icon = $(this).find('i');
         
         if (row.child.isShown()) {
@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Filter products by status
     $('#statusFilter').on('change', function() {
-        productsTable.dataTable.column(4).search($(this).val()).draw();
+        productsTable.getApiInstance().column(4).search($(this).val()).draw();
     });
     
     // Add New Product Button
@@ -581,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#productStatus').val(product.PROD_AVAILABILITY_STATUS);
             
             if (product.PROD_IMAGE) {
-                $('#imagePreview').html(`<img src="/uploads/products/${product.PROD_IMAGE}" class="preview-image" alt="Product Image">`);
+                $('#imagePreview').html(`<img src="/assets/uploads/products/${product.PROD_IMAGE}" class="preview-image" alt="Product Image">`);
             }
             
             // Add features
@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     $('#deleteConfirmModal').modal('hide');
-                    productsTable.dataTable.ajax.reload();
+                    productsTable.getApiInstance().ajax.reload();
                     showAlert('Product deleted successfully', 'success');
                 } else {
                     showAlert('Error: ' + data.message, 'danger');
@@ -744,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     $('#productModal').modal('hide');
-                    productsTable.dataTable.ajax.reload();
+                    productsTable.getApiInstance().ajax.reload();
                     showAlert(isEditMode ? 'Product updated successfully' : 'Product created successfully', 'success');
                 } else {
                     showAlert('Error: ' + data.message, 'danger');

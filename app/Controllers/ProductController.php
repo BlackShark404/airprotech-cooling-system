@@ -17,7 +17,6 @@ class ProductController extends BaseController
     private $productVariantModel;
     private $productBookingModel;
     private $inventoryModel;
-    private $uploadsDirectory = 'public/uploads/products/';
 
     public function __construct()
     {
@@ -28,11 +27,6 @@ class ProductController extends BaseController
         $this->productVariantModel = new ProductVariantModel();
         $this->productBookingModel = new ProductBookingModel();
         $this->inventoryModel = new InventoryModel();
-        
-        // Ensure uploads directory exists
-        if (!is_dir($this->uploadsDirectory)) {
-            mkdir($this->uploadsDirectory, 0755, true);
-        }
     }
 
     public function renderProductManagement()
@@ -61,89 +55,18 @@ class ProductController extends BaseController
         $this->jsonSuccess($product);
     }
 
-    /**
-     * Handle product image upload
-     * 
-     * @param array $file The uploaded file from $_FILES
-     * @return string|false Filename on success, false on failure
-     */
-    private function handleProductImageUpload($file)
-    {
-        // Validate file
-        if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
-            error_log("File upload error: " . ($file['error'] ?? 'No file'));
-            return false;
-        }
-
-        // Validate file type
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($file['type'], $allowedTypes)) {
-            error_log("Invalid file type: {$file['type']}");
-            return false;
-        }
-
-        // Generate unique filename
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = uniqid('product_') . '.' . $extension;
-        $destination = $this->uploadsDirectory . $filename;
-
-        // Move uploaded file
-        if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            error_log("Failed to move uploaded file to {$destination}");
-            return false;
-        }
-
-        return $filename;
-    }
-
-    /**
-     * Delete product image
-     * 
-     * @param string $filename The filename to delete
-     * @return bool True on success, false on failure
-     */
-    private function deleteProductImage($filename)
-    {
-        if (empty($filename)) {
-            return false;
-        }
-
-        $filepath = $this->uploadsDirectory . $filename;
-        
-        if (file_exists($filepath) && is_file($filepath)) {
-            return unlink($filepath);
-        }
-        
-        return false;
-    }
-
     public function createProduct()
     {
-        if (!$this->isPost()) {
+        if (!$this->isAjax() || !$this->isPost()) {
             $this->renderError('Bad Request', 400);
             return;
         }
         
-        // Get product data from form
-        $productData = json_decode($_POST['product'] ?? '{}', true);
+        $data = $this->getJsonInput();
         
         // Validate required fields
-        if (empty($productData['PROD_NAME']) || empty($productData['PROD_AVAILABILITY_STATUS'])) {
+        if (empty($data['product']['PROD_NAME']) || empty($data['product']['PROD_AVAILABILITY_STATUS'])) {
             $this->jsonError('Missing required product fields', 400);
-            return;
-        }
-        
-        // Handle image upload
-        if (isset($_FILES['product_image'])) {
-            $filename = $this->handleProductImageUpload($_FILES['product_image']);
-            if ($filename) {
-                $productData['PROD_IMAGE'] = $filename;
-            } else {
-                $this->jsonError('Failed to upload product image', 400);
-                return;
-            }
-        } else {
-            $this->jsonError('Product image is required', 400);
             return;
         }
         
@@ -152,36 +75,41 @@ class ProductController extends BaseController
         
         try {
             // Create product
-            $productId = $this->productModel->createProduct($productData);
+            $productId = $this->productModel->createProduct($data['product']);
             
             if (!$productId) {
                 throw new \Exception("Failed to create product");
             }
             
-            // Process features
-            if (isset($_POST['features'])) {
-                $features = json_decode($_POST['features'], true) ?? [];
-                foreach ($features as $feature) {
+            // Create features if provided
+            if (!empty($data['features']) && is_array($data['features'])) {
+                foreach ($data['features'] as $feature) {
                     $feature['PROD_ID'] = $productId;
                     $this->productFeatureModel->createFeature($feature);
                 }
             }
             
-            // Process specs
-            if (isset($_POST['specs'])) {
-                $specs = json_decode($_POST['specs'], true) ?? [];
-                foreach ($specs as $spec) {
+            // Create specs if provided
+            if (!empty($data['specs']) && is_array($data['specs'])) {
+                foreach ($data['specs'] as $spec) {
                     $spec['PROD_ID'] = $productId;
                     $this->productSpecModel->createSpec($spec);
                 }
             }
             
-            // Process variants
-            if (isset($_POST['variants'])) {
-                $variants = json_decode($_POST['variants'], true) ?? [];
-                foreach ($variants as $variant) {
+            // Create variants if provided
+            if (!empty($data['variants']) && is_array($data['variants'])) {
+                foreach ($data['variants'] as $variant) {
                     $variant['PROD_ID'] = $productId;
                     $this->productVariantModel->createVariant($variant);
+                }
+            }
+            
+            // Add inventory if provided
+            if (!empty($data['inventory']) && is_array($data['inventory'])) {
+                foreach ($data['inventory'] as $inventory) {
+                    $inventory['PROD_ID'] = $productId;
+                    $this->inventoryModel->createInventory($inventory);
                 }
             }
             
@@ -192,12 +120,6 @@ class ProductController extends BaseController
             
         } catch (\Exception $e) {
             $this->productModel->rollback();
-            
-            // Clean up uploaded image if it exists
-            if (!empty($productData['PROD_IMAGE'])) {
-                $this->deleteProductImage($productData['PROD_IMAGE']);
-            }
-            
             error_log("Error creating product: " . $e->getMessage());
             $this->jsonError('Failed to create product: ' . $e->getMessage(), 500);
         }
@@ -205,10 +127,12 @@ class ProductController extends BaseController
 
     public function updateProduct($id)
     {
-        if (!$this->isPost()) {
+        if (!$this->isAjax() || !$this->isPost()) {
             $this->renderError('Bad Request', 400);
             return;
         }
+        
+        $data = $this->getJsonInput();
         
         // Check if product exists
         $existingProduct = $this->productModel->getProductById($id);
@@ -217,81 +141,61 @@ class ProductController extends BaseController
             return;
         }
         
-        // Get product data from form
-        $productData = json_decode($_POST['product'] ?? '{}', true);
-        
         // Start transaction
         $this->productModel->beginTransaction();
         
         try {
-            $oldImage = $existingProduct['PROD_IMAGE'] ?? null;
-            
-            // Handle image upload if a new image is provided
-            if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
-                $filename = $this->handleProductImageUpload($_FILES['product_image']);
-                if ($filename) {
-                    $productData['PROD_IMAGE'] = $filename;
-                } else {
-                    throw new \Exception('Failed to upload product image');
-                }
-            }
-            
             // Update product
-            if (!empty($productData)) {
-                $this->productModel->updateProduct($id, $productData);
+            if (!empty($data['product'])) {
+                $this->productModel->updateProduct($id, $data['product']);
             }
             
-            // Process features
-            if (isset($_POST['features'])) {
-                $features = json_decode($_POST['features'], true) ?? [];
+            // Update features
+            if (isset($data['features'])) {
+                // Delete existing features and add new ones
                 $this->productFeatureModel->deleteFeaturesByProductId($id);
                 
-                foreach ($features as $feature) {
-                    $feature['PROD_ID'] = $id;
-                    $this->productFeatureModel->createFeature($feature);
+                if (!empty($data['features']) && is_array($data['features'])) {
+                    foreach ($data['features'] as $feature) {
+                        $feature['PROD_ID'] = $id;
+                        $this->productFeatureModel->createFeature($feature);
+                    }
                 }
             }
             
-            // Process specs
-            if (isset($_POST['specs'])) {
-                $specs = json_decode($_POST['specs'], true) ?? [];
+            // Update specs
+            if (isset($data['specs'])) {
+                // Delete existing specs and add new ones
                 $this->productSpecModel->deleteSpecsByProductId($id);
                 
-                foreach ($specs as $spec) {
-                    $spec['PROD_ID'] = $id;
-                    $this->productSpecModel->createSpec($spec);
+                if (!empty($data['specs']) && is_array($data['specs'])) {
+                    foreach ($data['specs'] as $spec) {
+                        $spec['PROD_ID'] = $id;
+                        $this->productSpecModel->createSpec($spec);
+                    }
                 }
             }
             
-            // Process variants
-            if (isset($_POST['variants'])) {
-                $variants = json_decode($_POST['variants'], true) ?? [];
+            // Update variants
+            if (isset($data['variants'])) {
+                // Delete existing variants and add new ones
                 $this->productVariantModel->deleteVariantsByProductId($id);
                 
-                foreach ($variants as $variant) {
-                    $variant['PROD_ID'] = $id;
-                    $this->productVariantModel->createVariant($variant);
+                if (!empty($data['variants']) && is_array($data['variants'])) {
+                    foreach ($data['variants'] as $variant) {
+                        $variant['PROD_ID'] = $id;
+                        $this->productVariantModel->createVariant($variant);
+                    }
                 }
             }
             
             // Commit the transaction
             $this->productModel->commit();
             
-            // Delete old image if it was replaced
-            if (!empty($productData['PROD_IMAGE']) && !empty($oldImage) && $productData['PROD_IMAGE'] !== $oldImage) {
-                $this->deleteProductImage($oldImage);
-            }
-            
             $this->jsonSuccess(['product_id' => $id], 'Product updated successfully');
             
         } catch (\Exception $e) {
             $this->productModel->rollback();
-            
-            // Clean up newly uploaded image if it exists and differs from the old one
-            if (!empty($productData['PROD_IMAGE']) && (!empty($oldImage) && $productData['PROD_IMAGE'] !== $oldImage)) {
-                $this->deleteProductImage($productData['PROD_IMAGE']);
-            }
-            
             error_log("Error updating product: " . $e->getMessage());
             $this->jsonError('Failed to update product: ' . $e->getMessage(), 500);
         }
@@ -299,7 +203,7 @@ class ProductController extends BaseController
 
     public function deleteProduct($id)
     {
-        if (!$this->isPost()) {
+        if (!$this->isAjax() || !$this->isPost()) {
             $this->renderError('Bad Request', 400);
             return;
         }
@@ -311,10 +215,11 @@ class ProductController extends BaseController
             return;
         }
         
-        // Delete the product (soft delete in the database)
-        if ($this->productModel->deleteProduct($id)) {
-            // We don't delete the image on soft delete, it will remain available if the product is restored
-            $this->jsonSuccess([], 'Product deleted successfully');
+        // Delete the product (soft delete)
+        $result = $this->productModel->deleteProduct($id);
+        
+        if ($result) {
+            $this->jsonSuccess(null, 'Product deleted successfully');
         } else {
             $this->jsonError('Failed to delete product', 500);
         }
