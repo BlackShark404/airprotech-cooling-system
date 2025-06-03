@@ -645,6 +645,42 @@ ob_start();
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/assets/js/utility/DataTablesManager.js"></script>
 <script>
+    // Global variable to hold reference to the inventoryTable
+    let globalInventoryTable;
+
+    // Global function for Reset Filters button
+    function clearInventoryFilters() {
+        const warehouseFilter = document.getElementById('warehouseFilter');
+        const inventoryTypeFilter = document.getElementById('inventoryTypeFilter');
+        
+        if (warehouseFilter) warehouseFilter.value = '';
+        if (inventoryTypeFilter) inventoryTypeFilter.value = '';
+        
+        // Hide the filter notice
+        const filteredElement = document.getElementById('inventoryFilteredNotice');
+        if (filteredElement) {
+            filteredElement.classList.add('d-none');
+        }
+        
+        // Clear custom filters if they exist
+        if ($.fn.dataTable.ext.search.length > 0) {
+            $.fn.dataTable.ext.search.pop();
+        }
+        
+        // Access the globally stored reference to inventoryTable
+        if (globalInventoryTable) {
+            globalInventoryTable.applyFilters({});
+            console.log('Filters cleared using globalInventoryTable reference');
+        } else {
+            // Fallback if globalInventoryTable is not set yet
+            const dataTable = $('#inventoryTable').DataTable();
+            if (dataTable) {
+                dataTable.search('').draw();
+                console.log('Filters cleared using direct DataTable reference');
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize DataTables
         let inventoryTable;
@@ -764,6 +800,9 @@ ob_start();
                                 }
                             ]
                         });
+                        
+                        // Store reference to inventoryTable in global variable for the clearInventoryFilters function
+                        globalInventoryTable = inventoryTable;
                         
                         // Add event listeners for the custom buttons
                         $('#inventoryTable').on('click', '.view-inventory-btn', function() {
@@ -1001,6 +1040,15 @@ ob_start();
             document.getElementById('updateWarehouseBtn').addEventListener('click', updateWarehouse);
             // Event listener for move stock form
             document.getElementById('moveStockBtn').addEventListener('click', moveStock);
+            
+            // Add direct event listener for Reset Filters button as a backup to the onclick
+            const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+            if (resetFiltersBtn) {
+                resetFiltersBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    clearInventoryFilters();
+                });
+            }
             
             // Handle filter changes for Inventory table
             document.getElementById('warehouseFilter').addEventListener('change', applyInventoryFilters);
@@ -1573,26 +1621,6 @@ ob_start();
                 if(inventoryTable) {
                     console.log('Applying standard filters:', filters);
                     inventoryTable.applyFilters(filters);
-                }
-            }
-
-            // Function to clear inventory filters
-            function clearInventoryFilters() {
-                document.getElementById('warehouseFilter').value = '';
-                document.getElementById('inventoryTypeFilter').value = '';
-                
-                // Hide the filter notice
-                const filteredElement = document.getElementById('inventoryFilteredNotice');
-                if (filteredElement) {
-                    filteredElement.classList.add('d-none');
-                }
-                
-                // Clear custom filters
-                $.fn.dataTable.ext.search.pop();
-                
-                // Refresh the table
-                if(inventoryTable) {
-                    inventoryTable.applyFilters({});
                 }
             }
 
