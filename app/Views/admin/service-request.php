@@ -566,9 +566,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Actions',
                 render: function(data, type, row) {
                     return `<div class="d-flex">
-                        <button class="btn btn-sm btn-info me-1 view-btn" data-id="${row.sb_id}">View</button>
-                        <button class="btn btn-sm btn-warning me-1 edit-btn" data-id="${row.sb_id}">Edit</button>
-                        <button class="btn btn-sm btn-danger delete-btn" data-id="${row.sb_id}">Delete</button>
+                        <div class="action-icon action-icon-view view-btn me-1" data-id="${row.sb_id}">
+                            <i class="bi bi-eye"></i>
+                        </div>
+                        <div class="action-icon action-icon-edit edit-btn me-1" data-id="${row.sb_id}">
+                            <i class="bi bi-pencil"></i>
+                        </div>
+                        <div class="action-icon action-icon-delete delete-btn" data-id="${row.sb_id}">
+                            <i class="bi bi-trash"></i>
+                        </div>
                     </div>`;
                 }
             }
