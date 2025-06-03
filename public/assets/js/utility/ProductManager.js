@@ -269,7 +269,7 @@ class ProductManager {
      */
     updateTotalAmount() {
         if (!this.currentProduct || !this.modal.quantity || !this.modal.variantSelect || !this.modal.totalAmount) {
-            if (this.modal.totalAmount) this.modal.totalAmount.textContent = '$0.00';
+            if (this.modal.totalAmount) this.modal.totalAmount.textContent = '₱0.00';
             return;
         }
 
@@ -288,7 +288,7 @@ class ProductManager {
         const price = selectedVariant ? parseFloat(selectedVariant.price) : 0;
         const total = price * quantity;
 
-        this.modal.totalAmount.textContent = `$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        this.modal.totalAmount.textContent = `₱${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     /**
@@ -312,7 +312,7 @@ class ProductManager {
         const selectedVariant = normalizedVariants.find(v => v.id === variantId);
 
         if (selectedVariant) {
-            this.modal.price.textContent = `$${selectedVariant.price}`;
+            this.modal.price.textContent = `₱${selectedVariant.price}`;
 
             // Get product status
             const productStatus = this.currentProduct.PROD_AVAILABILITY_STATUS ||
@@ -324,7 +324,7 @@ class ProductManager {
                     ? `Available (${this.getAvailableQuantity(selectedVariant)} units)`
                     : productStatus;
         } else {
-            this.modal.price.textContent = '$N/A';
+            this.modal.price.textContent = '₱N/A';
             this.modal.availabilityStatus.textContent = 'N/A';
         }
     }
@@ -755,7 +755,7 @@ class ProductManager {
             if (hasVariants) {
                 let variantOptions = '';
                 normalizedVariants.forEach(variant => {
-                    variantOptions += `<option value="${variant.id}">${variant.capacity} - $${variant.price}</option>`;
+                    variantOptions += `<option value="${variant.id}">${variant.capacity} - ₱${variant.price}</option>`;
                 });
                 this.modal.variantSelect.innerHTML = variantOptions;
                 this.modal.variantSelect.disabled = false;
@@ -801,7 +801,7 @@ class ProductManager {
         // Update price with attractive styling
         if (this.modal.price) {
             if (hasVariants) {
-                this.modal.price.textContent = `$${normalizedVariants[0].price}`;
+                this.modal.price.textContent = `₱${normalizedVariants[0].price}`;
                 this.modal.price.classList.add('fs-4');
                 this.modal.price.classList.add('fw-bold');
                 this.modal.price.classList.add('text-primary');
