@@ -116,9 +116,10 @@ class BaseController
         $output = ob_get_clean();
         
         // If there were any PHP warnings/errors, log them instead of sending to client
-        if (preg_match('/<br\s*\/?>/i', $output) || strpos($output, '<b>Warning</b>:') !== false) {
-            error_log("PHP warnings during JSON output: " . $output);
-            // Only output the JSON part
+        if (preg_match('/<br\s*\/?>/i', $output) || strpos($output, '<b>Warning</b>:') !== false || strpos($output, '<b>Notice</b>:') !== false || strpos($output, '<b>Error</b>:') !== false) {
+            error_log("PHP warnings/errors during JSON output: " . $output);
+            
+            // Only output the JSON part without any HTML warnings
             $jsonStart = strpos($output, '{');
             if ($jsonStart !== false) {
                 echo substr($output, $jsonStart);
