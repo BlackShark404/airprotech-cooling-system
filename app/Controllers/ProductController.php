@@ -567,11 +567,6 @@ class ProductController extends BaseController
         // Get the current user ID from the session
         $userId = $_SESSION['user_id'] ?? null;
         
-        // Add debug information
-        error_log("getUserProductBookingDetails - Requested booking ID: $id");
-        error_log("getUserProductBookingDetails - Session user_id: " . ($userId ?? 'null'));
-        error_log("getUserProductBookingDetails - SESSION data: " . json_encode($_SESSION));
-        
         if (!$userId) {
             $this->jsonError('You must be logged in to view booking details', 401);
             return;
@@ -580,30 +575,23 @@ class ProductController extends BaseController
         // Get the booking details
         $booking = $this->productBookingModel->getBookingById($id);
         
-        // Debug booking data
-        if ($booking) {
-            error_log("getUserProductBookingDetails - Found booking: " . json_encode($booking));
-            error_log("getUserProductBookingDetails - Booking customer ID: " . ($booking['PB_CUSTOMER_ID'] ?? 'not set'));
-            error_log("getUserProductBookingDetails - Comparing user $userId with booking customer " . ($booking['PB_CUSTOMER_ID'] ?? 'null'));
-        } else {
-            error_log("getUserProductBookingDetails - No booking found with ID $id");
-        }
-        
-        // Temporary fix: Allow access regardless of user ID for testing
-        if ($booking) {
-            $this->jsonSuccess($booking);
+        // Check if the booking exists and belongs to this user
+        if (!$booking) {
+            $this->jsonError('Booking not found', 404);
             return;
         }
         
-        // Original check - commented out for testing
-        // Check if the booking exists and belongs to this user
-        // if (!$booking || !isset($booking['PB_CUSTOMER_ID']) || $booking['PB_CUSTOMER_ID'] != $userId) {
-        //    $this->jsonError('Booking not found or you do not have permission to view it', 404);
-        //    return;
-        // }
+        // Check if the booking belongs to the current user
+        $customerId = $booking['pb_customer_id'] ?? $booking['PB_CUSTOMER_ID'] ?? null;
+        if (!$customerId || $customerId != $userId) {
+            $this->jsonError('You do not have permission to view this booking', 403);
+            return;
+        }
         
-        // Fallback error if we get here
-        $this->jsonError('Booking not found or you do not have permission to view it', 404);
+        // Get technicians assigned to this booking
+        $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($id);
+        
+        $this->jsonSuccess($booking);
     }
 
     /**
@@ -647,15 +635,28 @@ class ProductController extends BaseController
         if ($bookings) {
             foreach ($bookings as &$booking) {
                 // Add customer information
-                $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
-                if ($customer) {
-                    $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
-                    $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
-                    $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+                if (isset($booking['pb_customer_id']) && !empty($booking['pb_customer_id'])) {
+                    $customer = $this->getUserInfo($booking['pb_customer_id']);
+                    if ($customer) {
+                        $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
+                        $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
+                        $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+                    }
+                } else if (isset($booking['PB_CUSTOMER_ID']) && !empty($booking['PB_CUSTOMER_ID'])) {
+                    $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
+                    if ($customer) {
+                        $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
+                        $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
+                        $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+                    }
+                } else {
+                    $booking['customer_email'] = '';
+                    $booking['customer_phone'] = '';
+                    $booking['customer_profile_url'] = '';
                 }
                 
                 // Get assigned technicians for each booking
-                $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($booking['PB_ID']);
+                $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($booking['pb_id'] ?? $booking['PB_ID'] ?? null);
                 
                 // Add profile images to technicians
                 foreach ($booking['technicians'] as &$tech) {
@@ -693,11 +694,24 @@ class ProductController extends BaseController
         }
         
         // Add customer information
-        $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
-        if ($customer) {
-            $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
-            $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
-            $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+        if (isset($booking['pb_customer_id']) && !empty($booking['pb_customer_id'])) {
+            $customer = $this->getUserInfo($booking['pb_customer_id']);
+            if ($customer) {
+                $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
+                $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
+                $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+            }
+        } else if (isset($booking['PB_CUSTOMER_ID']) && !empty($booking['PB_CUSTOMER_ID'])) {
+            $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
+            if ($customer) {
+                $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
+                $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
+                $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
+            }
+        } else {
+            $booking['customer_email'] = '';
+            $booking['customer_phone'] = '';
+            $booking['customer_profile_url'] = '';
         }
         
         // Get assigned technicians for this booking
@@ -832,6 +846,15 @@ class ProductController extends BaseController
             FROM USER_ACCOUNT 
             WHERE UA_ID = :userId";
             
-        return $this->db->queryOne($sql, [':userId' => $userId]);
+        // Use pdo instead of db
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':userId', $userId, \PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(\PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log("Database error in getUserInfo: " . $e->getMessage());
+            return null;
+        }
     }
 } 
