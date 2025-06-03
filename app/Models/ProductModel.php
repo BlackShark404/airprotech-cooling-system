@@ -146,4 +146,15 @@ class ProductModel extends Model
             'total_variants' => $totalVariants
         ];
     }
+
+    /**
+     * Count the number of active (non-deleted) products
+     * @return int Number of active products
+     */
+    public function countActiveProducts()
+    {
+        $sql = "SELECT COUNT(*) AS total FROM {$this->table} WHERE PROD_DELETED_AT IS NULL";
+        $result = $this->queryOne($sql);
+        return ($result && isset($result['total'])) ? (int)$result['total'] : 0;
+    }
 } 

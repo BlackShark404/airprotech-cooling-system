@@ -162,10 +162,14 @@ class InventoryModel extends Model
         $totalWarehouses = $warehouseModel->countActiveWarehouses();
         error_log("[InventoryModel] Total warehouses from WarehouseModel: " . $totalWarehouses);
 
-        // Get other inventory-specific stats
+        // Get total active products (count all products, not just those in inventory)
+        $productModel = new ProductModel();
+        $totalProducts = $productModel->countActiveProducts();
+        error_log("[InventoryModel] Total products from ProductModel: " . $totalProducts);
+
+        // Get inventory-specific stats
         $sql = "SELECT 
-                    COUNT(DISTINCT i.PROD_ID) AS TOTAL_PRODUCTS,
-                    SUM(i.QUANTITY) AS TOTAL_INVENTORY,
+                    COALESCE(SUM(i.QUANTITY), 0) AS TOTAL_INVENTORY,
                     COUNT(DISTINCT CASE WHEN i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD AND w.WHOUSE_RESTOCK_THRESHOLD > 0 THEN i.INVE_ID ELSE NULL END) AS LOW_STOCK_ITEMS
                 FROM {$this->table} i
                 LEFT JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
@@ -178,7 +182,7 @@ class InventoryModel extends Model
 
         // Combine the results, ensuring all are integers and default to 0 if null/not set
         $summaryData = [
-            'TOTAL_PRODUCTS' => ($inventoryStats && isset($inventoryStats['TOTAL_PRODUCTS'])) ? (int)$inventoryStats['TOTAL_PRODUCTS'] : 0,
+            'TOTAL_PRODUCTS' => (int)$totalProducts,
             'TOTAL_WAREHOUSES' => (int)$totalWarehouses, // Already an int from WarehouseModel
             'TOTAL_INVENTORY' => ($inventoryStats && isset($inventoryStats['TOTAL_INVENTORY'])) ? (int)$inventoryStats['TOTAL_INVENTORY'] : 0,
             'LOW_STOCK_ITEMS' => ($inventoryStats && isset($inventoryStats['LOW_STOCK_ITEMS'])) ? (int)$inventoryStats['LOW_STOCK_ITEMS'] : 0
