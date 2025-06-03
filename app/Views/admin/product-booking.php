@@ -211,6 +211,7 @@ ob_start();
                         <option value="">All Statuses</option>
                         <option value="pending">Pending</option>
                         <option value="confirmed">Confirmed</option>
+                        <option value="in-progress">In Progress</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
@@ -366,6 +367,7 @@ ob_start();
                             <select id="edit-status" name="status" class="form-select">
                                 <option value="pending">Pending</option>
                                 <option value="confirmed">Confirmed</option>
+                                <option value="in-progress">In Progress</option>
                                 <option value="completed">Completed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
@@ -513,6 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     valueMap: {
                         'pending': { type: 'warning', display: 'Pending' },
                         'confirmed': { type: 'info', display: 'Confirmed' },
+                        'in-progress': { type: 'primary', display: 'In Progress' },
                         'completed': { type: 'success', display: 'Completed' },
                         'cancelled': { type: 'danger', display: 'Cancelled' }
                     }
