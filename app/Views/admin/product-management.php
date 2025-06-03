@@ -782,6 +782,37 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
     
+    // Add validation check when switching tabs
+    $('#productTabs button').on('click', function(e) {
+        // Only validate when leaving the details tab
+        if ($('#details-tab').hasClass('active')) {
+            const productId = $('#productId').val();
+            const isEditMode = productId !== '';
+            
+            // Check required fields
+            let isValid = true;
+            let errorMessage = '';
+            
+            if (!$('#productName').val()) {
+                isValid = false;
+                errorMessage = 'Please enter a product name';
+            } else if (!$('#productStatus').val()) {
+                isValid = false;
+                errorMessage = 'Please select an availability status';
+            } else if (!isEditMode && !$('#productImage').val() && !$('#imagePreview img').length) {
+                isValid = false;
+                errorMessage = 'Please select a product image';
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                e.stopPropagation();
+                productsManager.showErrorToast('Validation Error', errorMessage);
+                return false;
+            }
+        }
+    });
+    
     // Add Feature Row
     $('#addFeatureBtn').on('click', function() {
         addFeatureRow();
@@ -920,9 +951,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add product details
         const productData = {
-            prod_name: $('#productName').val(),
-            prod_description: $('#productDescription').val(),
-            prod_availability_status: $('#productStatus').val()
+            PROD_NAME: $('#productName').val(),
+            PROD_DESCRIPTION: $('#productDescription').val(),
+            PROD_AVAILABILITY_STATUS: $('#productStatus').val()
         };
         
         formData.append('product', JSON.stringify(productData));
@@ -941,8 +972,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (featureName) {
                 features.push({
-                    feature_id: featureId || null,
-                    feature_name: featureName
+                    FEATURE_ID: featureId || null,
+                    FEATURE_NAME: featureName
                 });
             }
         });
@@ -957,9 +988,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (specName && specValue) {
                 specs.push({
-                    spec_id: specId || null,
-                    spec_name: specName,
-                    spec_value: specValue
+                    SPEC_ID: specId || null,
+                    SPEC_NAME: specName,
+                    SPEC_VALUE: specValue
                 });
             }
         });
@@ -977,16 +1008,27 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (capacity && srpPrice) {
                 variants.push({
-                    var_id: variantId || null,
-                    var_capacity: capacity,
-                    var_srp_price: srpPrice,
-                    var_price_free_install: freeInstallPrice || null,
-                    var_price_with_install: withInstallPrice || null,
-                    var_power_consumption: powerConsumption || null
+                    VAR_ID: variantId || null,
+                    VAR_CAPACITY: capacity,
+                    VAR_SRP_PRICE: srpPrice,
+                    VAR_PRICE_FREE_INSTALL: freeInstallPrice || null,
+                    VAR_PRICE_WITH_INSTALL: withInstallPrice || null,
+                    VAR_POWER_CONSUMPTION: powerConsumption || null
                 });
             }
         });
         formData.append('variants', JSON.stringify(variants));
+        
+        // Debug: Log the form data
+        console.log('Product Data:', productData);
+        console.log('Features:', features);
+        console.log('Specs:', specs);
+        console.log('Variants:', variants);
+        
+        // For debugging FormData (can't directly console.log FormData contents)
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
         
         // Determine the API endpoint based on whether we're adding or editing
         const url = isEditMode ? `/api/products/${productId}` : '/api/products';

@@ -76,6 +76,25 @@ class ProductController extends BaseController
             return;
         }
 
+        // Debug: Log the received payload
+        error_log("Product JSON: " . $productJson);
+        
+        // Normalize field names to uppercase for database consistency
+        if (isset($payload['product']['prod_name'])) {
+            $payload['product']['PROD_NAME'] = $payload['product']['prod_name'];
+            unset($payload['product']['prod_name']);
+        }
+        
+        if (isset($payload['product']['prod_description'])) {
+            $payload['product']['PROD_DESCRIPTION'] = $payload['product']['prod_description'];
+            unset($payload['product']['prod_description']);
+        }
+        
+        if (isset($payload['product']['prod_availability_status'])) {
+            $payload['product']['PROD_AVAILABILITY_STATUS'] = $payload['product']['prod_availability_status'];
+            unset($payload['product']['prod_availability_status']);
+        }
+
         // 2. Handle 'product_image' file upload
         if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
             $uploadedImage = $_FILES['product_image'];
@@ -123,6 +142,7 @@ class ProductController extends BaseController
 
         // 3. Get and decode 'features', 'specs', 'variants' JSON strings
         $featuresJson = $this->request('features');
+        error_log("Features JSON: " . $featuresJson);
         $payload['features'] = $featuresJson ? json_decode($featuresJson, true) : [];
         if ($featuresJson && json_last_error() !== JSON_ERROR_NONE) {
             $this->jsonError('Invalid features JSON data: ' . json_last_error_msg(), 400);
@@ -130,6 +150,7 @@ class ProductController extends BaseController
         }
 
         $specsJson = $this->request('specs');
+        error_log("Specs JSON: " . $specsJson);
         $payload['specs'] = $specsJson ? json_decode($specsJson, true) : [];
         if ($specsJson && json_last_error() !== JSON_ERROR_NONE) {
             $this->jsonError('Invalid specs JSON data: ' . json_last_error_msg(), 400);
@@ -137,15 +158,30 @@ class ProductController extends BaseController
         }
 
         $variantsJson = $this->request('variants');
+        error_log("Variants JSON: " . $variantsJson);
         $payload['variants'] = $variantsJson ? json_decode($variantsJson, true) : [];
         if ($variantsJson && json_last_error() !== JSON_ERROR_NONE) {
             $this->jsonError('Invalid variants JSON data: ' . json_last_error_msg(), 400);
             return;
         }
         
-        // Validate required product fields (PROD_IMAGE is now populated if uploaded)
-        if (empty($payload['product']['PROD_NAME']) || empty($payload['product']['PROD_AVAILABILITY_STATUS']) || empty($payload['product']['PROD_IMAGE'])) {
-            $this->jsonError('Missing required product fields: Name, Availability Status, or Image.', 400);
+        // Validate required product fields with clear error message
+        $missingFields = [];
+        
+        if (empty($payload['product']['PROD_NAME'])) {
+            $missingFields[] = 'Name';
+        }
+        
+        if (empty($payload['product']['PROD_AVAILABILITY_STATUS'])) {
+            $missingFields[] = 'Availability Status';
+        }
+        
+        if (empty($payload['product']['PROD_IMAGE'])) {
+            $missingFields[] = 'Image';
+        }
+        
+        if (!empty($missingFields)) {
+            $this->jsonError('Missing required product fields: ' . implode(', ', $missingFields) . '.', 400);
             return;
         }
         
@@ -163,9 +199,26 @@ class ProductController extends BaseController
             // Create features if provided
             if (!empty($payload['features']) && is_array($payload['features'])) {
                 foreach ($payload['features'] as $feature) {
-                    $featureData = is_array($feature) ? $feature : ['FEATURE_NAME' => $feature];
+                    $featureData = [];
                     $featureData['PROD_ID'] = $productId;
-                    if (empty($featureData['FEATURE_NAME'])) continue; // Skip empty features
+                    
+                    // Extract feature name from the feature data
+                    if (isset($feature['FEATURE_NAME'])) {
+                        $featureData['FEATURE_NAME'] = $feature['FEATURE_NAME'];
+                    } else if (isset($feature['feature_name'])) {
+                        $featureData['FEATURE_NAME'] = $feature['feature_name'];
+                    } else if (!is_array($feature)) {
+                        $featureData['FEATURE_NAME'] = $feature;
+                    }
+                    
+                    if (empty($featureData['FEATURE_NAME'])) {
+                        error_log("Skipping feature due to missing name: " . json_encode($feature));
+                        continue; // Skip empty features
+                    }
+                    
+                    // Debug: Log the feature being added
+                    error_log("Adding feature: " . json_encode($featureData));
+                    
                     $this->productFeatureModel->createFeature($featureData);
                 }
             }
@@ -173,22 +226,69 @@ class ProductController extends BaseController
             // Create specs if provided
             if (!empty($payload['specs']) && is_array($payload['specs'])) {
                 foreach ($payload['specs'] as $spec) {
-                    $spec['PROD_ID'] = $productId;
-                    if (empty($spec['SPEC_NAME']) || !isset($spec['SPEC_VALUE'])) continue; // Skip incomplete specs
-                    $this->productSpecModel->createSpec($spec);
+                    $specData = [];
+                    $specData['PROD_ID'] = $productId;
+                    
+                    // Extract spec name and value from the spec data
+                    if (isset($spec['SPEC_NAME'])) {
+                        $specData['SPEC_NAME'] = $spec['SPEC_NAME'];
+                    } else if (isset($spec['spec_name'])) {
+                        $specData['SPEC_NAME'] = $spec['spec_name'];
+                    }
+                    
+                    if (isset($spec['SPEC_VALUE'])) {
+                        $specData['SPEC_VALUE'] = $spec['SPEC_VALUE'];
+                    } else if (isset($spec['spec_value'])) {
+                        $specData['SPEC_VALUE'] = $spec['spec_value'];
+                    }
+                    
+                    if (empty($specData['SPEC_NAME']) || !isset($specData['SPEC_VALUE'])) {
+                        error_log("Skipping spec due to missing name or value: " . json_encode($spec));
+                        continue; // Skip incomplete specs
+                    }
+                    
+                    // Debug: Log the spec being added
+                    error_log("Adding spec: " . json_encode($specData));
+                    
+                    $this->productSpecModel->createSpec($specData);
                 }
             }
             
             // Create variants if provided
             if (!empty($payload['variants']) && is_array($payload['variants'])) {
                 foreach ($payload['variants'] as $variant) {
-                    $variant['PROD_ID'] = $productId;
-                    // Add validation for required variant fields if necessary here
-                    if (empty($variant['VAR_CAPACITY']) || empty($variant['VAR_SRP_PRICE'])) {
-                         error_log("Skipping variant due to missing capacity or SRP price: " . json_encode($variant));
-                         continue; 
+                    $variantData = [];
+                    $variantData['PROD_ID'] = $productId;
+                    
+                    // Field mappings for variants
+                    $fieldMappings = [
+                        'VAR_CAPACITY' => ['var_capacity', 'VAR_CAPACITY'],
+                        'VAR_SRP_PRICE' => ['var_srp_price', 'VAR_SRP_PRICE'],
+                        'VAR_PRICE_FREE_INSTALL' => ['var_price_free_install', 'VAR_PRICE_FREE_INSTALL'],
+                        'VAR_PRICE_WITH_INSTALL' => ['var_price_with_install', 'VAR_PRICE_WITH_INSTALL'],
+                        'VAR_POWER_CONSUMPTION' => ['var_power_consumption', 'VAR_POWER_CONSUMPTION']
+                    ];
+                    
+                    // Extract all fields for the variant
+                    foreach ($fieldMappings as $targetField => $sourceFields) {
+                        foreach ($sourceFields as $sourceField) {
+                            if (isset($variant[$sourceField])) {
+                                $variantData[$targetField] = $variant[$sourceField];
+                                break;
+                            }
+                        }
                     }
-                    $this->productVariantModel->createVariant($variant);
+                    
+                    // Check required fields
+                    if (empty($variantData['VAR_CAPACITY']) || empty($variantData['VAR_SRP_PRICE'])) {
+                        error_log("Skipping variant due to missing capacity or SRP price: " . json_encode($variant));
+                        continue;
+                    }
+                    
+                    // Debug: Log the variant being added
+                    error_log("Adding variant: " . json_encode($variantData));
+                    
+                    $this->productVariantModel->createVariant($variantData);
                 }
             }
             

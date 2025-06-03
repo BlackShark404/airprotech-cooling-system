@@ -167,7 +167,12 @@ class BaseController
     protected function request($key = null, $default = null) {
         $request = array_merge($_GET, $_POST);
         if ($key) {
-            return $request[$key] ?? $default;
+            if (isset($request[$key])) {
+                return $request[$key];
+            } else {
+                error_log("Request key not found: " . $key);
+                return $default;
+            }
         }
         return $request;
     }
