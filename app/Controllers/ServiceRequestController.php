@@ -139,7 +139,6 @@ class ServiceRequestController extends BaseController
             'serviceDescription',
             'fullName',
             'emailAddress',
-            'phoneNumber',
             'address'
         ];
         
