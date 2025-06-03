@@ -879,12 +879,34 @@ ob_start();
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
+            .then(response => {
+                // Check if the response is valid JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // If not JSON, get the text and throw an error with the text content
+                    return response.text().then(text => {
+                        console.error("Non-JSON response:", text);
+                        throw new Error('Error adding stock: ' + (text.substring(0, 100) + '...'));
+                    });
+                }
+            })
             .then(result => {
                 if (result.success) {
                     $('#addStockModal').modal('hide');
+                    
+                    // Refresh the relevant tables
                     if(inventoryTable) inventoryTable.refresh();
-                    if(lowStockTable) lowStockTable.refresh(); // Refresh low stock if it exists
+                    
+                    // Check if the item might have moved out of low stock based on the response
+                    if (result.data && result.data.is_low_stock === false) {
+                        console.log("Item no longer in low stock after update");
+                    }
+                    
+                    // Always refresh low stock table
+                    if(lowStockTable) lowStockTable.refresh();
+                    
                     inventoryTable.showSuccessToast('Success', 'Stock added successfully');
                     form.reset();
                     loadSummaryData();
@@ -894,7 +916,7 @@ ob_start();
             })
             .catch(error => {
                 console.error('Error adding stock:', error);
-                inventoryTable.showErrorToast('Error', 'An error occurred while adding stock');
+                inventoryTable.showErrorToast('Error', error.message || 'An error occurred while adding stock');
             });
         }
         

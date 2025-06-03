@@ -129,15 +129,20 @@ class InventoryController extends BaseController
             return;
         }
         
+        // Convert values to proper types
+        $productId = intval($data['product_id']);
+        $warehouseId = intval($data['warehouse_id']);
+        $quantity = intval($data['quantity']);
+        
         // Check if product exists
-        $product = $this->productModel->getProductById($data['product_id']);
+        $product = $this->productModel->getProductById($productId);
         if (!$product) {
             $this->jsonError('Product not found', 404);
             return;
         }
         
         // Check if warehouse exists
-        $warehouse = $this->warehouseModel->getWarehouseById($data['warehouse_id']);
+        $warehouse = $this->warehouseModel->getWarehouseById($warehouseId);
         if (!$warehouse) {
             $this->jsonError('Warehouse not found', 404);
             return;
@@ -146,17 +151,37 @@ class InventoryController extends BaseController
         // Add stock
         $inventoryType = $data['inventory_type'] ?? 'Regular';
         $result = $this->inventoryModel->addStock(
-            $data['product_id'], 
-            $data['warehouse_id'], 
-            $data['quantity'],
+            $productId, 
+            $warehouseId, 
+            $quantity,
             $inventoryType
         );
         
         if ($result) {
+            // Check if this item was previously in low stock and now isn't
+            $warehouseRestockThreshold = isset($warehouse['WHOUSE_RESTOCK_THRESHOLD']) ? 
+                intval($warehouse['WHOUSE_RESTOCK_THRESHOLD']) : 
+                (isset($warehouse['whouse_restock_threshold']) ? intval($warehouse['whouse_restock_threshold']) : 0);
+            
+            // Get the updated inventory quantity
+            $updatedInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($productId, $warehouseId);
+            
+            $updatedQuantity = 0;
+            if ($updatedInventory) {
+                if (isset($updatedInventory['QUANTITY'])) {
+                    $updatedQuantity = intval($updatedInventory['QUANTITY']);
+                } elseif (isset($updatedInventory['quantity'])) {
+                    $updatedQuantity = intval($updatedInventory['quantity']);
+                }
+            }
+            
             $this->jsonSuccess([
-                'product_id' => $data['product_id'],
-                'warehouse_id' => $data['warehouse_id'],
-                'added_quantity' => $data['quantity'],
+                'product_id' => $productId,
+                'warehouse_id' => $warehouseId,
+                'added_quantity' => $quantity,
+                'current_quantity' => $updatedQuantity,
+                'threshold' => $warehouseRestockThreshold,
+                'is_low_stock' => ($updatedQuantity <= $warehouseRestockThreshold)
             ], 'Stock added successfully');
         } else {
             $this->jsonError('Failed to add stock', 500);

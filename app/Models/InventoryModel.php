@@ -250,9 +250,28 @@ class InventoryModel extends Model
         $existingInventory = $this->getInventoryByProductAndWarehouse($productId, $warehouseId);
         
         if ($existingInventory) {
+            // Ensure QUANTITY key exists (handle both uppercase and lowercase)
+            $currentQuantity = 0;
+            if (isset($existingInventory['QUANTITY'])) {
+                $currentQuantity = $existingInventory['QUANTITY'];
+            } elseif (isset($existingInventory['quantity'])) {
+                $currentQuantity = $existingInventory['quantity'];
+            }
+
+            // Ensure INVE_ID key exists (handle both uppercase and lowercase)
+            $inventoryId = null;
+            if (isset($existingInventory['INVE_ID'])) {
+                $inventoryId = $existingInventory['INVE_ID'];
+            } elseif (isset($existingInventory['inve_id'])) {
+                $inventoryId = $existingInventory['inve_id'];
+            } else {
+                error_log("[ERROR] Inventory record exists but ID is missing: " . print_r($existingInventory, true));
+                return false;
+            }
+            
             // Update existing inventory
-            $newQuantity = $existingInventory['QUANTITY'] + $quantity;
-            return $this->updateInventoryQuantity($existingInventory['INVE_ID'], $newQuantity);
+            $newQuantity = $currentQuantity + $quantity;
+            return $this->updateInventoryQuantity($inventoryId, $newQuantity);
         } else {
             // Create new inventory record
             return $this->createInventory([
