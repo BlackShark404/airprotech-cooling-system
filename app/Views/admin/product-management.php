@@ -111,12 +111,17 @@ $additionalStyles = <<<HTML
     .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        width: 100%;
+        margin-bottom: 1rem;
+        -ms-overflow-style: -ms-autohiding-scrollbar;
     }
     
-    /* Table styling */
+    /* Ensure table takes full width but allows scrolling */
     #productsTable {
         border-collapse: separate;
         border-spacing: 0;
+        width: 100%;
+        min-width: 800px; /* Minimum width to ensure proper layout */
     }
     
     #productsTable thead th {
@@ -165,6 +170,50 @@ $additionalStyles = <<<HTML
         padding: 8px;
         border-bottom: 1px solid #dee2e6;
     }
+    
+    /* Additional responsive styles for small screens */
+    @media (max-width: 767.98px) {
+        .product-image {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 3px;
+        }
+        
+        .filter-card .row .col-md-6 {
+            margin-top: 10px;
+        }
+        
+        #productsTable th, 
+        #productsTable td {
+            padding: 10px 5px;
+            white-space: nowrap;
+        }
+        
+        /* Improve scrolling experience on mobile */
+        .table-responsive {
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.05);
+        }
+        
+        /* Make sure detail rows display well on mobile */
+        tr.details-row .detail-content {
+            padding: 10px;
+        }
+        
+        tr.details-row .detail-content .row {
+            flex-direction: column;
+        }
+        
+        tr.details-row .detail-content .col-md-4 {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+    }
 </style>
 HTML;
 
@@ -209,17 +258,17 @@ ob_start();
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table id="productsTable" class="table table-hover" style="width:100%">
+                <table id="productsTable" class="table table-hover">
                     <thead>
                         <tr>
-                            <th></th>
-                            <th>Image</th>
-                            <th>Name</th>
+                            <th width="40"></th>
+                            <th width="100">Image</th>
+                            <th width="200">Name</th>
                             <th>Description</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th>Updated At</th>
-                            <th>Actions</th>
+                            <th width="120">Status</th>
+                            <th width="120">Created At</th>
+                            <th width="120">Updated At</th>
+                            <th width="120">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -361,12 +410,15 @@ ob_start();
 <!-- Include DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
 
 <!-- Include DataTables JS -->
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
@@ -393,21 +445,29 @@ document.addEventListener('DOMContentLoaded', function() {
             url: '/api/products',
             dataSrc: 'data'
         },
+        responsive: true,
+        scrollX: true,
+        scrollCollapse: true,
+        autoWidth: false,
         columns: [
             {
                 className: 'details-control',
                 orderable: false,
                 data: null,
                 defaultContent: '<i class="bi bi-chevron-down"></i>',
-                width: '30px'
+                width: '40px'
             },
             { 
                 data: 'prod_image',
                 render: function(data) {
                     return data ? '<img src="/' + data + '" class="product-image" alt="Product Image">' : 'No Image';
-                }
+                },
+                width: '100px'
             },
-            { data: 'prod_name' },
+            { 
+                data: 'prod_name',
+                width: '200px'
+            },
             { 
                 data: 'prod_description',
                 render: function(data) {
@@ -424,23 +484,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         badgeClass = 'badge-discontinued';
                     }
                     return '<span class="badge ' + badgeClass + '">' + (data || 'N/A') + '</span>';
-                }
+                },
+                width: '120px'
             },
             { 
                 data: 'prod_created_at',
                 render: function(data) {
                     return data ? new Date(data).toLocaleDateString() : 'N/A';
-                }
+                },
+                width: '120px'
             },
             { 
                 data: 'prod_updated_at',
                 render: function(data) {
                     return data ? new Date(data).toLocaleDateString() : 'N/A';
-                }
+                },
+                width: '120px'
             },
             {
                 data: null,
                 orderable: false,
+                width: '120px',
                 render: function(data) {
                     return `
                         <div class="d-flex">
@@ -458,7 +522,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         ],
-        order: [[5, 'desc']] // Sort by Created At column by default
+        order: [[5, 'desc']], // Sort by Created At column by default
+        columnDefs: [
+            { responsivePriority: 1, targets: [0, 2, 7] }, // These columns will be displayed first
+            { responsivePriority: 2, targets: 4 }           // Status column is next priority
+        ]
     });
     
     // Create a DataTablesManager instance WITHOUT initializing the table again
