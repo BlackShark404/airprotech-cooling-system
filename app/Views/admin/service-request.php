@@ -478,6 +478,7 @@ ob_start();
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 
+<script src="/assets/js/utility/toast-notifications.js"></script>
 <script src="/assets/js/utility/DataTablesManager.js"></script>
 
 <!-- Initialize DataTables and handle service requests -->

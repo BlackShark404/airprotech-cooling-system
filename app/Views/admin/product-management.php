@@ -371,9 +371,8 @@ ob_start();
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 
-<script src="/assets/js/utility/toast-notifications.js"></script>
+<!-- DataTablesManager script -->
 <script src="/assets/js/utility/DataTablesManager.js"></script>
-
 
 <!-- JavaScript for Product Management -->
 <script>
@@ -460,6 +459,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         ],
         order: [[5, 'desc']] // Sort by Created At column by default
+    });
+    
+    // Create a DataTablesManager instance for more advanced features
+    const productsManager = new DataTablesManager('productsTable', {
+        dataTable: productsTable // Assign the existing DataTable instance
     });
     
     // Handle row expand/collapse for details
@@ -649,14 +653,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     $('#deleteConfirmModal').modal('hide');
                     productsTable.ajax.reload();
-                    showAlert('Product deleted successfully', 'success');
+                    productsManager.showSuccessToast('Product deleted successfully');
                 } else {
-                    showAlert('Error: ' + data.message, 'danger');
+                    productsManager.showErrorToast('Error: ' + data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showAlert('An error occurred while deleting the product', 'danger');
+                productsManager.showErrorToast('An error occurred while deleting the product');
             });
     });
     
@@ -756,14 +760,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     $('#productModal').modal('hide');
                     productsTable.ajax.reload();
-                    showAlert(isEditMode ? 'Product updated successfully' : 'Product created successfully', 'success');
+                    productsManager.showSuccessToast(isEditMode ? 'Product updated successfully' : 'Product created successfully');
                 } else {
-                    showAlert('Error: ' + data.message, 'danger');
+                    productsManager.showErrorToast('Error: ' + data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showAlert('An error occurred while saving the product', 'danger');
+                productsManager.showErrorToast('An error occurred while saving the product');
             });
     });
     
@@ -781,13 +785,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validate product form
     function validateProductForm() {
         if (!$('#productName').val()) {
-            showAlert('Please enter a product name', 'danger');
+            productsManager.showErrorToast('Validation Error', 'Please enter a product name');
             $('#details-tab').tab('show');
             return false;
         }
         
         if (!$('#productStatus').val()) {
-            showAlert('Please select an availability status', 'danger');
+            productsManager.showErrorToast('Validation Error', 'Please select an availability status');
             $('#details-tab').tab('show');
             return false;
         }
@@ -797,39 +801,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // For new products, require an image
         if (!isEditMode && !$('#productImage').val() && !$('#imagePreview img').length) {
-            showAlert('Please select a product image', 'danger');
+            productsManager.showErrorToast('Validation Error', 'Please select a product image');
             $('#details-tab').tab('show');
             return false;
         }
         
         // Require at least one variant
         if ($('.variant-row').length === 0) {
-            showAlert('Please add at least one product variant', 'danger');
+            productsManager.showErrorToast('Validation Error', 'Please add at least one product variant');
             $('#variants-tab').tab('show');
             return false;
         }
         
         return true;
-    }
-    
-    // Show alert message
-    function showAlert(message, type) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.setAttribute('role', 'alert');
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-        
-        const container = document.querySelector('.container-fluid');
-        container.insertBefore(alertDiv, container.firstChild);
-        
-        // Auto dismiss after 5 seconds
-        setTimeout(() => {
-            alertDiv.classList.remove('show');
-            setTimeout(() => alertDiv.remove(), 150);
-        }, 5000);
     }
     
     // Add Feature Row
