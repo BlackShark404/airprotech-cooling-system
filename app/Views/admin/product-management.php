@@ -379,7 +379,7 @@ ob_start();
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize DataTable
-    let productsTable = new DataTablesManager('#productsTable', {
+    let productsTable = $('#productsTable').DataTable({
         ajax: {
             url: '/api/products',
             dataSrc: ''
@@ -455,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle row expand/collapse for details
     $('#productsTable tbody').on('click', 'td.details-control', function() {
         let tr = $(this).closest('tr');
-        let row = productsTable.getApiInstance().row(tr);
+        let row = productsTable.row(tr);
         let icon = $(this).find('i');
         
         if (row.child.isShown()) {
@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Filter products by status
     $('#statusFilter').on('change', function() {
-        productsTable.getApiInstance().column(4).search($(this).val()).draw();
+        productsTable.column(4).search($(this).val()).draw();
     });
     
     // Add New Product Button
@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     $('#deleteConfirmModal').modal('hide');
-                    productsTable.getApiInstance().ajax.reload();
+                    productsTable.ajax.reload();
                     showAlert('Product deleted successfully', 'success');
                 } else {
                     showAlert('Error: ' + data.message, 'danger');
@@ -744,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     $('#productModal').modal('hide');
-                    productsTable.getApiInstance().ajax.reload();
+                    productsTable.ajax.reload();
                     showAlert(isEditMode ? 'Product updated successfully' : 'Product created successfully', 'success');
                 } else {
                     showAlert('Error: ' + data.message, 'danger');
