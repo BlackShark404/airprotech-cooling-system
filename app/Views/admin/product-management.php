@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (details.features && details.features.length > 0) {
             featuresHtml = '<table class="nested-table"><thead><tr><th>Feature</th></tr></thead><tbody>';
             details.features.forEach(function(feature) {
-                featuresHtml += `<tr><td>${feature.FEATURE_NAME}</td></tr>`;
+                featuresHtml += `<tr><td>${feature.feature_name || 'N/A'}</td></tr>`;
             });
             featuresHtml += '</tbody></table>';
         } else {
@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (details.specs && details.specs.length > 0) {
             specsHtml = '<table class="nested-table"><thead><tr><th>Specification</th><th>Value</th></tr></thead><tbody>';
             details.specs.forEach(function(spec) {
-                specsHtml += `<tr><td>${spec.SPEC_NAME}</td><td>${spec.SPEC_VALUE}</td></tr>`;
+                specsHtml += `<tr><td>${spec.spec_name || 'N/A'}</td><td>${spec.spec_value || 'N/A'}</td></tr>`;
             });
             specsHtml += '</tbody></table>';
         } else {
@@ -518,11 +518,11 @@ document.addEventListener('DOMContentLoaded', function() {
             details.variants.forEach(function(variant) {
                 variantsHtml += `
                     <tr>
-                        <td>${variant.VAR_CAPACITY}</td>
-                        <td>₱${parseFloat(variant.VAR_SRP_PRICE).toLocaleString()}</td>
-                        <td>${variant.VAR_PRICE_FREE_INSTALL ? '₱' + parseFloat(variant.VAR_PRICE_FREE_INSTALL).toLocaleString() : 'N/A'}</td>
-                        <td>${variant.VAR_PRICE_WITH_INSTALL ? '₱' + parseFloat(variant.VAR_PRICE_WITH_INSTALL).toLocaleString() : 'N/A'}</td>
-                        <td>${variant.VAR_POWER_CONSUMPTION || 'N/A'}</td>
+                        <td>${variant.var_capacity || 'N/A'}</td>
+                        <td>${variant.var_srp_price ? '₱' + parseFloat(variant.var_srp_price).toLocaleString() : 'N/A'}</td>
+                        <td>${variant.var_price_free_install ? '₱' + parseFloat(variant.var_price_free_install).toLocaleString() : 'N/A'}</td>
+                        <td>${variant.var_price_with_install ? '₱' + parseFloat(variant.var_price_with_install).toLocaleString() : 'N/A'}</td>
+                        <td>${variant.var_power_consumption || 'N/A'}</td>
                     </tr>
                 `;
             });
@@ -557,6 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    console.log('Product detail data:', data.data); // Debug: Log the entire product details
                     callback(data.data);
                 } else {
                     console.error('Error fetching product details:', data.message);
@@ -597,14 +598,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add features
             if (product.features && product.features.length > 0) {
                 product.features.forEach(function(feature) {
-                    addFeatureRow(feature.FEATURE_NAME, feature.FEATURE_ID);
+                    addFeatureRow(feature.feature_name, feature.feature_id);
                 });
             }
             
             // Add specs
             if (product.specs && product.specs.length > 0) {
                 product.specs.forEach(function(spec) {
-                    addSpecRow(spec.SPEC_NAME, spec.SPEC_VALUE, spec.SPEC_ID);
+                    addSpecRow(spec.spec_name, spec.spec_value, spec.spec_id);
                 });
             }
             
@@ -612,12 +613,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (product.variants && product.variants.length > 0) {
                 product.variants.forEach(function(variant) {
                     addVariantRow(
-                        variant.VAR_ID,
-                        variant.VAR_CAPACITY,
-                        variant.VAR_SRP_PRICE,
-                        variant.VAR_PRICE_FREE_INSTALL,
-                        variant.VAR_PRICE_WITH_INSTALL,
-                        variant.VAR_POWER_CONSUMPTION
+                        variant.var_id,
+                        variant.var_capacity,
+                        variant.var_srp_price,
+                        variant.var_price_free_install,
+                        variant.var_price_with_install,
+                        variant.var_power_consumption
                     );
                 });
             }
@@ -695,8 +696,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (featureName) {
                 features.push({
-                    FEATURE_ID: featureId || null,
-                    FEATURE_NAME: featureName
+                    feature_id: featureId || null,
+                    feature_name: featureName
                 });
             }
         });
@@ -711,9 +712,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (specName && specValue) {
                 specs.push({
-                    SPEC_ID: specId || null,
-                    SPEC_NAME: specName,
-                    SPEC_VALUE: specValue
+                    spec_id: specId || null,
+                    spec_name: specName,
+                    spec_value: specValue
                 });
             }
         });
@@ -731,12 +732,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (capacity && srpPrice) {
                 variants.push({
-                    VAR_ID: variantId || null,
-                    VAR_CAPACITY: capacity,
-                    VAR_SRP_PRICE: srpPrice,
-                    VAR_PRICE_FREE_INSTALL: freeInstallPrice || null,
-                    VAR_PRICE_WITH_INSTALL: withInstallPrice || null,
-                    VAR_POWER_CONSUMPTION: powerConsumption || null
+                    var_id: variantId || null,
+                    var_capacity: capacity,
+                    var_srp_price: srpPrice,
+                    var_price_free_install: freeInstallPrice || null,
+                    var_price_with_install: withInstallPrice || null,
+                    var_power_consumption: powerConsumption || null
                 });
             }
         });
