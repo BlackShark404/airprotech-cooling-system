@@ -54,18 +54,6 @@ $additionalStyles = <<<HTML
         vertical-align: baseline;
         border-radius: 0.375rem;
     }
-    .badge-low {
-        background-color: #dc3545;
-        color: #fff;
-    }
-    .badge-medium {
-        background-color: #ffc107;
-        color: #212529;
-    }
-    .badge-high {
-        background-color: #198754;
-        color: #fff;
-    }
     .inventory-card {
         border-radius: 10px;
         overflow: hidden;
@@ -210,15 +198,6 @@ ob_start();
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="stockLevelFilter" class="form-label">Stock Level</label>
-                            <select id="stockLevelFilter" class="form-select filter-dropdown">
-                                <option value="">All Stock Levels</option>
-                                <option value="low">Low Stock</option>
-                                <option value="medium">Medium Stock</option>
-                                <option value="high">High Stock</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
                             <label for="inventoryTypeFilter" class="form-label">Inventory Type</label>
                             <select id="inventoryTypeFilter" class="form-select filter-dropdown">
                                 <option value="">All Types</option>
@@ -244,7 +223,6 @@ ob_start();
                                     <th>Warehouse</th>
                                     <th>Quantity</th>
                                     <th>Type</th>
-                                    <th>Stock Level</th>
                                     <th>Last Updated</th>
                                     <th>Actions</th>
                                 </tr>
@@ -672,17 +650,6 @@ ob_start();
                             pill: true
                         }
                     },
-                    { 
-                        data: 'stock_level', 
-                        title: 'Stock Level',
-                        badge: {
-                            valueMap: {
-                                'low': { type: 'danger', display: 'Low' },
-                                'medium': { type: 'warning', display: 'Medium' },
-                                'high': { type: 'success', display: 'High' }
-                            }
-                        }
-                    },
                     { data: 'inve_updated_at', title: 'Last Updated' },
                 ],
                 viewRowCallback: viewInventory,
@@ -826,7 +793,6 @@ ob_start();
         
         // Handle filter changes for Inventory table
         document.getElementById('warehouseFilter').addEventListener('change', applyInventoryFilters);
-        document.getElementById('stockLevelFilter').addEventListener('change', applyInventoryFilters);
         document.getElementById('inventoryTypeFilter').addEventListener('change', applyInventoryFilters);
         
         // Function to load products for Add Stock modal dropdown
@@ -1204,11 +1170,9 @@ ob_start();
         function applyInventoryFilters() {
             const filters = {};
             const warehouseId = document.getElementById('warehouseFilter').value;
-            const stockLevel = document.getElementById('stockLevelFilter').value;
             const inventoryType = document.getElementById('inventoryTypeFilter').value;
             
             if (warehouseId) filters.whouse_id = warehouseId;
-            if (stockLevel) filters.stock_level = stockLevel; // Assumes backend handles stock_level filter
             if (inventoryType) filters.inve_type = inventoryType;
             
             if(inventoryTable) inventoryTable.applyFilters(filters);
