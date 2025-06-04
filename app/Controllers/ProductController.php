@@ -880,13 +880,15 @@ class ProductController extends BaseController
         $this->productBookingModel->updateBooking($bookingId, $updateData);
         
         // Update technician assignments if provided
-        if (!empty($data['technicians'])) {
+        if (isset($data['technicians'])) {
             // Remove current assignments
             $this->productBookingModel->removeAllTechnicians($bookingId);
             
-            // Add new assignments
-            foreach ($data['technicians'] as $tech) {
-                $this->productBookingModel->assignTechnician($bookingId, $tech['id'], $tech['notes'] ?? '');
+            // Add new assignments only if technicians array is not empty
+            if (!empty($data['technicians'])) {
+                foreach ($data['technicians'] as $tech) {
+                    $this->productBookingModel->assignTechnician($bookingId, $tech['id'], $tech['notes'] ?? '');
+                }
             }
         }
         

@@ -831,8 +831,9 @@ function addTechnicianBadge(techId, techName, notes = '') {
     
     // Add remove functionality
     badge.find('.technician-remove').on('click', function() {
-        // Remove from tracking array
-        assignedTechnicians = assignedTechnicians.filter(tech => tech.id !== techId);
+        // Remove from tracking array - convert both to numbers for comparison
+        const numTechId = parseInt(techId);
+        assignedTechnicians = assignedTechnicians.filter(tech => parseInt(tech.id) !== numTechId);
         // Remove badge from UI
         badge.remove();
     });
