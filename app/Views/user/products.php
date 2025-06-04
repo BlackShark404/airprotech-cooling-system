@@ -394,115 +394,134 @@
 
     <!-- Product Modal Template -->
     <div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="productDetailModalLabel">Product Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <!-- Product Image -->
-                        <div class="col-md-5 mb-3">
-                            <img id="modal-product-image" src="" alt="Product" class="img-fluid rounded">
-                            
-                            <div class="bg-light p-3 mt-3 rounded">
-                                <p class="mb-1">Product Code</p>
-                                <h5 id="modal-product-code" class="fw-bold"></h5>
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 overflow-hidden">
+                <button type="button" class="btn-close position-absolute end-0 top-0 p-4 z-3" style="font-size: 0.8rem" data-bs-dismiss="modal" aria-label="Close"></button>
+                
+                <div class="row g-0">
+                    <!-- Left Column - Product Image -->
+                    <div class="col-lg-5 bg-light">
+                        <div class="product-display d-flex flex-column h-100">
+                            <div class="flex-grow-1 d-flex align-items-center justify-content-center p-5" style="min-height: 500px;">
+                                <img id="modal-product-image" src="" alt="Product" class="img-fluid" style="max-height: 400px; object-fit: contain;">
                             </div>
-                        </div>
-                        
-                        <!-- Product Details -->
-                        <div class="col-md-7">
-                            <h2 id="modal-product-name" class="mb-2"></h2>
-                            <h3 id="modal-product-price" class="text-danger mb-4"></h3>
-                            
-                            <div class="d-flex align-items-center mb-4">
-                                <span class="badge bg-success rounded-pill p-2 me-2">
-                                    <i class="fas fa-check"></i>
-                                </span>
-                                <span id="modal-availability-status" class="text-success fw-bold"></span>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="modal-variant-select" class="form-label">Select Variant</label>
-                                <select id="modal-variant-select" class="form-select">
-                                    <!-- Variants will be added dynamically -->
-                                </select>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="modal-quantity" class="form-label">Quantity</label>
-                                <div class="input-group w-50">
-                                    <button class="btn btn-outline-secondary" type="button" id="decrease-quantity">−</button>
-                                    <input type="text" class="form-control text-center" id="modal-quantity" value="1" readonly>
-                                    <button class="btn btn-outline-secondary" type="button" id="increase-quantity">+</button>
-                                </div>
-                            </div>
-                            
-                            <div class="modal-section mb-4">
-                                <h4>Booking Information</h4>
-                                <div class="row mb-3">
-                                    <div class="col-6">
-                                        <p class="text-muted mb-1">Booking ID</p>
-                                        <p id="modal-order-id" class="fw-bold"></p>
-                                    </div>
-                                    <div class="col-6">
-                                        <p class="text-muted mb-1">Booking Date</p>
-                                        <p id="modal-order-date" class="fw-bold"></p>
+                            <div class="product-info p-4 bg-white">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fs-6 text-muted">Product ID: <span id="modal-product-code" class="fw-medium text-dark"></span></span>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge rounded-pill bg-success-subtle text-success me-2">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                        <span id="modal-availability-status" class="text-success fw-medium"></span>
                                     </div>
                                 </div>
-                                <div class="row mb-3">
-                                    <div class="col-6">
-                                        <p class="text-muted mb-1">Status</p>
-                                        <p id="modal-status" class="text-primary fw-bold"></p>
-                                    </div>
-                                    <div class="col-6">
-                                        <p class="text-muted mb-1">Total Amount</p>
-                                        <p id="modal-total-amount" class="fw-bold"></p>
-                                    </div>
-                                </div>
-                                
-                                <!-- New fields for preferred date, time, and address -->
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="modal-preferred-date" class="form-label">Preferred Date*</label>
-                                        <input type="date" id="modal-preferred-date" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="modal-preferred-time" class="form-label">Preferred Time*</label>
-                                        <input type="time" id="modal-preferred-time" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="modal-address" class="form-label">Delivery/Installation Address*</label>
-                                    <textarea id="modal-address" class="form-control" rows="2" required></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="modal-description" class="form-label">Additional Instructions</label>
-                                    <textarea id="modal-description" class="form-control" rows="2" placeholder="Any special instructions or requirements..."></textarea>
-                                </div>
-                            </div>
-                            
-                            <div class="modal-section">
-                                <h4>Features</h4>
-                                <ul id="modal-features" class="list-unstyled">
-                                    <!-- Features will be added dynamically -->
-                                </ul>
-                            </div>
-                            
-                            <div class="modal-section">
-                                <h4>Specifications</h4>
-                                <ul id="modal-specifications" class="list-unstyled">
-                                    <!-- Specifications will be added dynamically -->
-                                </ul>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" id="confirm-order" class="btn btn-primary">Confirm Booking</button>
+                    
+                    <!-- Right Column - Product Details & Booking -->
+                    <div class="col-lg-7">
+                        <div class="p-5">
+                            <h3 id="modal-product-name" class="display-6 fw-bold mb-0"></h3>
+                            <h4 id="modal-product-price" class="mb-4 text-primary fw-bold fs-3"></h4>
+                            
+                            <div class="row gx-4 gy-3 mb-4">
+                                <div class="col-md-7">
+                                    <label for="modal-variant-select" class="form-label">Variant</label>
+                                    <select id="modal-variant-select" class="form-select form-select-lg shadow-sm border-0 bg-light">
+                                        <!-- Variants will be added dynamically -->
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="modal-quantity" class="form-label">Quantity</label>
+                                    <div class="input-group">
+                                        <button class="btn btn-outline-secondary border-0 bg-light px-3" type="button" id="decrease-quantity">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="text" class="form-control text-center border-0 bg-light" id="modal-quantity" value="1" readonly>
+                                        <button class="btn btn-outline-secondary border-0 bg-light px-3" type="button" id="increase-quantity">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Product Information Tabs -->
+                            <ul class="nav nav-tabs mb-4" id="productDetailTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="booking-tab" data-bs-toggle="tab" data-bs-target="#booking-content" type="button" role="tab" aria-controls="booking-content" aria-selected="true">
+                                        <i class="fas fa-calendar-alt me-2"></i>Booking Details
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="features-tab" data-bs-toggle="tab" data-bs-target="#features-content" type="button" role="tab" aria-controls="features-content" aria-selected="false">
+                                        <i class="fas fa-star me-2"></i>Features
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs-content" type="button" role="tab" aria-controls="specs-content" aria-selected="false">
+                                        <i class="fas fa-cogs me-2"></i>Specifications
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content" id="productDetailTabsContent">
+                                <!-- Booking Tab -->
+                                <div class="tab-pane fade show active" id="booking-content" role="tabpanel" aria-labelledby="booking-tab">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input type="date" id="modal-preferred-date" class="form-control" placeholder="Preferred Date" required>
+                                                <label for="modal-preferred-date">Preferred Date*</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input type="time" id="modal-preferred-time" class="form-control" placeholder="Preferred Time" required>
+                                                <label for="modal-preferred-time">Preferred Time*</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-floating">
+                                                <textarea id="modal-address" class="form-control" placeholder="Delivery/Installation Address" style="height: 100px" required></textarea>
+                                                <label for="modal-address">Delivery/Installation Address*</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-floating">
+                                                <textarea id="modal-description" class="form-control" placeholder="Additional Instructions" style="height: 100px"></textarea>
+                                                <label for="modal-description">Additional Instructions</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Features Tab -->
+                                <div class="tab-pane fade" id="features-content" role="tabpanel" aria-labelledby="features-tab">
+                                    <ul id="modal-features" class="list-group list-group-flush">
+                                        <!-- Features will be added dynamically -->
+                                    </ul>
+                                </div>
+                                
+                                <!-- Specifications Tab -->
+                                <div class="tab-pane fade" id="specs-content" role="tabpanel" aria-labelledby="specs-tab">
+                                    <ul id="modal-specifications" class="list-group list-group-flush">
+                                        <!-- Specifications will be added dynamically -->
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-4">
+                                <div class="total-price">
+                                    <p class="m-0 text-muted">Total Amount</p>
+                                    <h4 id="modal-total-amount" class="m-0 text-primary fw-bold"></h4>
+                                </div>
+                                <button type="button" id="confirm-order" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-check-circle me-2"></i>Confirm Booking
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
