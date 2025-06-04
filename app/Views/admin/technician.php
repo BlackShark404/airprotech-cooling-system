@@ -538,8 +538,9 @@ function initServiceAssignmentsTable(technicianId) {
         ajax: {
             url: `/api/admin/technicians/${technicianId}/assignments?type=service`,
             dataSrc: function(json) {
-                // Extract data from the response
-                return json.data || [];
+                console.log("Service assignments response:", json); // Debug
+                // Handle doubly nested data structure
+                return json.data && json.data.data ? json.data.data : [];
             }
         },
         columns: [
@@ -589,8 +590,9 @@ function initProductAssignmentsTable(technicianId) {
         ajax: {
             url: `/api/admin/technicians/${technicianId}/assignments?type=product`,
             dataSrc: function(json) {
-                // Extract data from the response
-                return json.data || [];
+                console.log("Product assignments response:", json); // Debug
+                // Handle doubly nested data structure
+                return json.data && json.data.data ? json.data.data : [];
             }
         },
         columns: [
