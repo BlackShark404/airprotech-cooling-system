@@ -396,7 +396,6 @@ ob_start();
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 
-<script src="/assets/js/utility/toast-notifications.js"></script>
 <script src="/assets/js/utility/DataTablesManager.js"></script>
 
 <!-- Initialize DataTables and handle technicians -->
@@ -523,7 +522,7 @@ function viewTechnician(technicianId) {
             $('#viewTechnicianModal').modal('show');
         },
         error: function(xhr) {
-            showErrorToast('Error', 'Failed to load technician details');
+            showErrorToast('Failed to load technician details');
         }
     });
 }
@@ -654,7 +653,7 @@ function editTechnician(technicianId) {
             $('#editTechnicianModal').modal('show');
         },
         error: function(xhr) {
-            showErrorToast('Error', 'Failed to load technician details');
+            showErrorToast('Failed to load technician details');
         }
     });
 }
@@ -671,12 +670,12 @@ function saveTechnician() {
             te_is_available: isAvailable
         },
         success: function(response) {
-            showSuccessToast('Success', 'Technician updated successfully');
+            showSuccessToast('Technician updated successfully');
             $('#editTechnicianModal').modal('hide');
             techniciansManager.refresh();
         },
         error: function(xhr) {
-            showErrorToast('Error', 'Failed to update technician');
+            showErrorToast('Failed to update technician');
         }
     });
 }
@@ -702,7 +701,7 @@ function applyFilters() {
             techniciansManager.refresh(response.data);
         },
         error: function(xhr) {
-            showErrorToast('Error', 'Failed to apply filters');
+            showErrorToast('Failed to apply filters');
         }
     });
 }
@@ -714,25 +713,21 @@ function resetFilters() {
 }
 
 // Show toast notification - success
-function showSuccessToast(title, message) {
-    Toastify({
-        text: message,
-        className: "info",
-        style: {
-            background: "linear-gradient(to right, #00b09b, #96c93d)",
-        }
-    }).showToast();
+function showSuccessToast(message) {
+    if (techniciansManager) {
+        techniciansManager.showSuccessToast('Success', message);
+    } else {
+        alert(message);
+    }
 }
 
 // Show toast notification - error
-function showErrorToast(title, message) {
-    Toastify({
-        text: message,
-        className: "info",
-        style: {
-            background: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }
-    }).showToast();
+function showErrorToast(message) {
+    if (techniciansManager) {
+        techniciansManager.showErrorToast('Error', message);
+    } else {
+        alert(message);
+    }
 }
 </script>
 
