@@ -8,6 +8,8 @@ class ProductVariantModel extends Model
 
     public function getVariantsByProductId($productId)
     {
+        // Ensure productId is treated as an integer to avoid case sensitivity issues
+        $productId = intval($productId);
         $sql = "SELECT * FROM {$this->table} WHERE PROD_ID = :product_id AND VAR_DELETED_AT IS NULL";
         return $this->query($sql, [':product_id' => $productId]);
     }

@@ -82,19 +82,22 @@ class ProductManager {
             const productName = product.PROD_NAME || product.prod_name || 'Unnamed Product';
             const productDesc = product.PROD_DESCRIPTION || product.prod_description || '';
 
+            // Filter variants with inventory > 0
+            const variantsWithStock = product.variants?.filter(v => (v.INVENTORY_QUANTITY || 0) > 0) || [];
+
             // Get the primary variant price if available
             let priceDisplay = '';
-            if (product.variants && product.variants.length > 0) {
-                const primaryVariant = product.variants[0];
+            if (variantsWithStock.length > 0) {
+                const primaryVariant = variantsWithStock[0];
                 const price = primaryVariant.VAR_SRP_PRICE || primaryVariant.var_srp_price || '0.00';
                 priceDisplay = `<div class="product-price">₱${price}</div>`;
 
                 // If there are multiple variants, show a range
-                if (product.variants.length > 1) {
+                if (variantsWithStock.length > 1) {
                     let minPrice = Number.MAX_VALUE;
                     let maxPrice = 0;
 
-                    product.variants.forEach(variant => {
+                    variantsWithStock.forEach(variant => {
                         const varPrice = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
                         minPrice = Math.min(minPrice, varPrice);
                         maxPrice = Math.max(maxPrice, varPrice);
@@ -106,18 +109,19 @@ class ProductManager {
                 }
             }
 
-            // Show the capacity variants available
+            // Show the capacity variants available with inventory quantity
             let variantInfo = '';
-            if (product.variants && product.variants.length > 0) {
-                const capacities = product.variants.map(v => {
+            if (variantsWithStock.length > 0) {
+                const capacities = variantsWithStock.map(v => {
                     const capacity = v.VAR_CAPACITY || v.var_capacity;
-                    return `<span class="variant-badge">${capacity}</span>`;
+                    const quantity = v.INVENTORY_QUANTITY || 0;
+                    return `<span class="variant-badge" title="${quantity} units in stock">${capacity} <span class="badge bg-success">${quantity}</span></span>`;
                 }).join(' ');
 
                 if (capacities) {
                     variantInfo = `
                         <div class="product-variants">
-                            <small class="text-muted d-block mb-1">Available Variants:</small>
+                            <small class="text-muted d-block mb-1">Available Variants (Stock):</small>
                             ${capacities}
                         </div>
                     `;
@@ -310,67 +314,119 @@ class ProductManager {
     }
 
     /**
-     * Update total amount based on quantity and selected variant
+     * Update total amount in the modal
      */
     updateTotalAmount() {
-        if (!this.currentProduct || !this.modal.quantity || !this.modal.variantSelect || !this.modal.totalAmount) {
-            if (this.modal.totalAmount) this.modal.totalAmount.textContent = '₱0.00';
+        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.quantity || !this.modal.totalAmount) {
             return;
         }
 
-        const quantity = parseInt(this.modal.quantity.value, 10);
-        const variantId = parseInt(this.modal.variantSelect.value);
-
-        // Get variants from the current product and normalize them
-        const variants = this.currentProduct.variants || [];
-        const normalizedVariants = variants.map(variant => ({
-            id: variant.VAR_ID || variant.var_id,
-            price: variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00'
-        }));
+        const selectedVariantId = parseInt(this.modal.variantSelect.value);
+        const quantity = parseInt(this.modal.quantity.value) || 1;
 
         // Find the selected variant
-        const selectedVariant = normalizedVariants.find(v => v.id === variantId);
-        const price = selectedVariant ? parseFloat(selectedVariant.price) : 0;
-        const total = price * quantity;
+        const selectedVariant = this.currentProduct.variants.find(v => {
+            const id = v.VAR_ID || v.var_id;
+            return id === selectedVariantId;
+        });
 
-        this.modal.totalAmount.textContent = `₱${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (selectedVariant) {
+            const price = parseFloat(selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || 0);
+            const availableQuantity = this.getAvailableQuantity(selectedVariant);
+
+            // Ensure quantity doesn't exceed available inventory
+            const validQuantity = Math.min(quantity, availableQuantity);
+            if (validQuantity !== quantity && this.modal.quantity) {
+                this.modal.quantity.value = validQuantity;
+            }
+
+            const totalAmount = price * validQuantity;
+            this.modal.totalAmount.textContent = `₱${totalAmount.toFixed(2)}`;
+
+            // Disable increase button if at inventory limit
+            const increaseQtyBtn = document.getElementById('increase-quantity');
+            if (increaseQtyBtn) {
+                increaseQtyBtn.disabled = validQuantity >= availableQuantity;
+            }
+        } else {
+            this.modal.totalAmount.textContent = '₱0.00';
+        }
     }
 
     /**
      * Update modal price and availability based on selected variant
      */
     updateModalPriceAndAvailability() {
-        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) {
-            return;
-        }
+        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) return;
 
-        const variantId = parseInt(this.modal.variantSelect.value);
-
-        // Get variants from the current product and normalize them
-        const variants = this.currentProduct.variants || [];
-        const normalizedVariants = variants.map(variant => ({
-            id: variant.VAR_ID || variant.var_id,
-            price: variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00'
-        }));
-
-        // Find the selected variant
-        const selectedVariant = normalizedVariants.find(v => v.id === variantId);
+        const selectedVariantId = parseInt(this.modal.variantSelect.value);
+        const selectedVariant = this.currentProduct.variants.find(v => {
+            const id = v.VAR_ID || v.var_id;
+            return id === selectedVariantId;
+        });
 
         if (selectedVariant) {
-            this.modal.price.textContent = `₱${selectedVariant.price}`;
+            const price = selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || '0.00';
+            this.modal.price.textContent = `₱${price}`;
 
-            // Get product status
-            const productStatus = this.currentProduct.PROD_AVAILABILITY_STATUS ||
-                this.currentProduct.prod_availability_status ||
-                'Unknown';
+            // Check inventory quantity for this variant
+            const availableQuantity = this.getAvailableQuantity(selectedVariant);
 
-            this.modal.availabilityStatus.textContent =
-                productStatus === 'Available'
-                    ? `Available (${this.getAvailableQuantity(selectedVariant)} units)`
-                    : productStatus;
+            // Update availability status based on inventory quantity
+            let productStatus = 'Out of Stock';
+            let statusClass = 'text-danger';
+
+            if (availableQuantity > 10) {
+                productStatus = `In Stock (${availableQuantity})`;
+                statusClass = 'text-success';
+            } else if (availableQuantity > 0) {
+                productStatus = `Limited Stock (${availableQuantity})`;
+                statusClass = 'text-warning';
+            }
+
+            // Update the display
+            this.modal.availabilityStatus.textContent = productStatus;
+            this.modal.availabilityStatus.className = `fw-bold ${statusClass}`;
+
+            // Reset quantity to 1 or available quantity if less than 1
+            if (this.modal.quantity) {
+                const maxQuantity = Math.max(1, Math.min(availableQuantity, 10)); // Limit to 10 for UI purposes
+                this.modal.quantity.value = Math.min(1, maxQuantity);
+
+                // Enable/disable quantity controls based on stock
+                const increaseQtyBtn = document.getElementById('increase-quantity');
+                const decreaseQtyBtn = document.getElementById('decrease-quantity');
+
+                if (increaseQtyBtn) {
+                    increaseQtyBtn.disabled = availableQuantity <= 1;
+                }
+
+                if (decreaseQtyBtn) {
+                    decreaseQtyBtn.disabled = true; // Start with 1
+                }
+
+                // Set max attribute on quantity input to inventory limit
+                this.modal.quantity.setAttribute('max', availableQuantity);
+
+                // Disable the confirm button if out of stock
+                if (this.modal.confirmButton) {
+                    this.modal.confirmButton.disabled = availableQuantity <= 0;
+                    if (availableQuantity <= 0) {
+                        this.modal.confirmButton.title = "This product is out of stock";
+                    } else {
+                        this.modal.confirmButton.title = "";
+                    }
+                }
+            }
         } else {
             this.modal.price.textContent = '₱N/A';
             this.modal.availabilityStatus.textContent = 'N/A';
+            this.modal.availabilityStatus.className = 'fw-bold text-muted';
+
+            if (this.modal.confirmButton) {
+                this.modal.confirmButton.disabled = true;
+                this.modal.confirmButton.title = "Please select a variant";
+            }
         }
     }
 
@@ -389,12 +445,24 @@ class ProductManager {
 
             // Check for success response structure with data field
             if (response.data && response.data.success && Array.isArray(response.data.data)) {
-                const products = response.data.data;
+                const allProducts = response.data.data;
 
-                if (products.length > 0) {
-                    this.allProducts = products;
-                    this.populateCategoryFilter(products);
-                    this.renderProducts(products);
+                if (allProducts.length > 0) {
+                    // Filter to only products with variants that have inventory
+                    const productsWithInventory = allProducts.filter(product => {
+                        // Check if product has variants with inventory
+                        return product.variants && Array.isArray(product.variants) &&
+                            product.variants.some(variant => {
+                                const inventory = variant.INVENTORY_QUANTITY || 0;
+                                return inventory > 0;
+                            });
+                    });
+
+                    this.allProducts = productsWithInventory;
+                    this.populateCategoryFilter(productsWithInventory);
+                    this.renderProducts(productsWithInventory);
+
+                    console.log(`Filtered ${productsWithInventory.length} products with inventory out of ${allProducts.length} total products`);
                 } else {
                     console.warn('No products found in API response.');
                     if (this.container) this.container.innerHTML = '<div class="col-12"><p class="text-center">No products available at the moment.</p></div>';
@@ -693,308 +761,168 @@ class ProductManager {
     }
 
     /**
-     * Populate modal with product details
+     * Populate the modal with product details
      */
     populateModal(product) {
-        if (!this.modal.element || !product) return; // Modal or product not available
+        if (!product || !this.modal.element) return;
 
-        // Normalize product data - handle both uppercase and lowercase field names
-        const productData = {
-            id: product.PROD_ID || product.prod_id,
-            name: product.PROD_NAME || product.prod_name,
-            description: product.PROD_DESCRIPTION || product.prod_description,
-            image: product.PROD_IMAGE || product.prod_image,
-            status: product.PROD_AVAILABILITY_STATUS || product.prod_availability_status
-        };
+        this.currentProduct = product;
 
-        // Convert relative paths to absolute paths if needed
-        let imagePath = productData.image || '';
-        if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
-            imagePath = '/' + imagePath;
+        // Reset form values
+        if (this.modal.variantSelect) this.modal.variantSelect.innerHTML = '';
+        if (this.modal.quantity) this.modal.quantity.value = '1';
+        if (this.modal.features) this.modal.features.innerHTML = '';
+        if (this.modal.specifications) this.modal.specifications.innerHTML = '';
+        if (this.modal.preferredDate) this.modal.preferredDate.value = '';
+        if (this.modal.preferredTime) this.modal.preferredTime.value = '';
+        if (this.modal.address) this.modal.address.value = '';
+        if (this.modal.description) this.modal.description.value = '';
+
+        // Set min date for the preferred date to today
+        if (this.modal.preferredDate) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            this.modal.preferredDate.min = `${yyyy}-${mm}-${dd}`;
         }
 
-        // Add custom styling to modal elements
-        if (this.modal.element) {
-            // Get the modal body and ensure it has the right styling
-            const modalBody = this.modal.element.querySelector('.modal-body');
-            if (modalBody) {
-                modalBody.classList.add('p-4');
-            }
-
-            // Add a fade-in animation to the modal
-            this.modal.element.classList.add('fade');
-
-            // Style the modal dialog for better aesthetics
-            const modalDialog = this.modal.element.querySelector('.modal-dialog');
-            if (modalDialog) {
-                modalDialog.classList.add('modal-lg');
-                modalDialog.classList.add('modal-dialog-centered');
-            }
-
-            // Add a modern header style
-            const modalHeader = this.modal.element.querySelector('.modal-header');
-            if (modalHeader) {
-                modalHeader.classList.add('bg-light');
-                modalHeader.classList.add('border-0');
-                modalHeader.classList.add('py-3');
-            }
-
-            // Style the footer
-            const modalFooter = this.modal.element.querySelector('.modal-footer');
-            if (modalFooter) {
-                modalFooter.classList.add('border-0');
-                modalFooter.classList.add('pt-0');
-                modalFooter.classList.add('pb-4');
-                modalFooter.classList.add('px-4');
-                modalFooter.classList.add('bg-white');
-            }
-        }
-
-        if (this.modal.quantity) this.modal.quantity.value = 1;
-
-        // Enhance image display with responsive class
+        // Populate basic product details
         if (this.modal.image) {
-            this.modal.image.src = imagePath;
-            this.modal.image.alt = productData.name || 'Product Image';
-            this.modal.image.classList.add('img-fluid');
-            this.modal.image.classList.add('rounded');
-            this.modal.image.classList.add('shadow-sm');
-
-            // Find the parent container and add styling
-            const imageContainer = this.modal.image.parentElement;
-            if (imageContainer) {
-                imageContainer.classList.add('text-center');
-                imageContainer.classList.add('mb-4');
+            let imagePath = product.PROD_IMAGE || product.prod_image || '';
+            if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
+                imagePath = '/' + imagePath;
             }
+            this.modal.image.src = imagePath;
         }
 
-        // Enhance product name styling
         if (this.modal.name) {
-            this.modal.name.textContent = productData.name || 'N/A';
-            this.modal.name.classList.add('fw-bold');
-            this.modal.name.classList.add('text-primary');
-            this.modal.name.classList.add('mb-3');
+            this.modal.name.textContent = product.PROD_NAME || product.prod_name || 'Unnamed Product';
         }
 
         if (this.modal.code) {
-            this.modal.code.textContent = `PROD-${productData.id || 'N/A'}`;
-            this.modal.code.classList.add('text-muted');
-            this.modal.code.classList.add('small');
+            this.modal.code.textContent = `Product ID: ${product.PROD_ID || product.prod_id || 'N/A'}`;
         }
 
-        // Normalize variants data (handle both upper and lowercase field names)
-        const variants = product.variants || [];
-        const normalizedVariants = variants.map(variant => ({
-            id: variant.VAR_ID || variant.var_id,
-            capacity: variant.VAR_CAPACITY || variant.var_capacity || 'Standard',
-            price: variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00',
-            freeInstallPrice: variant.VAR_PRICE_FREE_INSTALL || variant.var_price_free_install,
-            withInstallPrice: variant.VAR_PRICE_WITH_INSTALL || variant.var_price_with_install,
-            powerConsumption: variant.VAR_POWER_CONSUMPTION || variant.var_power_consumption
-        }));
+        // Filter variants with inventory > 0 for the dropdown
+        const variantsWithStock = product.variants.filter(variant => {
+            const inventory = variant.INVENTORY_QUANTITY || 0;
+            return inventory > 0;
+        });
 
-        const hasVariants = normalizedVariants.length > 0;
-
-        // Enhance variant select styling
+        // Populate variants in dropdown
         if (this.modal.variantSelect) {
-            if (hasVariants) {
-                let variantOptions = '';
-                normalizedVariants.forEach(variant => {
-                    variantOptions += `<option value="${variant.id}">${variant.capacity} - ₱${variant.price}</option>`;
+            if (!variantsWithStock || variantsWithStock.length === 0) {
+                this.modal.variantSelect.innerHTML = '<option value="">No variants available in stock</option>';
+            } else {
+                variantsWithStock.forEach(variant => {
+                    const capacity = variant.VAR_CAPACITY || variant.var_capacity || 'Unknown';
+                    const price = variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00';
+                    const inventory = variant.INVENTORY_QUANTITY || 0;
+                    const variantId = variant.VAR_ID || variant.var_id;
+
+                    const option = document.createElement('option');
+                    option.value = variantId;
+                    option.textContent = `${capacity} - ₱${price} (${inventory} in stock)`;
+
+                    this.modal.variantSelect.appendChild(option);
                 });
-                this.modal.variantSelect.innerHTML = variantOptions;
-                this.modal.variantSelect.disabled = false;
-                this.modal.variantSelect.classList.add('form-select');
-                this.modal.variantSelect.classList.add('border-primary');
 
-                // Find the label for the variant select and style it
-                const variantLabel = this.modal.variantSelect.parentElement?.querySelector('label');
-                if (variantLabel) {
-                    variantLabel.classList.add('fw-bold');
-                    variantLabel.classList.add('mb-2');
+                // Select the first option to trigger price update
+                if (this.modal.variantSelect.options.length > 0) {
+                    this.modal.variantSelect.selectedIndex = 0;
                 }
-            } else {
-                // No variants available
-                this.modal.variantSelect.innerHTML = '<option value="">No variants available</option>';
-                this.modal.variantSelect.disabled = true;
-                this.modal.variantSelect.classList.add('form-select');
-                this.modal.variantSelect.classList.add('bg-light');
             }
         }
 
-        // Update availability status with badge styling
-        if (this.modal.availabilityStatus) {
-            this.modal.availabilityStatus.textContent = productData.status || 'N/A';
+        // Update price and availability based on selected variant
+        this.updateModalPriceAndAvailability();
 
-            // Remove any previous badge classes
-            this.modal.availabilityStatus.className = '';
-
-            // Add badge styling based on availability
-            this.modal.availabilityStatus.classList.add('badge');
-            if (productData.status === 'Available') {
-                this.modal.availabilityStatus.classList.add('bg-success');
-            } else if (productData.status === 'Out of Stock') {
-                this.modal.availabilityStatus.classList.add('bg-danger');
+        // Populate product features
+        if (this.modal.features && product.features && Array.isArray(product.features)) {
+            if (product.features.length === 0) {
+                this.modal.features.innerHTML = '<li class="text-muted">No features available</li>';
             } else {
-                this.modal.availabilityStatus.classList.add('bg-secondary');
-            }
-            this.modal.availabilityStatus.classList.add('rounded-pill');
-            this.modal.availabilityStatus.classList.add('px-3');
-            this.modal.availabilityStatus.classList.add('py-2');
-        }
-
-        // Update price with attractive styling
-        if (this.modal.price) {
-            if (hasVariants) {
-                this.modal.price.textContent = `₱${normalizedVariants[0].price}`;
-                this.modal.price.classList.add('fs-4');
-                this.modal.price.classList.add('fw-bold');
-                this.modal.price.classList.add('text-primary');
-            } else {
-                this.modal.price.textContent = 'Price not available';
-                this.modal.price.classList.add('text-muted');
-                this.modal.price.classList.add('fst-italic');
+                let featuresHTML = '';
+                product.features.forEach(feature => {
+                    const featureName = feature.FEATURE_NAME || feature.feature_name || '';
+                    if (featureName) {
+                        featuresHTML += `<li><i class="fas fa-check-circle text-success me-2"></i>${featureName}</li>`;
+                    }
+                });
+                this.modal.features.innerHTML = featuresHTML || '<li class="text-muted">No features available</li>';
             }
         }
 
+        // Populate product specifications
+        if (this.modal.specifications && product.specs && Array.isArray(product.specs)) {
+            if (product.specs.length === 0) {
+                this.modal.specifications.innerHTML = '<li class="text-muted">No specifications available</li>';
+            } else {
+                let specsHTML = '';
+                product.specs.forEach(spec => {
+                    const specName = spec.SPEC_NAME || spec.spec_name || '';
+                    const specValue = spec.SPEC_VALUE || spec.spec_value || '';
+                    if (specName && specValue) {
+                        specsHTML += `
+                            <li class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>${specName}:</strong>
+                                    <span class="ms-3 text-end">${specValue}</span>
+                                </div>
+                            </li>
+                        `;
+                    }
+                });
+                this.modal.specifications.innerHTML = specsHTML || '<li class="text-muted">No specifications available</li>';
+            }
+        }
+
+        // Reset quantity controls
+        const increaseQtyBtn = document.getElementById('increase-quantity');
+        const decreaseQtyBtn = document.getElementById('decrease-quantity');
+
+        if (increaseQtyBtn) {
+            increaseQtyBtn.disabled = false;
+        }
+
+        if (decreaseQtyBtn) {
+            decreaseQtyBtn.disabled = true; // Start with 1, so can't decrease
+        }
+
+        // Set order ID and date (hidden until checkout)
         if (this.modal.orderId) {
-            this.modal.orderId.textContent = `PB-${new Date().getFullYear()}-${String(productData.id || '0').padStart(4, '0')}`;
-            this.modal.orderId.classList.add('text-muted');
+            this.modal.orderId.textContent = 'To be generated';
         }
 
         if (this.modal.orderDate) {
-            this.modal.orderDate.textContent = new Date().toLocaleDateString('en-US', {
-                year: 'numeric', month: 'short', day: 'numeric'
-            });
-            this.modal.orderDate.classList.add('text-muted');
+            this.modal.orderDate.textContent = new Date().toLocaleDateString();
         }
 
         if (this.modal.status) {
             this.modal.status.textContent = 'Pending';
-            this.modal.status.classList.add('badge');
-            this.modal.status.classList.add('bg-warning');
-            this.modal.status.classList.add('text-dark');
+            this.modal.status.className = 'text-primary fw-bold';
         }
 
-        this.updateTotalAmount(); // Sets initial total amount
+        // Update total amount
+        this.updateTotalAmount();
 
-        // Style the date and time inputs
-        if (this.modal.preferredDate) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            this.modal.preferredDate.value = tomorrow.toISOString().split('T')[0];
-            this.modal.preferredDate.classList.add('form-control');
-            this.modal.preferredDate.classList.add('mb-3');
+        // Check if product has variants in stock to enable/disable the order button
+        const hasVariantsWithStock = variantsWithStock.length > 0;
 
-            // Find the label for the date input and style it
-            const dateLabel = this.modal.preferredDate.parentElement?.querySelector('label');
-            if (dateLabel) {
-                dateLabel.classList.add('fw-bold');
-                dateLabel.classList.add('mb-2');
-            }
-        }
-
-        if (this.modal.preferredTime) {
-            this.modal.preferredTime.value = '09:00';
-            this.modal.preferredTime.classList.add('form-control');
-            this.modal.preferredTime.classList.add('mb-3');
-
-            // Find the label for the time input and style it
-            const timeLabel = this.modal.preferredTime.parentElement?.querySelector('label');
-            if (timeLabel) {
-                timeLabel.classList.add('fw-bold');
-                timeLabel.classList.add('mb-2');
-            }
-        }
-
-        if (this.modal.address) {
-            this.modal.address.value = '';
-            this.modal.address.classList.add('form-control');
-            this.modal.address.classList.add('mb-3');
-
-            // Find the label for the address input and style it
-            const addressLabel = this.modal.address.parentElement?.querySelector('label');
-            if (addressLabel) {
-                addressLabel.classList.add('fw-bold');
-                addressLabel.classList.add('mb-2');
-            }
-        }
-
-        // Style the features list
-        if (this.modal.features) {
-            let featuresHTML = '';
-            // Normalize features array handling both upper and lowercase field names
-            const features = product.features || product.FEATURES || [];
-
-            if (features.length > 0) {
-                featuresHTML = '<div class="list-group list-group-flush">';
-                features.forEach(feature => {
-                    const featureName = feature.FEATURE_NAME || feature.feature_name || 'Unnamed Feature';
-                    featuresHTML += `<div class="list-group-item border-0 ps-0">
-                        <i class="bi bi-check-circle-fill text-success me-2"></i> ${featureName}
-                    </div>`;
-                });
-                featuresHTML += '</div>';
-            } else {
-                featuresHTML = '<p class="text-muted fst-italic">No features listed.</p>';
-            }
-            this.modal.features.innerHTML = featuresHTML;
-
-            // Find the features section title and style it
-            const featuresTitle = this.modal.features.parentElement?.querySelector('h5, h4, h3');
-            if (featuresTitle) {
-                featuresTitle.classList.add('fw-bold');
-                featuresTitle.classList.add('mb-3');
-                featuresTitle.classList.add('border-bottom');
-                featuresTitle.classList.add('pb-2');
-            }
-        }
-
-        // Style the specifications list
-        if (this.modal.specifications) {
-            let specsHTML = '';
-            // Normalize specs array handling both upper and lowercase field names
-            const specs = product.specs || product.SPECS || [];
-
-            if (specs.length > 0) {
-                specsHTML = '<div class="table-responsive"><table class="table table-sm table-hover">';
-                specsHTML += '<tbody>';
-                specs.forEach(spec => {
-                    const specName = spec.SPEC_NAME || spec.spec_name || 'Spec';
-                    const specValue = spec.SPEC_VALUE || spec.spec_value || 'N/A';
-                    specsHTML += `<tr>
-                        <td class="fw-bold text-nowrap">${specName}</td>
-                        <td>${specValue}</td>
-                    </tr>`;
-                });
-                specsHTML += '</tbody></table></div>';
-            } else {
-                specsHTML = '<p class="text-muted fst-italic">No specifications available.</p>';
-            }
-            this.modal.specifications.innerHTML = specsHTML;
-
-            // Find the specifications section title and style it
-            const specsTitle = this.modal.specifications.parentElement?.querySelector('h5, h4, h3');
-            if (specsTitle) {
-                specsTitle.classList.add('fw-bold');
-                specsTitle.classList.add('mb-3');
-                specsTitle.classList.add('border-bottom');
-                specsTitle.classList.add('pb-2');
-            }
-        }
-
-        // Style the confirm button
         if (this.modal.confirmButton) {
-            this.modal.confirmButton.disabled = !hasVariants;
+            this.modal.confirmButton.disabled = !hasVariantsWithStock;
             this.modal.confirmButton.classList.add('btn-lg');
             this.modal.confirmButton.classList.add('px-4');
 
-            if (!hasVariants) {
-                this.modal.confirmButton.title = "Product variants are not available for ordering";
+            if (!hasVariantsWithStock) {
+                this.modal.confirmButton.title = "No variants available in stock";
                 this.modal.confirmButton.classList.add('btn-secondary');
+                this.modal.confirmButton.classList.remove('btn-primary');
             } else {
                 this.modal.confirmButton.title = "";
                 this.modal.confirmButton.classList.add('btn-primary');
+                this.modal.confirmButton.classList.remove('btn-secondary');
             }
         }
 
@@ -1056,16 +984,23 @@ class ProductManager {
      * Get available quantity from inventory
      */
     getAvailableQuantity(variant) {
-        // If we have inventory data from the API, use it
+        // If we have INVENTORY_QUANTITY from the API, use it (comes from the inventory)
+        if (variant && variant.INVENTORY_QUANTITY !== undefined) {
+            return parseInt(variant.INVENTORY_QUANTITY);
+        }
+
+        // If we have inventory data from the API, use it (legacy support)
         if (this.currentProduct && this.currentProduct.inventory && Array.isArray(this.currentProduct.inventory)) {
-            // Calculate total quantity across all warehouses for this product
             return this.currentProduct.inventory.reduce((total, inv) => {
-                return total + (parseInt(inv.quantity) || 0);
+                if (inv.VAR_ID === variant.VAR_ID) {
+                    return total + (parseInt(inv.quantity) || 0);
+                }
+                return total;
             }, 0);
         }
 
-        // Fallback: Use variant stock quantity if available, or default to 100
-        return variant?.VAR_STOCK_QUANTITY || variant?.var_stock_quantity || 100;
+        // Fallback: Use variant stock quantity if available, or default to 10
+        return variant?.VAR_STOCK_QUANTITY || variant?.var_stock_quantity || 10;
     }
 
     /**

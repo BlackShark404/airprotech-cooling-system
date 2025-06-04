@@ -57,6 +57,9 @@ class InventoryModel extends Model
 
     public function getProductInventory($productId)
     {
+        // Ensure productId is treated as an integer to avoid case sensitivity issues
+        $productId = intval($productId);
+        
         $sql = "SELECT 
                     i.*,
                     v.VAR_ID,
@@ -505,5 +508,44 @@ class InventoryModel extends Model
             error_log("[ERROR] Error moving stock: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             return false;
         }
+    }
+
+    /**
+     * Get inventory data for multiple variants at once
+     * 
+     * @param array $variantIds Array of variant IDs
+     * @return array Inventory data for all variants
+     */
+    public function getInventoryByVariantIds($variantIds)
+    {
+        if (empty($variantIds)) {
+            return [];
+        }
+        
+        // Normalize variant IDs to integers to avoid case sensitivity issues
+        $normalizedIds = array_map('intval', $variantIds);
+        
+        // Create placeholders for the IN clause (:var0, :var1, etc.)
+        $placeholders = [];
+        $params = [];
+        foreach ($normalizedIds as $index => $id) {
+            $placeholders[] = ":var{$index}";
+            $params[":var{$index}"] = $id;
+        }
+        
+        $placeholderString = implode(',', $placeholders);
+        
+        $sql = "SELECT 
+                    i.*,
+                    v.VAR_CAPACITY,
+                    w.WHOUSE_NAME
+                FROM {$this->table} i
+                JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
+                JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
+                WHERE i.VAR_ID IN ({$placeholderString})
+                AND i.INVE_DELETED_AT IS NULL
+                AND i.QUANTITY > 0"; // Only include items with quantity > 0
+        
+        return $this->query($sql, $params);
     }
 } 
