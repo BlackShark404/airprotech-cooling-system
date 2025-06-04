@@ -306,17 +306,7 @@
             <div class="filter-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="filter-title mb-0">Filter Products</h3>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            Sort By: Default
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                            <li><a class="dropdown-item" href="#" data-sort="default">Default</a></li>
-                            <li><a class="dropdown-item" href="#" data-sort="price-low">Price: Low to High</a></li>
-                            <li><a class="dropdown-item" href="#" data-sort="price-high">Price: High to Low</a></li>
-                            <li><a class="dropdown-item" href="#" data-sort="name-asc">Name: A to Z</a></li>
-                        </ul>
-                    </div>
+                    
                 </div>
                 
                 <form id="product-filters">
@@ -326,7 +316,6 @@
                             <i class="fas fa-search search-icon"></i>
                             <input type="text" id="product-search" class="form-control" placeholder="Search products...">
                         </div>
-                        
                         
                         <!-- Price Range Filter -->
                         <div class="filter-group">
