@@ -63,6 +63,7 @@ $router->map('GET', '/admin/product-bookings', 'App\Controllers\AdminController#
 $router->map('GET', '/admin/inventory', 'App\Controllers\AdminController#renderInventory', 'render-inventory');
 $router->map('GET', '/admin/add-product', 'App\Controllers\AdminController#renderAddProduct', 'render-add-product');
 $router->map('GET', '/admin/reports', 'App\Controllers\AdminController#renderReports', 'render-reports');
+$router->map('GET', '/admin/technician', 'App\Controllers\AdminController#renderTechnician', 'render-technician');
 $router->map('GET', '/api/admin/reports/[i:year]', 'App\Controllers\AdminController#getReportsByYear', 'get_reports_by_year');
 
 // Admin Profile Routes

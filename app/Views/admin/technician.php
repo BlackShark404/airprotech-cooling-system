@@ -1,6 +1,6 @@
 <?php
 $title = 'Technicians - AC Service Pro';
-$activeTab = 'technicians';
+$activeTab = 'technician';
 
 // Add any additional styles specific to this page
 $additionalStyles = <<<HTML

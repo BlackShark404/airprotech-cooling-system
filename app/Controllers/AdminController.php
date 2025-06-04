@@ -22,6 +22,7 @@ class AdminController extends BaseController {
         $this->serviceModel = new ServiceRequestModel();
         $this->productModel = new ProductModel();
         $this->reportsModel = new ReportsModel();
+
         // Ensure user is authenticated and is an admin
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
             // Redirect to login or show an error page
@@ -324,11 +325,6 @@ class AdminController extends BaseController {
         ]);
     }
 
-    /**
-     * API endpoint to get reports data filtered by year
-     * 
-     * @param int $year The year to filter by
-     */
     public function getReportsByYear($year) {
         // Validate year
         if (!is_numeric($year) || $year < 2000 || $year > date('Y') + 1) {
@@ -394,5 +390,9 @@ class AdminController extends BaseController {
     
     public function renderProductOrders() {
         $this->render('admin/product-orders');
+    }
+
+    public function renderTechnician() {
+        $this->render('admin/technician');
     }
 }
