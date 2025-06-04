@@ -730,48 +730,111 @@ class ProductController extends BaseController
         }
         
         // Check if we have the necessary booking data
-        if (empty($data['PB_VARIANT_ID']) || 
-            empty($data['PB_QUANTITY']) || 
-            empty($data['PB_UNIT_PRICE']) ||
-            empty($data['PB_PREFERRED_DATE']) ||
-            empty($data['PB_PREFERRED_TIME']) ||
-            empty($data['PB_ADDRESS'])) {
-            $this->jsonError('Missing required booking information', 400);
+        $requiredFields = [
+            'PB_VARIANT_ID' => 'Variant',
+            'PB_QUANTITY' => 'Quantity',
+            'PB_UNIT_PRICE' => 'Unit Price',
+            'PB_PREFERRED_DATE' => 'Preferred Date',
+            'PB_PREFERRED_TIME' => 'Preferred Time',
+            'PB_ADDRESS' => 'Address'
+        ];
+        
+        $missingFields = [];
+        foreach ($requiredFields as $field => $label) {
+            if (empty($data[$field])) {
+                $missingFields[] = $label;
+            }
+        }
+        
+        if (!empty($missingFields)) {
+            $this->jsonError('Missing required fields: ' . implode(', ', $missingFields), 400);
+            return;
+        }
+        
+        // Ensure quantity is valid
+        $quantity = intval($data['PB_QUANTITY']);
+        if ($quantity <= 0) {
+            $this->jsonError('Quantity must be greater than zero', 400);
             return;
         }
         
         // Verify that the variant exists
-        $variant = $this->productVariantModel->getVariantById($data['PB_VARIANT_ID']);
+        $variantId = intval($data['PB_VARIANT_ID']);
+        $variant = $this->productVariantModel->getVariantById($variantId);
         if (!$variant) {
             $this->jsonError('Selected product variant not found', 404);
             return;
         }
         
-        // Create a complete booking data structure
-        $bookingData = [
-            'PB_CUSTOMER_ID' => $userId,
-            'PB_VARIANT_ID' => $data['PB_VARIANT_ID'],
-            'PB_QUANTITY' => $data['PB_QUANTITY'],
-            'PB_UNIT_PRICE' => $data['PB_UNIT_PRICE'],
-            'PB_STATUS' => 'pending',
-            'PB_PREFERRED_DATE' => $data['PB_PREFERRED_DATE'],
-            'PB_PREFERRED_TIME' => $data['PB_PREFERRED_TIME'],
-            'PB_ADDRESS' => $data['PB_ADDRESS']
-        ];
-        
-        // Create the booking in the database
-        $bookingId = $this->productBookingModel->createBooking($bookingData);
-        
-        if (!$bookingId) {
-            $this->jsonError('Failed to create booking. Please try again.', 500);
-            return;
+        try {
+            // Start transaction to ensure booking and inventory update are atomic
+            // Use the productBookingModel for transactions
+            $this->productBookingModel->beginTransaction();
+            error_log("Started transaction for booking creation");
+            
+            // Create a complete booking data structure
+            $bookingData = [
+                'PB_CUSTOMER_ID' => $userId,
+                'PB_VARIANT_ID' => $variantId,
+                'PB_QUANTITY' => $quantity,
+                'PB_UNIT_PRICE' => $data['PB_UNIT_PRICE'],
+                'PB_STATUS' => 'pending',
+                'PB_PREFERRED_DATE' => $data['PB_PREFERRED_DATE'],
+                'PB_PREFERRED_TIME' => $data['PB_PREFERRED_TIME'],
+                'PB_ADDRESS' => $data['PB_ADDRESS']
+            ];
+            
+            if (!empty($data['PB_DESCRIPTION'])) {
+                $bookingData['PB_DESCRIPTION'] = $data['PB_DESCRIPTION'];
+            }
+            
+            error_log("Creating booking with data: " . json_encode($bookingData));
+            
+            // Create the booking in the database
+            $bookingId = $this->productBookingModel->createBooking($bookingData);
+            
+            if (!$bookingId) {
+                error_log("Failed to create booking record in database");
+                $this->productBookingModel->rollback();
+                $this->jsonError('Failed to create booking. Please try again.', 500);
+                return;
+            }
+            
+            error_log("Booking created with ID: " . $bookingId);
+            
+            // Now reduce the inventory for this variant
+            $inventoryReduced = $this->inventoryModel->reduceStock($variantId, $quantity);
+            
+            if (!$inventoryReduced) {
+                error_log("Failed to reduce inventory for variant ID: " . $variantId);
+                $this->productBookingModel->rollback();
+                $this->jsonError('Insufficient inventory for the selected quantity. Please try a smaller quantity or choose a different variant.', 400);
+                return;
+            }
+            
+            error_log("Inventory reduced successfully for variant ID: " . $variantId);
+            
+            // All operations successful, commit the transaction
+            $commitResult = $this->productBookingModel->commit();
+            error_log("Transaction commit result: " . ($commitResult ? 'Success' : 'Failed'));
+            
+            // Return success response with the booking ID
+            $this->jsonSuccess([
+                'PB_ID' => $bookingId,
+                'message' => 'Your booking has been received and is being processed.'
+            ], 'Booking created successfully');
+            
+        } catch (\PDOException $e) {
+            // Handle database errors
+            $this->productBookingModel->rollback();
+            error_log("Database error creating booking: " . $e->getMessage());
+            $this->jsonError('A database error occurred while processing your booking. Please try again.', 500);
+        } catch (\Exception $e) {
+            // Handle other errors
+            $this->productBookingModel->rollback();
+            error_log("Error creating booking: " . $e->getMessage());
+            $this->jsonError('An error occurred while processing your booking. Please try again.', 500);
         }
-        
-        // Return success response with the booking ID
-        $this->jsonSuccess([
-            'PB_ID' => $bookingId,
-            'message' => 'Your booking has been received and is being processed.'
-        ], 'Booking created successfully');
     }
 
     /**

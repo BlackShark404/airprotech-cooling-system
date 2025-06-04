@@ -26,30 +26,8 @@ class ProductManager {
             return; // Critical element missing
         }
 
-        // Initialize modal elements references
-        this.modal = { element: document.getElementById(this.config.modalId) };
-        if (this.modal.element) {
-            this.modal.image = document.getElementById('modal-product-image');
-            this.modal.name = document.getElementById('modal-product-name');
-            this.modal.variantSelect = document.getElementById('modal-variant-select');
-            this.modal.price = document.getElementById('modal-product-price');
-            this.modal.code = document.getElementById('modal-product-code');
-            this.modal.availabilityStatus = document.getElementById('modal-availability-status');
-            this.modal.quantity = document.getElementById('modal-quantity');
-            this.modal.orderId = document.getElementById('modal-order-id');
-            this.modal.orderDate = document.getElementById('modal-order-date');
-            this.modal.status = document.getElementById('modal-status');
-            this.modal.totalAmount = document.getElementById('modal-total-amount');
-            this.modal.features = document.getElementById('modal-features');
-            this.modal.specifications = document.getElementById('modal-specifications');
-            this.modal.confirmButton = document.getElementById('confirm-order');
-            this.modal.preferredDate = document.getElementById('modal-preferred-date');
-            this.modal.preferredTime = document.getElementById('modal-preferred-time');
-            this.modal.address = document.getElementById('modal-address');
-            this.modal.description = document.getElementById('modal-description');
-        } else {
-            console.warn(`ProductManager: Modal with ID "${this.config.modalId}" not found. Modal functionality will be disabled.`);
-        }
+        // Initialize modal elements once on class creation
+        this.initModalElements();
 
         // Store all products for filtering
         this.allProducts = [];
@@ -57,11 +35,6 @@ class ProductManager {
         // Pagination state
         this.currentPage = 1;
         this.itemsPerPage = this.config.itemsPerPage;
-
-        // Initialize modal controls and order confirmation if modal exists
-        if (this.modal.element) {
-            this.initModalControls();
-        }
 
         // Initialize filter and search
         this.initFilterAndSearch();
@@ -150,6 +123,50 @@ class ProductManager {
     }
 
     /**
+     * Initialize modal elements once on class creation
+     */
+    initModalElements() {
+        this.modal = {
+            element: document.getElementById('productDetailModal'),
+            title: document.getElementById('productDetailModalLabel'),
+            productImage: document.getElementById('modal-product-image'),
+            productName: document.getElementById('modal-product-name'),
+            productCode: document.getElementById('modal-product-code'),
+            price: document.getElementById('modal-product-price'),
+            availabilityStatus: document.getElementById('modal-availability-status'),
+            variantSelect: document.getElementById('modal-variant-select'),
+            quantity: document.getElementById('modal-quantity'),
+            features: document.getElementById('modal-features'),
+            specifications: document.getElementById('modal-specifications'),
+            preferredDate: document.getElementById('modal-preferred-date'),
+            preferredTime: document.getElementById('modal-preferred-time'),
+            address: document.getElementById('modal-address'),
+            optionalNotes: document.getElementById('modal-description'), // Note: This is the description field in the UI
+            totalAmount: document.getElementById('modal-total-amount'),
+            submitBtn: document.getElementById('confirm-order') // Using the actual ID from the HTML
+        };
+
+        // Add event to confirm button if it exists
+        if (this.modal.submitBtn) {
+            this.modal.submitBtn.addEventListener('click', () => this.confirmOrder());
+            console.log('Initialized confirm order button');
+        } else {
+            console.error('Could not find confirm order button');
+        }
+
+        // Initialize quantity control buttons
+        this.initModalControls();
+
+        // Add event listener for variant selection changes
+        if (this.modal.variantSelect) {
+            this.modal.variantSelect.addEventListener('change', () => {
+                this.updateModalPriceAndAvailability();
+                this.updateTotalAmount();
+            });
+        }
+    }
+
+    /**
      * Initialize controls within the modal
      */
     initModalControls() {
@@ -159,13 +176,31 @@ class ProductManager {
         if (increaseQtyBtn && this.modal.quantity) {
             increaseQtyBtn.addEventListener('click', () => {
                 if (!this.currentProduct || !this.modal.variantSelect || !this.modal.quantity) return;
-                const quantity = parseInt(this.modal.quantity.value, 10);
-                const selectedVariant = this.currentProduct.variants.find(
-                    v => v.VAR_ID === parseInt(this.modal.variantSelect.value)
-                );
-                if (selectedVariant && quantity < this.getAvailableQuantity(selectedVariant)) {
+
+                // Get current quantity and selected variant
+                const quantity = parseInt(this.modal.quantity.value, 10) || 1;
+                const selectedVariantId = parseInt(this.modal.variantSelect.value);
+
+                // Find the selected variant 
+                const selectedVariant = this.currentProduct.variants.find(v => {
+                    const id = parseInt(v.VAR_ID || v.var_id);
+                    return id === selectedVariantId;
+                });
+
+                // Get available quantity from inventory
+                const availableQuantity = this.getAvailableQuantity(selectedVariant);
+                console.log('Increasing quantity: Current =', quantity, 'Available =', availableQuantity);
+
+                // Only increase if we haven't hit the limit
+                if (selectedVariant && quantity < availableQuantity) {
                     this.modal.quantity.value = quantity + 1;
+
+                    // Update total amount
                     this.updateTotalAmount();
+
+                    // Update button states
+                    decreaseQtyBtn.disabled = false;
+                    increaseQtyBtn.disabled = (quantity + 1) >= availableQuantity;
                 }
             });
         }
@@ -173,17 +208,66 @@ class ProductManager {
         if (decreaseQtyBtn && this.modal.quantity) {
             decreaseQtyBtn.addEventListener('click', () => {
                 if (!this.modal.quantity) return;
-                const quantity = parseInt(this.modal.quantity.value, 10);
+
+                // Get current quantity
+                const quantity = parseInt(this.modal.quantity.value, 10) || 1;
+                console.log('Decreasing quantity: Current =', quantity);
+
+                // Only decrease if we're above 1
                 if (quantity > 1) {
                     this.modal.quantity.value = quantity - 1;
+
+                    // Update total amount
                     this.updateTotalAmount();
+
+                    // Update button states
+                    decreaseQtyBtn.disabled = (quantity - 1) <= 1;
+
+                    // Re-enable increase button since we're decreasing
+                    if (increaseQtyBtn) {
+                        const selectedVariantId = parseInt(this.modal.variantSelect.value);
+                        const selectedVariant = this.currentProduct.variants.find(v => {
+                            const id = parseInt(v.VAR_ID || v.var_id);
+                            return id === selectedVariantId;
+                        });
+                        const availableQuantity = this.getAvailableQuantity(selectedVariant);
+
+                        increaseQtyBtn.disabled = (quantity - 1) >= availableQuantity;
+                    }
                 }
             });
         }
 
-        if (this.modal.variantSelect) {
-            this.modal.variantSelect.addEventListener('change', () => {
-                this.updateModalPriceAndAvailability();
+        // Add an input event listener to the quantity input for direct changes
+        if (this.modal.quantity) {
+            this.modal.quantity.addEventListener('input', () => {
+                let quantity = parseInt(this.modal.quantity.value, 10);
+
+                // Get selected variant and its available quantity
+                const selectedVariantId = parseInt(this.modal.variantSelect.value);
+                const selectedVariant = this.currentProduct.variants.find(v => {
+                    const id = parseInt(v.VAR_ID || v.var_id);
+                    return id === selectedVariantId;
+                });
+                const availableQuantity = this.getAvailableQuantity(selectedVariant);
+
+                // Enforce minimum value of 1
+                if (isNaN(quantity) || quantity < 1) {
+                    quantity = 1;
+                    this.modal.quantity.value = quantity;
+                }
+
+                // Enforce maximum based on inventory
+                if (quantity > availableQuantity) {
+                    quantity = availableQuantity;
+                    this.modal.quantity.value = quantity;
+                }
+
+                // Update button states
+                if (increaseQtyBtn) increaseQtyBtn.disabled = quantity >= availableQuantity;
+                if (decreaseQtyBtn) decreaseQtyBtn.disabled = quantity <= 1;
+
+                // Update total amount
                 this.updateTotalAmount();
             });
         }
@@ -200,12 +284,6 @@ class ProductManager {
                 this.openProductModal(productId);
             }
         });
-
-        if (this.modal.confirmButton) {
-            this.modal.confirmButton.addEventListener('click', () => {
-                this.confirmOrder();
-            });
-        }
     }
 
     /**
@@ -370,9 +448,9 @@ class ProductManager {
             this.modal.availabilityStatus.className = 'fw-bold text-danger';
 
             // Disable confirm button
-            if (this.modal.confirmButton) {
-                this.modal.confirmButton.disabled = true;
-                this.modal.confirmButton.title = "No variants available in stock";
+            if (this.modal.submitBtn) {
+                this.modal.submitBtn.disabled = true;
+                this.modal.submitBtn.title = "No variants available in stock";
             }
 
             // Disable quantity controls
@@ -439,12 +517,12 @@ class ProductManager {
                 this.modal.quantity.setAttribute('max', availableQuantity);
 
                 // Disable the confirm button if out of stock
-                if (this.modal.confirmButton) {
-                    this.modal.confirmButton.disabled = availableQuantity <= 0;
+                if (this.modal.submitBtn) {
+                    this.modal.submitBtn.disabled = availableQuantity <= 0;
                     if (availableQuantity <= 0) {
-                        this.modal.confirmButton.title = "This product is out of stock";
+                        this.modal.submitBtn.title = "This product is out of stock";
                     } else {
-                        this.modal.confirmButton.title = "";
+                        this.modal.submitBtn.title = "";
                     }
                 }
             }
@@ -454,9 +532,9 @@ class ProductManager {
             this.modal.availabilityStatus.textContent = 'N/A';
             this.modal.availabilityStatus.className = 'fw-bold text-muted';
 
-            if (this.modal.confirmButton) {
-                this.modal.confirmButton.disabled = true;
-                this.modal.confirmButton.title = "Please select a variant";
+            if (this.modal.submitBtn) {
+                this.modal.submitBtn.disabled = true;
+                this.modal.submitBtn.title = "Please select a variant";
             }
         }
     }
@@ -808,7 +886,7 @@ class ProductManager {
         if (this.modal.preferredDate) this.modal.preferredDate.value = '';
         if (this.modal.preferredTime) this.modal.preferredTime.value = '';
         if (this.modal.address) this.modal.address.value = '';
-        if (this.modal.description) this.modal.description.value = '';
+        if (this.modal.optionalNotes) this.modal.optionalNotes.value = '';
 
         // Set min date for the preferred date to today
         if (this.modal.preferredDate) {
@@ -820,20 +898,20 @@ class ProductManager {
         }
 
         // Populate basic product details
-        if (this.modal.image) {
+        if (this.modal.productImage) {
             let imagePath = product.PROD_IMAGE || product.prod_image || '';
             if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
                 imagePath = '/' + imagePath;
             }
-            this.modal.image.src = imagePath;
+            this.modal.productImage.src = imagePath;
         }
 
-        if (this.modal.name) {
-            this.modal.name.textContent = product.PROD_NAME || product.prod_name || 'Unnamed Product';
+        if (this.modal.productName) {
+            this.modal.productName.textContent = product.PROD_NAME || product.prod_name || 'Unnamed Product';
         }
 
-        if (this.modal.code) {
-            this.modal.code.textContent = `Product ID: ${product.PROD_ID || product.prod_id || 'N/A'}`;
+        if (this.modal.productCode) {
+            this.modal.productCode.textContent = `Product ID: ${product.PROD_ID || product.prod_id || 'N/A'}`;
         }
 
         // Make sure variants array exists
@@ -957,19 +1035,19 @@ class ProductManager {
         // Check if product has variants in stock to enable/disable the order button
         const hasVariantsWithStock = variantsWithStock.length > 0;
 
-        if (this.modal.confirmButton) {
-            this.modal.confirmButton.disabled = !hasVariantsWithStock;
-            this.modal.confirmButton.classList.add('btn-lg');
-            this.modal.confirmButton.classList.add('px-4');
+        if (this.modal.submitBtn) {
+            this.modal.submitBtn.disabled = !hasVariantsWithStock;
+            this.modal.submitBtn.classList.add('btn-lg');
+            this.modal.submitBtn.classList.add('px-4');
 
             if (!hasVariantsWithStock) {
-                this.modal.confirmButton.title = "No variants available in stock";
-                this.modal.confirmButton.classList.add('btn-secondary');
-                this.modal.confirmButton.classList.remove('btn-primary');
+                this.modal.submitBtn.title = "No variants available in stock";
+                this.modal.submitBtn.classList.add('btn-secondary');
+                this.modal.submitBtn.classList.remove('btn-primary');
             } else {
-                this.modal.confirmButton.title = "";
-                this.modal.confirmButton.classList.add('btn-primary');
-                this.modal.confirmButton.classList.remove('btn-secondary');
+                this.modal.submitBtn.title = "";
+                this.modal.submitBtn.classList.add('btn-primary');
+                this.modal.submitBtn.classList.remove('btn-secondary');
             }
         }
 
@@ -1066,119 +1144,183 @@ class ProductManager {
     }
 
     /**
-     * Handle order confirmation and send to backend
+     * Handle order confirmation
      */
     async confirmOrder() {
-        if (typeof axios === 'undefined') {
-            console.error('ProductManager: axios is not available. Cannot place order.');
-            alert('Order placement service is currently unavailable.');
-            return;
-        }
-        if (!this.currentProduct) {
-            alert('No product selected. Please try again.');
+        if (!this.currentProduct || !this.modal.element) {
+            console.error('No product selected or modal not initialized');
             return;
         }
 
-        if (!this.modal.variantSelect || !this.modal.quantity) {
-            alert('Modal elements for order are missing. Cannot proceed.');
+        // Get selected variant
+        const selectedVariantId = parseInt(this.modal.variantSelect?.value);
+        if (!selectedVariantId) {
+            alert('Please select a product variant');
             return;
         }
 
-        if (!this.modal.preferredDate || !this.modal.preferredTime || !this.modal.address) {
-            alert('Please fill in all required booking information: preferred date, time, and address.');
-            return;
-        }
+        console.log('Confirming order for variant:', selectedVariantId);
 
-        if (!this.modal.preferredDate.value) {
-            alert('Please select a preferred date for your booking.');
-            this.modal.preferredDate.focus();
-            return;
-        }
-
-        if (!this.modal.preferredTime.value) {
-            alert('Please select a preferred time for your booking.');
-            this.modal.preferredTime.focus();
-            return;
-        }
-
-        if (!this.modal.address.value.trim()) {
-            alert('Please provide your address for delivery/installation.');
-            this.modal.address.focus();
-            return;
-        }
-
-        const variantId = parseInt(this.modal.variantSelect.value);
-        if (isNaN(variantId)) {
-            alert('Please select a valid product variant.');
-            this.modal.variantSelect.focus();
-            return;
-        }
-
-        // Get the original variant object from the product data
-        const variants = this.currentProduct.variants || [];
-        const selectedVariant = variants.find(v => {
+        // Get selected variant details
+        const selectedVariant = this.currentProduct.variants.find(v => {
             const id = v.VAR_ID || v.var_id;
-            return id === variantId;
+            return id === selectedVariantId;
         });
 
         if (!selectedVariant) {
-            alert('Invalid product variant selected. Please select a valid option.');
+            console.error('Selected variant not found in current product variants');
+            alert('Error: Could not find selected variant');
             return;
         }
 
-        const orderData = {
-            PB_VARIANT_ID: variantId,
-            PB_QUANTITY: parseInt(this.modal.quantity.value, 10),
-            PB_UNIT_PRICE: parseFloat(selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price),
-            PB_STATUS: 'pending',
-            PB_ORDER_DATE: new Date().toISOString(),
-            PB_PREFERRED_DATE: this.modal.preferredDate.value,
-            PB_PREFERRED_TIME: this.modal.preferredTime.value,
-            PB_ADDRESS: this.modal.address.value.trim(),
-            PB_DESCRIPTION: this.modal.description ? this.modal.description.value.trim() : ''
-        };
+        // Get quantity
+        const quantity = parseInt(this.modal.quantity.value) || 1;
+        if (quantity <= 0) {
+            alert('Please enter a valid quantity');
+            return;
+        }
+
+        const availableQuantity = this.getAvailableQuantity(selectedVariant);
+        if (quantity > availableQuantity) {
+            alert(`Sorry, only ${availableQuantity} units available for this variant.`);
+            return;
+        }
+
+        // Get other form values
+        const preferredDate = this.modal.preferredDate?.value || '';
+        const preferredTime = this.modal.preferredTime?.value || '';
+        const address = this.modal.address?.value || '';
+        const optionalNotes = this.modal.optionalNotes?.value || '';
+
+        // Validate required fields
+        if (!preferredDate) {
+            alert('Please select a preferred date');
+            return;
+        }
+        if (!preferredTime) {
+            alert('Please select a preferred time');
+            return;
+        }
+        if (!address) {
+            alert('Please enter an address for delivery');
+            return;
+        }
+
+        // Get price from selected variant
+        const unitPrice = parseFloat(selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || 0);
 
         try {
-            if (this.modal.confirmButton) {
-                this.modal.confirmButton.disabled = true;
-                this.modal.confirmButton.textContent = 'Placing Order...';
-            }
+            console.log('Submitting booking with data:', {
+                PB_VARIANT_ID: selectedVariantId,
+                PB_QUANTITY: quantity,
+                PB_UNIT_PRICE: unitPrice,
+                PB_PREFERRED_DATE: preferredDate,
+                PB_PREFERRED_TIME: preferredTime,
+                PB_ADDRESS: address,
+                PB_DESCRIPTION: optionalNotes
+            });
+            console.log('Using order endpoint:', this.config.orderEndpoint);
 
-            console.log('Sending order data:', orderData);
-            const response = await axios.post(this.config.orderEndpoint, orderData);
-            console.log('Order response:', response.data);
+            // Show loading state
+            this.modal.submitBtn.disabled = true;
+            this.modal.submitBtn.innerHTML = 'Processing...';
 
-            // Check for success response structure with data field
+            const response = await axios.post(this.config.orderEndpoint, {
+                PB_VARIANT_ID: selectedVariantId,
+                PB_QUANTITY: quantity,
+                PB_UNIT_PRICE: unitPrice,
+                PB_PREFERRED_DATE: preferredDate,
+                PB_PREFERRED_TIME: preferredTime,
+                PB_ADDRESS: address,
+                PB_DESCRIPTION: optionalNotes
+            });
+
+            console.log('Booking response:', response.data);
+
             if (response.data && response.data.success) {
-                const orderData = response.data.data;
-                const orderId = orderData && orderData.PB_ID ? orderData.PB_ID : 'N/A';
-                alert('Booking placed successfully! Booking ID: ' + orderId);
+                // Close the modal
+                this.closeModal();
+
+                // Show success message
+                Swal.fire({
+                    title: 'Success!',
+                    text: response.data.message || 'Your booking has been submitted successfully.',
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6'
+                }).then(() => {
+                    // Refresh the page to update product availability
+                    window.location.reload();
+                });
             } else {
-                alert('Booking received but no confirmation details were returned.');
-            }
+                const errorMessage = (response.data && response.data.message)
+                    ? response.data.message
+                    : 'An unknown error occurred. Please try again.';
 
-            if (this.modal.element) {
-                const bsModal = bootstrap.Modal.getInstance(this.modal.element);
-                if (bsModal) {
-                    bsModal.hide();
-                }
-            }
+                console.error('Error in booking submission:', errorMessage, response.data);
 
-            this.fetchAndRenderProducts();
+                Swal.fire({
+                    title: 'Error',
+                    text: errorMessage,
+                    icon: 'error'
+                });
+
+                // Reset submit button
+                this.modal.submitBtn.disabled = false;
+                this.modal.submitBtn.innerHTML = 'Confirm';
+            }
         } catch (error) {
-            console.error('Error placing booking:', error.response ? error.response.data : error.message);
-            let errorMessage = 'Failed to place booking. Please try again.';
-            if (error.response && error.response.status === 401) {
-                errorMessage = 'You must be logged in to place a booking. Please log in and try again.';
-            } else if (error.response && error.response.data && error.response.data.message) {
-                errorMessage = `Failed to place booking. ${error.response.data.message}`;
+            console.error('Exception in booking submission:', error);
+
+            // Log detailed error information
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.error('Server response error:', {
+                    data: error.response.data,
+                    status: error.response.status,
+                    headers: error.response.headers
+                });
+            } else if (error.request) {
+                // The request was made but no response was received
+                console.error('No response received:', error.request);
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                console.error('Request setup error:', error.message);
             }
-            alert(errorMessage);
-        } finally {
-            if (this.modal.confirmButton) {
-                this.modal.confirmButton.disabled = false;
-                this.modal.confirmButton.textContent = 'Confirm Booking';
+
+            // Create a user-friendly error message
+            let errorMessage = 'An error occurred. Please try again.';
+
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message && (error.message.includes('Network Error') || error.message.includes('timeout'))) {
+                errorMessage = 'Network connection issue. Please check your internet connection and try again.';
             }
+
+            Swal.fire({
+                title: 'Error',
+                text: errorMessage,
+                icon: 'error'
+            });
+
+            // Reset submit button
+            this.modal.submitBtn.disabled = false;
+            this.modal.submitBtn.innerHTML = 'Confirm';
+        }
+    }
+
+    /**
+     * Close the product modal
+     */
+    closeModal() {
+        if (!this.modal.element) return;
+
+        const bsModal = bootstrap.Modal.getInstance(this.modal.element);
+        if (bsModal) {
+            bsModal.hide();
+            console.log('Modal closed');
+        } else {
+            console.warn('Could not get Modal instance');
         }
     }
 }

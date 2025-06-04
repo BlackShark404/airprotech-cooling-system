@@ -548,4 +548,140 @@ class InventoryModel extends Model
         
         return $this->query($sql, $params);
     }
+
+    /**
+     * Reduce stock from inventory for a specific variant
+     * Will distribute reduction across warehouses if needed
+     *
+     * @param int $variantId The variant ID to reduce stock for
+     * @param int $quantity The quantity to reduce
+     * @return bool True if successful, false otherwise
+     */
+    public function reduceStock($variantId, $quantity)
+    {
+        // Ensure parameters are integers
+        $variantId = intval($variantId);
+        $quantity = intval($quantity);
+        
+        error_log("[DEBUG] Reducing stock - VariantID: {$variantId}, Quantity: {$quantity}");
+        
+        if ($quantity <= 0) {
+            error_log("[ERROR] Cannot reduce inventory by zero or negative quantity");
+            return false;
+        }
+        
+        // Start a transaction
+        try {
+            if ($this->pdo->inTransaction()) {
+                error_log("[WARNING] Transaction already in progress, continuing with existing transaction");
+            } else {
+                $this->beginTransaction();
+                error_log("[DEBUG] Started new transaction for inventory reduction");
+            }
+            
+            // Get all inventory entries for this variant ordered by oldest first WITH row locks
+            $sql = "SELECT * FROM {$this->table} 
+                    WHERE VAR_ID = :variant_id 
+                    AND QUANTITY > 0
+                    AND INVE_DELETED_AT IS NULL
+                    ORDER BY INVE_UPDATED_AT ASC
+                    FOR UPDATE";
+                    
+            $inventoryEntries = $this->query($sql, [':variant_id' => $variantId]);
+            error_log("[DEBUG] Found " . count($inventoryEntries) . " inventory entries for variant {$variantId}");
+            
+            // Check if we have enough total inventory
+            $totalAvailable = 0;
+            foreach ($inventoryEntries as $entry) {
+                $entryQuantity = isset($entry['QUANTITY']) ? intval($entry['QUANTITY']) : intval($entry['quantity'] ?? 0);
+                $totalAvailable += $entryQuantity;
+            }
+            
+            error_log("[DEBUG] Total available inventory: {$totalAvailable}, Requested: {$quantity}");
+            
+            if ($totalAvailable < $quantity) {
+                error_log("[ERROR] Not enough inventory to reduce. Available: {$totalAvailable}, Requested: {$quantity}");
+                // Only rollback if we started the transaction
+                if (!isset($existingTransaction) || !$existingTransaction) {
+                    $this->rollback();
+                    error_log("[DEBUG] Transaction rolled back due to insufficient inventory");
+                }
+                return false;
+            }
+            
+            $remainingToReduce = $quantity;
+            
+            // Iterate through inventory entries and reduce quantities
+            foreach ($inventoryEntries as $entry) {
+                if ($remainingToReduce <= 0) {
+                    break;
+                }
+                
+                // Get inventory ID with case sensitivity check
+                $inventoryId = isset($entry['INVE_ID']) ? $entry['INVE_ID'] : $entry['inve_id'];
+                
+                // Get current quantity with case sensitivity check
+                $currentQuantity = isset($entry['QUANTITY']) ? intval($entry['QUANTITY']) : intval($entry['quantity']);
+                
+                // Calculate how much to take from this entry
+                $reduceBy = min($currentQuantity, $remainingToReduce);
+                $newQuantity = $currentQuantity - $reduceBy;
+                
+                error_log("[DEBUG] Reducing inventory ID {$inventoryId} from {$currentQuantity} to {$newQuantity}");
+                
+                // Update the inventory
+                $updateSql = "UPDATE {$this->table} SET 
+                            QUANTITY = :quantity,
+                            INVE_UPDATED_AT = CURRENT_TIMESTAMP
+                            WHERE INVE_ID = :inventory_id 
+                            AND INVE_DELETED_AT IS NULL";
+                
+                $updateResult = $this->execute($updateSql, [
+                    ':quantity' => $newQuantity,
+                    ':inventory_id' => $inventoryId
+                ]);
+                
+                if (!$updateResult) {
+                    error_log("[ERROR] Failed to update inventory ID {$inventoryId}");
+                    // Only rollback if we started the transaction
+                    if (!isset($existingTransaction) || !$existingTransaction) {
+                        $this->rollback();
+                        error_log("[DEBUG] Transaction rolled back due to update failure");
+                    }
+                    return false;
+                }
+                
+                $remainingToReduce -= $reduceBy;
+                error_log("[DEBUG] Remaining to reduce: {$remainingToReduce}");
+            }
+            
+            // Verify we've reduced all requested quantity
+            if ($remainingToReduce > 0) {
+                error_log("[ERROR] Could not reduce entire requested quantity. Remaining: {$remainingToReduce}");
+                // Only rollback if we started the transaction
+                if (!isset($existingTransaction) || !$existingTransaction) {
+                    $this->rollback();
+                    error_log("[DEBUG] Transaction rolled back due to incomplete reduction");
+                }
+                return false;
+            }
+            
+            // Only commit if we started the transaction
+            if (!isset($existingTransaction) || !$existingTransaction) {
+                $this->commit();
+                error_log("[DEBUG] Transaction committed successfully");
+            }
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            error_log("[ERROR] Exception reducing inventory: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            // Only rollback if we started the transaction
+            if (!isset($existingTransaction) || !$existingTransaction) {
+                $this->rollback();
+                error_log("[DEBUG] Transaction rolled back due to exception");
+            }
+            return false;
+        }
+    }
 } 
