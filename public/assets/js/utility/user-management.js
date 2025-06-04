@@ -419,7 +419,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const password = $("#edit_password").val();
     // Get roleId from the disabled select (we'll keep the original value)
     const roleId = parseInt($("#edit_role_id").val());
-    const isActive = parseInt($("#edit_is_active").val()); // Ensure isActive is an integer
+    // Convert isActive to boolean instead of integer
+    const isActive = $("#edit_is_active").val() === "true";
 
     // Simple validation
     if (!firstName || !lastName || !email) {
@@ -521,8 +522,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Set the dropdown value (even though it's disabled, we want to display the correct role)
     $("#edit_role_id").val(roleId);
 
-    // Set status
-    $("#edit_is_active").val(rowData.status === "active" ? "1" : "0");
+    // Set status using true/false strings
+    $("#edit_is_active").val(rowData.status === "active" ? "true" : "false");
 
     // Clear password field (for security)
     $("#edit_password").val("");
