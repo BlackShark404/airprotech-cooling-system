@@ -231,23 +231,31 @@ class InventoryModel extends Model
         return $summaryData;
     }
 
-    public function getInventoryByProductAndWarehouse($productId, $warehouseId)
+    public function getInventoryByProductAndWarehouse($productId, $warehouseId, $inventoryType = null)
     {
         $sql = "SELECT * FROM {$this->table} 
                 WHERE PROD_ID = :product_id 
                 AND WHOUSE_ID = :warehouse_id 
                 AND INVE_DELETED_AT IS NULL";
         
-        return $this->queryOne($sql, [
+        $params = [
             ':product_id' => $productId,
             ':warehouse_id' => $warehouseId
-        ]);
+        ];
+        
+        // Add inventory type to the query if provided
+        if ($inventoryType !== null) {
+            $sql .= " AND INVE_TYPE = :inventory_type";
+            $params[':inventory_type'] = $inventoryType;
+        }
+        
+        return $this->queryOne($sql, $params);
     }
 
     public function addStock($productId, $warehouseId, $quantity, $inventoryType = 'Regular')
     {
-        // First check if there's an existing inventory record
-        $existingInventory = $this->getInventoryByProductAndWarehouse($productId, $warehouseId);
+        // First check if there's an existing inventory record with the same inventory type
+        $existingInventory = $this->getInventoryByProductAndWarehouse($productId, $warehouseId, $inventoryType);
         
         if ($existingInventory) {
             // Ensure QUANTITY key exists (handle both uppercase and lowercase)
@@ -361,16 +369,18 @@ class InventoryModel extends Model
                 $inventoryType = $sourceInventory['inve_type'];
             }
             
-            // First, check if target warehouse inventory already exists
+            // First, check if target warehouse inventory already exists with the same inventory type
             $targetSql = "SELECT * FROM {$this->table} 
                          WHERE PROD_ID = :product_id 
                          AND WHOUSE_ID = :warehouse_id 
+                         AND INVE_TYPE = :inventory_type
                          AND INVE_DELETED_AT IS NULL
                          FOR UPDATE";
             
             $targetInventory = $this->queryOne($targetSql, [
                 ':product_id' => $prodId,
-                ':warehouse_id' => $targetWarehouseId
+                ':warehouse_id' => $targetWarehouseId,
+                ':inventory_type' => $inventoryType
             ]);
             
             error_log("[DEBUG] moveStock in Model - Target inventory: " . print_r($targetInventory, true));
