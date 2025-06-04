@@ -526,4 +526,42 @@ class UserModel extends Model
             'product_orders' => $productOrders
         ];
     }
+
+    /**
+     * Get all technicians with their user account information
+     * 
+     * @return array Array of technicians with their user data
+     */
+    public function getTechnicians()
+    {
+        $sql = "SELECT user_account.*, technician.*
+                FROM user_account
+                INNER JOIN technician ON user_account.ua_id = technician.te_account_id
+                WHERE user_account.ua_role_id = :role_id
+                AND user_account.ua_is_active = true
+                ORDER BY user_account.ua_first_name, user_account.ua_last_name";
+                
+        return $this->query($sql, ['role_id' => 2]); // Role ID 2 for technician
+    }
+    
+    /**
+     * Get technician by ID with user account information
+     * 
+     * @param int $id Technician ID
+     * @return array|null Technician data or null if not found
+     */
+    public function getTechnicianById($id)
+    {
+        $sql = "SELECT user_account.*, technician.*
+                FROM user_account
+                INNER JOIN technician ON user_account.ua_id = technician.te_account_id
+                WHERE user_account.ua_id = :id
+                AND user_account.ua_role_id = :role_id
+                AND user_account.ua_is_active = true";
+                
+        return $this->queryOne($sql, [
+            'id' => $id,
+            'role_id' => 2 // Role ID 2 for technician
+        ]);
+    }
 }

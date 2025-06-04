@@ -146,5 +146,13 @@ $router->map('POST', '/api/admin/product-bookings/delete/[i:id]', 'App\Controlle
 
 // Warehouse Management API Routes
 
+// Technician API Routes
+$router->map('GET', '/api/admin/technicians', 'App\Controllers\AdminController#getTechnicians', 'get_technicians');
+$router->map('GET', '/api/admin/technicians/[i:id]/assignments', 'App\Controllers\AdminController#getTechnicianAssignments', 'get_technician_assignments');
+$router->map('POST', '/api/admin/service-requests/assign', 'App\Controllers\AdminController#assignServiceRequest', 'assign_service_request');
+$router->map('POST', '/api/admin/product-bookings/assign', 'App\Controllers\AdminController#assignProductBooking', 'assign_product_booking');
+$router->map('POST', '/api/technicians/service-assignment/update', 'App\Controllers\TechnicianController#updateServiceAssignment', 'update_service_assignment');
+$router->map('POST', '/api/technicians/product-assignment/update', 'App\Controllers\TechnicianController#updateProductAssignment', 'update_product_assignment');
+
 
 

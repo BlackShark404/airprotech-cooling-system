@@ -393,6 +393,116 @@ class AdminController extends BaseController {
     }
 
     public function renderTechnician() {
-        $this->render('admin/technician');
+        // Load the TechnicianModel to get all technicians
+        $technicianModel = $this->loadModel('TechnicianModel');
+        $userModel = $this->loadModel('UserModel');
+        
+        // Get all technicians with their user account information
+        $technicians = $userModel->getTechnicians();
+        
+        $this->render('admin/technician', [
+            'technicians' => $technicians
+        ]);
+    }
+    
+    /**
+     * API endpoint to get all technicians
+     */
+    public function getTechnicians()
+    {
+        $userModel = $this->loadModel('UserModel');
+        $technicians = $userModel->getTechnicians();
+        
+        $this->jsonSuccess($technicians);
+    }
+    
+    /**
+     * API endpoint to get a specific technician's assignments
+     */
+    public function getTechnicianAssignments($technicianId)
+    {
+        $bookingAssignmentModel = $this->loadModel('BookingAssignmentModel');
+        $productAssignmentModel = $this->loadModel('ProductAssignmentModel');
+        
+        // Get service request assignments
+        $serviceAssignments = $bookingAssignmentModel->getAssignmentsByTechnician($technicianId);
+        
+        // Get product booking assignments
+        $productAssignments = $productAssignmentModel->getAssignmentsByTechnician($technicianId);
+        
+        $this->jsonSuccess([
+            'serviceAssignments' => $serviceAssignments,
+            'productAssignments' => $productAssignments
+        ]);
+    }
+    
+    /**
+     * API endpoint to assign a service request to a technician
+     */
+    public function assignServiceRequest()
+    {
+        if (!$this->isPost()) {
+            $this->jsonError('Invalid request method');
+        }
+        
+        $input = $this->getJsonInput();
+        
+        $bookingId = $input['booking_id'] ?? null;
+        $technicianId = $input['technician_id'] ?? null;
+        
+        if (!$bookingId || !$technicianId) {
+            $this->jsonError('Missing required parameters');
+        }
+        
+        $bookingAssignmentModel = $this->loadModel('BookingAssignmentModel');
+        
+        $data = [
+            'ba_booking_id' => $bookingId,
+            'ba_technician_id' => $technicianId,
+            'ba_status' => 'assigned'
+        ];
+        
+        $result = $bookingAssignmentModel->createAssignment($data);
+        
+        if ($result) {
+            $this->jsonSuccess(['message' => 'Service request assigned successfully']);
+        } else {
+            $this->jsonError('Failed to assign service request');
+        }
+    }
+    
+    /**
+     * API endpoint to assign a product booking to a technician
+     */
+    public function assignProductBooking()
+    {
+        if (!$this->isPost()) {
+            $this->jsonError('Invalid request method');
+        }
+        
+        $input = $this->getJsonInput();
+        
+        $bookingId = $input['booking_id'] ?? null;
+        $technicianId = $input['technician_id'] ?? null;
+        
+        if (!$bookingId || !$technicianId) {
+            $this->jsonError('Missing required parameters');
+        }
+        
+        $productAssignmentModel = $this->loadModel('ProductAssignmentModel');
+        
+        $data = [
+            'pa_order_id' => $bookingId,
+            'pa_technician_id' => $technicianId,
+            'pa_status' => 'assigned'
+        ];
+        
+        $result = $productAssignmentModel->createAssignment($data);
+        
+        if ($result) {
+            $this->jsonSuccess(['message' => 'Product booking assigned successfully']);
+        } else {
+            $this->jsonError('Failed to assign product booking');
+        }
     }
 }
