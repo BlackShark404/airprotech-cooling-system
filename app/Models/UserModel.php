@@ -534,6 +534,7 @@ class UserModel extends Model
      */
     public function getTechnicians()
     {
+        // First get all technicians
         $sql = "SELECT user_account.*, technician.*
                 FROM user_account
                 INNER JOIN technician ON user_account.ua_id = technician.te_account_id
@@ -541,7 +542,40 @@ class UserModel extends Model
                 AND user_account.ua_is_active = true
                 ORDER BY user_account.ua_first_name, user_account.ua_last_name";
                 
-        return $this->query($sql, ['role_id' => 2]); // Role ID 2 for technician
+        $technicians = $this->query($sql, ['role_id' => 2]); // Role ID 2 for technician
+        
+        // For each technician, get their assignment statistics
+        foreach ($technicians as &$technician) {
+            $id = $technician['te_account_id'];
+            
+            // Get active assignments count (both service and product)
+            $activeServiceSql = "SELECT COUNT(*) FROM booking_assignment 
+                                WHERE ba_technician_id = :id 
+                                AND ba_status IN ('assigned', 'in-progress')";
+            $activeProductSql = "SELECT COUNT(*) FROM product_assignment 
+                                WHERE pa_technician_id = :id 
+                                AND pa_status IN ('assigned', 'in-progress')";
+            
+            $activeServiceCount = (int)$this->queryScalar($activeServiceSql, ['id' => $id]);
+            $activeProductCount = (int)$this->queryScalar($activeProductSql, ['id' => $id]);
+            
+            // Get completed assignments count
+            $completedServiceSql = "SELECT COUNT(*) FROM booking_assignment 
+                                   WHERE ba_technician_id = :id 
+                                   AND ba_status = 'completed'";
+            $completedProductSql = "SELECT COUNT(*) FROM product_assignment 
+                                   WHERE pa_technician_id = :id 
+                                   AND pa_status = 'completed'";
+            
+            $completedServiceCount = (int)$this->queryScalar($completedServiceSql, ['id' => $id]);
+            $completedProductCount = (int)$this->queryScalar($completedProductSql, ['id' => $id]);
+            
+            // Add statistics to technician data
+            $technician['active_assignments'] = $activeServiceCount + $activeProductCount;
+            $technician['completed_assignments'] = $completedServiceCount + $completedProductCount;
+        }
+        
+        return $technicians;
     }
     
     /**
