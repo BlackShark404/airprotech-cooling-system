@@ -2,96 +2,266 @@
 
 namespace App\Models;
 
-class BookingAssignmentModel extends BaseModel
+class BookingAssignmentModel extends Model
 {
     protected $table = 'booking_assignment';
     protected $primaryKey = 'ba_id';
-    protected $useSoftDeletes = false;
-    protected $timestamps = true;
-    protected $createdAtColumn = 'ba_assigned_at';
-    protected $updatedAtColumn = 'ba_updated_at';
-    
+
     protected $fillable = [
         'ba_booking_id',
         'ba_technician_id',
+        'ba_assigned_at',
         'ba_status',
         'ba_notes',
-        'ba_started_at',
         'ba_completed_at'
     ];
+
+    protected $timestamps = true;
+    protected $createdAtColumn = 'ba_assigned_at';
+    protected $updatedAtColumn = null; // No updated_at column for this table
+
+    /**
+     * Get all assignments for a specific booking
+     * 
+     * @param int $bookingId The booking ID
+     * @return array Array of assignment records
+     */
+    public function getAssignmentsForBooking($bookingId)
+    {
+        $sql = "SELECT * FROM {$this->table} 
+                WHERE ba_booking_id = :bookingId 
+                AND ba_status IN ('assigned', 'in-progress', 'completed')
+                ORDER BY ba_assigned_at DESC";
+        return $this->query($sql, ['bookingId' => $bookingId]);
+    }
 
     /**
      * Get all assignments for a specific technician
      * 
      * @param int $technicianId The technician ID
-     * @return array The assignments for the technician
+     * @param string|null $status Filter by assignment status
+     * @return array Array of assignment records
      */
-    public function getAssignmentsByTechnician($technicianId)
+    public function getAssignmentsForTechnician($technicianId, $status = null)
     {
-        return $this->select('booking_assignment.*, service_booking.sb_service_type_id, 
-                            service_booking.sb_preferred_date, service_booking.sb_preferred_time, 
-                            service_booking.sb_address, service_booking.sb_description, 
-                            service_booking.sb_status as booking_status, service_booking.sb_priority,
-                            service_type.st_name as service_type_name,
-                            CONCAT(user_account.ua_first_name, " ", user_account.ua_last_name) as customer_name')
-                    ->join('service_booking', 'booking_assignment.ba_booking_id = service_booking.sb_id', 'INNER')
-                    ->join('service_type', 'service_booking.sb_service_type_id = service_type.st_id', 'INNER')
-                    ->join('customer', 'service_booking.sb_customer_id = customer.cu_account_id', 'INNER')
-                    ->join('user_account', 'customer.cu_account_id = user_account.ua_id', 'INNER')
-                    ->where('booking_assignment.ba_technician_id = :technician_id')
-                    ->bind(['technician_id' => $technicianId])
-                    ->orderBy('service_booking.sb_preferred_date DESC, service_booking.sb_preferred_time DESC')
-                    ->get();
+        $sql = "SELECT * FROM {$this->table} WHERE ba_technician_id = :technicianId";
+        $params = ['technicianId' => $technicianId];
+        
+        if ($status !== null) {
+            $sql .= " AND ba_status = :status";
+            $params['status'] = $status;
+        }
+        
+        $sql .= " ORDER BY ba_assigned_at DESC";
+        
+        return $this->query($sql, $params);
     }
 
     /**
-     * Get all assignments for a specific service booking
+     * Add a new assignment
      * 
-     * @param int $bookingId The service booking ID
-     * @return array The assignments for the service booking
+     * @param array $data Assignment data
+     * @return int|false The ID of the new assignment or false on failure
      */
-    public function getAssignmentsByBooking($bookingId)
+    public function addAssignment($data)
     {
-        return $this->select('booking_assignment.*, 
-                            CONCAT(user_account.ua_first_name, " ", user_account.ua_last_name) as technician_name')
-                    ->join('technician', 'booking_assignment.ba_technician_id = technician.te_account_id', 'INNER')
-                    ->join('user_account', 'technician.te_account_id = user_account.ua_id', 'INNER')
-                    ->where('booking_assignment.ba_booking_id = :booking_id')
-                    ->bind(['booking_id' => $bookingId])
-                    ->get();
-    }
-
-    /**
-     * Create a new assignment
-     * 
-     * @param array $data The assignment data
-     * @return int|bool The new assignment ID or false on failure
-     */
-    public function createAssignment($data)
-    {
-        return $this->insert($data);
+        // Ensure required fields are present
+        if (empty($data['ba_booking_id']) || empty($data['ba_technician_id'])) {
+            error_log("Missing required fields for booking assignment");
+            return false;
+        }
+        
+        try {
+            // Set default values if not provided
+            if (!isset($data['ba_status'])) {
+                $data['ba_status'] = 'assigned';
+            }
+            
+            if (!isset($data['ba_assigned_at'])) {
+                $data['ba_assigned_at'] = date('Y-m-d H:i:s');
+            }
+            
+            // Check if assignment already exists
+            $existing = $this->queryOne(
+                "SELECT * FROM {$this->table} WHERE ba_booking_id = :bookingId AND ba_technician_id = :technicianId",
+                [
+                    'bookingId' => $data['ba_booking_id'],
+                    'technicianId' => $data['ba_technician_id']
+                ]
+            );
+            
+            if ($existing) {
+                // Debug log
+                error_log("Assignment already exists for booking {$data['ba_booking_id']} and technician {$data['ba_technician_id']}");
+                
+                // If assignment exists but was cancelled, reactivate it
+                if ($existing['ba_status'] === 'cancelled') {
+                    error_log("Reactivating cancelled assignment");
+                    return $this->updateAssignment($existing[$this->primaryKey], [
+                        'ba_status' => 'assigned',
+                        'ba_assigned_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+                
+                // Assignment already exists and is active
+                return $existing[$this->primaryKey];
+            }
+            
+            // Format insert data
+            $formattedInsert = $this->formatInsertData($data);
+            
+            // Debug log
+            error_log("Inserting new assignment: " . json_encode($formattedInsert));
+            
+            $sql = "INSERT INTO {$this->table} ({$formattedInsert['columns']}) 
+                    VALUES ({$formattedInsert['placeholders']})";
+            
+            $result = $this->execute($sql, $formattedInsert['filteredData']);
+            
+            if ($result <= 0) {
+                error_log("Failed to insert assignment record");
+                return false;
+            }
+            
+            // Get the sequence name for PostgreSQL
+            $sequenceName = "{$this->table}_{$this->primaryKey}_seq";
+            
+            // Debug log
+            error_log("Using sequence name: " . $sequenceName);
+            
+            $insertId = $this->lastInsertId($sequenceName);
+            error_log("Inserted assignment with ID: " . $insertId);
+            
+            return $insertId;
+        } catch (\Exception $e) {
+            error_log("Error inserting booking assignment: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
      * Update an assignment
      * 
-     * @param int $id The assignment ID
-     * @param array $data The assignment data
-     * @return bool Success or failure
+     * @param int $assignmentId The assignment ID
+     * @param array $data The data to update
+     * @return bool Success status
      */
-    public function updateAssignment($id, $data)
+    public function updateAssignment($assignmentId, $data)
     {
-        return $this->update($data, 'ba_id = :id', ['id' => $id]);
+        if (empty($data)) {
+            return true; // No data to update, considered successful
+        }
+        
+        $formattedUpdate = $this->formatUpdateData($data);
+        
+        if (empty($formattedUpdate['updateClause'])) {
+            return true; // No effective update to make
+        }
+        
+        $sql = "UPDATE {$this->table} 
+                SET {$formattedUpdate['updateClause']}
+                WHERE {$this->primaryKey} = :_primaryKeyValueBinding";
+                
+        $params = $formattedUpdate['filteredData'];
+        $params['_primaryKeyValueBinding'] = $assignmentId;
+        
+        return $this->execute($sql, $params) > 0;
     }
 
     /**
-     * Delete an assignment
+     * Update assignment status
      * 
-     * @param int $id The assignment ID
-     * @return bool Success or failure
+     * @param int $assignmentId The assignment ID
+     * @param string $status The new status
+     * @return bool Success status
      */
-    public function deleteAssignment($id)
+    public function updateAssignmentStatus($assignmentId, $status)
     {
-        return $this->delete('ba_id = :id', ['id' => $id]);
+        $allowedStatuses = ['assigned', 'in-progress', 'completed', 'cancelled'];
+        if (!in_array($status, $allowedStatuses)) {
+            return false;
+        }
+        
+        $data = ['ba_status' => $status];
+        
+        // Set completed_at timestamp if status is completed
+        if ($status === 'completed' && empty($data['ba_completed_at'])) {
+            $data['ba_completed_at'] = date('Y-m-d H:i:s');
+        }
+        
+        return $this->updateAssignment($assignmentId, $data);
+    }
+
+    /**
+     * Remove an assignment between a booking and technician
+     * 
+     * @param int $bookingId The booking ID
+     * @param int $technicianId The technician ID
+     * @return bool Success status
+     */
+    public function removeAssignment($bookingId, $technicianId)
+    {
+        $sql = "UPDATE {$this->table} 
+                SET ba_status = 'cancelled'
+                WHERE ba_booking_id = :bookingId 
+                AND ba_technician_id = :technicianId
+                AND ba_status IN ('assigned', 'in-progress')";
+                
+        $params = [
+            'bookingId' => $bookingId,
+            'technicianId' => $technicianId
+        ];
+        
+        return $this->execute($sql, $params) > 0;
+    }
+
+    /**
+     * Check if a technician is assigned to a booking
+     * 
+     * @param int $bookingId The booking ID
+     * @param int $technicianId The technician ID
+     * @return bool True if assigned, false otherwise
+     */
+    public function isAssigned($bookingId, $technicianId)
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->table} 
+                WHERE ba_booking_id = :bookingId 
+                AND ba_technician_id = :technicianId
+                AND ba_status IN ('assigned', 'in-progress')";
+                
+        $params = [
+            'bookingId' => $bookingId,
+            'technicianId' => $technicianId
+        ];
+        
+        return $this->queryScalar($sql, $params) > 0;
+    }
+
+    /**
+     * Update notes for a specific assignment
+     * 
+     * @param int $bookingId The booking ID
+     * @param int $technicianId The technician ID
+     * @param string|null $notes The notes to update
+     * @return bool Success status
+     */
+    public function updateAssignmentNotes($bookingId, $technicianId, $notes)
+    {
+        $sql = "UPDATE {$this->table} 
+                SET ba_notes = :notes
+                WHERE ba_booking_id = :bookingId 
+                AND ba_technician_id = :technicianId
+                AND ba_status IN ('assigned', 'in-progress')"; // Ensure we only update active assignments
+                
+        $params = [
+            'notes' => $notes,
+            'bookingId' => $bookingId,
+            'technicianId' => $technicianId
+        ];
+        
+        // We expect this to affect one row if the assignment exists and is active.
+        // If no rows are affected, it could mean the assignment doesn't exist or isn't in a state to be updated.
+        // The controller should handle the logic of whether an assignment *should* exist.
+        return $this->execute($sql, $params) >= 0; // Allow 0 if notes are unchanged
     }
 }
