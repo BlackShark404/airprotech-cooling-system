@@ -800,15 +800,17 @@ ob_start();
                                         // Ensure we have the inventory ID in a consistent format
                                         const inventoryId = row.inve_id || row.INVE_ID;
                                         return `
-                                            <button type="button" class="btn btn-sm btn-info view-inventory-btn" title="View Details" data-id="${inventoryId}">
-                                                <i class="bi bi-eye-fill"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-warning move-stock-btn" title="Move Stock" data-id="${inventoryId}">
-                                                <i class="bi bi-arrows-move"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger delete-inventory-btn" title="Delete Inventory" data-id="${inventoryId}">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </button>
+                                            <div class="d-flex">
+                                                <div class="action-icon action-icon-view view-inventory-btn me-1" data-id="${inventoryId}">
+                                                    <i class="bi bi-eye"></i>
+                                                </div>
+                                                <div class="action-icon action-icon-edit move-stock-btn me-1" data-id="${inventoryId}">
+                                                    <i class="bi bi-arrows-move"></i>
+                                                </div>
+                                                <div class="action-icon action-icon-delete delete-inventory-btn" data-id="${inventoryId}">
+                                                    <i class="bi bi-trash"></i>
+                                                </div>
+                                            </div>
                                         `;
                                     }
                                 }
@@ -882,15 +884,17 @@ ob_start();
                                     searchable: false,
                                     render: function(data, type, row) {
                                         return `
-                                            <button type="button" class="btn btn-sm btn-info view-warehouse-btn" title="View Warehouse" data-id="${row.whouse_id}">
-                                                <i class="bi bi-eye-fill"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-warning edit-warehouse-btn" title="Edit Warehouse" data-id="${row.whouse_id}">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger delete-warehouse-btn" title="Delete Warehouse" data-id="${row.whouse_id}">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </button>
+                                            <div class="d-flex">
+                                                <div class="action-icon action-icon-view view-warehouse-btn me-1" data-id="${row.whouse_id}">
+                                                    <i class="bi bi-eye"></i>
+                                                </div>
+                                                <div class="action-icon action-icon-edit edit-warehouse-btn me-1" data-id="${row.whouse_id}">
+                                                    <i class="bi bi-pencil"></i>
+                                                </div>
+                                                <div class="action-icon action-icon-delete delete-warehouse-btn" data-id="${row.whouse_id}">
+                                                    <i class="bi bi-trash"></i>
+                                                </div>
+                                            </div>
                                         `;
                                     }
                                 }
@@ -940,9 +944,11 @@ ob_start();
                                     searchable: false,
                                     render: function(data, type, row) {
                                         return `
-                                            <button type="button" class="btn btn-sm btn-success restock-btn" title="Restock Item" data-id="${row.inve_id}">
-                                                <i class="bi bi-plus-circle-fill"></i> Restock
-                                            </button>
+                                            <div class="d-flex">
+                                                <div class="action-icon action-icon-edit restock-btn" data-id="${row.inve_id}">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                </div>
+                                            </div>
                                         `;
                                     }
                                 }

@@ -58,6 +58,33 @@ ob_start();
     .dataTables_wrapper .dataTables_length {
         margin-top: 10px;
     }
+    
+    /* Action icon styles */
+    .action-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        background-color: #f8f9fa;
+        margin-right: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .action-icon:hover {
+        background-color: #e9ecef;
+    }
+    .action-icon-view {
+        color: #007bff;
+    }
+    .action-icon-edit {
+        color: #28a745;
+    }
+    .action-icon-delete {
+        color: #dc3545;
+    }
 </style>
 
 <!-- Main Content -->

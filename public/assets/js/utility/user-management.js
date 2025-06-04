@@ -87,13 +87,13 @@ document.addEventListener("DOMContentLoaded", function () {
         orderable: false,
         className: "text-center",
         render: function (data, type, row) {
-          return `<div class="d-flex justify-content-center gap-2">
-                    <button class="btn btn-icon btn-sm btn-info view-btn" data-id="${row.id}" title="View User">
-                      <i class="bi bi-eye-fill"></i>
-                    </button>
-                    <button class="btn btn-icon btn-sm btn-warning edit-btn" data-id="${row.id}" title="Edit User">
-                      <i class="bi bi-pencil-fill"></i>
-                    </button>
+          return `<div class="d-flex">
+                    <div class="action-icon action-icon-view view-btn me-1" data-id="${row.id}">
+                      <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="action-icon action-icon-edit edit-btn" data-id="${row.id}">
+                      <i class="bi bi-pencil"></i>
+                    </div>
                   </div>`;
         }
       }
