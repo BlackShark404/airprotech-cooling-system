@@ -44,6 +44,7 @@ class ProductBookingModel extends Model
                         ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME AS CUSTOMER_NAME,
                         ua.UA_EMAIL AS CUSTOMER_EMAIL,
                         ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
+                        ua.UA_PROFILE_URL AS CUSTOMER_PROFILE_URL,
                         pv.VAR_CAPACITY,
                         p.PROD_NAME,
                         p.PROD_IMAGE,
