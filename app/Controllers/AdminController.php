@@ -4,15 +4,24 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Models\AdminModel; // Assuming you have an AdminModel for admin-specific operations
+use App\Models\ServiceRequestModel;
+use App\Models\ProductModel;
+use App\Models\ReportsModel;
 
 class AdminController extends BaseController {
     protected $userModel;
     protected $adminModel;
+    protected $serviceModel;
+    protected $productModel;
+    protected $reportsModel;
 
     public function __construct() {
         parent::__construct();
         $this->userModel = new UserModel();
         $this->adminModel = new AdminModel(); // Initialize AdminModel
+        $this->serviceModel = new ServiceRequestModel();
+        $this->productModel = new ProductModel();
+        $this->reportsModel = new ReportsModel();
         // Ensure user is authenticated and is an admin
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
             // Redirect to login or show an error page
@@ -282,7 +291,85 @@ class AdminController extends BaseController {
     }
 
     public function renderReports() {
-        $this->render('admin/reports');
+        // Get current year for default filter
+        $year = date('Y');
+        
+        // Get service request statistics
+        $serviceRequestsByStatus = $this->reportsModel->getServiceRequestsByStatus();
+        $serviceRequestsByType = $this->reportsModel->getServiceRequestsByType();
+        $serviceRequestsByMonth = $this->reportsModel->getServiceRequestsByMonth($year);
+        
+        // Get product booking statistics
+        $productBookingsByStatus = $this->reportsModel->getProductBookingsByStatus();
+        $productBookingsByMonth = $this->reportsModel->getProductBookingsByMonth($year);
+        $topSellingProducts = $this->reportsModel->getTopSellingProducts(5);
+        
+        // Get technician performance data
+        $technicianPerformance = $this->reportsModel->getTechnicianPerformance();
+        
+        // Get revenue data
+        $revenueByMonth = $this->reportsModel->getRevenueByMonth($year);
+        
+        // Pass data to the view
+        $this->render('admin/reports', [
+            'serviceRequestsByStatus' => $serviceRequestsByStatus,
+            'serviceRequestsByType' => $serviceRequestsByType,
+            'serviceRequestsByMonth' => $serviceRequestsByMonth,
+            'productBookingsByStatus' => $productBookingsByStatus,
+            'productBookingsByMonth' => $productBookingsByMonth,
+            'topSellingProducts' => $topSellingProducts,
+            'technicianPerformance' => $technicianPerformance,
+            'revenueByMonth' => $revenueByMonth,
+            'currentYear' => $year
+        ]);
+    }
+
+    /**
+     * API endpoint to get reports data filtered by year
+     * 
+     * @param int $year The year to filter by
+     */
+    public function getReportsByYear($year) {
+        // Validate year
+        if (!is_numeric($year) || $year < 2000 || $year > date('Y') + 1) {
+            return $this->jsonError('Invalid year', 400);
+        }
+        
+        // Get data for the specified year
+        $serviceRequestsByMonth = $this->reportsModel->getServiceRequestsByMonth($year);
+        $productBookingsByMonth = $this->reportsModel->getProductBookingsByMonth($year);
+        $revenueByMonth = $this->reportsModel->getRevenueByMonth($year);
+        
+        // Format the data for charts
+        $monthlyServiceData = array_fill(1, 12, 0);
+        if (!empty($serviceRequestsByMonth)) {
+            foreach ($serviceRequestsByMonth as $monthly) {
+                $monthlyServiceData[(int)$monthly['month']] = (int)$monthly['count'];
+            }
+        }
+        
+        $monthlyProductData = array_fill(1, 12, 0);
+        if (!empty($productBookingsByMonth)) {
+            foreach ($productBookingsByMonth as $monthly) {
+                $monthlyProductData[(int)$monthly['month']] = (int)$monthly['count'];
+            }
+        }
+        
+        $monthlyRevenueData = array_fill(1, 12, 0);
+        if (!empty($revenueByMonth)) {
+            foreach ($revenueByMonth as $monthly) {
+                $monthlyRevenueData[(int)$monthly['month']] = (float)$monthly['total_revenue'];
+            }
+        }
+        
+        // Return the formatted data
+        header('Content-Type: application/json');
+        return $this->jsonSuccess([
+            'serviceRequestsByMonth' => array_values($monthlyServiceData),
+            'productBookingsByMonth' => array_values($monthlyProductData),
+            'revenueByMonth' => array_values($monthlyRevenueData),
+            'year' => $year
+        ]);
     }
 
     public function renderAddProduct() {
