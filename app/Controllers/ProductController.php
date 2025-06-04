@@ -734,25 +734,17 @@ class ProductController extends BaseController
         // Enhance the response with additional information
         if ($bookings) {
             foreach ($bookings as &$booking) {
-                // Add customer information
-                if (isset($booking['pb_customer_id']) && !empty($booking['pb_customer_id'])) {
-                    $customer = $this->getUserInfo($booking['pb_customer_id']);
-                    if ($customer) {
-                        $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
-                        $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
-                        $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
-                    }
-                } else if (isset($booking['PB_CUSTOMER_ID']) && !empty($booking['PB_CUSTOMER_ID'])) {
-                    $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
-                    if ($customer) {
-                        $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
-                        $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
-                        $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
-                    }
-                } else {
-                    $booking['customer_email'] = '';
-                    $booking['customer_phone'] = '';
-                    $booking['customer_profile_url'] = '';
+                // No need to add customer information here as it's already included in the SQL query
+                
+                // Convert uppercase keys to lowercase for consistency
+                if (isset($booking['CUSTOMER_EMAIL'])) {
+                    $booking['customer_email'] = $booking['CUSTOMER_EMAIL'];
+                }
+                if (isset($booking['CUSTOMER_PHONE'])) {
+                    $booking['customer_phone'] = $booking['CUSTOMER_PHONE'];
+                }
+                if (isset($booking['CUSTOMER_PROFILE_URL'])) {
+                    $booking['customer_profile_url'] = $booking['CUSTOMER_PROFILE_URL'];
                 }
                 
                 // Get assigned technicians for each booking
@@ -793,25 +785,17 @@ class ProductController extends BaseController
             return;
         }
         
-        // Add customer information
-        if (isset($booking['pb_customer_id']) && !empty($booking['pb_customer_id'])) {
-            $customer = $this->getUserInfo($booking['pb_customer_id']);
-            if ($customer) {
-                $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
-                $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
-                $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
-            }
-        } else if (isset($booking['PB_CUSTOMER_ID']) && !empty($booking['PB_CUSTOMER_ID'])) {
-            $customer = $this->getUserInfo($booking['PB_CUSTOMER_ID']);
-            if ($customer) {
-                $booking['customer_email'] = $customer['UA_EMAIL'] ?? '';
-                $booking['customer_phone'] = $customer['UA_PHONE_NUMBER'] ?? '';
-                $booking['customer_profile_url'] = $customer['UA_PROFILE_URL'] ?? '';
-            }
-        } else {
-            $booking['customer_email'] = '';
-            $booking['customer_phone'] = '';
-            $booking['customer_profile_url'] = '';
+        // No need to add customer information here as it's already included in the SQL query
+        
+        // Convert uppercase keys to lowercase for consistency
+        if (isset($booking['CUSTOMER_EMAIL'])) {
+            $booking['customer_email'] = $booking['CUSTOMER_EMAIL'];
+        }
+        if (isset($booking['CUSTOMER_PHONE'])) {
+            $booking['customer_phone'] = $booking['CUSTOMER_PHONE'];
+        }
+        if (isset($booking['CUSTOMER_PROFILE_URL'])) {
+            $booking['customer_profile_url'] = $booking['CUSTOMER_PROFILE_URL'];
         }
         
         // Get assigned technicians for this booking

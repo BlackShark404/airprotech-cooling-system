@@ -14,6 +14,9 @@ class ProductBookingModel extends Model
         $sql = "SELECT 
                     pb.*,
                     ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME AS CUSTOMER_NAME,
+                    ua.UA_EMAIL AS CUSTOMER_EMAIL,
+                    ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
+                    ua.UA_PROFILE_URL AS CUSTOMER_PROFILE_URL,
                     pv.VAR_CAPACITY,
                     p.PROD_NAME,
                     p.PROD_IMAGE
@@ -290,6 +293,9 @@ class ProductBookingModel extends Model
         $sql = "SELECT 
                     pb.*,
                     ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME AS CUSTOMER_NAME,
+                    ua.UA_EMAIL AS CUSTOMER_EMAIL,
+                    ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
+                    ua.UA_PROFILE_URL AS CUSTOMER_PROFILE_URL,
                     pv.VAR_CAPACITY,
                     p.PROD_NAME,
                     p.PROD_IMAGE
@@ -318,6 +324,9 @@ class ProductBookingModel extends Model
                     pa.PA_ID,
                     pa.PA_TECHNICIAN_ID as id,
                     ua.UA_FIRST_NAME || ' ' || ua.UA_LAST_NAME as name,
+                    ua.UA_EMAIL as email,
+                    ua.UA_PHONE_NUMBER as phone,
+                    ua.UA_PROFILE_URL as profile_url,
                     pa.PA_NOTES as notes,
                     pa.PA_STATUS as status,
                     pa.PA_ASSIGNED_AT as assigned_at
