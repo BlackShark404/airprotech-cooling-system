@@ -103,7 +103,7 @@ class WarehouseModel extends Model
         $sql = "SELECT 
                     w.*,
                     COALESCE(SUM(i.QUANTITY), 0) AS TOTAL_INVENTORY,
-                    COUNT(DISTINCT i.PROD_ID) AS UNIQUE_PRODUCTS
+                    COUNT(DISTINCT i.VAR_ID) AS UNIQUE_PRODUCTS
                 FROM {$this->table} w
                 LEFT JOIN INVENTORY i ON w.WHOUSE_ID = i.WHOUSE_ID AND i.INVE_DELETED_AT IS NULL
                 WHERE w.WHOUSE_DELETED_AT IS NULL

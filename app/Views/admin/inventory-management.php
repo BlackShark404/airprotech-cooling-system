@@ -209,9 +209,11 @@ ob_start();
                             <select id="inventoryTypeFilter" class="form-select filter-dropdown">
                                 <option value="">All Types</option>
                                 <option value="Regular">Regular</option>
-                                <option value="Reserved">Reserved</option>
+                                <option value="Display">Display</option>
+                                <option value="Reserve">Reserve</option>
                                 <option value="Damaged">Damaged</option>
-                                <option value="Returns">Returns</option>
+                                <option value="Returned">Returned</option>
+                                <option value="Quarantine">Quarantine</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3 d-flex align-items-end">
@@ -323,6 +325,13 @@ ob_start();
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label for="variantId" class="form-label">Variant</label>
+                        <select id="variantId" name="variant_id" class="form-select" required disabled>
+                            <option value="">Select Product First</option>
+                            <!-- Options will be loaded when product is selected -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="warehouseId" class="form-label">Warehouse</label>
                         <select id="warehouseId" name="warehouse_id" class="form-select" required>
                             <option value="">Select Warehouse</option>
@@ -337,9 +346,11 @@ ob_start();
                         <label for="inventoryType" class="form-label">Inventory Type</label>
                         <select id="inventoryType" name="inventory_type" class="form-select">
                             <option value="Regular">Regular</option>
-                            <option value="Reserved">Reserved</option>
+                            <option value="Display">Display</option>
+                            <option value="Reserve">Reserve</option>
                             <option value="Damaged">Damaged</option>
-                            <option value="Returns">Returns</option>
+                            <option value="Returned">Returned</option>
+                            <option value="Quarantine">Quarantine</option>
                         </select>
                     </div>
                 </form>
@@ -445,6 +456,10 @@ ob_start();
                         <input type="text" class="form-control" id="productDetails" disabled>
                     </div>
                     <div class="mb-3">
+                        <label for="variantDetails" class="form-label">Variant</label>
+                        <input type="text" class="form-control" id="variantDetails" disabled>
+                    </div>
+                    <div class="mb-3">
                         <label for="sourceWarehouse" class="form-label">Source Warehouse</label>
                         <input type="text" class="form-control" id="sourceWarehouse" disabled>
                     </div>
@@ -494,6 +509,10 @@ ob_start();
                             <div class="col-md-12">
                                 <h6>Inventory Details</h6>
                                 <table class="table table-sm">
+                                    <tr>
+                                        <th>Variant Capacity:</th>
+                                        <td id="detailVariantCapacity"></td>
+                                    </tr>
                                     <tr>
                                         <th>Warehouse:</th>
                                         <td id="detailWarehouse"></td>
@@ -620,6 +639,7 @@ ob_start();
             <div class="modal-body">
                 <p>Are you sure you want to delete the following inventory item? This action cannot be undone.</p>
                 <p><strong>Product:</strong> <span id="deleteInventoryProductSpan"></span></p>
+                <p><strong>Variant:</strong> <span id="deleteInventoryVariantSpan"></span></p>
                 <p><strong>Warehouse:</strong> <span id="deleteInventoryWarehouseSpan"></span></p>
                 <p><strong>Quantity:</strong> <span id="deleteInventoryQuantitySpan"></span></p>
                 <p><strong>Type:</strong> <span id="deleteInventoryTypeSpan"></span></p>
@@ -756,7 +776,16 @@ ob_start();
                             ajaxUrl: '/api/inventory',
                             columns: [
                                 { data: 'inve_id', title: 'ID' },
-                                { data: 'prod_name', title: 'Product' },
+                                { 
+                                    data: null, 
+                                    title: 'Product',
+                                    render: function(data, type, row) {
+                                        // Handle both uppercase and lowercase field names
+                                        const prodName = row.prod_name || row.PROD_NAME || 'N/A';
+                                        const varCapacity = row.var_capacity || row.VAR_CAPACITY || '';
+                                        return `${prodName} ${varCapacity ? `(${varCapacity})` : ''}`;
+                                    }
+                                },
                                 { 
                                     data: null, 
                                     title: 'Warehouse', 
@@ -919,7 +948,15 @@ ob_start();
                             ajaxUrl: '/api/inventory/low-stock',
                             columns: [
                                 { data: 'inve_id', title: 'ID' },
-                                { data: 'prod_name', title: 'Product' },
+                                { 
+                                    data: null, 
+                                    title: 'Product',
+                                    render: function(data, type, row) {
+                                        const prodName = row.prod_name || row.PROD_NAME || 'N/A';
+                                        const varCapacity = row.var_capacity || row.VAR_CAPACITY || '';
+                                        return `${prodName} ${varCapacity ? `(${varCapacity})` : ''}`;
+                                    }
+                                },
                                 { data: 'whouse_name', title: 'Warehouse' },
                                 { data: 'quantity', title: 'Current Quantity' },
                                 { data: 'whouse_restock_threshold', title: 'Threshold' },
@@ -1139,6 +1176,9 @@ ob_start();
                                 option.textContent = product.prod_name;
                                 productSelect.appendChild(option);
                             });
+                            
+                            // Add event listener to load variants when product is selected
+                            productSelect.addEventListener('change', loadVariantsForSelectedProduct);
                         } else {
                              inventoryTable.showErrorToast('Error', 'Failed to load products for dropdown.');
                         }
@@ -1146,6 +1186,46 @@ ob_start();
                     .catch(error => {
                         console.error('Error loading products for modal:', error);
                         inventoryTable.showErrorToast('Error', 'Failed to load products for dropdown.');
+                    });
+            }
+            
+            // Function to load variants when a product is selected
+            function loadVariantsForSelectedProduct() {
+                const productId = document.getElementById('productId').value;
+                const variantSelect = document.getElementById('variantId');
+                
+                // Reset and disable the variant dropdown if no product is selected
+                if (!productId) {
+                    variantSelect.innerHTML = '<option value="">Select Product First</option>';
+                    variantSelect.disabled = true;
+                    return;
+                }
+                
+                // Show loading state
+                variantSelect.innerHTML = '<option value="">Loading variants...</option>';
+                variantSelect.disabled = true;
+                
+                fetch(`/api/products/${productId}/variants`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.data) {
+                            variantSelect.innerHTML = '<option value="">Select Variant</option>';
+                            data.data.forEach(variant => {
+                                const option = document.createElement('option');
+                                option.value = variant.var_id;
+                                option.textContent = variant.var_capacity;
+                                variantSelect.appendChild(option);
+                            });
+                            variantSelect.disabled = false;
+                        } else {
+                            variantSelect.innerHTML = '<option value="">No variants available</option>';
+                            inventoryTable.showErrorToast('Warning', 'No variants found for this product');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading variants:', error);
+                        variantSelect.innerHTML = '<option value="">Error loading variants</option>';
+                        inventoryTable.showErrorToast('Error', 'Failed to load product variants');
                     });
             }
             
@@ -1212,7 +1292,7 @@ ob_start();
                     return;
                 }
                 const data = {
-                    product_id: document.getElementById('productId').value,
+                    variant_id: document.getElementById('variantId').value,
                     warehouse_id: document.getElementById('warehouseId').value,
                     quantity: parseInt(document.getElementById('quantity').value),
                     inventory_type: document.getElementById('inventoryType').value
@@ -1253,6 +1333,12 @@ ob_start();
                         
                         inventoryTable.showSuccessToast('Success', 'Stock added successfully');
                         form.reset();
+                        
+                        // Reset and disable the variant dropdown
+                        const variantSelect = document.getElementById('variantId');
+                        variantSelect.innerHTML = '<option value="">Select Product First</option>';
+                        variantSelect.disabled = true;
+                        
                         loadSummaryData();
                     } else {
                         inventoryTable.showErrorToast('Error', result.message || 'Failed to add stock');
@@ -1376,6 +1462,7 @@ ob_start();
                             }
                             
                             // Inventory details
+                            document.getElementById('detailVariantCapacity').textContent = item.var_capacity || 'N/A';
                             document.getElementById('detailWarehouse').textContent = item.whouse_name || 'N/A';
                             document.getElementById('detailQuantity').textContent = item.quantity || '0';
                             document.getElementById('detailType').textContent = item.inve_type || 'N/A';
@@ -1397,6 +1484,7 @@ ob_start();
             function confirmDeleteInventory(rowData) {
                 // Populate the modal with inventory data
                 document.getElementById('deleteInventoryProductSpan').textContent = rowData.prod_name || 'N/A';
+                document.getElementById('deleteInventoryVariantSpan').textContent = rowData.var_capacity || 'N/A';
                 document.getElementById('deleteInventoryWarehouseSpan').textContent = rowData.whouse_name || 'N/A';
                 document.getElementById('deleteInventoryQuantitySpan').textContent = rowData.quantity || '0';
                 document.getElementById('deleteInventoryTypeSpan').textContent = rowData.inve_type || 'N/A';
@@ -1438,7 +1526,8 @@ ob_start();
             // Function to prepare move stock modal
             function openMoveStockModal(rowData) {
                 document.getElementById('sourceInventoryId').value = rowData.inve_id;
-                document.getElementById('productDetails').value = `${rowData.prod_name} (ID: ${rowData.prod_id})`; // More info
+                document.getElementById('productDetails').value = rowData.prod_name || 'N/A';
+                document.getElementById('variantDetails').value = rowData.var_capacity || 'N/A';
                 document.getElementById('sourceWarehouse').value = rowData.whouse_name;
                 document.getElementById('availableQuantity').value = rowData.quantity;
                 document.getElementById('moveQuantity').value = '1'; // Default to 1
@@ -1592,16 +1681,36 @@ ob_start();
             
             // Function to initiate restocking an item (opens Add Stock modal pre-filled)
             function restockItem(rowData) {
-                document.getElementById('productId').value = rowData.prod_id;
-                document.getElementById('warehouseId').value = rowData.whouse_id;
-                const currentQuantity = parseInt(rowData.quantity);
-                const threshold = parseInt(rowData.whouse_restock_threshold);
-                let suggestedQuantity = 1;
-                if (!isNaN(threshold) && threshold > currentQuantity) {
-                    suggestedQuantity = Math.max(threshold - currentQuantity, 1);
-                }
-                document.getElementById('quantity').value = suggestedQuantity;
-                document.getElementById('inventoryType').value = 'Regular'; // Default to Regular for restock
+                // Since we now need to load the product first, then the variant
+                const productId = rowData.prod_id;
+                const variantId = rowData.var_id;
+                
+                // Set the product first, which will trigger loading variants
+                document.getElementById('productId').value = productId;
+                
+                // Trigger the change event to load variants
+                const productSelect = document.getElementById('productId');
+                const changeEvent = new Event('change');
+                productSelect.dispatchEvent(changeEvent);
+                
+                // After variants are loaded, we need to select the correct variant
+                // This needs to be done after the variants are loaded, so we use setTimeout
+                setTimeout(() => {
+                    const variantSelect = document.getElementById('variantId');
+                    variantSelect.value = variantId;
+                    
+                    // Now set the rest of the form values
+                    document.getElementById('warehouseId').value = rowData.whouse_id;
+                    const currentQuantity = parseInt(rowData.quantity);
+                    const threshold = parseInt(rowData.whouse_restock_threshold);
+                    let suggestedQuantity = 1;
+                    if (!isNaN(threshold) && threshold > currentQuantity) {
+                        suggestedQuantity = Math.max(threshold - currentQuantity, 1);
+                    }
+                    document.getElementById('quantity').value = suggestedQuantity;
+                    document.getElementById('inventoryType').value = 'Regular'; // Default to Regular for restock
+                }, 500); // Wait 500ms for variants to load
+                
                 $('#addStockModal').modal('show');
             }
             

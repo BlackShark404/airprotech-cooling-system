@@ -12,9 +12,11 @@ class InventoryModel extends Model
                     i.*,
                     p.PROD_NAME,
                     p.PROD_IMAGE,
+                    v.VAR_CAPACITY,
                     w.WHOUSE_NAME
                 FROM {$this->table} i
-                JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
+                JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
+                JOIN PRODUCT p ON v.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
                 JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID AND w.WHOUSE_DELETED_AT IS NULL
                 WHERE i.INVE_DELETED_AT IS NULL
                 ORDER BY i.INVE_UPDATED_AT DESC";
@@ -30,9 +32,11 @@ class InventoryModel extends Model
                     i.*,
                     p.PROD_NAME,
                     p.PROD_IMAGE,
+                    v.VAR_CAPACITY,
                     w.WHOUSE_NAME
                 FROM {$this->table} i
-                JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID
+                JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
+                JOIN PRODUCT p ON v.PROD_ID = p.PROD_ID
                 JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
                 WHERE i.INVE_ID = :inventory_id AND i.INVE_DELETED_AT IS NULL";
         
@@ -55,12 +59,15 @@ class InventoryModel extends Model
     {
         $sql = "SELECT 
                     i.*,
+                    v.VAR_ID,
+                    v.VAR_CAPACITY,
                     w.WHOUSE_NAME,
                     w.WHOUSE_LOCATION
                 FROM {$this->table} i
+                JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
                 JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
-                WHERE i.PROD_ID = :product_id AND i.INVE_DELETED_AT IS NULL
-                ORDER BY w.WHOUSE_NAME";
+                WHERE v.PROD_ID = :product_id AND i.INVE_DELETED_AT IS NULL
+                ORDER BY w.WHOUSE_NAME, v.VAR_CAPACITY";
         
         return $this->query($sql, [':product_id' => $productId]);
     }
@@ -71,11 +78,13 @@ class InventoryModel extends Model
                     i.*,
                     p.PROD_NAME,
                     p.PROD_IMAGE,
-                    p.PROD_AVAILABILITY_STATUS
+                    p.PROD_AVAILABILITY_STATUS,
+                    v.VAR_CAPACITY
                 FROM {$this->table} i
-                JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID
+                JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
+                JOIN PRODUCT p ON v.PROD_ID = p.PROD_ID
                 WHERE i.WHOUSE_ID = :warehouse_id AND i.INVE_DELETED_AT IS NULL
-                ORDER BY p.PROD_NAME";
+                ORDER BY p.PROD_NAME, v.VAR_CAPACITY";
         
         return $this->query($sql, [':warehouse_id' => $warehouseId]);
     }
@@ -86,10 +95,12 @@ class InventoryModel extends Model
                     i.*,
                     p.PROD_NAME,
                     p.PROD_IMAGE,
+                    v.VAR_CAPACITY,
                     w.WHOUSE_NAME,
                     w.WHOUSE_RESTOCK_THRESHOLD
                 FROM {$this->table} i
-                JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
+                JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
+                JOIN PRODUCT p ON v.PROD_ID = p.PROD_ID AND p.PROD_DELETED_AT IS NULL
                 JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID AND w.WHOUSE_DELETED_AT IS NULL
                 WHERE i.INVE_DELETED_AT IS NULL
                 AND i.QUANTITY <= w.WHOUSE_RESTOCK_THRESHOLD
@@ -101,11 +112,11 @@ class InventoryModel extends Model
 
     public function createInventory($data)
     {
-        $sql = "INSERT INTO {$this->table} (PROD_ID, WHOUSE_ID, INVE_TYPE, QUANTITY)
-                VALUES (:product_id, :warehouse_id, :inventory_type, :quantity)";
+        $sql = "INSERT INTO {$this->table} (VAR_ID, WHOUSE_ID, INVE_TYPE, QUANTITY)
+                VALUES (:variant_id, :warehouse_id, :inventory_type, :quantity)";
         
         $params = [
-            ':product_id' => $data['PROD_ID'],
+            ':variant_id' => $data['VAR_ID'],
             ':warehouse_id' => $data['WHOUSE_ID'],
             ':inventory_type' => $data['INVE_TYPE'],
             ':quantity' => $data['QUANTITY']
@@ -231,15 +242,15 @@ class InventoryModel extends Model
         return $summaryData;
     }
 
-    public function getInventoryByProductAndWarehouse($productId, $warehouseId, $inventoryType = null)
+    public function getInventoryByProductAndWarehouse($variantId, $warehouseId, $inventoryType = null)
     {
         $sql = "SELECT * FROM {$this->table} 
-                WHERE PROD_ID = :product_id 
+                WHERE VAR_ID = :variant_id 
                 AND WHOUSE_ID = :warehouse_id 
                 AND INVE_DELETED_AT IS NULL";
         
         $params = [
-            ':product_id' => $productId,
+            ':variant_id' => $variantId,
             ':warehouse_id' => $warehouseId
         ];
         
@@ -252,10 +263,10 @@ class InventoryModel extends Model
         return $this->queryOne($sql, $params);
     }
 
-    public function addStock($productId, $warehouseId, $quantity, $inventoryType = 'Regular')
+    public function addStock($variantId, $warehouseId, $quantity, $inventoryType = 'Regular')
     {
         // First check if there's an existing inventory record with the same inventory type
-        $existingInventory = $this->getInventoryByProductAndWarehouse($productId, $warehouseId, $inventoryType);
+        $existingInventory = $this->getInventoryByProductAndWarehouse($variantId, $warehouseId, $inventoryType);
         
         if ($existingInventory) {
             // Ensure QUANTITY key exists (handle both uppercase and lowercase)
@@ -283,7 +294,7 @@ class InventoryModel extends Model
         } else {
             // Create new inventory record
             return $this->createInventory([
-                'PROD_ID' => $productId,
+                'VAR_ID' => $variantId,
                 'WHOUSE_ID' => $warehouseId,
                 'INVE_TYPE' => $inventoryType,
                 'QUANTITY' => $quantity
@@ -325,16 +336,16 @@ class InventoryModel extends Model
                 return false;
             }
             
-            // Get product ID with case insensitivity check before checking quantity
-            $prodId = null;
-            if (isset($sourceInventory['PROD_ID'])) {
-                $prodId = $sourceInventory['PROD_ID'];
-            } else if (isset($sourceInventory['prod_id'])) {
-                $prodId = $sourceInventory['prod_id'];
+            // Get variant ID with case insensitivity check before checking quantity
+            $varId = null;
+            if (isset($sourceInventory['VAR_ID'])) {
+                $varId = $sourceInventory['VAR_ID'];
+            } else if (isset($sourceInventory['var_id'])) {
+                $varId = $sourceInventory['var_id'];
             }
             
-            if (!$prodId) {
-                error_log("[DEBUG] moveStock in Model - Product ID not found in source inventory");
+            if (!$varId) {
+                error_log("[DEBUG] moveStock in Model - Variant ID not found in source inventory");
                 $this->rollback();
                 return false;
             }
@@ -371,14 +382,14 @@ class InventoryModel extends Model
             
             // First, check if target warehouse inventory already exists with the same inventory type
             $targetSql = "SELECT * FROM {$this->table} 
-                         WHERE PROD_ID = :product_id 
+                         WHERE VAR_ID = :variant_id 
                          AND WHOUSE_ID = :warehouse_id 
                          AND INVE_TYPE = :inventory_type
                          AND INVE_DELETED_AT IS NULL
                          FOR UPDATE";
             
             $targetInventory = $this->queryOne($targetSql, [
-                ':product_id' => $prodId,
+                ':variant_id' => $varId,
                 ':warehouse_id' => $targetWarehouseId,
                 ':inventory_type' => $inventoryType
             ]);
@@ -432,11 +443,11 @@ class InventoryModel extends Model
                 // Create new inventory at target
                 error_log("[DEBUG] moveStock in Model - Creating new inventory at target warehouse with quantity: " . $quantity);
                 
-                $insertSql = "INSERT INTO {$this->table} (PROD_ID, WHOUSE_ID, INVE_TYPE, QUANTITY, INVE_CREATED_AT, INVE_UPDATED_AT)
-                            VALUES (:product_id, :warehouse_id, :inventory_type, :quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                $insertSql = "INSERT INTO {$this->table} (VAR_ID, WHOUSE_ID, INVE_TYPE, QUANTITY, INVE_CREATED_AT, INVE_UPDATED_AT)
+                            VALUES (:variant_id, :warehouse_id, :inventory_type, :quantity, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
                 
                 $insertResult = $this->execute($insertSql, [
-                    ':product_id' => $prodId,
+                    ':variant_id' => $varId,
                     ':warehouse_id' => $targetWarehouseId,
                     ':inventory_type' => $inventoryType,
                     ':quantity' => $quantity
@@ -478,8 +489,8 @@ class InventoryModel extends Model
             $verifySourceSql = "SELECT QUANTITY FROM {$this->table} WHERE INVE_ID = :inventory_id AND INVE_DELETED_AT IS NULL";
             $sourceVerifyResult = $this->queryOne($verifySourceSql, [':inventory_id' => $sourceInventoryId]);
             
-            $verifyTargetSql = "SELECT SUM(QUANTITY) as total_quantity FROM {$this->table} WHERE PROD_ID = :product_id AND INVE_DELETED_AT IS NULL";
-            $targetVerifyResult = $this->queryOne($verifyTargetSql, [':product_id' => $prodId]);
+            $verifyTargetSql = "SELECT SUM(QUANTITY) as total_quantity FROM {$this->table} WHERE VAR_ID = :variant_id AND INVE_DELETED_AT IS NULL";
+            $targetVerifyResult = $this->queryOne($verifyTargetSql, [':variant_id' => $varId]);
             
             error_log("[DEBUG] moveStock in Model - Source verification: " . print_r($sourceVerifyResult, true));
             error_log("[DEBUG] moveStock in Model - Total quantity verification: " . print_r($targetVerifyResult, true));

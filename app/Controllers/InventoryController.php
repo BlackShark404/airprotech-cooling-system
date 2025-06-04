@@ -50,11 +50,17 @@ class InventoryController extends BaseController
             return;
         }
 
+        // Get product variants first
+        $productVariantModel = new \App\Models\ProductVariantModel();
+        $variants = $productVariantModel->getVariantsByProductId($id);
+        
+        // Get inventory for all variants of this product
         $inventory = $this->inventoryModel->getProductInventory($id);
         
         // Add product info
         $data = [
             'product' => $product,
+            'variants' => $variants,
             'inventory' => $inventory
         ];
         
@@ -118,8 +124,8 @@ class InventoryController extends BaseController
         $data = $this->getJsonInput();
         
         // Validate required fields
-        if (!isset($data['product_id']) || !isset($data['warehouse_id']) || !isset($data['quantity'])) {
-            $this->jsonError('Missing required fields: product_id, warehouse_id, quantity', 400);
+        if (!isset($data['variant_id']) || !isset($data['warehouse_id']) || !isset($data['quantity'])) {
+            $this->jsonError('Missing required fields: variant_id, warehouse_id, quantity', 400);
             return;
         }
         
@@ -130,12 +136,23 @@ class InventoryController extends BaseController
         }
         
         // Convert values to proper types
-        $productId = intval($data['product_id']);
+        $variantId = intval($data['variant_id']);
         $warehouseId = intval($data['warehouse_id']);
         $quantity = intval($data['quantity']);
         
-        // Check if product exists
+        // Check if variant exists
+        $productVariantModel = new \App\Models\ProductVariantModel();
+        $variant = $productVariantModel->getVariantById($variantId);
+        
+        if (!$variant) {
+            $this->jsonError('Product variant not found', 404);
+            return;
+        }
+        
+        // Get the product information
+        $productId = $variant['PROD_ID'] ?? $variant['prod_id'];
         $product = $this->productModel->getProductById($productId);
+        
         if (!$product) {
             $this->jsonError('Product not found', 404);
             return;
@@ -151,7 +168,7 @@ class InventoryController extends BaseController
         // Add stock
         $inventoryType = $data['inventory_type'] ?? 'Regular';
         $result = $this->inventoryModel->addStock(
-            $productId, 
+            $variantId, 
             $warehouseId, 
             $quantity,
             $inventoryType
@@ -164,7 +181,7 @@ class InventoryController extends BaseController
                 (isset($warehouse['whouse_restock_threshold']) ? intval($warehouse['whouse_restock_threshold']) : 0);
             
             // Get the updated inventory quantity
-            $updatedInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($productId, $warehouseId);
+            $updatedInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($variantId, $warehouseId);
             
             $updatedQuantity = 0;
             if ($updatedInventory) {
@@ -177,7 +194,11 @@ class InventoryController extends BaseController
             
             $this->jsonSuccess([
                 'product_id' => $productId,
+                'product_name' => $product['PROD_NAME'] ?? $product['prod_name'],
+                'variant_id' => $variantId,
+                'variant_capacity' => $variant['VAR_CAPACITY'] ?? $variant['var_capacity'],
                 'warehouse_id' => $warehouseId,
+                'warehouse_name' => $warehouse['WHOUSE_NAME'] ?? $warehouse['whouse_name'],
                 'added_quantity' => $quantity,
                 'current_quantity' => $updatedQuantity,
                 'threshold' => $warehouseRestockThreshold,
@@ -278,12 +299,12 @@ class InventoryController extends BaseController
             $sourceQty = isset($updatedSource['QUANTITY']) ? $updatedSource['QUANTITY'] : 
                         (isset($updatedSource['quantity']) ? $updatedSource['quantity'] : 0);
             
-            // Get the product ID from source inventory
-            $productId = isset($sourceInventory['PROD_ID']) ? $sourceInventory['PROD_ID'] : 
-                        (isset($sourceInventory['prod_id']) ? $sourceInventory['prod_id'] : null);
+            // Get the variant ID from source inventory
+            $variantId = isset($sourceInventory['VAR_ID']) ? $sourceInventory['VAR_ID'] : 
+                        (isset($sourceInventory['var_id']) ? $sourceInventory['var_id'] : null);
             
             // Try to find the target inventory record
-            $targetInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($productId, $targetWarehouseId);
+            $targetInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($variantId, $targetWarehouseId);
             $targetQty = isset($targetInventory['QUANTITY']) ? $targetInventory['QUANTITY'] : 
                         (isset($targetInventory['quantity']) ? $targetInventory['quantity'] : 0);
             
@@ -353,16 +374,18 @@ class InventoryController extends BaseController
         // First, add debug logging to trace the issue
         error_log("[DEBUG] Getting inventory item with ID: " . $id);
         
-        // Update our query to explicitly include the required product fields
+        // Update query to use VAR_ID instead of PROD_ID and join with PRODUCT_VARIANT
         $sql = "SELECT 
                 i.*,
                 p.PROD_NAME, 
                 p.PROD_DESCRIPTION,
                 p.PROD_IMAGE, 
                 p.PROD_AVAILABILITY_STATUS,
+                v.VAR_CAPACITY,
                 w.WHOUSE_NAME 
             FROM INVENTORY i
-            LEFT JOIN PRODUCT p ON i.PROD_ID = p.PROD_ID
+            LEFT JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
+            LEFT JOIN PRODUCT p ON v.PROD_ID = p.PROD_ID
             LEFT JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
             WHERE i.INVE_ID = :inventory_id 
             AND i.INVE_DELETED_AT IS NULL";
