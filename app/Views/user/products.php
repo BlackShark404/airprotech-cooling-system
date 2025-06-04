@@ -68,6 +68,27 @@
             margin-bottom: 1rem;
         }
         
+        .product-variants {
+            font-size: 0.85rem;
+            color: #495057;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            background-color: #f8f9fa;
+            border-left: 3px solid #6c757d;
+        }
+        
+        .variant-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+            background-color: #e9ecef;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            color: #495057;
+        }
+        
         .btn-book-now {
             background-color: #dc3545;
             border-color: #dc3545;
@@ -456,6 +477,10 @@
                                 <div class="mb-3">
                                     <label for="modal-address" class="form-label">Delivery/Installation Address*</label>
                                     <textarea id="modal-address" class="form-control" rows="2" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="modal-description" class="form-label">Additional Instructions</label>
+                                    <textarea id="modal-description" class="form-control" rows="2" placeholder="Any special instructions or requirements..."></textarea>
                                 </div>
                             </div>
                             

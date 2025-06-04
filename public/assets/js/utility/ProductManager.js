@@ -46,6 +46,7 @@ class ProductManager {
             this.modal.preferredDate = document.getElementById('modal-preferred-date');
             this.modal.preferredTime = document.getElementById('modal-preferred-time');
             this.modal.address = document.getElementById('modal-address');
+            this.modal.description = document.getElementById('modal-description');
         } else {
             console.warn(`ProductManager: Modal with ID "${this.config.modalId}" not found. Modal functionality will be disabled.`);
         }
@@ -81,6 +82,48 @@ class ProductManager {
             const productName = product.PROD_NAME || product.prod_name || 'Unnamed Product';
             const productDesc = product.PROD_DESCRIPTION || product.prod_description || '';
 
+            // Get the primary variant price if available
+            let priceDisplay = '';
+            if (product.variants && product.variants.length > 0) {
+                const primaryVariant = product.variants[0];
+                const price = primaryVariant.VAR_SRP_PRICE || primaryVariant.var_srp_price || '0.00';
+                priceDisplay = `<div class="product-price">₱${price}</div>`;
+
+                // If there are multiple variants, show a range
+                if (product.variants.length > 1) {
+                    let minPrice = Number.MAX_VALUE;
+                    let maxPrice = 0;
+
+                    product.variants.forEach(variant => {
+                        const varPrice = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
+                        minPrice = Math.min(minPrice, varPrice);
+                        maxPrice = Math.max(maxPrice, varPrice);
+                    });
+
+                    if (minPrice !== maxPrice) {
+                        priceDisplay = `<div class="product-price">₱${minPrice.toFixed(2)} - ₱${maxPrice.toFixed(2)}</div>`;
+                    }
+                }
+            }
+
+            // Show the capacity variants available
+            let variantInfo = '';
+            if (product.variants && product.variants.length > 0) {
+                const capacities = product.variants.map(v => {
+                    const capacity = v.VAR_CAPACITY || v.var_capacity;
+                    return `<span class="variant-badge">${capacity}</span>`;
+                }).join(' ');
+
+                if (capacities) {
+                    variantInfo = `
+                        <div class="product-variants">
+                            <small class="text-muted d-block mb-1">Available Variants:</small>
+                            ${capacities}
+                        </div>
+                    `;
+                }
+            }
+
             return `
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="product-card" data-product-id="${productId}" data-category="${product.category || ''}">
@@ -89,8 +132,10 @@ class ProductManager {
                         </div>
                         <div class="product-info">
                             <h3 class="product-title">${productName}</h3>
-                            <p class="product-desc">${productDesc}</p>
-                            <div class="d-flex justify-content-end align-items-center">
+                            <p class="product-desc">${productDesc.substring(0, 70)}${productDesc.length > 70 ? '...' : ''}</p>
+                            ${priceDisplay}
+                            ${variantInfo}
+                            <div class="d-flex justify-content-end align-items-center mt-3">
                                 <button class="btn btn-book-now view-details" data-product-id="${productId}">Book Now</button>
                             </div>
                         </div>
@@ -1092,7 +1137,8 @@ class ProductManager {
             PB_ORDER_DATE: new Date().toISOString(),
             PB_PREFERRED_DATE: this.modal.preferredDate.value,
             PB_PREFERRED_TIME: this.modal.preferredTime.value,
-            PB_ADDRESS: this.modal.address.value.trim()
+            PB_ADDRESS: this.modal.address.value.trim(),
+            PB_DESCRIPTION: this.modal.description ? this.modal.description.value.trim() : ''
         };
 
         try {
