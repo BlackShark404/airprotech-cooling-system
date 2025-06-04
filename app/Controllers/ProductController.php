@@ -144,6 +144,49 @@ class ProductController extends BaseController
         // Get inventory information
         $product['inventory'] = $this->inventoryModel->getProductInventory($id);
         
+        // Add inventory quantity to each variant
+        if (isset($product['variants']) && is_array($product['variants'])) {
+            $variantIds = [];
+            foreach ($product['variants'] as &$variant) {
+                // Get variant ID (handling both uppercase and lowercase keys)
+                $varId = isset($variant['VAR_ID']) ? $variant['VAR_ID'] : ($variant['var_id'] ?? null);
+                if ($varId) {
+                    $variantIds[] = $varId;
+                }
+            }
+            
+            if (!empty($variantIds)) {
+                // Get inventory data for all variants
+                $inventoryItems = $this->inventoryModel->getInventoryByVariantIds($variantIds);
+                $variantInventoryMap = [];
+                
+                // Group inventory by variant ID and calculate total quantity
+                foreach ($inventoryItems as $item) {
+                    // Handle both uppercase and lowercase keys
+                    $varId = isset($item['VAR_ID']) ? $item['VAR_ID'] : ($item['var_id'] ?? null);
+                    if (!$varId) continue;
+                    
+                    if (!isset($variantInventoryMap[$varId])) {
+                        $variantInventoryMap[$varId] = 0;
+                    }
+                    
+                    // Handle both uppercase and lowercase 'quantity' keys
+                    $quantity = isset($item['QUANTITY']) ? (int)$item['QUANTITY'] : (int)($item['quantity'] ?? 0);
+                    $variantInventoryMap[$varId] += $quantity;
+                }
+                
+                // Add inventory quantities to each variant
+                foreach ($product['variants'] as &$variant) {
+                    $varId = isset($variant['VAR_ID']) ? $variant['VAR_ID'] : ($variant['var_id'] ?? null);
+                    if ($varId) {
+                        $variant['INVENTORY_QUANTITY'] = $variantInventoryMap[$varId] ?? 0;
+                    } else {
+                        $variant['INVENTORY_QUANTITY'] = 0;
+                    }
+                }
+            }
+        }
+        
         $this->jsonSuccess($product);
     }
 

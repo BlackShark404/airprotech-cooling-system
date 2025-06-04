@@ -357,13 +357,42 @@ class ProductManager {
      * Update modal price and availability based on selected variant
      */
     updateModalPriceAndAvailability() {
-        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) return;
+        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) {
+            console.log('Missing elements for updating modal price and availability');
+            return;
+        }
+
+        // Handle the case where there are no variants available
+        if (this.modal.variantSelect.options.length === 0 || this.modal.variantSelect.value === '') {
+            console.log('No variants available or selected');
+            this.modal.price.textContent = '₱N/A';
+            this.modal.availabilityStatus.textContent = 'Out of Stock';
+            this.modal.availabilityStatus.className = 'fw-bold text-danger';
+
+            // Disable confirm button
+            if (this.modal.confirmButton) {
+                this.modal.confirmButton.disabled = true;
+                this.modal.confirmButton.title = "No variants available in stock";
+            }
+
+            // Disable quantity controls
+            const increaseQtyBtn = document.getElementById('increase-quantity');
+            const decreaseQtyBtn = document.getElementById('decrease-quantity');
+            if (increaseQtyBtn) increaseQtyBtn.disabled = true;
+            if (decreaseQtyBtn) decreaseQtyBtn.disabled = true;
+
+            return;
+        }
 
         const selectedVariantId = parseInt(this.modal.variantSelect.value);
+        console.log('Selected variant ID:', selectedVariantId);
+
         const selectedVariant = this.currentProduct.variants.find(v => {
-            const id = v.VAR_ID || v.var_id;
+            const id = parseInt(v.VAR_ID || v.var_id);
             return id === selectedVariantId;
         });
+
+        console.log('Selected variant:', selectedVariant);
 
         if (selectedVariant) {
             const price = selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || '0.00';
@@ -371,6 +400,7 @@ class ProductManager {
 
             // Check inventory quantity for this variant
             const availableQuantity = this.getAvailableQuantity(selectedVariant);
+            console.log('Available quantity:', availableQuantity);
 
             // Update availability status based on inventory quantity
             let productStatus = 'Out of Stock';
@@ -419,6 +449,7 @@ class ProductManager {
                 }
             }
         } else {
+            console.log('No matching variant found for ID:', selectedVariantId);
             this.modal.price.textContent = '₱N/A';
             this.modal.availabilityStatus.textContent = 'N/A';
             this.modal.availabilityStatus.className = 'fw-bold text-muted';
@@ -766,6 +797,7 @@ class ProductManager {
     populateModal(product) {
         if (!product || !this.modal.element) return;
 
+        console.log('Populating modal with product:', product); // Debug: Log the entire product
         this.currentProduct = product;
 
         // Reset form values
@@ -804,16 +836,30 @@ class ProductManager {
             this.modal.code.textContent = `Product ID: ${product.PROD_ID || product.prod_id || 'N/A'}`;
         }
 
+        // Make sure variants array exists
+        if (!product.variants || !Array.isArray(product.variants)) {
+            console.error('Product variants missing or not an array:', product);
+            product.variants = [];
+        }
+
+        console.log('Product variants:', product.variants); // Debug: Log the variants
+
         // Filter variants with inventory > 0 for the dropdown
         const variantsWithStock = product.variants.filter(variant => {
+            // Log each variant inventory for debugging
+            console.log('Variant:', variant, 'Inventory:', variant.INVENTORY_QUANTITY);
+
             const inventory = variant.INVENTORY_QUANTITY || 0;
             return inventory > 0;
         });
+
+        console.log('Variants with stock:', variantsWithStock); // Debug: Log filtered variants
 
         // Populate variants in dropdown
         if (this.modal.variantSelect) {
             if (!variantsWithStock || variantsWithStock.length === 0) {
                 this.modal.variantSelect.innerHTML = '<option value="">No variants available in stock</option>';
+                console.log('No variants with stock found'); // Debug
             } else {
                 variantsWithStock.forEach(variant => {
                     const capacity = variant.VAR_CAPACITY || variant.var_capacity || 'Unknown';
@@ -831,6 +877,7 @@ class ProductManager {
                 // Select the first option to trigger price update
                 if (this.modal.variantSelect.options.length > 0) {
                     this.modal.variantSelect.selectedIndex = 0;
+                    console.log('Selected first variant option'); // Debug
                 }
             }
         }
@@ -984,23 +1031,38 @@ class ProductManager {
      * Get available quantity from inventory
      */
     getAvailableQuantity(variant) {
+        console.log('Getting available quantity for variant:', variant);
+
         // If we have INVENTORY_QUANTITY from the API, use it (comes from the inventory)
         if (variant && variant.INVENTORY_QUANTITY !== undefined) {
+            console.log('Using INVENTORY_QUANTITY:', variant.INVENTORY_QUANTITY);
             return parseInt(variant.INVENTORY_QUANTITY);
         }
 
-        // If we have inventory data from the API, use it (legacy support)
+        // Legacy fallback: check individual inventory items
         if (this.currentProduct && this.currentProduct.inventory && Array.isArray(this.currentProduct.inventory)) {
-            return this.currentProduct.inventory.reduce((total, inv) => {
-                if (inv.VAR_ID === variant.VAR_ID) {
-                    return total + (parseInt(inv.quantity) || 0);
+            const variantId = variant?.VAR_ID || variant?.var_id;
+            if (!variantId) {
+                console.log('No variant ID found, returning 0');
+                return 0;
+            }
+
+            let total = 0;
+            this.currentProduct.inventory.forEach(inv => {
+                const invVariantId = inv.VAR_ID || inv.var_id;
+                if (invVariantId === variantId) {
+                    const quantity = parseInt(inv.QUANTITY || inv.quantity || 0);
+                    total += quantity;
                 }
-                return total;
-            }, 0);
+            });
+
+            console.log('Calculated total from inventory:', total);
+            return total;
         }
 
-        // Fallback: Use variant stock quantity if available, or default to 10
-        return variant?.VAR_STOCK_QUANTITY || variant?.var_stock_quantity || 10;
+        // Absolute fallback
+        console.log('No inventory data found, returning 0');
+        return 0;
     }
 
     /**
