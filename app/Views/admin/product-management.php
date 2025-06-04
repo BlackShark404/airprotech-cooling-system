@@ -508,15 +508,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 render: function(data) {
                     return `
                         <div class="d-flex">
-                            <button class="action-icon action-icon-view view-product" data-id="${data.prod_id}">
+                            <div class="action-icon action-icon-view view-btn me-1" data-id="${data.prod_id}">
                                 <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="action-icon action-icon-edit edit-product" data-id="${data.prod_id}">
+                            </div>
+                            <div class="action-icon action-icon-edit edit-btn me-1" data-id="${data.prod_id}">
                                 <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="action-icon action-icon-delete delete-product" data-id="${data.prod_id}">
+                            </div>
+                            <div class="action-icon action-icon-delete delete-btn" data-id="${data.prod_id}">
                                 <i class="bi bi-trash"></i>
-                            </button>
+                            </div>
                         </div>
                     `;
                 }
@@ -654,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Edit Product Button
-    $(document).on('click', '.edit-product', function() {
+    $(document).on('click', '.edit-btn', function() {
         const productId = $(this).data('id');
         resetProductForm();
         $('#productModalLabel').text('Edit Product');
@@ -703,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // View Product Button
-    $(document).on('click', '.view-product', function() {
+    $(document).on('click', '.view-btn', function() {
         const productId = $(this).data('id');
         
         fetchProductDetails(productId, function(product) {
@@ -758,7 +758,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Delete Product Button
-    $(document).on('click', '.delete-product', function() {
+    $(document).on('click', '.delete-btn', function() {
         const productId = $(this).data('id');
         $('#confirmDeleteBtn').data('id', productId);
         $('#deleteConfirmModal').modal('show');
