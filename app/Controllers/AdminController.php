@@ -393,16 +393,8 @@ class AdminController extends BaseController {
     }
 
     public function renderTechnician() {
-        // Load the TechnicianModel to get all technicians
-        $technicianModel = $this->loadModel('TechnicianModel');
-        $userModel = $this->loadModel('UserModel');
         
-        // Get all technicians with their user account information
-        $technicians = $userModel->getTechnicians();
-        
-        $this->render('admin/technician', [
-            'technicians' => $technicians
-        ]);
+        $this->render('admin/technician');
     }
     
     /**
