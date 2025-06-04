@@ -270,6 +270,7 @@ CREATE TABLE WAREHOUSE (
     WHOUSE_DELETED_AT       TIMESTAMP
 );
 
+
 -- INVENTORY Table: Tracks product stock in warehouses
 CREATE TABLE INVENTORY (
     INVE_ID         SERIAL PRIMARY KEY,
@@ -290,7 +291,6 @@ CREATE TABLE INVENTORY (
     INVE_UPDATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INVE_DELETED_AT TIMESTAMP
 );
-
 
 
 -- --------------------------------------
