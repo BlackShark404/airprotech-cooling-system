@@ -4,6 +4,7 @@ $activeTab = 'reports';
 
 // Ensure we have a year variable available throughout the page
 $currentYear = isset($currentYear) ? $currentYear : date('Y');
+$year = $currentYear; // Also define $year for compatibility
 
 // Add any additional styles specific to this page
 $additionalStyles = <<<HTML
@@ -175,16 +176,15 @@ $chartData = [
 // Create the JSON string before using it
 $chartDataJson = json_encode($chartData);
 
-// Add JavaScript code
-$additionalScripts = <<<HTML
-<script>
+// Create the JavaScript code without using heredoc to avoid PHP variable interpretation issues
+$additionalScripts = '<script>
     // Chart data from PHP
-    const chartData = $chartDataJson;
+    const chartData = ' . $chartDataJson . ';
     
     // Utility function to get month names
     function getMonthName(monthNumber) {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                       'July', 'August', 'September', 'October', 'November', 'December'];
+        const months = ["January", "February", "March", "April", "May", "June", 
+                       "July", "August", "September", "October", "November", "December"];
         return months[monthNumber - 1];
     }
     
@@ -194,7 +194,7 @@ $additionalScripts = <<<HTML
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'bottom'
+                position: "bottom"
             }
         }
     };
@@ -205,26 +205,26 @@ $additionalScripts = <<<HTML
     let revenueChart;
     
     // Create charts when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener("DOMContentLoaded", function() {
         // Year filter change handler
-        document.getElementById('yearFilter').addEventListener('change', function() {
+        document.getElementById("yearFilter").addEventListener("change", function() {
             const year = this.value;
             updateChartsForYear(year);
         });
         
         // Service Request Status Chart
-        const serviceStatusCtx = document.getElementById('serviceStatusChart').getContext('2d');
+        const serviceStatusCtx = document.getElementById("serviceStatusChart").getContext("2d");
         const serviceStatusChart = new Chart(serviceStatusCtx, {
-            type: 'pie',
+            type: "pie",
             data: {
                 labels: chartData.serviceStatusLabels,
                 datasets: [{
                     data: chartData.serviceStatusData,
                     backgroundColor: [
-                        '#ffc107', // pending - yellow
-                        '#0dcaf0', // in-progress - blue
-                        '#198754', // completed - green
-                        '#dc3545'  // cancelled - red
+                        "#ffc107", // pending - yellow
+                        "#0dcaf0", // in-progress - blue
+                        "#198754", // completed - green
+                        "#dc3545"  // cancelled - red
                     ],
                     borderWidth: 1
                 }]
@@ -233,15 +233,15 @@ $additionalScripts = <<<HTML
         });
         
         // Service Request Type Chart
-        const serviceTypeCtx = document.getElementById('serviceTypeChart').getContext('2d');
+        const serviceTypeCtx = document.getElementById("serviceTypeChart").getContext("2d");
         const serviceTypeChart = new Chart(serviceTypeCtx, {
-            type: 'bar',
+            type: "bar",
             data: {
                 labels: chartData.serviceTypeLabels,
                 datasets: [{
-                    label: 'Number of Requests',
+                    label: "Number of Requests",
                     data: chartData.serviceTypeData,
-                    backgroundColor: '#0d6efd',
+                    backgroundColor: "#0d6efd",
                     borderWidth: 0,
                     borderRadius: 5
                 }]
@@ -257,16 +257,16 @@ $additionalScripts = <<<HTML
         });
         
         // Monthly Service Requests Chart
-        const monthlyServiceCtx = document.getElementById('monthlyServiceChart').getContext('2d');
+        const monthlyServiceCtx = document.getElementById("monthlyServiceChart").getContext("2d");
         monthlyServiceChart = new Chart(monthlyServiceCtx, {
-            type: 'line',
+            type: "line",
             data: {
                 labels: Array.from({length: 12}, (_, i) => getMonthName(i + 1)),
                 datasets: [{
-                    label: 'Service Requests',
+                    label: "Service Requests",
                     data: chartData.monthlyServiceData,
-                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
-                    borderColor: '#0d6efd',
+                    backgroundColor: "rgba(13, 110, 253, 0.2)",
+                    borderColor: "#0d6efd",
                     borderWidth: 2,
                     tension: 0.2,
                     fill: true
@@ -283,18 +283,18 @@ $additionalScripts = <<<HTML
         });
         
         // Product Booking Status Chart
-        const productStatusCtx = document.getElementById('productStatusChart').getContext('2d');
+        const productStatusCtx = document.getElementById("productStatusChart").getContext("2d");
         const productStatusChart = new Chart(productStatusCtx, {
-            type: 'doughnut',
+            type: "doughnut",
             data: {
                 labels: chartData.productStatusLabels,
                 datasets: [{
                     data: chartData.productStatusData,
                     backgroundColor: [
-                        '#ffc107', // pending - yellow
-                        '#0dcaf0', // confirmed - blue
-                        '#198754', // completed - green
-                        '#dc3545'  // cancelled - red
+                        "#ffc107", // pending - yellow
+                        "#0dcaf0", // confirmed - blue
+                        "#198754", // completed - green
+                        "#dc3545"  // cancelled - red
                     ],
                     borderWidth: 1
                 }]
@@ -303,16 +303,16 @@ $additionalScripts = <<<HTML
         });
         
         // Monthly Product Bookings Chart
-        const monthlyProductCtx = document.getElementById('monthlyProductChart').getContext('2d');
+        const monthlyProductCtx = document.getElementById("monthlyProductChart").getContext("2d");
         monthlyProductChart = new Chart(monthlyProductCtx, {
-            type: 'line',
+            type: "line",
             data: {
                 labels: Array.from({length: 12}, (_, i) => getMonthName(i + 1)),
                 datasets: [{
-                    label: 'Product Bookings',
+                    label: "Product Bookings",
                     data: chartData.monthlyProductData,
-                    backgroundColor: 'rgba(25, 135, 84, 0.2)',
-                    borderColor: '#198754',
+                    backgroundColor: "rgba(25, 135, 84, 0.2)",
+                    borderColor: "#198754",
                     borderWidth: 2,
                     tension: 0.2,
                     fill: true
@@ -329,22 +329,22 @@ $additionalScripts = <<<HTML
         });
         
         // Top Selling Products Chart
-        const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+        const topProductsCtx = document.getElementById("topProductsChart").getContext("2d");
         const topProductsChart = new Chart(topProductsCtx, {
-            type: 'bar',
+            type: "bar",
             data: {
                 labels: chartData.topProductLabels,
                 datasets: [{
-                    label: 'Units Sold',
+                    label: "Units Sold",
                     data: chartData.topProductData,
-                    backgroundColor: '#fd7e14',
+                    backgroundColor: "#fd7e14",
                     borderWidth: 0,
                     borderRadius: 5
                 }]
             },
             options: {
                 ...commonOptions,
-                indexAxis: 'y',
+                indexAxis: "y",
                 scales: {
                     x: {
                         beginAtZero: true
@@ -354,23 +354,23 @@ $additionalScripts = <<<HTML
         });
         
         // Technician Performance Chart
-        const technicianCtx = document.getElementById('technicianChart').getContext('2d');
+        const technicianCtx = document.getElementById("technicianChart").getContext("2d");
         const technicianChart = new Chart(technicianCtx, {
-            type: 'bar',
+            type: "bar",
             data: {
                 labels: chartData.technicianLabels,
                 datasets: [
                     {
-                        label: 'Total Assignments',
+                        label: "Total Assignments",
                         data: chartData.technicianTotalData,
-                        backgroundColor: '#6c757d',
+                        backgroundColor: "#6c757d",
                         borderWidth: 0,
                         borderRadius: 5
                     },
                     {
-                        label: 'Completed Assignments',
+                        label: "Completed Assignments",
                         data: chartData.technicianCompletedData,
-                        backgroundColor: '#198754',
+                        backgroundColor: "#198754",
                         borderWidth: 0,
                         borderRadius: 5
                     }
@@ -387,15 +387,15 @@ $additionalScripts = <<<HTML
         });
         
         // Monthly Revenue Chart
-        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueCtx = document.getElementById("revenueChart").getContext("2d");
         revenueChart = new Chart(revenueCtx, {
-            type: 'bar',
+            type: "bar",
             data: {
                 labels: Array.from({length: 12}, (_, i) => getMonthName(i + 1)),
                 datasets: [{
-                    label: 'Revenue ($)',
+                    label: "Revenue ($)",
                     data: chartData.monthlyRevenueData,
-                    backgroundColor: '#0d6efd',
+                    backgroundColor: "#0d6efd",
                     borderWidth: 0,
                     borderRadius: 5
                 }]
@@ -414,17 +414,17 @@ $additionalScripts = <<<HTML
     // Function to update charts when year changes
     function updateChartsForYear(year) {
         // Show loading state
-        document.querySelectorAll('.chart-container').forEach(container => {
-            container.style.opacity = '0.5';
+        document.querySelectorAll(".chart-container").forEach(container => {
+            container.style.opacity = "0.5";
         });
         
         // Update year in chart headers
-        document.querySelectorAll('.chart-year').forEach(el => {
+        document.querySelectorAll(".chart-year").forEach(el => {
             el.textContent = year;
         });
         
         // Fetch data for the selected year
-        fetch(`/api/admin/reports/${year}`)
+        fetch("/api/admin/reports/" + year)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -441,26 +441,25 @@ $additionalScripts = <<<HTML
                     revenueChart.update();
                     
                     // Reset opacity
-                    document.querySelectorAll('.chart-container').forEach(container => {
-                        container.style.opacity = '1';
+                    document.querySelectorAll(".chart-container").forEach(container => {
+                        container.style.opacity = "1";
                     });
                 } else {
-                    console.error('Error fetching report data:', data.message);
-                    alert('Error fetching report data: ' + data.message);
+                    console.error("Error fetching report data:", data.message);
+                    alert("Error fetching report data: " + data.message);
                 }
             })
             .catch(error => {
-                console.error('Error fetching report data:', error);
-                alert('Error fetching report data. Please try again.');
+                console.error("Error fetching report data:", error);
+                alert("Error fetching report data. Please try again.");
                 
                 // Reset opacity
-                document.querySelectorAll('.chart-container').forEach(container => {
-                    container.style.opacity = '1';
+                document.querySelectorAll(".chart-container").forEach(container => {
+                    container.style.opacity = "1";
                 });
             });
     }
-</script>
-HTML;
+</script>';
 
 // Start output buffering for the main content
 ob_start();
