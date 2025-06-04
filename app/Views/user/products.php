@@ -311,9 +311,6 @@
                     <p class="lead mb-4">Browse our high-quality products for all your AC needs</p>
                     <a href="#product-section" class="btn btn-danger btn-lg">View Products</a>
                 </div>
-                <div class="col-lg-6">
-                    <!-- Hero image is in the background via CSS -->
-                </div>
             </div>
         </div>
     </section>
@@ -422,7 +419,7 @@
                     <!-- Right Column - Product Details & Booking -->
                     <div class="col-lg-7">
                         <div class="p-5">
-                            <h3 id="modal-product-name" class="display-6 fw-bold mb-0"></h3>
+                            <h3 id="modal-product-name" class="display-7 fw-bold mb-0"></h3>
                             <h4 id="modal-product-price" class="mb-4 text-primary fw-bold fs-3"></h4>
                             
                             <div class="row gx-4 gy-3 mb-4">

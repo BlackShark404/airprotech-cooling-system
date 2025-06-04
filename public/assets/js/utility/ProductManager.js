@@ -1113,25 +1113,23 @@ class ProductManager {
     }
 
     /**
-     * Get available quantity from inventory
+     * Calculate available quantity for a variant
+     * Only count inventory items, not pending bookings
      */
     getAvailableQuantity(variant) {
-        console.log('Getting available quantity for variant:', variant);
-
-        // If we have INVENTORY_QUANTITY from the API, use it (comes from the inventory)
-        if (variant && variant.INVENTORY_QUANTITY !== undefined) {
-            console.log('Using INVENTORY_QUANTITY:', variant.INVENTORY_QUANTITY);
-            return parseInt(variant.INVENTORY_QUANTITY);
+        // If no variant provided, return 0
+        if (!variant) {
+            console.log('No variant provided to getAvailableQuantity');
+            return 0;
         }
 
-        // Legacy fallback: check individual inventory items
-        if (this.currentProduct && this.currentProduct.inventory && Array.isArray(this.currentProduct.inventory)) {
-            const variantId = variant?.VAR_ID || variant?.var_id;
-            if (!variantId) {
-                console.log('No variant ID found, returning 0');
-                return 0;
-            }
+        const variantId = parseInt(variant.VAR_ID || variant.var_id);
 
+        console.log('Calculating available quantity for variant:', variantId);
+
+        // If the product has inventory data, calculate from that
+        if (this.currentProduct && this.currentProduct.inventory) {
+            console.log('Using product inventory data');
             let total = 0;
             this.currentProduct.inventory.forEach(inv => {
                 const invVariantId = inv.VAR_ID || inv.var_id;

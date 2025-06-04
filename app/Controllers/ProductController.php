@@ -767,8 +767,7 @@ class ProductController extends BaseController
         }
         
         try {
-            // Start transaction to ensure booking and inventory update are atomic
-            // Use the productBookingModel for transactions
+            // Start transaction to ensure booking creation is atomic
             $this->productBookingModel->beginTransaction();
             error_log("Started transaction for booking creation");
             
@@ -801,18 +800,6 @@ class ProductController extends BaseController
             }
             
             error_log("Booking created with ID: " . $bookingId);
-            
-            // Now reduce the inventory for this variant
-            $inventoryReduced = $this->inventoryModel->reduceStock($variantId, $quantity);
-            
-            if (!$inventoryReduced) {
-                error_log("Failed to reduce inventory for variant ID: " . $variantId);
-                $this->productBookingModel->rollback();
-                $this->jsonError('Insufficient inventory for the selected quantity. Please try a smaller quantity or choose a different variant.', 400);
-                return;
-            }
-            
-            error_log("Inventory reduced successfully for variant ID: " . $variantId);
             
             // All operations successful, commit the transaction
             $commitResult = $this->productBookingModel->commit();
@@ -1059,38 +1046,82 @@ class ProductController extends BaseController
             return;
         }
         
-        // Prepare update data
-        $updateData = [];
+        // Start transaction for safe updates
+        $this->productBookingModel->beginTransaction();
         
-        if (!empty($data['status'])) {
-            $updateData['PB_STATUS'] = $data['status'];
-        }
-        
-        if (!empty($data['preferredDate'])) {
-            $updateData['PB_PREFERRED_DATE'] = $data['preferredDate'];
-        }
-        
-        if (!empty($data['preferredTime'])) {
-            $updateData['PB_PREFERRED_TIME'] = $data['preferredTime'];
-        }
-        
-        // Update the booking
-        $this->productBookingModel->updateBooking($bookingId, $updateData);
-        
-        // Update technician assignments if provided
-        if (isset($data['technicians'])) {
-            // Remove current assignments
-            $this->productBookingModel->removeAllTechnicians($bookingId);
-            
-            // Add new assignments only if technicians array is not empty
-            if (!empty($data['technicians'])) {
-                foreach ($data['technicians'] as $tech) {
-                    $this->productBookingModel->assignTechnician($bookingId, $tech['id'], $tech['notes'] ?? '');
+        try {
+            // Check if status is changing to confirmed
+            $statusChangingToConfirmed = false;
+            if (!empty($data['status']) && $data['status'] === 'confirmed') {
+                $currentStatus = isset($booking['PB_STATUS']) ? $booking['PB_STATUS'] : (isset($booking['pb_status']) ? $booking['pb_status'] : '');
+                $statusChangingToConfirmed = ($currentStatus !== 'confirmed');
+                
+                // If status is changing to confirmed, need to check inventory first
+                if ($statusChangingToConfirmed) {
+                    // Get variant ID and quantity from the booking
+                    $variantId = isset($booking['PB_VARIANT_ID']) ? $booking['PB_VARIANT_ID'] : (isset($booking['pb_variant_id']) ? $booking['pb_variant_id'] : null);
+                    $quantity = isset($booking['PB_QUANTITY']) ? $booking['PB_QUANTITY'] : (isset($booking['pb_quantity']) ? $booking['pb_quantity'] : null);
+                    
+                    if (!$variantId || !$quantity) {
+                        $this->productBookingModel->rollback();
+                        $this->jsonError('Invalid booking data: missing variant or quantity', 500);
+                        return;
+                    }
+                    
+                    // Check if there's enough inventory
+                    $inventoryReduced = $this->inventoryModel->reduceStock($variantId, $quantity);
+                    
+                    if (!$inventoryReduced) {
+                        $this->productBookingModel->rollback();
+                        $this->jsonError('Insufficient inventory for this booking. Cannot confirm.', 400);
+                        return;
+                    }
+                    
+                    error_log("Inventory reduced for variant {$variantId}, quantity {$quantity} on booking confirmation");
                 }
             }
+            
+            // Prepare update data
+            $updateData = [];
+            
+            if (!empty($data['status'])) {
+                $updateData['PB_STATUS'] = $data['status'];
+            }
+            
+            if (!empty($data['preferredDate'])) {
+                $updateData['PB_PREFERRED_DATE'] = $data['preferredDate'];
+            }
+            
+            if (!empty($data['preferredTime'])) {
+                $updateData['PB_PREFERRED_TIME'] = $data['preferredTime'];
+            }
+            
+            // Update the booking
+            $this->productBookingModel->updateBooking($bookingId, $updateData);
+            
+            // Update technician assignments if provided
+            if (isset($data['technicians'])) {
+                // Remove current assignments
+                $this->productBookingModel->removeAllTechnicians($bookingId);
+                
+                // Add new assignments only if technicians array is not empty
+                if (!empty($data['technicians'])) {
+                    foreach ($data['technicians'] as $tech) {
+                        $this->productBookingModel->assignTechnician($bookingId, $tech['id'], $tech['notes'] ?? '');
+                    }
+                }
+            }
+            
+            // Commit transaction
+            $this->productBookingModel->commit();
+            
+            $this->jsonSuccess(null, 'Booking updated successfully');
+            
+        } catch (\Exception $e) {
+            $this->productBookingModel->rollback();
+            error_log("Error updating booking: " . $e->getMessage());
+            $this->jsonError('An error occurred while updating the booking: ' . $e->getMessage(), 500);
         }
-        
-        $this->jsonSuccess(null, 'Booking updated successfully');
     }
     
     /**
