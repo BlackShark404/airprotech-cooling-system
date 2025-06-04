@@ -85,9 +85,6 @@
         }
         
         .hero-section {
-            background: linear-gradient(to right, rgba(26, 35, 126, 0.9), rgba(13, 22, 62, 0.9)), 
-                        url('/assets/images/ac-unit-bg.jpg') no-repeat center center;
-            background-size: cover;
             padding: 100px 0;
             color: white;
             margin-bottom: 3rem;

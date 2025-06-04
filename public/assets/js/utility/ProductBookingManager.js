@@ -105,7 +105,11 @@ class ProductBookingManager {
             const id = booking.PB_ID || booking.pb_id;
             const bookingDate = booking.PB_ORDER_DATE || booking.pb_order_date;
             const productName = booking.PROD_NAME || booking.prod_name || 'Unknown Product';
-            const productImage = booking.PROD_IMAGE || booking.prod_image || '/assets/images/product-placeholder.jpg';
+            const rawProductImage = booking.PROD_IMAGE || booking.prod_image || '/assets/images/product-placeholder.jpg';
+            
+            // Fix image path by ensuring it has the correct prefix
+            const productImage = this.fixImagePath(rawProductImage);
+            
             const variantCapacity = booking.VAR_CAPACITY || booking.var_capacity || 'N/A';
             const totalAmount = booking.PB_TOTAL_AMOUNT || booking.pb_total_amount || 0;
             const status = booking.PB_STATUS || booking.pb_status || 'pending';
@@ -136,6 +140,21 @@ class ProductBookingManager {
                 </div>
             `;
         };
+    }
+
+    /**
+     * Helper method to fix image paths
+     */
+    fixImagePath(path) {
+        if (!path) return '/assets/images/product-placeholder.jpg';
+        
+        // If path already starts with http/https or /, return as is
+        if (path.startsWith('http') || path.startsWith('/')) {
+            return path;
+        }
+        
+        // Otherwise, prepend /
+        return '/' + path;
     }
 
     /**
@@ -604,7 +623,8 @@ class ProductBookingManager {
         }
 
         if (this.modal.productImage) {
-            this.modal.productImage.src = bookingData.productImage || '';
+            // Fix image path
+            this.modal.productImage.src = this.fixImagePath(bookingData.productImage);
             this.modal.productImage.alt = bookingData.productName || 'Product Image';
             this.modal.productImage.classList.add('img-fluid');
             this.modal.productImage.classList.add('rounded');
