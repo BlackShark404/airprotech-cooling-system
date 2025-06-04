@@ -310,7 +310,7 @@ ob_start();
                     </div>
                     <div class="col-md-8">
                         <h4 id="view-product-name" class="fw-bold"></h4>
-                        <p><strong>Model:</strong> <span id="view-product-variant"></span></p>
+                        <p><strong>Variant:</strong> <span id="view-product-variant"></span></p>
                         <div class="row mt-3">
                             <div class="col-md-6">
                                 <p><strong>Booking ID:</strong> <span id="view-id"></span></p>

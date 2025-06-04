@@ -1109,7 +1109,6 @@ ob_start();
                         clearInventoryFilters();
                         
                         // Only show one notification
-                        inventoryTable.showInfoToast('Filters Removed', 'All filters have been cleared');
                         
                         // Restore the original method after a delay
                         setTimeout(() => {
