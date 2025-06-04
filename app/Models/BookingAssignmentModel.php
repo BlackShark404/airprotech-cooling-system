@@ -44,15 +44,27 @@ class BookingAssignmentModel extends Model
      */
     public function getAssignmentsForTechnician($technicianId, $status = null)
     {
-        $sql = "SELECT * FROM {$this->table} WHERE ba_technician_id = :technicianId";
+        $sql = "SELECT booking_assignment.*, 
+                service_booking.sb_service_type_id, service_booking.sb_preferred_date, 
+                service_booking.sb_preferred_time, service_booking.sb_address, 
+                service_booking.sb_description, service_booking.sb_status as booking_status,
+                service_type.st_name as service_type_name,
+                CONCAT(user_account.ua_first_name, ' ', user_account.ua_last_name) as customer_name
+                FROM {$this->table} booking_assignment
+                INNER JOIN service_booking ON booking_assignment.ba_booking_id = service_booking.sb_id
+                INNER JOIN service_type ON service_booking.sb_service_type_id = service_type.st_id
+                INNER JOIN customer ON service_booking.sb_customer_id = customer.cu_account_id
+                INNER JOIN user_account ON customer.cu_account_id = user_account.ua_id
+                WHERE booking_assignment.ba_technician_id = :technicianId";
+        
         $params = ['technicianId' => $technicianId];
         
         if ($status !== null) {
-            $sql .= " AND ba_status = :status";
+            $sql .= " AND booking_assignment.ba_status = :status";
             $params['status'] = $status;
         }
         
-        $sql .= " ORDER BY ba_assigned_at DESC";
+        $sql .= " ORDER BY service_booking.sb_preferred_date DESC, service_booking.sb_preferred_time DESC";
         
         return $this->query($sql, $params);
     }

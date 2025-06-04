@@ -564,4 +564,48 @@ class UserModel extends Model
             'role_id' => 2 // Role ID 2 for technician
         ]);
     }
+    
+    /**
+     * Get detailed technician information including assignment statistics
+     * 
+     * @param int $id Technician ID
+     * @return array|null Technician data with statistics or null if not found
+     */
+    public function getTechnicianDetails($id)
+    {
+        // Get basic technician info
+        $technician = $this->getTechnicianById($id);
+        
+        if (!$technician) {
+            return null;
+        }
+        
+        // Get active assignments count (both service and product)
+        $activeServiceSql = "SELECT COUNT(*) FROM booking_assignment 
+                            WHERE ba_technician_id = :id 
+                            AND ba_status IN ('assigned', 'in-progress')";
+        $activeProductSql = "SELECT COUNT(*) FROM product_assignment 
+                            WHERE pa_technician_id = :id 
+                            AND pa_status IN ('assigned', 'in-progress')";
+        
+        $activeServiceCount = (int)$this->queryScalar($activeServiceSql, ['id' => $id]);
+        $activeProductCount = (int)$this->queryScalar($activeProductSql, ['id' => $id]);
+        
+        // Get completed assignments count
+        $completedServiceSql = "SELECT COUNT(*) FROM booking_assignment 
+                               WHERE ba_technician_id = :id 
+                               AND ba_status = 'completed'";
+        $completedProductSql = "SELECT COUNT(*) FROM product_assignment 
+                               WHERE pa_technician_id = :id 
+                               AND pa_status = 'completed'";
+        
+        $completedServiceCount = (int)$this->queryScalar($completedServiceSql, ['id' => $id]);
+        $completedProductCount = (int)$this->queryScalar($completedProductSql, ['id' => $id]);
+        
+        // Add statistics to technician data
+        $technician['active_assignments'] = $activeServiceCount + $activeProductCount;
+        $technician['completed_assignments'] = $completedServiceCount + $completedProductCount;
+        
+        return $technician;
+    }
 }

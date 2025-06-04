@@ -245,10 +245,26 @@ class BaseModel
     
     /**
      * Add a join clause
+     * 
+     * @param string $table Table to join
+     * @param string $firstKey First key for the join condition or a complete ON condition
+     * @param string $secondKey Second key or join type if $firstKey is a complete condition
+     * @param string $type Join type (INNER, LEFT, RIGHT)
+     * @return $this
      */
-    public function join($table, $firstKey, $secondKey, $type = 'INNER')
+    public function join($table, $firstKey, $secondKey = null, $type = 'INNER')
     {
-        $this->joins[] = "$type JOIN $table ON $firstKey = $secondKey";
+        // Check if $firstKey contains a full condition (with =, <>, etc.)
+        if (strpos($firstKey, '=') !== false || strpos($firstKey, '<') !== false || strpos($firstKey, '>') !== false) {
+            // $firstKey is a complete condition, $secondKey is the join type
+            if ($secondKey !== null && in_array(strtoupper($secondKey), ['INNER', 'LEFT', 'RIGHT'])) {
+                $type = $secondKey;
+            }
+            $this->joins[] = "$type JOIN $table ON $firstKey";
+        } else {
+            // Standard join with two columns
+            $this->joins[] = "$type JOIN $table ON $firstKey = $secondKey";
+        }
         return $this;
     }
 

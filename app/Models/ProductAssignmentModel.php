@@ -33,13 +33,13 @@ class ProductAssignmentModel extends BaseModel
                             product_booking.pb_total_amount, product_booking.pb_status as booking_status,
                             product_booking.pb_preferred_date, product_booking.pb_preferred_time,
                             product_booking.pb_address, product_booking.pb_description,
-                            CONCAT(user_account.ua_first_name, " ", user_account.ua_last_name) as customer_name,
+                            CONCAT(user_account.ua_first_name, \' \', user_account.ua_last_name) as customer_name,
                             product.prod_name, product_variant.var_capacity')
-                    ->join('product_booking', 'product_assignment.pa_order_id = product_booking.pb_id', 'INNER')
-                    ->join('product_variant', 'product_booking.pb_variant_id = product_variant.var_id', 'INNER')
-                    ->join('product', 'product_variant.prod_id = product.prod_id', 'INNER')
-                    ->join('customer', 'product_booking.pb_customer_id = customer.cu_account_id', 'INNER')
-                    ->join('user_account', 'customer.cu_account_id = user_account.ua_id', 'INNER')
+                    ->join('product_booking', 'product_assignment.pa_order_id', 'product_booking.pb_id')
+                    ->join('product_variant', 'product_booking.pb_variant_id', 'product_variant.var_id')
+                    ->join('product', 'product_variant.prod_id', 'product.prod_id')
+                    ->join('customer', 'product_booking.pb_customer_id', 'customer.cu_account_id')
+                    ->join('user_account', 'customer.cu_account_id', 'user_account.ua_id')
                     ->where('product_assignment.pa_technician_id = :technician_id')
                     ->bind(['technician_id' => $technicianId])
                     ->orderBy('product_booking.pb_preferred_date DESC, product_booking.pb_preferred_time DESC')
@@ -55,9 +55,9 @@ class ProductAssignmentModel extends BaseModel
     public function getAssignmentsByBooking($bookingId)
     {
         return $this->select('product_assignment.*, 
-                            CONCAT(user_account.ua_first_name, " ", user_account.ua_last_name) as technician_name')
-                    ->join('technician', 'product_assignment.pa_technician_id = technician.te_account_id', 'INNER')
-                    ->join('user_account', 'technician.te_account_id = user_account.ua_id', 'INNER')
+                            CONCAT(user_account.ua_first_name, \' \', user_account.ua_last_name) as technician_name')
+                    ->join('technician', 'product_assignment.pa_technician_id', 'technician.te_account_id')
+                    ->join('user_account', 'technician.te_account_id', 'user_account.ua_id')
                     ->where('product_assignment.pa_order_id = :booking_id')
                     ->bind(['booking_id' => $bookingId])
                     ->get();

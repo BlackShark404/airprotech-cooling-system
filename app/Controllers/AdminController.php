@@ -411,21 +411,32 @@ class AdminController extends BaseController {
     /**
      * API endpoint to get a specific technician's assignments
      */
-    public function getTechnicianAssignments($technicianId)
+    public function getTechnicianAssignments($id)
     {
         $bookingAssignmentModel = $this->loadModel('BookingAssignmentModel');
         $productAssignmentModel = $this->loadModel('ProductAssignmentModel');
         
-        // Get service request assignments
-        $serviceAssignments = $bookingAssignmentModel->getAssignmentsByTechnician($technicianId);
+        // Check if type parameter is provided
+        $type = $_GET['type'] ?? null;
         
-        // Get product booking assignments
-        $productAssignments = $productAssignmentModel->getAssignmentsByTechnician($technicianId);
-        
-        $this->jsonSuccess([
-            'serviceAssignments' => $serviceAssignments,
-            'productAssignments' => $productAssignments
-        ]);
+        if ($type === 'service') {
+            // Return only service assignments
+            $serviceAssignments = $bookingAssignmentModel->getAssignmentsForTechnician($id);
+            $this->jsonSuccess(['data' => $serviceAssignments]);
+        } else if ($type === 'product') {
+            // Return only product assignments
+            $productAssignments = $productAssignmentModel->getAssignmentsByTechnician($id);
+            $this->jsonSuccess(['data' => $productAssignments]);
+        } else {
+            // Return both types of assignments
+            $serviceAssignments = $bookingAssignmentModel->getAssignmentsForTechnician($id);
+            $productAssignments = $productAssignmentModel->getAssignmentsByTechnician($id);
+            
+            $this->jsonSuccess([
+                'serviceAssignments' => $serviceAssignments,
+                'productAssignments' => $productAssignments
+            ]);
+        }
     }
     
     /**
@@ -495,6 +506,52 @@ class AdminController extends BaseController {
             $this->jsonSuccess(['message' => 'Product booking assigned successfully']);
         } else {
             $this->jsonError('Failed to assign product booking');
+        }
+    }
+    
+    /**
+     * API endpoint to get a specific technician's details
+     */
+    public function getTechnician($id)
+    {
+        $userModel = $this->loadModel('UserModel');
+        $technician = $userModel->getTechnicianDetails($id);
+        
+        if (!$technician) {
+            $this->jsonError('Technician not found', 404);
+        }
+        
+        $this->jsonSuccess($technician);
+    }
+    
+    /**
+     * API endpoint to update a technician's details
+     */
+    public function updateTechnician($id)
+    {
+        if (!$this->isPost()) {
+            $this->jsonError('Invalid request method');
+        }
+        
+        $technicianModel = $this->loadModel('TechnicianModel');
+        
+        // Get post data
+        $isAvailable = isset($_POST['te_is_available']) ? (int)$_POST['te_is_available'] : null;
+        
+        if ($isAvailable === null) {
+            $this->jsonError('Missing required parameters');
+        }
+        
+        $data = [
+            'te_is_available' => $isAvailable
+        ];
+        
+        $result = $technicianModel->update($data, 'te_account_id = :id', ['id' => $id]);
+        
+        if ($result) {
+            $this->jsonSuccess(['message' => 'Technician updated successfully']);
+        } else {
+            $this->jsonError('Failed to update technician');
         }
     }
 }
