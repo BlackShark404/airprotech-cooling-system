@@ -604,7 +604,7 @@ ob_start();
         <div class="col-xl-6">
             <div class="card">
                 <div class="card-header">
-                    Technician Performance
+                    Technician Performance (Service & Product Assignments)
                 </div>
                 <div class="card-body">
                     <div class="chart-container">

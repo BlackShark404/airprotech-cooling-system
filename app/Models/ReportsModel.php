@@ -174,12 +174,32 @@ class ReportsModel extends Model
     public function getTechnicianPerformance()
     {
         $sql = "SELECT 
-                    CONCAT(ua.ua_first_name, ' ', ua.ua_last_name) as technician_name,
-                    COUNT(ba.ba_id) as total_assignments,
-                    SUM(CASE WHEN ba.ba_status = 'completed' THEN 1 ELSE 0 END) as completed_assignments
-                FROM booking_assignment ba
-                JOIN technician t ON ba.ba_technician_id = t.te_account_id
-                JOIN user_account ua ON t.te_account_id = ua.ua_id
+                    technician_name,
+                    SUM(total_assignments) as total_assignments,
+                    SUM(completed_assignments) as completed_assignments
+                FROM (
+                    -- Service booking assignments
+                    SELECT 
+                        CONCAT(ua.ua_first_name, ' ', ua.ua_last_name) as technician_name,
+                        COUNT(ba.ba_id) as total_assignments,
+                        SUM(CASE WHEN ba.ba_status = 'completed' THEN 1 ELSE 0 END) as completed_assignments
+                    FROM booking_assignment ba
+                    JOIN technician t ON ba.ba_technician_id = t.te_account_id
+                    JOIN user_account ua ON t.te_account_id = ua.ua_id
+                    GROUP BY technician_name
+                    
+                    UNION ALL
+                    
+                    -- Product booking assignments
+                    SELECT 
+                        CONCAT(ua.ua_first_name, ' ', ua.ua_last_name) as technician_name,
+                        COUNT(pa.pa_id) as total_assignments,
+                        SUM(CASE WHEN pa.pa_status = 'completed' THEN 1 ELSE 0 END) as completed_assignments
+                    FROM product_assignment pa
+                    JOIN technician t ON pa.pa_technician_id = t.te_account_id
+                    JOIN user_account ua ON t.te_account_id = ua.ua_id
+                    GROUP BY technician_name
+                ) as combined_assignments
                 GROUP BY technician_name
                 ORDER BY completed_assignments DESC";
         
