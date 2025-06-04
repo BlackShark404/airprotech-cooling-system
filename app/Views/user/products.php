@@ -327,14 +327,6 @@
                             <input type="text" id="product-search" class="form-control" placeholder="Search products...">
                         </div>
                         
-                        <!-- Category Filter -->
-                        <div class="filter-group">
-                            <label for="category" class="form-label">Category</label>
-                            <select id="category" name="category" class="form-select">
-                                <option value="">All Categories</option>
-                                <!-- Will be populated dynamically -->
-                            </select>
-                        </div>
                         
                         <!-- Price Range Filter -->
                         <div class="filter-group">
