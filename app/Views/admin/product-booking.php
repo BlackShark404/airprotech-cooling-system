@@ -705,13 +705,14 @@ function viewProductBooking(rowData) {
             if (data.technicians && data.technicians.length > 0) {
                 const techHtml = data.technicians.map(tech => {
                     const profileImg = tech.profile_url || '/assets/images/default-profile.jpg';
+                    console.log('Technician data:', tech); // Debug log in browser console
                     return `
                         <div class="d-flex align-items-center mb-3 p-3 bg-white rounded border">
                             <img src="${profileImg}" alt="${tech.name}" class="rounded-circle me-3" width="48" height="48" style="border: 1px solid #eee;">
                             <div>
                                 <div class="fw-bold fs-5">${tech.name}</div>
-                                <div class="text-muted mb-1"><i class="fas fa-envelope me-2"></i>${tech.email || 'N/A'}</div>
-                                <div class="text-muted"><i class="fas fa-phone me-2"></i>${tech.phone || 'N/A'}</div>
+                                ${tech.email ? `<div class="text-muted mt-1"><i class="fas fa-envelope me-1"></i>${tech.email}</div>` : ''}
+                                ${tech.phone ? `<div class="text-muted"><i class="fas fa-phone me-1"></i>${tech.phone}</div>` : ''}
                                 ${tech.notes ? `<div class="text-muted mt-2 border-top pt-2">${tech.notes}</div>` : ''}
                             </div>
                         </div>

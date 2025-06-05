@@ -972,6 +972,9 @@ class ProductController extends BaseController
             return;
         }
         
+        // Debug log to see what's in the booking data
+        error_log("Product booking data: " . json_encode($booking));
+        
         // Convert uppercase keys to lowercase for consistency
         if (isset($booking['CUSTOMER_EMAIL'])) {
             $booking['customer_email'] = $booking['CUSTOMER_EMAIL'];
@@ -984,21 +987,30 @@ class ProductController extends BaseController
         }
         
         // Get assigned technicians for this booking
-        $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($id);
+        $technicians = $this->productBookingModel->getAssignedTechnicians($id);
         
-        // Add profile images to technicians
-        foreach ($booking['technicians'] as &$tech) {
-            $techInfo = $this->getUserInfo($tech['id']);
-            if ($techInfo) {
-                // Use profile_url from database if available
-                if (!empty($techInfo['UA_PROFILE_URL'])) {
-                    $tech['profile_url'] = $techInfo['UA_PROFILE_URL'];
-                } 
-                
-                $tech['email'] = $techInfo['UA_EMAIL'] ?? '';
-                $tech['phone'] = $techInfo['UA_PHONE_NUMBER'] ?? '';
-            }
+        // Debug log for technicians
+        error_log("Product booking technicians (raw): " . json_encode($technicians));
+        
+        // Process technician data to ensure email and phone are included
+        $processedTechnicians = [];
+        foreach ($technicians as $tech) {
+            $techData = [
+                'id' => $tech['id'],
+                'name' => $tech['name'],
+                'email' => isset($tech['email']) ? $tech['email'] : '',
+                'phone' => isset($tech['phone']) ? $tech['phone'] : '',
+                'profile_url' => $tech['profile_url'] ?? '/assets/images/default-profile.jpg',
+                'status' => $tech['status'] ?? 'assigned',
+                'notes' => $tech['notes'] ?? ''
+            ];
+            $processedTechnicians[] = $techData;
         }
+        
+        // Debug log for processed technicians
+        error_log("Product booking technicians (processed): " . json_encode($processedTechnicians));
+        
+        $booking['technicians'] = $processedTechnicians;
         
         // Return the booking details as JSON
         $this->jsonSuccess($booking);
