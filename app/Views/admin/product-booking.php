@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { data: 'prod_name', title: 'Product' },
             { data: 'pb_quantity', title: 'Quantity' },
             { data: 'pb_total_amount', title: 'Total Amount', render: function(data) {
-                return data ? '$' + parseFloat(data).toFixed(2) : '-';
+                return data ? '₱' + parseFloat(data).toFixed(2) : '-';
             }},
             { data: 'pb_preferred_date', title: 'Delivery Date' },
             { data: 'pb_preferred_time', title: 'Delivery Time' },

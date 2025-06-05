@@ -406,7 +406,7 @@ $additionalScripts = '<script>
             data: {
                 labels: Array.from({length: 12}, (_, i) => getMonthName(i + 1)),
                 datasets: [{
-                    label: "Revenue ($)",
+                    label: "Revenue (₱)",
                     data: chartData.monthlyRevenueData,
                     backgroundColor: "#0d6efd",
                     borderWidth: 0,
@@ -525,7 +525,7 @@ ob_start();
                     <i class="bi bi-cash-stack"></i>
                 </div>
                 <div class="stats-title">Total Revenue</div>
-                <div class="stats-value">$<?= number_format($totalRevenue, 2) ?></div>
+                <div class="stats-value">₱<?= number_format($totalRevenue, 2) ?></div>
             </div>
         </div>
     </div>
