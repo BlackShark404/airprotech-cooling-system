@@ -241,11 +241,7 @@ ob_start();
                         <option value="Discontinued">Discontinued</option>
                     </select>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <label for="dateFilter" class="form-label">Date Range</label>
-                    <input type="date" id="dateFilter" class="form-control date-input">
-                </div>
-                <div class="col-md-6 mb-3 text-end align-self-end">
+                <div class="col-md-9     mb-3 text-end align-self-end">
                     <button id="addProductBtn" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-1"></i> Add New Product
                     </button>
