@@ -465,6 +465,13 @@ class ServiceRequestController extends BaseController
             $filters['sb_priority'] = $_GET['priority'];
         }
         
+        // Technician filter - Added to fix the technician filtering issue
+        if (isset($_GET['technician_id']) && !empty($_GET['technician_id'])) {
+            $filters['technician_id'] = $_GET['technician_id'];
+        } elseif (isset($_GET['has_technician'])) {
+            $filters['has_technician'] = filter_var($_GET['has_technician'], FILTER_VALIDATE_BOOLEAN);
+        }
+        
         // Get bookings with the specified filters
         $bookings = empty($filters) 
             ? $this->serviceModel->getAllActiveBookings() 

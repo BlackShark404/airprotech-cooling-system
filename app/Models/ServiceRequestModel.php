@@ -328,12 +328,18 @@ class ServiceRequestModel extends Model // Extends Model directly
      */
     public function getBookingsByCriteria(array $criteria, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
-        $sql = "SELECT * FROM {$this->table}";
+        $sql = "SELECT DISTINCT sb.* FROM {$this->table} sb";
         $whereClauses = [];
         $params = [];
 
+        // Add JOIN for technician filtering if needed
+        $needTechnicianJoin = isset($criteria['technician_id']) || isset($criteria['has_technician']);
+        if ($needTechnicianJoin) {
+            $sql .= " LEFT JOIN booking_assignment ba ON sb.sb_id = ba.ba_booking_id";
+        }
+
         if ($this->useSoftDeletes) {
-            $whereClauses[] = "{$this->deletedAtColumn} IS NULL";
+            $whereClauses[] = "sb.{$this->deletedAtColumn} IS NULL";
         }
 
         $allowedFilterColumns = [
@@ -343,6 +349,21 @@ class ServiceRequestModel extends Model // Extends Model directly
         ];
 
         foreach ($criteria as $column => $value) {
+            if ($column === 'technician_id') {
+                $whereClauses[] = "ba.ba_technician_id = :technician_id";
+                $params[':technician_id'] = $value;
+                continue;
+            }
+
+            if ($column === 'has_technician') {
+                if ($value === true) {
+                    $whereClauses[] = "ba.ba_id IS NOT NULL";
+                } else {
+                    $whereClauses[] = "ba.ba_id IS NULL";
+                }
+                continue;
+            }
+
             $columnLower = strtolower($column);
             if (in_array($columnLower, $allowedFilterColumns)) {
                 // Use column name directly from $allowedFilterColumns to maintain case if necessary, or use $column
@@ -358,7 +379,7 @@ class ServiceRequestModel extends Model // Extends Model directly
                     $whereClauses[] = "{$actualColumn} IN ({$paramKey})"; // Base Model query() handles array to IN expansion
                     $params[$paramKey] = $value;
                 } else {
-                    $whereClauses[] = "{$actualColumn} = {$paramKey}";
+                    $whereClauses[] = "sb.{$actualColumn} = {$paramKey}";
                     $params[$paramKey] = $value;
                 }
             }
@@ -372,7 +393,7 @@ class ServiceRequestModel extends Model // Extends Model directly
             $orderParts = [];
             foreach ($orderBy as $column => $direction) {
                 if (preg_match('/^[a-zA-Z0-9_.]+$/', $column) && in_array(strtoupper($direction), ['ASC', 'DESC'])) {
-                    $orderParts[] = "{$column} {$direction}";
+                    $orderParts[] = "sb.{$column} {$direction}";
                 }
             }
             if (!empty($orderParts)) {
@@ -391,12 +412,18 @@ class ServiceRequestModel extends Model // Extends Model directly
      */
     public function countBookings(array $criteria = [])
     {
-        $sql = "SELECT COUNT(*) FROM {$this->table}";
+        $sql = "SELECT COUNT(DISTINCT sb.sb_id) FROM {$this->table} sb";
         $whereClauses = [];
         $params = [];
 
+        // Add JOIN for technician filtering if needed
+        $needTechnicianJoin = isset($criteria['technician_id']) || isset($criteria['has_technician']);
+        if ($needTechnicianJoin) {
+            $sql .= " LEFT JOIN booking_assignment ba ON sb.sb_id = ba.ba_booking_id";
+        }
+
         if ($this->useSoftDeletes) {
-            $whereClauses[] = "{$this->deletedAtColumn} IS NULL";
+            $whereClauses[] = "sb.{$this->deletedAtColumn} IS NULL";
         }
         
         $allowedFilterColumns = [
@@ -405,20 +432,35 @@ class ServiceRequestModel extends Model // Extends Model directly
         ];
 
         foreach ($criteria as $column => $value) {
+            if ($column === 'technician_id') {
+                $whereClauses[] = "ba.ba_technician_id = :technician_id";
+                $params[':technician_id'] = $value;
+                continue;
+            }
+
+            if ($column === 'has_technician') {
+                if ($value === true) {
+                    $whereClauses[] = "ba.ba_id IS NOT NULL";
+                } else {
+                    $whereClauses[] = "ba.ba_id IS NULL";
+                }
+                continue;
+            }
+            
             $columnLower = strtolower($column);
             if (in_array($columnLower, $allowedFilterColumns)) {
                 $actualColumn = $column;
                 $paramKey = ":" . $columnLower . "_filt";
 
                 if ($actualColumn === 'sb_preferred_date' && is_array($value) && isset($value['from']) && isset($value['to'])) {
-                    $whereClauses[] = "{$actualColumn} BETWEEN {$paramKey}_from AND {$paramKey}_to";
+                    $whereClauses[] = "sb.{$actualColumn} BETWEEN {$paramKey}_from AND {$paramKey}_to";
                     $params["{$paramKey}_from"] = $value['from'];
                     $params["{$paramKey}_to"] = $value['to'];
                 } elseif (is_array($value) && !empty($value)) {
-                    $whereClauses[] = "{$actualColumn} IN ({$paramKey})";
+                    $whereClauses[] = "sb.{$actualColumn} IN ({$paramKey})";
                     $params[$paramKey] = $value;
                 } else {
-                    $whereClauses[] = "{$actualColumn} = {$paramKey}";
+                    $whereClauses[] = "sb.{$actualColumn} = {$paramKey}";
                     $params[$paramKey] = $value;
                 }
             }
