@@ -224,10 +224,6 @@
                         <div class="card-body p-4">
                             <h5 class="fw-bold mb-4">Quick Actions</h5>
                             <div class="list-group">
-                                <a href="/admin/user-management" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                    Manage Users
-                                    <i class="fas fa-users-cog opacity-75"></i>
-                                </a>
                                 <a href="/admin/service-requests" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                                     Service Requests
                                     <i class="fas fa-concierge-bell opacity-75"></i>
@@ -244,17 +240,17 @@
                                     Inventory Management
                                     <i class="fas fa-warehouse opacity-75"></i>
                                 </a>
-                                <a href="/admin/warehouse-management" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                    Warehouse Management
-                                    <i class="fas fa-building opacity-75"></i>
-                                </a>
-                                <a href="/admin/add-product" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                    Add New Product
-                                    <i class="fas fa-plus-circle opacity-75"></i>
-                                </a>
                                 <a href="/admin/reports" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                                     View Reports
                                     <i class="fas fa-chart-line opacity-75"></i>
+                                </a>
+                                <a href="/admin/technician" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Manage Technicians
+                                    <i class="fas fa-tools opacity-75"></i>
+                                </a>
+                                <a href="/admin/user-management" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    Manage Users
+                                    <i class="fas fa-users-cog opacity-75"></i>
                                 </a>
                             </div>
                         </div>
