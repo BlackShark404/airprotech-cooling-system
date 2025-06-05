@@ -51,7 +51,7 @@
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src=<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?> alt="Profile" class="rounded-circle me-2" width="36" height="36">
+                        <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36" style="object-fit: cover;">
                             <div class="d-flex flex-column lh-sm">
                                 <span class="fw-semibold small text-dark"><?=$_SESSION['full_name'] ?? 'User'?></span>
                                 <small class="text-success">● Online</small>
