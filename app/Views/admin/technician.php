@@ -210,24 +210,7 @@ ob_start();
                         <option value="unavailable">Unavailable</option>
                     </select>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <label for="assignmentTypeFilter" class="form-label">Assignment Type</label>
-                    <select id="assignmentTypeFilter" class="form-select filter-dropdown">
-                        <option value="">All Types</option>
-                        <option value="service">Service Requests</option>
-                        <option value="product">Product Bookings</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="assignmentStatusFilter" class="form-label">Assignment Status</label>
-                    <select id="assignmentStatusFilter" class="form-select filter-dropdown">
-                        <option value="">All Statuses</option>
-                        <option value="assigned">Assigned</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
+                
                 <div class="col-md-3 mb-3 d-flex align-items-end">
                     <button id="resetFilters" class="btn btn-outline-secondary w-100">
                         <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Filters
