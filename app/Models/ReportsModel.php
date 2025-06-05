@@ -223,15 +223,35 @@ class ReportsModel extends Model
             $year = date('Y');
         }
         
-        $sql = "SELECT 
-                    EXTRACT(MONTH FROM pb_order_date) as month,
-                    SUM(pb_total_amount) as total_revenue
-                FROM product_booking
-                WHERE 
-                    EXTRACT(YEAR FROM pb_order_date) = :year
-                    AND pb_status = 'completed'
-                    AND pb_deleted_at IS NULL
-                GROUP BY month
+        $sql = "WITH product_revenue AS (
+                    SELECT 
+                        EXTRACT(MONTH FROM pb_order_date) as month,
+                        COALESCE(SUM(pb_total_amount), 0) as total_revenue
+                    FROM product_booking
+                    WHERE 
+                        EXTRACT(YEAR FROM pb_order_date) = :year
+                        AND pb_status NOT IN ('pending', 'cancelled')
+                        AND pb_deleted_at IS NULL
+                    GROUP BY month
+                ),
+                service_revenue AS (
+                    SELECT 
+                        EXTRACT(MONTH FROM sb_created_at) as month,
+                        COALESCE(SUM(sb_estimated_cost), 0) as total_revenue
+                    FROM service_booking
+                    WHERE 
+                        EXTRACT(YEAR FROM sb_created_at) = :year
+                        AND sb_status NOT IN ('pending', 'cancelled')
+                        AND sb_deleted_at IS NULL
+                    GROUP BY month
+                )
+                SELECT
+                    COALESCE(p.month, s.month) as month,
+                    COALESCE(p.total_revenue, 0) + COALESCE(s.total_revenue, 0) as total_revenue
+                FROM
+                    product_revenue p
+                FULL OUTER JOIN
+                    service_revenue s ON p.month = s.month
                 ORDER BY month";
         
         try {

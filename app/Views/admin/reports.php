@@ -153,7 +153,12 @@ foreach ($revenueByMonth as $monthly) {
 $totalServiceRequests = array_sum($serviceStatusData);
 $totalProductBookings = array_sum($productStatusData);
 $totalTechnicians = count($technicianLabels);
-$totalRevenue = array_sum($monthlyRevenueData);
+
+// Calculate total revenue excluding 'pending' and 'cancelled' statuses
+$totalRevenue = 0;
+foreach ($revenueByMonth as $monthly) {
+    $totalRevenue += (float)$monthly['total_revenue'];
+}
 
 // Create JSON data for JavaScript
 $chartData = [
