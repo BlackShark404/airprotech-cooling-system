@@ -348,7 +348,6 @@
                                     <input type="number" name="max-price" class="form-control" placeholder="Max" min="0" step="100">
                                 </div>
                             </div>
-                            <small class="text-muted">Shows products with prices in range</small>
                         </div>
                         
                         <!-- Stock Status Filter -->
