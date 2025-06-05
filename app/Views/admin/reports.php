@@ -225,12 +225,16 @@ $additionalScripts = '<script>
                 labels: chartData.serviceStatusLabels,
                 datasets: [{
                     data: chartData.serviceStatusData,
-                    backgroundColor: [
-                        "#ffc107", // pending - yellow
-                        "#0dcaf0", // in-progress - blue
-                        "#198754", // completed - green
-                        "#dc3545"  // cancelled - red
-                    ],
+                    backgroundColor: chartData.serviceStatusLabels.map(status => {
+                        switch(status.toLowerCase()) {
+                            case "pending": return "#ffc107"; // warning - yellow
+                            case "in-progress": return "#0d6efd"; // primary - blue
+                            case "confirmed": return "#0dcaf0"; // info - light blue
+                            case "completed": return "#198754"; // success - green
+                            case "cancelled": return "#dc3545"; // danger - red
+                            default: return "#6c757d"; // secondary - gray
+                        }
+                    }),
                     borderWidth: 1
                 }]
             },
@@ -295,12 +299,16 @@ $additionalScripts = '<script>
                 labels: chartData.productStatusLabels,
                 datasets: [{
                     data: chartData.productStatusData,
-                    backgroundColor: [
-                        "#ffc107", // pending - yellow
-                        "#0dcaf0", // confirmed - blue
-                        "#198754", // completed - green
-                        "#dc3545"  // cancelled - red
-                    ],
+                    backgroundColor: chartData.productStatusLabels.map(status => {
+                        switch(status.toLowerCase()) {
+                            case "pending": return "#ffc107"; // warning - yellow
+                            case "confirmed": return "#0dcaf0"; // info - light blue
+                            case "in-progress": return "#0d6efd"; // primary - blue
+                            case "completed": return "#198754"; // success - green
+                            case "cancelled": return "#dc3545"; // danger - red
+                            default: return "#6c757d"; // secondary - gray
+                        }
+                    }),
                     borderWidth: 1
                 }]
             },
