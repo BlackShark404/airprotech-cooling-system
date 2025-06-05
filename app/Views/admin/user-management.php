@@ -93,7 +93,7 @@ ob_start();
     <div class="row mb-4">
         <div class="col">
             <h1 class="h3 mb-0">User Management</h1>
-            <p class="text-muted">Manage inventory across all warehouses</p>
+            <p class="text-muted">Create user accounts and manage their account status</p>
         </div>
         <div class="col-auto">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
