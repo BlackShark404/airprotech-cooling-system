@@ -329,7 +329,7 @@ ob_start();
                 </div>
                 <div class="row mt-3">
                     <div class="col-12">
-                        <p><strong>Delivery Address:</strong></p>
+                        <p><strong>Delivery/Installation Address:</strong></p>
                         <p id="view-address" class="border p-2 bg-light"></p>
                     </div>
                 </div>
