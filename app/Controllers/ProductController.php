@@ -928,12 +928,8 @@ class ProductController extends BaseController
                 }
                 if (isset($booking['CUSTOMER_PROFILE_URL'])) {
                     $booking['customer_profile_url'] = $booking['CUSTOMER_PROFILE_URL'];
-                } else {
-                    // Set default profile URL if not present
-                    $customerName = $booking['CUSTOMER_NAME'] ?? $booking['customer_name'] ?? 'Unknown User';
-                    $booking['customer_profile_url'] = "https://ui-avatars.com/api/?name=" . urlencode(str_replace(' ', '+', $customerName)) . "&background=1a2236&color=fff&size=128";
-                }
-                
+                } 
+
                 // Get assigned technicians for each booking
                 $booking['technicians'] = $this->productBookingModel->getAssignedTechnicians($booking['pb_id'] ?? $booking['PB_ID'] ?? null);
                 
@@ -944,11 +940,8 @@ class ProductController extends BaseController
                         // Use profile_url from database if available
                         if (!empty($techInfo['UA_PROFILE_URL'])) {
                             $tech['profile_url'] = $techInfo['UA_PROFILE_URL'];
-                        } else {
-                            // Generate a profile image URL using ui-avatars service
-                            $techName = $tech['name'] ?? 'Unknown Technician';
-                            $tech['profile_url'] = "https://ui-avatars.com/api/?name=" . urlencode(str_replace(' ', '+', $techName)) . "&background=f2801a&color=fff&size=128";
                         }
+                        
                         $tech['email'] = $techInfo['UA_EMAIL'] ?? '';
                         $tech['phone'] = $techInfo['UA_PHONE_NUMBER'] ?? '';
                     }
@@ -988,10 +981,6 @@ class ProductController extends BaseController
         }
         if (isset($booking['CUSTOMER_PROFILE_URL'])) {
             $booking['customer_profile_url'] = $booking['CUSTOMER_PROFILE_URL'];
-        } else {
-            // Set default profile URL if not present
-            $customerName = $booking['CUSTOMER_NAME'] ?? $booking['customer_name'] ?? 'Unknown User';
-            $booking['customer_profile_url'] = "https://ui-avatars.com/api/?name=" . urlencode(str_replace(' ', '+', $customerName)) . "&background=1a2236&color=fff&size=128";
         }
         
         // Get assigned technicians for this booking
@@ -1004,11 +993,8 @@ class ProductController extends BaseController
                 // Use profile_url from database if available
                 if (!empty($techInfo['UA_PROFILE_URL'])) {
                     $tech['profile_url'] = $techInfo['UA_PROFILE_URL'];
-                } else {
-                    // Generate a profile image URL using ui-avatars service
-                    $techName = $tech['name'] ?? 'Unknown Technician';
-                    $tech['profile_url'] = "https://ui-avatars.com/api/?name=" . urlencode(str_replace(' ', '+', $techName)) . "&background=f2801a&color=fff&size=128";
-                }
+                } 
+                
                 $tech['email'] = $techInfo['UA_EMAIL'] ?? '';
                 $tech['phone'] = $techInfo['UA_PHONE_NUMBER'] ?? '';
             }
