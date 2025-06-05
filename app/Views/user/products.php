@@ -30,7 +30,7 @@
         }
         
         .product-img-container {
-            height: 200px;
+            height: 280px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -45,34 +45,35 @@
         }
         
         .product-info {
-            padding: 1.5rem;
+            padding: 1.8rem;
         }
         
         .product-title {
             font-weight: 600;
             color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.4rem;
         }
         
         .product-desc {
             color: #6c757d;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
+            font-size: 1rem;
+            margin-bottom: 1.2rem;
+            line-height: 1.5;
         }
         
         .product-price {
             font-weight: 700;
             color: #dc3545;
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            margin-bottom: 1.2rem;
         }
         
         .product-variants {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: #495057;
-            margin-bottom: 0.75rem;
-            padding: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
             border-radius: 0.25rem;
             background-color: #f8f9fa;
             border-left: 3px solid #6c757d;
@@ -80,12 +81,12 @@
         
         .variant-badge {
             display: inline-block;
-            padding: 0.2rem 0.5rem;
-            margin-right: 0.25rem;
-            margin-bottom: 0.25rem;
+            padding: 0.25rem 0.6rem;
+            margin-right: 0.3rem;
+            margin-bottom: 0.3rem;
             background-color: #e9ecef;
             border-radius: 50px;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             color: #495057;
         }
         
@@ -93,9 +94,10 @@
             background-color: #dc3545;
             border-color: #dc3545;
             color: white;
-            padding: 0.5rem 1.5rem;
+            padding: 0.6rem 1.8rem;
             border-radius: 5px;
             font-weight: 500;
+            font-size: 1rem;
             transition: all 0.3s ease;
         }
         

@@ -13,7 +13,7 @@ class ProductManager {
             filterFormId: 'product-filters',
             searchInputId: 'product-search',
             cardTemplate: this.getDefaultCardTemplate(),
-            itemsPerPage: 9,
+            itemsPerPage: 4,
             paginationContainerSelector: '#pagination-container',
             orderEndpoint: '/api/product-bookings',
             ...options
@@ -55,22 +55,23 @@ class ProductManager {
             const productName = product.PROD_NAME || product.prod_name || 'Unnamed Product';
             const productDesc = product.PROD_DESCRIPTION || product.prod_description || '';
 
-            // Filter variants with inventory > 0
-            const variantsWithStock = product.variants?.filter(v => (v.INVENTORY_QUANTITY || 0) > 0) || [];
+            // Show all variants instead of only filtering those with inventory > 0
+            const allVariants = product.variants || [];
+            const variantsWithStock = allVariants.filter(v => (v.INVENTORY_QUANTITY || 0) > 0);
 
             // Get the primary variant price if available
             let priceDisplay = '';
-            if (variantsWithStock.length > 0) {
-                const primaryVariant = variantsWithStock[0];
+            if (allVariants.length > 0) {
+                const primaryVariant = allVariants[0];
                 const price = primaryVariant.VAR_SRP_PRICE || primaryVariant.var_srp_price || '0.00';
                 priceDisplay = `<div class="product-price">₱${price}</div>`;
 
                 // If there are multiple variants, show a range
-                if (variantsWithStock.length > 1) {
+                if (allVariants.length > 1) {
                     let minPrice = Number.MAX_VALUE;
                     let maxPrice = 0;
 
-                    variantsWithStock.forEach(variant => {
+                    allVariants.forEach(variant => {
                         const varPrice = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
                         minPrice = Math.min(minPrice, varPrice);
                         maxPrice = Math.max(maxPrice, varPrice);
@@ -82,13 +83,14 @@ class ProductManager {
                 }
             }
 
-            // Show the capacity variants available with inventory quantity
+            // Show all capacity variants with appropriate badge colors
             let variantInfo = '';
-            if (variantsWithStock.length > 0) {
-                const capacities = variantsWithStock.map(v => {
+            if (allVariants.length > 0) {
+                const capacities = allVariants.map(v => {
                     const capacity = v.VAR_CAPACITY || v.var_capacity;
                     const quantity = v.INVENTORY_QUANTITY || 0;
-                    return `<span class="variant-badge" title="${quantity} units in stock">${capacity} <span class="badge bg-success">${quantity}</span></span>`;
+                    const badgeClass = quantity > 0 ? 'bg-success' : 'bg-danger';
+                    return `<span class="variant-badge" title="${quantity > 0 ? quantity + ' units in stock' : 'Out of stock'}">${capacity} <span class="badge ${badgeClass}">${quantity > 0 ? quantity : 'Out'}</span></span>`;
                 }).join(' ');
 
                 if (capacities) {
@@ -101,19 +103,25 @@ class ProductManager {
                 }
             }
 
+            // Check if any variants have stock
+            const hasVariantsWithStock = variantsWithStock.length > 0;
+            const bookButtonClass = hasVariantsWithStock ? 'btn-book-now' : 'btn-book-now btn-secondary disabled';
+            const bookButtonText = hasVariantsWithStock ? 'Book Now' : 'Out of Stock';
+            const bookButtonTooltip = hasVariantsWithStock ? '' : 'No variants in stock';
+
             return `
-                <div class="col-md-6 col-lg-4 mb-4">
+                <div class="col-md-6 col-lg-6 mb-5">
                     <div class="product-card" data-product-id="${productId}" data-category="${product.category || ''}">
                         <div class="product-img-container">
                             <img src="${imagePath}" alt="${productName}" class="product-img">
                         </div>
                         <div class="product-info">
                             <h3 class="product-title">${productName}</h3>
-                            <p class="product-desc">${productDesc.substring(0, 70)}${productDesc.length > 70 ? '...' : ''}</p>
+                            <p class="product-desc">${productDesc.substring(0, 100)}${productDesc.length > 100 ? '...' : ''}</p>
                             ${priceDisplay}
                             ${variantInfo}
                             <div class="d-flex justify-content-end align-items-center mt-3">
-                                <button class="btn btn-book-now view-details" data-product-id="${productId}">Book Now</button>
+                                <button class="btn ${bookButtonClass} view-details" data-product-id="${productId}" title="${bookButtonTooltip}">${bookButtonText}</button>
                             </div>
                         </div>
                     </div>
@@ -527,7 +535,7 @@ class ProductManager {
             // Reset quantity to 1 or available quantity if less than 1
             if (this.modal.quantity) {
                 const maxQuantity = Math.max(1, Math.min(availableQuantity, 10)); // Limit to 10 for UI purposes
-                this.modal.quantity.value = Math.min(1, maxQuantity);
+                this.modal.quantity.value = availableQuantity > 0 ? Math.min(1, maxQuantity) : 0;
 
                 // Enable/disable quantity controls based on stock
                 const increaseQtyBtn = document.getElementById('increase-quantity');
@@ -977,7 +985,8 @@ class ProductManager {
 
         console.log('Product variants:', product.variants);
 
-        // Filter variants with inventory > 0 for the dropdown
+        // Show all variants in dropdown, not just those with stock
+        const allVariants = product.variants;
         const variantsWithStock = product.variants.filter(variant => {
             const inventory = variant.INVENTORY_QUANTITY || 0;
             return inventory > 0;
@@ -987,27 +996,40 @@ class ProductManager {
 
         // Populate variants in dropdown
         if (this.modal.variantSelect) {
-            if (!variantsWithStock || variantsWithStock.length === 0) {
-                this.modal.variantSelect.innerHTML = '<option value="">No variants available in stock</option>';
-                console.log('No variants with stock found');
+            if (!allVariants || allVariants.length === 0) {
+                this.modal.variantSelect.innerHTML = '<option value="">No variants available</option>';
+                console.log('No variants found');
             } else {
-                variantsWithStock.forEach(variant => {
+                allVariants.forEach(variant => {
                     const capacity = variant.VAR_CAPACITY || variant.var_capacity || 'Unknown';
                     const price = variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00';
                     const inventory = variant.INVENTORY_QUANTITY || 0;
                     const variantId = variant.VAR_ID || variant.var_id;
+                    const outOfStock = inventory <= 0;
 
                     const option = document.createElement('option');
                     option.value = variantId;
-                    option.textContent = `${capacity} - ₱${price} (${inventory} in stock)`;
+                    if (outOfStock) {
+                        option.textContent = `${capacity} - ₱${price} (Out of Stock)`;
+                        option.classList.add('text-danger');
+                        option.disabled = true; // Disable out of stock options
+                    } else {
+                        option.textContent = `${capacity} - ₱${price} (${inventory} in stock)`;
+                    }
 
                     this.modal.variantSelect.appendChild(option);
                 });
 
-                // Select the first option to trigger price update
-                if (this.modal.variantSelect.options.length > 0) {
-                    this.modal.variantSelect.selectedIndex = 0;
-                    console.log('Selected first variant option');
+                // Select the first in-stock option
+                if (variantsWithStock.length > 0) {
+                    const firstInStockVariantId = variantsWithStock[0].VAR_ID || variantsWithStock[0].var_id;
+                    this.modal.variantSelect.value = firstInStockVariantId;
+                    console.log('Selected first in-stock variant option');
+                } else {
+                    // If no in-stock variants, select the first one but disable booking
+                    if (this.modal.variantSelect.options.length > 0) {
+                        this.modal.variantSelect.selectedIndex = 0;
+                    }
                 }
             }
         }
