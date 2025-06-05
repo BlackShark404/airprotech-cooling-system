@@ -1,6 +1,6 @@
 <?php
 $title = 'Technicians - AirProtech';
-$activeTab = 'technicians';
+$activeTab = 'technician';
 
 // Add any additional styles specific to this page
 $additionalStyles = <<<HTML
@@ -162,19 +162,6 @@ $additionalStyles = <<<HTML
         font-size: 0.8rem;
         color: #6c757d;
         line-height: 1.4;
-    }
-    
-    /* Tabs styling */
-    .nav-tabs .nav-item .nav-link {
-        border: none;
-        padding: 15px 20px;
-        font-weight: 600;
-        color: #6c757d;
-    }
-    
-    .nav-tabs .nav-item .nav-link.active {
-        color: #0d6efd;
-        border-bottom: 3px solid #0d6efd;
     }
     
     @media (max-width: 992px) {
