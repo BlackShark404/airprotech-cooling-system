@@ -554,4 +554,92 @@ class AdminController extends BaseController {
             $this->jsonError('Failed to update technician');
         }
     }
+    
+    /**
+     * API endpoint to update a service assignment status
+     */
+    public function updateServiceAssignment()
+    {
+        if (!$this->isPost()) {
+            $this->jsonError('Invalid request method');
+        }
+        
+        $bookingAssignmentModel = $this->loadModel('BookingAssignmentModel');
+        
+        // Get post data
+        $assignmentId = $_POST['assignment_id'] ?? null;
+        $status = $_POST['status'] ?? null;
+        $notes = $_POST['notes'] ?? null;
+        
+        if (!$assignmentId || !$status) {
+            $this->jsonError('Missing required parameters');
+        }
+        
+        $data = [
+            'ba_status' => $status,
+            'ba_notes' => $notes
+        ];
+        
+        // If status is in-progress, set started_at timestamp
+        if ($status === 'in-progress' && empty($_POST['started_at'])) {
+            $data['ba_started_at'] = date('Y-m-d H:i:s');
+        }
+        
+        // If status is completed, set completed_at timestamp
+        if ($status === 'completed' && empty($_POST['completed_at'])) {
+            $data['ba_completed_at'] = date('Y-m-d H:i:s');
+        }
+        
+        $result = $bookingAssignmentModel->updateAssignment($assignmentId, $data);
+        
+        if ($result) {
+            $this->jsonSuccess(['message' => 'Service assignment updated successfully']);
+        } else {
+            $this->jsonError('Failed to update service assignment');
+        }
+    }
+    
+    /**
+     * API endpoint to update a product assignment status
+     */
+    public function updateProductAssignment()
+    {
+        if (!$this->isPost()) {
+            $this->jsonError('Invalid request method');
+        }
+        
+        $productAssignmentModel = $this->loadModel('ProductAssignmentModel');
+        
+        // Get post data
+        $assignmentId = $_POST['assignment_id'] ?? null;
+        $status = $_POST['status'] ?? null;
+        $notes = $_POST['notes'] ?? null;
+        
+        if (!$assignmentId || !$status) {
+            $this->jsonError('Missing required parameters');
+        }
+        
+        $data = [
+            'pa_status' => $status,
+            'pa_notes' => $notes
+        ];
+        
+        // If status is in-progress, set started_at timestamp
+        if ($status === 'in-progress' && empty($_POST['started_at'])) {
+            $data['pa_started_at'] = date('Y-m-d H:i:s');
+        }
+        
+        // If status is completed, set completed_at timestamp
+        if ($status === 'completed' && empty($_POST['completed_at'])) {
+            $data['pa_completed_at'] = date('Y-m-d H:i:s');
+        }
+        
+        $result = $productAssignmentModel->updateAssignment($assignmentId, $data);
+        
+        if ($result) {
+            $this->jsonSuccess(['message' => 'Product assignment updated successfully']);
+        } else {
+            $this->jsonError('Failed to update product assignment');
+        }
+    }
 }

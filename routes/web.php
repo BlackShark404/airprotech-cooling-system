@@ -155,5 +155,9 @@ $router->map('POST', '/api/admin/service-requests/assign', 'App\Controllers\Admi
 $router->map('POST', '/api/technicians/service-assignment/update', 'App\Controllers\TechnicianController#updateServiceAssignment', 'update_service_assignment');
 $router->map('POST', '/api/technicians/product-assignment/update', 'App\Controllers\TechnicianController#updateProductAssignment', 'update_product_assignment');
 
+// New routes for admin to update assignment statuses
+$router->map('POST', '/api/admin/service-assignments/update', 'App\Controllers\AdminController#updateServiceAssignment', 'admin_update_service_assignment');
+$router->map('POST', '/api/admin/product-assignments/update', 'App\Controllers\AdminController#updateProductAssignment', 'admin_update_product_assignment');
+
 
 

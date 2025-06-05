@@ -363,6 +363,78 @@ ob_start();
     </div>
 </div>
 
+<!-- Update Service Assignment Status Modal -->
+<div class="modal fade" id="updateServiceStatusModal" tabindex="-1" role="dialog" aria-labelledby="updateServiceStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateServiceStatusModalLabel">Update Service Assignment Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateServiceStatusForm">
+                    <input type="hidden" id="service-assignment-id" name="assignmentId">
+                    
+                    <div class="mb-3">
+                        <label for="service-status" class="form-label">Status</label>
+                        <select id="service-status" name="status" class="form-select">
+                            <option value="assigned">Assigned</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="service-notes" class="form-label">Notes</label>
+                        <textarea id="service-notes" name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveServiceStatusBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Product Assignment Status Modal -->
+<div class="modal fade" id="updateProductStatusModal" tabindex="-1" role="dialog" aria-labelledby="updateProductStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateProductStatusModalLabel">Update Product Assignment Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateProductStatusForm">
+                    <input type="hidden" id="product-assignment-id" name="assignmentId">
+                    
+                    <div class="mb-3">
+                        <label for="product-status" class="form-label">Status</label>
+                        <select id="product-status" name="status" class="form-select">
+                            <option value="assigned">Assigned</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="product-notes" class="form-label">Notes</label>
+                        <textarea id="product-notes" name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveProductStatusBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Include jQuery first -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -386,6 +458,7 @@ ob_start();
 let techniciansManager;
 let serviceAssignmentsTable;
 let productAssignmentsTable;
+let currentTechnicianId;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the DataTablesManager for technicians
@@ -476,6 +549,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Save technician changes
     $('#saveTechnicianBtn').on('click', saveTechnician);
+    
+    // Save service assignment status changes
+    $('#saveServiceStatusBtn').on('click', saveServiceAssignmentStatus);
+    
+    // Save product assignment status changes
+    $('#saveProductStatusBtn').on('click', saveProductAssignmentStatus);
 });
 
 // View technician details
@@ -516,6 +595,8 @@ function initServiceAssignmentsTable(technicianId) {
         serviceAssignmentsTable.destroy();
     }
     
+    currentTechnicianId = technicianId;
+    
     serviceAssignmentsTable = $('#serviceAssignmentsTable').DataTable({
         ajax: {
             url: `/api/admin/technicians/${technicianId}/assignments?type=service`,
@@ -553,12 +634,28 @@ function initServiceAssignmentsTable(technicianId) {
                         <a href="/admin/service-requests?id=${row.ba_booking_id}" class="action-icon action-icon-view me-1">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <div class="action-icon action-icon-edit update-service-status-btn" data-id="${row.ba_id}" data-status="${row.ba_status}" data-notes="${row.ba_notes || ''}">
+                            <i class="bi bi-pencil"></i>
+                        </div>
                     </div>`;
                 }
             }
         ],
         responsive: true,
         order: [[3, 'desc']]
+    });
+    
+    // Add event listener for update status buttons
+    $('#serviceAssignmentsTable').on('click', '.update-service-status-btn', function() {
+        const id = $(this).data('id');
+        const status = $(this).data('status');
+        const notes = $(this).data('notes');
+        
+        $('#service-assignment-id').val(id);
+        $('#service-status').val(status);
+        $('#service-notes').val(notes);
+        
+        $('#updateServiceStatusModal').modal('show');
     });
 }
 
@@ -567,6 +664,8 @@ function initProductAssignmentsTable(technicianId) {
     if (productAssignmentsTable) {
         productAssignmentsTable.destroy();
     }
+    
+    currentTechnicianId = technicianId;
     
     productAssignmentsTable = $('#productAssignmentsTable').DataTable({
         ajax: {
@@ -611,12 +710,28 @@ function initProductAssignmentsTable(technicianId) {
                         <a href="/admin/product-bookings?id=${row.pa_order_id}" class="action-icon action-icon-view me-1">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <div class="action-icon action-icon-edit update-product-status-btn" data-id="${row.pa_id}" data-status="${row.pa_status}" data-notes="${row.pa_notes || ''}">
+                            <i class="bi bi-pencil"></i>
+                        </div>
                     </div>`;
                 }
             }
         ],
         responsive: true,
         order: [[3, 'desc']]
+    });
+    
+    // Add event listener for update status buttons
+    $('#productAssignmentsTable').on('click', '.update-product-status-btn', function() {
+        const id = $(this).data('id');
+        const status = $(this).data('status');
+        const notes = $(this).data('notes');
+        
+        $('#product-assignment-id').val(id);
+        $('#product-status').val(status);
+        $('#product-notes').val(notes);
+        
+        $('#updateProductStatusModal').modal('show');
     });
 }
 
@@ -711,6 +826,60 @@ function showErrorToast(message) {
     } else {
         alert(message);
     }
+}
+
+// Save service assignment status
+function saveServiceAssignmentStatus() {
+    const assignmentId = $('#service-assignment-id').val();
+    const status = $('#service-status').val();
+    const notes = $('#service-notes').val();
+    
+    $.ajax({
+        url: '/api/admin/service-assignments/update',
+        method: 'POST',
+        data: {
+            assignment_id: assignmentId,
+            status: status,
+            notes: notes
+        },
+        success: function(response) {
+            showSuccessToast('Service assignment status updated successfully');
+            $('#updateServiceStatusModal').modal('hide');
+            
+            // Refresh the assignments table
+            initServiceAssignmentsTable(currentTechnicianId);
+        },
+        error: function(xhr) {
+            showErrorToast('Failed to update service assignment status');
+        }
+    });
+}
+
+// Save product assignment status
+function saveProductAssignmentStatus() {
+    const assignmentId = $('#product-assignment-id').val();
+    const status = $('#product-status').val();
+    const notes = $('#product-notes').val();
+    
+    $.ajax({
+        url: '/api/admin/product-assignments/update',
+        method: 'POST',
+        data: {
+            assignment_id: assignmentId,
+            status: status,
+            notes: notes
+        },
+        success: function(response) {
+            showSuccessToast('Product assignment status updated successfully');
+            $('#updateProductStatusModal').modal('hide');
+            
+            // Refresh the assignments table
+            initProductAssignmentsTable(currentTechnicianId);
+        },
+        error: function(xhr) {
+            showErrorToast('Failed to update product assignment status');
+        }
+    });
 }
 </script>
 
