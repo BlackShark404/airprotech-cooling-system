@@ -339,15 +339,16 @@
                         
                         <!-- Price Range Filter -->
                         <div class="filter-group">
-                            <label class="form-label">Price Range</label>
+                            <label class="form-label">Price Range (₱)</label>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <input type="number" name="min-price" class="form-control" placeholder="Min">
+                                    <input type="number" name="min-price" class="form-control" placeholder="Min" min="0" step="100">
                                 </div>
                                 <div class="col-6">
-                                    <input type="number" name="max-price" class="form-control" placeholder="Max">
+                                    <input type="number" name="max-price" class="form-control" placeholder="Max" min="0" step="100">
                                 </div>
                             </div>
+                            <small class="text-muted">Shows products with prices in range</small>
                         </div>
                         
                         <!-- Stock Status Filter -->
@@ -363,8 +364,12 @@
                         
                         <!-- Filter Buttons -->
                         <div class="filter-buttons">
-                            <button type="submit" class="btn btn-filter btn-primary me-2">Apply Filters</button>
-                            <button type="reset" class="btn btn-reset">Clear Filters</button>
+                            <button type="submit" class="btn btn-filter btn-primary me-2">
+                                <i class="fas fa-filter me-1"></i>Apply Filters
+                            </button>
+                            <button type="reset" class="btn btn-reset">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </button>
                         </div>
                     </div>
                 </form>

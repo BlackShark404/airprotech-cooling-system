@@ -349,27 +349,30 @@ class ProductManager {
         const minPriceFilter = this.filterForm?.querySelector('[name="min-price"]');
         const maxPriceFilter = this.filterForm?.querySelector('[name="max-price"]');
 
-        if (minPriceFilter && minPriceFilter.value !== '') {
-            const minPrice = parseFloat(minPriceFilter.value);
-            filteredProducts = filteredProducts.filter(product => {
-                // Check if variants exist before filtering
-                return product.variants && Array.isArray(product.variants) &&
-                    product.variants.some(variant => {
-                        const price = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
-                        return price >= minPrice;
-                    });
-            });
-        }
+        if ((minPriceFilter && minPriceFilter.value !== '') || (maxPriceFilter && maxPriceFilter.value !== '')) {
+            const minPrice = minPriceFilter && minPriceFilter.value !== '' ? parseFloat(minPriceFilter.value) : 0;
+            const maxPrice = maxPriceFilter && maxPriceFilter.value !== '' ? parseFloat(maxPriceFilter.value) : Number.MAX_VALUE;
 
-        if (maxPriceFilter && maxPriceFilter.value !== '') {
-            const maxPrice = parseFloat(maxPriceFilter.value);
             filteredProducts = filteredProducts.filter(product => {
-                // Check if variants exist before filtering
-                return product.variants && Array.isArray(product.variants) &&
-                    product.variants.some(variant => {
-                        const price = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
-                        return price <= maxPrice;
-                    });
+                // Check if variants exist
+                if (!product.variants || !Array.isArray(product.variants) || product.variants.length === 0) {
+                    return false;
+                }
+
+                // Find the minimum price among all variants
+                let lowestPrice = Number.MAX_VALUE;
+                let highestPrice = 0;
+
+                product.variants.forEach(variant => {
+                    const price = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || 0);
+                    if (price < lowestPrice) lowestPrice = price;
+                    if (price > highestPrice) highestPrice = price;
+                });
+
+                // A product matches if any of its variants' prices falls within the range
+                // - The product's lowest price should be <= max price filter
+                // - The product's highest price should be >= min price filter
+                return lowestPrice <= maxPrice && highestPrice >= minPrice;
             });
         }
 
