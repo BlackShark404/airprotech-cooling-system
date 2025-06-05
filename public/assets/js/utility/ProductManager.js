@@ -111,16 +111,16 @@ class ProductManager {
 
             return `
                 <div class="col-md-6 col-lg-6 mb-5">
-                    <div class="product-card" data-product-id="${productId}" data-category="${product.category || ''}">
+                    <div class="product-card d-flex flex-column" data-product-id="${productId}" data-category="${product.category || ''}">
                         <div class="product-img-container">
                             <img src="${imagePath}" alt="${productName}" class="product-img">
                         </div>
-                        <div class="product-info">
+                        <div class="product-info d-flex flex-column flex-grow-1">
                             <h3 class="product-title">${productName}</h3>
                             <p class="product-desc">${productDesc.substring(0, 100)}${productDesc.length > 100 ? '...' : ''}</p>
                             ${priceDisplay}
                             ${variantInfo}
-                            <div class="d-flex justify-content-end align-items-center mt-3">
+                            <div class="d-flex justify-content-end align-items-center mt-auto">
                                 <button class="btn ${bookButtonClass} view-details" data-product-id="${productId}" title="${bookButtonTooltip}">${bookButtonText}</button>
                             </div>
                         </div>
