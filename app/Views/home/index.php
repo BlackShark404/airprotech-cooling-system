@@ -161,7 +161,7 @@
             <div class="modal-content">
                 <div class="modal-body p-0">
                     <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <img src="/assets/images/services-images/services-offered.jpg" class="img-fluid w-100" alt="Air Conditioning Installation">
+                    <img src="/assets/images/services-images/services-offered.webp" class="img-fluid w-100" alt="Air Conditioning Installation">
                 </div>
             </div>
         </div>
@@ -171,7 +171,7 @@
             <div class="modal-content">
                 <div class="modal-body p-0">
                     <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <img src="/assets/images/services-images/services-offered.jpg" class="img-fluid w-100" alt="AC Maintenance Service">
+                    <img src="/assets/images/services-images/services-offered.webp" class="img-fluid w-100" alt="AC Maintenance Service">
                 </div>
             </div>
         </div>
@@ -181,7 +181,7 @@
             <div class="modal-content">
                 <div class="modal-body p-0">
                     <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <img src="/assets/images/services-images/services-offered.jpg" class="img-fluid w-100" alt="AC Repair Services">
+                    <img src="/assets/images/services-images/services-offered.webp" class="img-fluid w-100" alt="AC Repair Services">
                 </div>
             </div>
         </div>
@@ -338,7 +338,7 @@
                             <i class="fas fa-phone fa-3x text-primary mb-3"></i>
                             <h4 class="fw-bold mb-3">Get in Touch</h4>
                             <p class="text-muted mb-3">Reach out to us for inquiries or to schedule a service.</p>
-                            <p class="mb-2"><strong>Phone:</strong> <a href="tel:+169171757258" class="text-decoration-none text-primary">+16 917 175 7258</a></p>
+                            <p class="mb-2"><strong>Phone:</strong> <a href="tel:09338525313" class="text-decoration-none text-primary">09338525313</a></p>
                             <p class="mb-2"><strong>Email:</strong> <a href="mailto:airprotechaircon123@gmail.com" class="text-decoration-none text-primary">airprotechaircon123@gmail.com</a></p>
                             <div class="social-links mt-4">
                                 <a href="#" class="text-primary me-3"><i class="fab fa-facebook-f fa-2x"></i></a>
@@ -364,24 +364,18 @@
                 <div class="col-md-3 mb-4">
                     <h4 class="h6 mb-3">Quick Links</h4>
                     <ul class="list-unstyled">
-                        <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                            <li><a href="/admin/services" class="text-white-50 text-decoration-none">Services</a></li>
-                            <li><a href="/admin/products" class="text-white-50 text-decoration-none">Products</a></li>
-                            <li><a href="/admin/my-order-services" class="text-white-50 text-decoration-none">My Orders and Services Request</a></li>
-                        <?php else: ?>
-                            <li><a href="#hero" class="text-white-50 text-decoration-none">Home</a></li>
-                            <li><a href="#our-services" class="text-white-50 text-decoration-none">Services</a></li>
-                            <li><a href="#featured-products" class="text-white-50 text-decoration-none">Products</a></li>
-                            <li><a href="#why-choose-us" class="text-white-50 text-decoration-none">Why Choose Us</a></li>
-                            <li><a href="#contact" class="text-white-50 text-decoration-none">Contact</a></li>
-                        <?php endif; ?>
+                        <li><a href="#hero" class="text-white-50 text-decoration-none">Home</a></li>
+                        <li><a href="#our-services" class="text-white-50 text-decoration-none">Services</a></li>
+                        <li><a href="#featured-products" class="text-white-50 text-decoration-none">Products</a></li>
+                        <li><a href="#why-choose-us" class="text-white-50 text-decoration-none">Why Choose Us</a></li>
+                        <li><a href="#contact" class="text-white-50 text-decoration-none">Contact</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3 mb-4">
                     <h4 class="h6 mb-3">Contact Info</h4>
                     <ul class="list-unstyled text-white-50">
-                        <li><i class="fas fa-phone text-primary me-2"></i> 1-800-AIR-COOL</li>
-                        <li><i class="fas fa-envelope text-primary me-2"></i> info@airprotech.com</li>
+                        <li><i class="fas fa-phone text-primary me-2"></i> 09338525313</li>
+                        <li><i class="fas fa-envelope text-primary me-2"></i> airprotechaircon123@gmail.com</li>
                         <li><i class="fas fa-map-marker-alt text-primary me-2"></i> 123 Cooling Street, AC City</li>
                     </ul>
                 </div>
