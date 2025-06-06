@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
-use App\Models\AdminModel; // Assuming you have an AdminModel for admin-specific operations
+use App\Models\AdminModel; 
 use App\Models\ServiceRequestModel;
 use App\Models\ProductModel;
 use App\Models\ReportsModel;
@@ -18,7 +18,7 @@ class AdminController extends BaseController {
     public function __construct() {
         parent::__construct();
         $this->userModel = new UserModel();
-        $this->adminModel = new AdminModel(); // Initialize AdminModel
+        $this->adminModel = new AdminModel(); 
         $this->serviceModel = new ServiceRequestModel();
         $this->productModel = new ProductModel();
         $this->reportsModel = new ReportsModel();
@@ -35,15 +35,11 @@ class AdminController extends BaseController {
             } else if (!isset($_SESSION['user_id'])){
                 // Not logged in, redirect to login page
                 $this->redirect('/login');
-                exit; // Important to stop further execution
+                exit; 
             }
-            // If user_id is set, but user_role is not 'admin' and not caught by above, it's a state to review.
-            // For now, the outer if condition handles this by proceeding to redirect if not admin.
-            // If code reaches here, it implies !isset($_SESSION['user_id']) which is handled by the else if.
-            // Or, it implies $_SESSION['user_id'] is set, but $_SESSION['user_role'] is not set or not 'admin'.
-            // The nested if conditions should cover these, but as a fallback for the outer if:
+           
             if(!isset($_SESSION['user_id'])) $this->redirect('/login');
-            else $this->redirect('/'); // Default redirect if conditions are tricky, implies non-admin or issue
+            else $this->redirect('/'); 
             exit;
         }
     }
@@ -61,7 +57,6 @@ class AdminController extends BaseController {
     }
 
     public function renderAdminProfile() {
-        // Auth check is already in constructor, but double check session for safety
         if (!isset($_SESSION['user_id'])) {
             $this->redirect('/login'); 
             return;
@@ -285,7 +280,7 @@ class AdminController extends BaseController {
                 return $this->jsonError('Failed to update profile image in database', 500);
             }
         } catch (\Exception $e) {
-            @unlink($targetPath); // Clean up on exception
+            @unlink($targetPath); 
             // Log the error: error_log("DB error updating profile image: " . $e->getMessage());
             return $this->jsonError('An error occurred during database update: ' . $e->getMessage(), 500);
         }

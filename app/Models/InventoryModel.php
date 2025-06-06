@@ -684,4 +684,24 @@ class InventoryModel extends Model
             return false;
         }
     }
+
+    /**
+     * Update inventory records to use new variant IDs after product update
+     * 
+     * @param int $oldVariantId The old variant ID
+     * @param int $newVariantId The new variant ID that replaces the old one
+     * @return bool True on success
+     */
+    public function updateVariantReferences($oldVariantId, $newVariantId)
+    {
+        $sql = "UPDATE {$this->table} SET 
+                VAR_ID = :new_variant_id,
+                INVE_UPDATED_AT = CURRENT_TIMESTAMP
+                WHERE VAR_ID = :old_variant_id AND INVE_DELETED_AT IS NULL";
+        
+        return $this->execute($sql, [
+            ':new_variant_id' => $newVariantId,
+            ':old_variant_id' => $oldVariantId
+        ]);
+    }
 } 

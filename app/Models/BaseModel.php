@@ -357,10 +357,6 @@ class BaseModel
 
     /**
      * Add a where less than or equal condition
-     * 
-     * @param string $column The column to compare
-     * @param mixed $value The value to compare against
-     * @return $this
      */
     public function whereLessThanOrEqual($column, $value)
     {
@@ -385,13 +381,6 @@ class BaseModel
         return $this;
     }
 
-    /**
-     * Add a NOT LIKE condition
-     * 
-     * @param string $column The column to compare
-     * @param string $value The pattern to not match against (use % for wildcards)
-     * @return $this
-     */
     public function whereNotLike($column, $value)
     {
         $paramName = $this->generateParamName($column);
@@ -402,11 +391,6 @@ class BaseModel
 
     /**
      * Add a BETWEEN condition
-     * 
-     * @param string $column The column to check
-     * @param mixed $min The minimum value
-     * @param mixed $max The maximum value
-     * @return $this
      */
     public function whereBetween($column, $min, $max)
     {

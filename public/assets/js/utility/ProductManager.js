@@ -55,9 +55,12 @@ class ProductManager {
             const productName = product.PROD_NAME || product.prod_name || 'Unnamed Product';
             const productDesc = product.PROD_DESCRIPTION || product.prod_description || '';
 
-            // Show all variants instead of only filtering those with inventory > 0
+            // Get all variants
             const allVariants = product.variants || [];
+
+            // Check if any variants have stock
             const variantsWithStock = allVariants.filter(v => (v.INVENTORY_QUANTITY || 0) > 0);
+            const hasVariantsWithStock = variantsWithStock.length > 0;
 
             // Get the primary variant price if available
             let priceDisplay = '';
@@ -103,8 +106,7 @@ class ProductManager {
                 }
             }
 
-            // Check if any variants have stock
-            const hasVariantsWithStock = variantsWithStock.length > 0;
+            // Set button status based on stock
             const bookButtonClass = hasVariantsWithStock ? 'btn-book-now' : 'btn-book-now btn-secondary disabled';
             const bookButtonText = hasVariantsWithStock ? 'Book Now' : 'Out of Stock';
             const bookButtonTooltip = hasVariantsWithStock ? '' : 'No variants in stock';
@@ -446,163 +448,59 @@ class ProductManager {
      * Update modal price and availability based on selected variant
      */
     updateModalPriceAndAvailability() {
-        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.price || !this.modal.availabilityStatus) {
-            console.log('Missing elements for updating modal price and availability');
-            return;
-        }
-
-        // Handle the case where there are no variants available
-        if (this.modal.variantSelect.options.length === 0 || this.modal.variantSelect.value === '') {
-            console.log('No variants available or selected');
-            this.modal.price.textContent = '₱N/A';
-            this.modal.availabilityStatus.textContent = 'Out of Stock';
-            this.modal.availabilityStatus.className = 'text-danger fw-medium';
-
-            // Update badge color - find it by going up one level to parent and then find badge
-            const parent = this.modal.availabilityStatus.parentNode;
-            const badge = parent.querySelector('.badge');
-            if (badge) {
-                badge.className = 'badge rounded-pill bg-danger-subtle text-danger me-2';
-                const icon = badge.querySelector('i');
-                if (icon) {
-                    icon.className = 'fas fa-times-circle';
-                }
-            }
-
-            // Disable confirm button
-            if (this.modal.submitBtn) {
-                this.modal.submitBtn.disabled = true;
-                this.modal.submitBtn.title = "No variants available in stock";
-            }
-
-            // Disable quantity controls
-            const increaseQtyBtn = document.getElementById('increase-quantity');
-            const decreaseQtyBtn = document.getElementById('decrease-quantity');
-            if (increaseQtyBtn) increaseQtyBtn.disabled = true;
-            if (decreaseQtyBtn) decreaseQtyBtn.disabled = true;
-
-            return;
-        }
+        if (!this.modal.variantSelect || !this.currentProduct) return;
 
         const selectedVariantId = parseInt(this.modal.variantSelect.value);
-        console.log('Selected variant ID:', selectedVariantId);
+        if (isNaN(selectedVariantId)) return;
 
-        const selectedVariant = this.currentProduct.variants.find(v => {
+        // Find the selected variant
+        const variant = this.currentProduct.variants.find(v => {
             const id = parseInt(v.VAR_ID || v.var_id);
             return id === selectedVariantId;
         });
 
-        console.log('Selected variant:', selectedVariant);
+        if (!variant) return;
 
-        if (selectedVariant) {
-            const price = selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || '0.00';
-            this.modal.price.textContent = `₱${price}`;
+        // Get the variant price and inventory
+        const price = variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00';
+        const inventory = variant.INVENTORY_QUANTITY || 0;
 
-            // Check inventory quantity for this variant
-            const availableQuantity = this.getAvailableQuantity(selectedVariant);
-            console.log('Available quantity:', availableQuantity);
+        // Update the price display
+        if (this.modal.price) {
+            this.modal.price.textContent = `₱${parseFloat(price).toFixed(2)}`;
+        }
 
-            // Update availability status based on inventory quantity
-            let productStatus = 'Out of Stock';
-            let statusClass = 'text-danger';
-            let badgeClass = 'bg-danger-subtle text-danger';
-            let iconClass = 'fas fa-times-circle';
-
-            if (availableQuantity > 10) {
-                productStatus = `In Stock (${availableQuantity})`;
-                statusClass = 'text-success';
-                badgeClass = 'bg-success-subtle text-success';
-                iconClass = 'fas fa-check-circle';
-            } else if (availableQuantity > 0) {
-                productStatus = `Limited Stock (${availableQuantity})`;
-                statusClass = 'text-warning';
-                badgeClass = 'bg-warning-subtle text-warning';
-                iconClass = 'fas fa-exclamation-circle';
-            }
-
-            // Update the display
-            this.modal.availabilityStatus.textContent = productStatus;
-            this.modal.availabilityStatus.className = `fw-medium ${statusClass}`;
-
-            // Update badge color - find it by going up one level to parent and then find badge
-            const parent = this.modal.availabilityStatus.parentNode;
-            const badge = parent.querySelector('.badge');
-            if (badge) {
-                badge.className = `badge rounded-pill ${badgeClass} me-2`;
-                const icon = badge.querySelector('i');
-                if (icon) {
-                    icon.className = iconClass;
-                }
-            }
-
-            // Reset quantity to 1 or available quantity if less than 1
-            if (this.modal.quantity) {
-                const maxQuantity = Math.max(1, Math.min(availableQuantity, 10)); // Limit to 10 for UI purposes
-                this.modal.quantity.value = availableQuantity > 0 ? Math.min(1, maxQuantity) : 0;
-
-                // Enable/disable quantity controls based on stock
-                const increaseQtyBtn = document.getElementById('increase-quantity');
-                const decreaseQtyBtn = document.getElementById('decrease-quantity');
-
-                if (increaseQtyBtn) {
-                    increaseQtyBtn.disabled = availableQuantity <= 1;
-                }
-
-                if (decreaseQtyBtn) {
-                    decreaseQtyBtn.disabled = true; // Start with 1
-                }
-
-                // Set max attribute on quantity input to inventory limit
-                this.modal.quantity.setAttribute('max', availableQuantity);
-
-                // Disable the confirm button if out of stock
-                if (this.modal.submitBtn) {
-                    this.modal.submitBtn.disabled = availableQuantity <= 0;
-                    if (availableQuantity <= 0) {
-                        this.modal.submitBtn.title = "This product is out of stock";
-                        this.modal.submitBtn.classList.add('btn-secondary');
-                        this.modal.submitBtn.classList.remove('btn-primary');
-
-                        // Update icon
-                        const icon = this.modal.submitBtn.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-times-circle me-2';
-                        }
-                    } else {
-                        this.modal.submitBtn.title = "";
-                        this.modal.submitBtn.classList.add('btn-primary');
-                        this.modal.submitBtn.classList.remove('btn-secondary');
-
-                        // Update icon
-                        const icon = this.modal.submitBtn.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-check-circle me-2';
-                        }
-                    }
-                }
-            }
-        } else {
-            console.log('No matching variant found for ID:', selectedVariantId);
-            this.modal.price.textContent = '₱N/A';
-            this.modal.availabilityStatus.textContent = 'N/A';
-            this.modal.availabilityStatus.className = 'fw-medium text-muted';
-
-            // Update badge color - find it by going up one level to parent and then find badge
-            const parent = this.modal.availabilityStatus.parentNode;
-            const badge = parent.querySelector('.badge');
-            if (badge) {
-                badge.className = 'badge rounded-pill bg-secondary-subtle text-secondary me-2';
-                const icon = badge.querySelector('i');
-                if (icon) {
-                    icon.className = 'fas fa-question-circle';
-                }
-            }
-
-            if (this.modal.submitBtn) {
-                this.modal.submitBtn.disabled = true;
-                this.modal.submitBtn.title = "Please select a variant";
+        // Update availability status
+        if (this.modal.availabilityStatus) {
+            if (inventory > 0) {
+                this.modal.availabilityStatus.textContent = `In Stock (${inventory} units)`;
+                this.modal.availabilityStatus.className = 'text-success fw-medium';
+            } else {
+                this.modal.availabilityStatus.textContent = 'Out of Stock';
+                this.modal.availabilityStatus.className = 'text-danger fw-medium';
             }
         }
+
+        // Update quantity input max value and button states
+        if (this.modal.quantity) {
+            // Reset quantity to 1 when changing variants
+            this.modal.quantity.value = '1';
+
+            // Update increase/decrease button states
+            const increaseQtyBtn = document.getElementById('increase-quantity');
+            const decreaseQtyBtn = document.getElementById('decrease-quantity');
+
+            if (increaseQtyBtn) {
+                increaseQtyBtn.disabled = inventory <= 1;
+            }
+
+            if (decreaseQtyBtn) {
+                decreaseQtyBtn.disabled = true; // Always disabled when quantity is 1
+            }
+        }
+
+        // Update total amount
+        this.updateTotalAmount();
     }
 
     /**
@@ -623,21 +521,12 @@ class ProductManager {
                 const allProducts = response.data.data;
 
                 if (allProducts.length > 0) {
-                    // Filter to only products with variants that have inventory
-                    const productsWithInventory = allProducts.filter(product => {
-                        // Check if product has variants with inventory
-                        return product.variants && Array.isArray(product.variants) &&
-                            product.variants.some(variant => {
-                                const inventory = variant.INVENTORY_QUANTITY || 0;
-                                return inventory > 0;
-                            });
-                    });
+                    // Use all products instead of filtering based on inventory
+                    this.allProducts = allProducts;
+                    this.populateCategoryFilter(allProducts);
+                    this.renderProducts(allProducts);
 
-                    this.allProducts = productsWithInventory;
-                    this.populateCategoryFilter(productsWithInventory);
-                    this.renderProducts(productsWithInventory);
-
-                    console.log(`Filtered ${productsWithInventory.length} products with inventory out of ${allProducts.length} total products`);
+                    console.log(`Loaded ${allProducts.length} total products`);
                 } else {
                     console.warn('No products found in API response.');
                     if (this.container) this.container.innerHTML = '<div class="col-12"><p class="text-center">No products available at the moment.</p></div>';
@@ -939,202 +828,191 @@ class ProductManager {
      * Populate the modal with product details
      */
     populateModal(product) {
+        // Ensure product exists and has the necessary details
         if (!product || !this.modal.element) return;
 
-        console.log('Populating modal with product:', product);
+        // Store the current product for use in the confirm order function
         this.currentProduct = product;
 
-        // Reset form values
-        if (this.modal.variantSelect) this.modal.variantSelect.innerHTML = '';
-        if (this.modal.quantity) this.modal.quantity.value = '1';
-        if (this.modal.features) this.modal.features.innerHTML = '';
-        if (this.modal.specifications) this.modal.specifications.innerHTML = '';
-        if (this.modal.preferredDate) this.modal.preferredDate.value = '';
-        if (this.modal.preferredTime) this.modal.preferredTime.value = '';
-        if (this.modal.address) this.modal.address.value = '';
-        if (this.modal.optionalNotes) this.modal.optionalNotes.value = '';
+        // Basic product details
+        const productName = product.PROD_NAME || product.prod_name || 'Unnamed Product';
+        const productId = product.PROD_ID || product.prod_id || 'N/A';
+        const productImage = product.PROD_IMAGE || product.prod_image || '';
+        const productDescription = product.PROD_DESCRIPTION || product.prod_description || '';
+        const availabilityStatus = product.PROD_AVAILABILITY_STATUS || product.prod_availability_status || 'Unknown';
 
-        // Set min date for the preferred date to today
-        if (this.modal.preferredDate) {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            this.modal.preferredDate.min = `${yyyy}-${mm}-${dd}`;
-        }
+        // Update the modal title and product name
+        if (this.modal.title) this.modal.title.textContent = `${productName}`;
+        if (this.modal.productName) this.modal.productName.textContent = productName;
 
-        // Populate basic product details
+        // Set product code/ID
+        if (this.modal.productCode) this.modal.productCode.textContent = `#${productId}`;
+
+        // Set product image with proper path handling
         if (this.modal.productImage) {
-            let imagePath = product.PROD_IMAGE || product.prod_image || '';
+            let imagePath = productImage;
             if (imagePath && !imagePath.startsWith('http') && !imagePath.startsWith('/uploads/')) {
                 imagePath = '/' + imagePath;
             }
             this.modal.productImage.src = imagePath;
+            this.modal.productImage.alt = productName;
         }
 
-        if (this.modal.productName) {
-            this.modal.productName.textContent = product.PROD_NAME || product.prod_name || 'Unnamed Product';
+        // Sort and filter variants (valid variants with all necessary data)
+        let variants = [];
+        if (product.variants && Array.isArray(product.variants)) {
+            variants = product.variants.filter(variant => {
+                return variant &&
+                    (variant.VAR_CAPACITY || variant.var_capacity) &&
+                    (variant.VAR_SRP_PRICE !== undefined || variant.var_srp_price !== undefined);
+            });
         }
 
-        if (this.modal.productCode) {
-            this.modal.productCode.textContent = `${product.PROD_ID || product.prod_id || 'N/A'}`;
-        }
-
-        // Make sure variants array exists
-        if (!product.variants || !Array.isArray(product.variants)) {
-            console.error('Product variants missing or not an array:', product);
-            product.variants = [];
-        }
-
-        console.log('Product variants:', product.variants);
-
-        // Show all variants in dropdown, not just those with stock
-        const allVariants = product.variants;
-        const variantsWithStock = product.variants.filter(variant => {
+        // Check if any variants have inventory
+        const hasInventory = variants.some(variant => {
             const inventory = variant.INVENTORY_QUANTITY || 0;
             return inventory > 0;
         });
 
-        console.log('Variants with stock:', variantsWithStock);
-
-        // Populate variants in dropdown
-        if (this.modal.variantSelect) {
-            if (!allVariants || allVariants.length === 0) {
-                this.modal.variantSelect.innerHTML = '<option value="">No variants available</option>';
-                console.log('No variants found');
+        // Set availability status in modal
+        if (this.modal.availabilityStatus) {
+            if (hasInventory) {
+                this.modal.availabilityStatus.textContent = 'In Stock';
+                this.modal.availabilityStatus.className = 'text-success fw-medium';
             } else {
-                allVariants.forEach(variant => {
-                    const capacity = variant.VAR_CAPACITY || variant.var_capacity || 'Unknown';
-                    const price = variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00';
-                    const inventory = variant.INVENTORY_QUANTITY || 0;
-                    const variantId = variant.VAR_ID || variant.var_id;
-                    const outOfStock = inventory <= 0;
-
-                    const option = document.createElement('option');
-                    option.value = variantId;
-                    if (outOfStock) {
-                        option.textContent = `${capacity} - ₱${price} (Out of Stock)`;
-                        option.classList.add('text-danger');
-                        option.disabled = true; // Disable out of stock options
-                    } else {
-                        option.textContent = `${capacity} - ₱${price} (${inventory} in stock)`;
-                    }
-
-                    this.modal.variantSelect.appendChild(option);
-                });
-
-                // Select the first in-stock option
-                if (variantsWithStock.length > 0) {
-                    const firstInStockVariantId = variantsWithStock[0].VAR_ID || variantsWithStock[0].var_id;
-                    this.modal.variantSelect.value = firstInStockVariantId;
-                    console.log('Selected first in-stock variant option');
-                } else {
-                    // If no in-stock variants, select the first one but disable booking
-                    if (this.modal.variantSelect.options.length > 0) {
-                        this.modal.variantSelect.selectedIndex = 0;
-                    }
-                }
+                this.modal.availabilityStatus.textContent = 'Out of Stock';
+                this.modal.availabilityStatus.className = 'text-danger fw-medium';
             }
         }
 
-        // Update price and availability based on selected variant
+        // Set up the variant selector with inventory information
+        if (this.modal.variantSelect) {
+            this.modal.variantSelect.innerHTML = '';
+
+            variants.forEach(variant => {
+                const variantId = variant.VAR_ID || variant.var_id;
+                const capacity = variant.VAR_CAPACITY || variant.var_capacity;
+                const inventory = variant.INVENTORY_QUANTITY || 0;
+
+                // Create option element
+                const option = document.createElement('option');
+                option.value = variantId;
+                option.textContent = `${capacity} ${inventory > 0 ? `(${inventory} in stock)` : '(Out of stock)'}`;
+                option.disabled = inventory <= 0;
+                option.dataset.price = variant.VAR_SRP_PRICE || variant.var_srp_price || 0;
+                option.dataset.inventory = inventory;
+
+                // Add to select
+                this.modal.variantSelect.appendChild(option);
+            });
+
+            // Disable confirm button if no variants have inventory
+            if (this.modal.submitBtn) {
+                this.modal.submitBtn.disabled = !hasInventory;
+                if (!hasInventory) {
+                    this.modal.submitBtn.innerHTML = '<i class="fas fa-times-circle me-2"></i>Out of Stock';
+                    this.modal.submitBtn.classList.remove('btn-primary');
+                    this.modal.submitBtn.classList.add('btn-secondary');
+                } else {
+                    this.modal.submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Confirm Booking';
+                    this.modal.submitBtn.classList.remove('btn-secondary');
+                    this.modal.submitBtn.classList.add('btn-primary');
+                }
+            }
+
+            // If there are no variants with inventory, disable the quantity controls
+            const increaseQtyBtn = document.getElementById('increase-quantity');
+            const decreaseQtyBtn = document.getElementById('decrease-quantity');
+
+            if (increaseQtyBtn) increaseQtyBtn.disabled = !hasInventory;
+            if (decreaseQtyBtn) decreaseQtyBtn.disabled = true; // Always disabled at start as quantity is 1
+            if (this.modal.quantity) this.modal.quantity.disabled = !hasInventory;
+        }
+
+        // Update price display based on the first variant
         this.updateModalPriceAndAvailability();
 
-        // Populate product features
-        if (this.modal.features && product.features && Array.isArray(product.features)) {
-            if (product.features.length === 0) {
-                this.modal.features.innerHTML = '<li class="list-group-item border-0 text-muted">No features available</li>';
-            } else {
-                let featuresHTML = '';
+        // Features
+        if (this.modal.features) {
+            this.modal.features.innerHTML = '';
+
+            if (product.features && Array.isArray(product.features) && product.features.length > 0) {
                 product.features.forEach(feature => {
-                    const featureName = feature.FEATURE_NAME || feature.feature_name || '';
+                    const featureName = feature.FEATURE_NAME || feature.feature_name;
                     if (featureName) {
-                        featuresHTML += `
-                            <li class="list-group-item border-0 py-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-check-circle text-success me-3"></i>
-                                    <span>${featureName}</span>
-                                </div>
-                            </li>
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item d-flex align-items-center';
+                        li.innerHTML = `
+                            <i class="fas fa-check-circle text-success me-3"></i>
+                            <span>${featureName}</span>
                         `;
+                        this.modal.features.appendChild(li);
                     }
                 });
-                this.modal.features.innerHTML = featuresHTML || '<li class="list-group-item border-0 text-muted">No features available</li>';
+            } else {
+                // No features message
+                const li = document.createElement('li');
+                li.className = 'list-group-item text-center text-muted';
+                li.textContent = 'No features available for this product.';
+                this.modal.features.appendChild(li);
             }
         }
 
-        // Populate product specifications
-        if (this.modal.specifications && product.specs && Array.isArray(product.specs)) {
-            if (product.specs.length === 0) {
-                this.modal.specifications.innerHTML = '<li class="list-group-item border-0 text-muted">No specifications available</li>';
-            } else {
-                let specsHTML = '';
+        // Specifications
+        if (this.modal.specifications) {
+            this.modal.specifications.innerHTML = '';
+
+            if (product.specs && Array.isArray(product.specs) && product.specs.length > 0) {
                 product.specs.forEach(spec => {
-                    const specName = spec.SPEC_NAME || spec.spec_name || '';
-                    const specValue = spec.SPEC_VALUE || spec.spec_value || '';
+                    const specName = spec.SPEC_NAME || spec.spec_name;
+                    const specValue = spec.SPEC_VALUE || spec.spec_value;
+
                     if (specName && specValue) {
-                        specsHTML += `
-                            <li class="list-group-item border-0 py-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-medium">${specName}</span>
-                                    <span class="badge bg-light text-dark">${specValue}</span>
-                                </div>
-                            </li>
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        li.innerHTML = `
+                            <strong class="text-muted">${specName}:</strong>
+                            <span class="text-dark">${specValue}</span>
                         `;
+                        this.modal.specifications.appendChild(li);
                     }
                 });
-                this.modal.specifications.innerHTML = specsHTML || '<li class="list-group-item border-0 text-muted">No specifications available</li>';
-            }
-        }
-
-        // Reset quantity controls
-        const increaseQtyBtn = document.getElementById('increase-quantity');
-        const decreaseQtyBtn = document.getElementById('decrease-quantity');
-
-        if (increaseQtyBtn) {
-            increaseQtyBtn.disabled = false;
-        }
-
-        if (decreaseQtyBtn) {
-            decreaseQtyBtn.disabled = true; // Start with 1, so can't decrease
-        }
-
-        // Update total amount
-        this.updateTotalAmount();
-
-        // Check if product has variants in stock to enable/disable the order button
-        const hasVariantsWithStock = variantsWithStock.length > 0;
-
-        if (this.modal.submitBtn) {
-            this.modal.submitBtn.disabled = !hasVariantsWithStock;
-
-            if (!hasVariantsWithStock) {
-                this.modal.submitBtn.title = "No variants available in stock";
-                this.modal.submitBtn.classList.add('btn-secondary');
-                this.modal.submitBtn.classList.remove('btn-primary');
-                // Update the icon to show out of stock
-                const icon = this.modal.submitBtn.querySelector('i');
-                if (icon) {
-                    icon.className = 'fas fa-times-circle me-2';
-                }
             } else {
-                this.modal.submitBtn.title = "";
-                this.modal.submitBtn.classList.add('btn-primary');
-                this.modal.submitBtn.classList.remove('btn-secondary');
-                // Update the icon to show check
-                const icon = this.modal.submitBtn.querySelector('i');
-                if (icon) {
-                    icon.className = 'fas fa-check-circle me-2';
-                }
+                // No specs message
+                const li = document.createElement('li');
+                li.className = 'list-group-item text-center text-muted';
+                li.textContent = 'No specifications available for this product.';
+                this.modal.specifications.appendChild(li);
             }
         }
 
-        // Make sure we start at the booking tab
-        const bookingTab = document.getElementById('booking-tab');
-        if (bookingTab) {
-            const tabInstance = new bootstrap.Tab(bookingTab);
-            tabInstance.show();
+        // Initialize date picker to today's date
+        if (this.modal.preferredDate) {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            this.modal.preferredDate.value = formattedDate;
+
+            // Set minimum date to today
+            this.modal.preferredDate.min = formattedDate;
         }
+
+        // Initialize time picker to current time
+        if (this.modal.preferredTime) {
+            const now = new Date();
+            let hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            this.modal.preferredTime.value = `${hours}:${minutes}`;
+        }
+
+        // Clear the address and notes fields
+        if (this.modal.address) this.modal.address.value = '';
+        if (this.modal.optionalNotes) this.modal.optionalNotes.value = '';
+
+        // Make sure quantity is reset to 1
+        if (this.modal.quantity) this.modal.quantity.value = '1';
+
+        // Update the total amount
+        this.updateTotalAmount();
     }
 
     /**

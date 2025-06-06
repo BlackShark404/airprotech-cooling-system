@@ -603,7 +603,19 @@ class ProductController extends BaseController
             
             // Update variants
             if (isset($data['variants'])) {
-                // Delete existing variants and add new ones
+                // Get existing variants before deletion
+                $existingVariants = $this->productVariantModel->getVariantsByProductId($id);
+                $existingVariantIds = [];
+                $newToOldVariantMap = [];
+                
+                // Create a map of existing variants for reference
+                foreach ($existingVariants as $variant) {
+                    $variantId = isset($variant['VAR_ID']) ? $variant['VAR_ID'] : $variant['var_id'];
+                    $capacity = isset($variant['VAR_CAPACITY']) ? $variant['VAR_CAPACITY'] : $variant['var_capacity'];
+                    $existingVariantIds[$capacity] = $variantId;
+                }
+                
+                // Delete existing variants
                 $this->productVariantModel->deleteVariantsByProductId($id);
                 
                 if (!empty($data['variants']) && is_array($data['variants'])) {
@@ -630,7 +642,21 @@ class ProductController extends BaseController
                             }
                         }
                         
-                        $this->productVariantModel->createVariant($normalizedVariant);
+                        // Get the capacity value for mapping
+                        $capacity = $normalizedVariant['VAR_CAPACITY'];
+                        
+                        // Create new variant and get its ID
+                        $newVariantId = $this->productVariantModel->createVariant($normalizedVariant);
+                        
+                        // If this capacity existed before, map the new ID to the old ID
+                        if (isset($existingVariantIds[$capacity])) {
+                            $newToOldVariantMap[$newVariantId] = $existingVariantIds[$capacity];
+                        }
+                    }
+                    
+                    // Now update inventory references with the new variant IDs
+                    foreach ($newToOldVariantMap as $newVariantId => $oldVariantId) {
+                        $this->inventoryModel->updateVariantReferences($oldVariantId, $newVariantId);
                     }
                 }
             }
