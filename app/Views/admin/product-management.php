@@ -646,6 +646,13 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#addProductBtn').on('click', function() {
         resetProductForm();
         $('#productModalLabel').text('Add New Product');
+        
+        // Automatically add 4 common specification rows for new products
+        addSpecRow('MODEL', '');
+        addSpecRow('CAPACITY', '');
+        addSpecRow('REFRIGERANT', '');
+        addSpecRow('COMPRESSOR', '');
+        
         $('#productModal').modal('show');
     });
     
