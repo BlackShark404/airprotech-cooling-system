@@ -498,7 +498,7 @@ class ServiceRequestController extends BaseController
                     $technicians[] = [
                         'id' => $assignment['ba_technician_id'],
                         'name' => $technicianInfo['ua_first_name'] . ' ' . $technicianInfo['ua_last_name'],
-                        'profile_url' => $technicianInfo['ua_profile_url'] ?? '/assets/images/default-profile.jpg',
+                        'profile_url' => $technicianInfo['ua_profile_url'] ?? '/assets/images/user-profile/default-profile.png',
                         'status' => $assignment['ba_status'],
                         'notes' => $assignment['ba_notes']
                     ];
@@ -513,7 +513,7 @@ class ServiceRequestController extends BaseController
                 : 'Unknown';
             $enhancedBooking['customer_email'] = $customerInfo ? $customerInfo['ua_email'] : '';
             $enhancedBooking['customer_phone'] = $customerInfo ? $customerInfo['ua_phone_number'] : '';
-            $enhancedBooking['customer_profile_url'] = $customerInfo ? $customerInfo['ua_profile_url'] : '/assets/images/default-profile.jpg';
+            $enhancedBooking['customer_profile_url'] = $customerInfo ? $customerInfo['ua_profile_url'] : '/assets/images/user-profile/default-profile.png';
             $enhancedBooking['technicians'] = $technicians;
             
             $enhancedBookings[] = $enhancedBooking;
@@ -563,7 +563,7 @@ class ServiceRequestController extends BaseController
                 $technicians[] = [
                     'id' => $assignment['ba_technician_id'],
                     'name' => $technicianInfo['ua_first_name'] . ' ' . $technicianInfo['ua_last_name'],
-                    'profile_url' => $technicianInfo['ua_profile_url'] ?? '/assets/images/default-profile.jpg',
+                    'profile_url' => $technicianInfo['ua_profile_url'] ?? '/assets/images/user-profile/default-profile.png',
                     'email' => $technicianInfo['ua_email'] ?? '',
                     'phone' => $technicianInfo['ua_phone_number'] ?? '',
                     'status' => $assignment['ba_status'],
@@ -578,7 +578,7 @@ class ServiceRequestController extends BaseController
         
         // Get customer profile URL
         $customerInfo = $this->getUserInfo($booking['sb_customer_id']);
-        $customerProfileUrl = $customerInfo ? $customerInfo['ua_profile_url'] : '/assets/images/default-profile.jpg';
+        $customerProfileUrl = $customerInfo ? $customerInfo['ua_profile_url'] : '/assets/images/user-profile/default-profile.png';
         
         // Format the response data
         $result = [

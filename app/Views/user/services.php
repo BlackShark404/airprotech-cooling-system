@@ -154,7 +154,7 @@
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                         <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36" style="object-fit: cover;">
+                         <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36" style="object-fit: cover;">
                             <div class="d-flex flex-column lh-sm">
                                 <span class="fw-semibold small text-dark"><?=$_SESSION['full_name'] ?? 'User'?></span>
                                 <small class="text-success">● Online</small>
@@ -409,7 +409,7 @@
                             <div class="card-body">
                                 <h6 class="fw-bold mb-3">Your Information</h6>
                                 <div class="d-flex align-items-center mb-3">
-                                    <img src="<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?>" alt="Profile" class="rounded-circle me-3" width="48" height="48">
+                                    <img src="<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png'?>" alt="Profile" class="rounded-circle me-3" width="48" height="48">
                                     <div>
                                         <div class="fw-medium"><?= Session::get('full_name') ?></div>
                                         <div class="text-muted small"><?= Session::get('email') ?></div>

@@ -244,7 +244,7 @@ ob_start();
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                            <img id="view-technician-avatar" src="/assets/images/default-profile.jpg" alt="Technician" class="rounded-circle me-3" width="80" height="80" style="border: 2px solid #eee; object-fit: cover;">
+                            <img id="view-technician-avatar" src="/assets/images/user-profile/default-profile.png" alt="Technician" class="rounded-circle me-3" width="80" height="80" style="border: 2px solid #eee; object-fit: cover;">
                             <div>
                                 <h5 class="mb-1 fw-bold fs-4" id="view-technician-name"></h5>
                                 <div class="text-muted mb-1" id="view-technician-email"><i class="fas fa-envelope me-2"></i><span></span></div>
@@ -457,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: null, 
                 title: 'Technician',
                 render: function(data, type, row) {
-                    const profileUrl = row.ua_profile_url || '/assets/images/default-profile.jpg';
+                    const profileUrl = row.ua_profile_url || '/assets/images/user-profile/default-profile.png';
                     return `
                         <div class="technician-info">
                             <img src="${profileUrl}" alt="Profile" class="technician-avatar">
@@ -558,7 +558,7 @@ function viewTechnician(technicianId) {
             $('#view-technician-name').text(`${tech.ua_first_name} ${tech.ua_last_name}`);
             $('#view-technician-email span').text(tech.ua_email || '');
             $('#view-technician-phone span').text(tech.ua_phone_number || '');
-            $('#view-technician-avatar').attr('src', tech.ua_profile_url || '/assets/images/default-profile.jpg');
+            $('#view-technician-avatar').attr('src', tech.ua_profile_url || '/assets/images/user-profile/default-profile.png');
             $('#view-technician-status').html(tech.te_is_available == 1 ? 
                 '<span class="badge badge-available">Available</span>' : 
                 '<span class="badge badge-unavailable">Unavailable</span>');

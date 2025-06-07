@@ -247,7 +247,7 @@ class UserController extends BaseController{
                 $_SESSION['profile_url'] = $profileUrl;
                 
                 // Delete old profile image if it exists and is not the default image
-                if ($oldProfileUrl && $oldProfileUrl !== '/assets/images/default-profile.jpg' && strpos($oldProfileUrl, '/uploads/profile_images/') === 0) {
+                if ($oldProfileUrl && $oldProfileUrl !== '/assets/images/user-profile/default-profile.png' && strpos($oldProfileUrl, '/uploads/profile_images/') === 0) {
                     $oldFilePath = $_SERVER['DOCUMENT_ROOT'] . $oldProfileUrl;
                     if (file_exists($oldFilePath)) {
                         @unlink($oldFilePath);

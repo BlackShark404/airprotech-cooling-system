@@ -288,7 +288,7 @@ class AdminController extends BaseController {
                 $_SESSION['profile_url'] = $profileUrl;
                 
                 // Delete old profile image if it exists, is not the default, and is in the uploads folder
-                if ($oldProfileUrl && $oldProfileUrl !== '/assets/images/default-profile.jpg' && strpos($oldProfileUrl, '/uploads/' . $uploadSubDir . '/') === 0) {
+                if ($oldProfileUrl && $oldProfileUrl !== '/assets/images/user-profile/default-profile.png' && strpos($oldProfileUrl, '/uploads/' . $uploadSubDir . '/') === 0) {
                     $oldFilePath = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . $oldProfileUrl;
                     if (file_exists($oldFilePath)) {
                         @unlink($oldFilePath);

@@ -310,7 +310,7 @@ ob_start();
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                            <img id="view-customer-avatar" src="/assets/images/default-profile.jpg" alt="Customer" class="rounded-circle me-3" width="80" height="80" style="border: 2px solid #eee; object-fit: cover;">
+                            <img id="view-customer-avatar" src="/assets/images/user-profile/default-profile.png" alt="Customer" class="rounded-circle me-3" width="80" height="80" style="border: 2px solid #eee; object-fit: cover;">
                             <div>
                                 <h5 class="mb-1 fw-bold fs-4" id="view-customer"></h5>
                                 <div class="text-muted mb-1" id="view-customer-email"><i class="fas fa-envelope me-2"></i><span></span></div>
@@ -497,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 data: null, 
                 title: 'Customer',
                 render: function(data, type, row) {
-                    const profileUrl = row.customer_profile_url || '/assets/images/default-profile.jpg';
+                    const profileUrl = row.customer_profile_url || '/assets/images/user-profile/default-profile.png';
                     return `
                         <div class="customer-info">
                             <img src="${profileUrl}" alt="Profile" class="customer-avatar">
@@ -523,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     let techHtml = '';
                     data.forEach(tech => {
-                        const profileImg = tech.profile_url || '/assets/images/default-profile.jpg';
+                        const profileImg = tech.profile_url || '/assets/images/user-profile/default-profile.png';
                         techHtml += `
                             <div class="technician-chip" title="${tech.name}">
                                 <img src="${profileImg}" alt="${tech.name}">
@@ -726,7 +726,7 @@ function viewServiceRequest(rowData) {
             $('#view-customer').text(data.customer_name);
             $('#view-customer-email span').text(data.customer_email);
             $('#view-customer-phone span').text(data.customer_phone);
-            $('#view-customer-avatar').attr('src', data.customer_profile_url || '/assets/images/default-profile.jpg');
+            $('#view-customer-avatar').attr('src', data.customer_profile_url || '/assets/images/user-profile/default-profile.png');
             $('#view-service-type').text(data.service_name);
             $('#view-date').text(data.sb_preferred_date);
             $('#view-time').text(data.sb_preferred_time);
@@ -743,7 +743,7 @@ function viewServiceRequest(rowData) {
             
             if (data.technicians && data.technicians.length > 0) {
                 const techHtml = data.technicians.map(tech => {
-                    const profileImg = tech.profile_url || '/assets/images/default-profile.jpg';
+                    const profileImg = tech.profile_url || '/assets/images/user-profile/default-profile.png';
                     return `
                         <div class="d-flex align-items-center mb-3 p-3 bg-white rounded border">
                             <img src="${profileImg}" alt="${tech.name}" class="rounded-circle me-3" width="48" height="48" style="border: 1px solid #eee;">

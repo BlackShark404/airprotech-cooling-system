@@ -39,7 +39,7 @@
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/user/dashboard">
-            <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36" style="object-fit: cover;">
+            <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36" style="object-fit: cover;">
                 <span class="brand-text">AIR<span class="text-danger">PROTECH</span></span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -55,7 +55,7 @@
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src=<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?> alt="Profile" class="rounded-circle me-2" width="36" height="36">
+                            <img src=<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png'?> alt="Profile" class="rounded-circle me-2" width="36" height="36">
                             <div class="d-flex flex-column lh-sm">
                                 <span class="fw-semibold small text-dark"><?=$_SESSION['full_name'] ?? 'User'?></span>
                                 <small class="text-success">● Online</small>

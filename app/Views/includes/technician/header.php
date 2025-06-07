@@ -15,7 +15,7 @@ require_once __DIR__ . '/../../../../script/active_page.php';
             </div>
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36">
+                    <img src="<?= Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png' ?>" alt="Profile" class="rounded-circle me-2" width="36" height="36">
                     <div class="d-flex flex-column lh-sm">
                         <span class="fw-semibold small text-dark"><?=$_SESSION['full_name'] ?? 'User'?></span>
                         <small>

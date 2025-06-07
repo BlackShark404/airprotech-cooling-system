@@ -1026,7 +1026,7 @@ class ProductController extends BaseController
                 'name' => $tech['name'],
                 'email' => isset($tech['email']) ? $tech['email'] : '',
                 'phone' => isset($tech['phone']) ? $tech['phone'] : '',
-                'profile_url' => $tech['profile_url'] ?? '/assets/images/default-profile.jpg',
+                'profile_url' => $tech['profile_url'] ?? '/assets/images/user-profile/default-profile.png',
                 'status' => $tech['status'] ?? 'assigned',
                 'notes' => $tech['notes'] ?? ''
             ];

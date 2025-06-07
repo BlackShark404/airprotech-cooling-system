@@ -28,7 +28,7 @@
                     <!-- User Profile -->
                     <li class="nav-item dropdown ms-3">
                         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?>" alt="Profile" class="rounded-circle me-2" width="36" height="36">
+                            <img src="<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png'?>" alt="Profile" class="rounded-circle me-2" width="36" height="36">
                             <div class="d-flex flex-column lh-sm">
                                 <span class="fw-semibold small text-dark"><?=$_SESSION['full_name'] ?? 'Admin'?></span>
                                 <small class="text-success">● Online</small>
@@ -54,7 +54,7 @@
                     <div class="card border-0 shadow-sm rounded-4 mb-4">
                         <div class="card-body p-4 text-center">
                             <div class="position-relative mb-4 mx-auto" style="width: 150px; height: 150px;">
-                                <img src="<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?>" 
+                                <img src="<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png'?>" 
                                      alt="Profile Picture" 
                                      class="rounded-circle border shadow-sm" 
                                      style="width: 150px; height: 150px; object-fit: cover;">
@@ -273,7 +273,7 @@
                     <form id="profileImageForm" enctype="multipart/form-data">
                         <div class="mb-4 text-center">
                             <div id="imagePreview" class="mb-4 mx-auto" style="width: 180px; height: 180px; border-radius: 50%; overflow: hidden; position: relative; background-color: #f8f9fa; border: 2px dashed #dee2e6; display: flex; align-items: center; justify-content: center;">
-                                <img src="/assets/images/default-profile.jpg" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="/assets/images/user-profile/default-profile.png" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
                             
                             <label for="profileImage" class="btn btn-outline-primary btn-sm px-4 mt-2">
@@ -334,13 +334,13 @@
             const profileImageInput = document.getElementById('profileImage');
             
             // Initialize modal with current profile image
-            const currentProfileUrl = '<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/default-profile.jpg'?>';
+            const currentProfileUrl = '<?=Session::get('profile_url') ? Session::get('profile_url') : '/assets/images/user-profile/default-profile.png'?>';
             
             // Update preview when modal opens
             profileImageModal.addEventListener('show.bs.modal', function() {
                 previewImage.src = currentProfileUrl;
                 
-                if (currentProfileUrl !== '/assets/images/default-profile.jpg') {
+                if (currentProfileUrl !== '/assets/images/user-profile/default-profile.png') {
                     imagePreview.classList.add('active');
                     imagePreview.style.border = 'none';
                 } else {
