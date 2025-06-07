@@ -882,7 +882,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addVariantRow();
     });
     
-    function addVariantRow(variantId = null, capacity = '', srpPrice = '', discountFreeInstallPct = '', discountWithInstallPct = '', installationFee = '', powerConsumption = '', readOnly = false) {
+    function addVariantRow(variantId = null, capacity = '', srpPrice = '', discountFreeInstallPct = '15', discountWithInstallPct = '25', installationFee = '', powerConsumption = '', readOnly = false) {
         const variantRow = `
             <div class="variant-row card mb-3" ${variantId ? `data-id="${variantId}"` : ''}>
                 <div class="card-body">
@@ -913,11 +913,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="row mb-2">
                         <div class="col-md-4">
                             <label class="form-label">Free Install Discount (%)</label>
-                            <input type="number" class="form-control variant-discount-free-install" min="0" max="100" step="0.01" placeholder="e.g., 15.00" value="${discountFreeInstallPct}" ${readOnly ? 'readonly' : ''}>
+                            <input type="number" class="form-control variant-discount-free-install" min="0" max="100" step="0.01" placeholder="e.g., 15.00" value="${discountFreeInstallPct || '15'}" ${readOnly ? 'readonly' : ''}>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">With Install Discount (%)</label>
-                            <input type="number" class="form-control variant-discount-with-install" min="0" max="100" step="0.01" placeholder="e.g., 25.00" value="${discountWithInstallPct}" ${readOnly ? 'readonly' : ''}>
+                            <input type="number" class="form-control variant-discount-with-install" min="0" max="100" step="0.01" placeholder="e.g., 25.00" value="${discountWithInstallPct || '25'}" ${readOnly ? 'readonly' : ''}>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Installation Fee (₱)</label>
