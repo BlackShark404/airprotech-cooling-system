@@ -711,51 +711,56 @@ class AdminController extends BaseController {
             }
 
             // Handle technician assignments if provided
-            if (!empty($data['technicians'])) {
+            if (isset($data['technicians'])) {
                 // First, get current assignments
                 $currentAssignments = $this->productAssignmentModel->getAssignmentsByOrderId($bookingId);
                 $currentTechIds = array_column($currentAssignments, 'pa_technician_id');
                 
-                // Process new assignments
-                $newTechIds = array_column($data['technicians'], 'id');
-                
-                // Technicians to add (in new but not in current)
-                $techsToAdd = array_diff($newTechIds, $currentTechIds);
-                foreach ($techsToAdd as $techId) {
-                    $techData = array_filter($data['technicians'], function($tech) use ($techId) {
-                        return $tech['id'] == $techId;
-                    });
-                    $techData = reset($techData);
+                // Remove all current assignments if technicians array is empty
+                if (empty($data['technicians'])) {
+                    $this->productBookingModel->removeAllTechnicians($bookingId);
+                } else {
+                    // Process new assignments
+                    $newTechIds = array_column($data['technicians'], 'id');
                     
-                    $assignmentData = [
-                        'pa_order_id' => $bookingId,
-                        'pa_technician_id' => $techId,
-                        'pa_notes' => $techData['notes'] ?? ''
-                    ];
-                    
-                    $this->productAssignmentModel->createAssignment($assignmentData);
-                }
-                
-                // Technicians to remove (in current but not in new)
-                $techsToRemove = array_diff($currentTechIds, $newTechIds);
-                foreach ($techsToRemove as $techId) {
-                    $this->productAssignmentModel->deleteAssignmentByOrderAndTechnician($bookingId, $techId);
-                }
-                
-                // Update notes for existing techs
-                $techsToUpdate = array_intersect($currentTechIds, $newTechIds);
-                foreach ($techsToUpdate as $techId) {
-                    $techData = array_filter($data['technicians'], function($tech) use ($techId) {
-                        return $tech['id'] == $techId;
-                    });
-                    $techData = reset($techData);
-                    
-                    if (isset($techData['notes'])) {
+                    // Technicians to add (in new but not in current)
+                    $techsToAdd = array_diff($newTechIds, $currentTechIds);
+                    foreach ($techsToAdd as $techId) {
+                        $techData = array_filter($data['technicians'], function($tech) use ($techId) {
+                            return $tech['id'] == $techId;
+                        });
+                        $techData = reset($techData);
+                        
                         $assignmentData = [
-                            'pa_notes' => $techData['notes']
+                            'pa_order_id' => $bookingId,
+                            'pa_technician_id' => $techId,
+                            'pa_notes' => $techData['notes'] ?? ''
                         ];
                         
-                        $this->productAssignmentModel->updateAssignmentNotes($bookingId, $techId, $assignmentData);
+                        $this->productAssignmentModel->createAssignment($assignmentData);
+                    }
+                    
+                    // Technicians to remove (in current but not in new)
+                    $techsToRemove = array_diff($currentTechIds, $newTechIds);
+                    foreach ($techsToRemove as $techId) {
+                        $this->productAssignmentModel->deleteAssignmentByOrderAndTechnician($bookingId, $techId);
+                    }
+                    
+                    // Update notes for existing techs
+                    $techsToUpdate = array_intersect($currentTechIds, $newTechIds);
+                    foreach ($techsToUpdate as $techId) {
+                        $techData = array_filter($data['technicians'], function($tech) use ($techId) {
+                            return $tech['id'] == $techId;
+                        });
+                        $techData = reset($techData);
+                        
+                        if (isset($techData['notes'])) {
+                            $assignmentData = [
+                                'pa_notes' => $techData['notes']
+                            ];
+                            
+                            $this->productAssignmentModel->updateAssignmentNotes($bookingId, $techId, $assignmentData);
+                        }
                     }
                 }
             }
