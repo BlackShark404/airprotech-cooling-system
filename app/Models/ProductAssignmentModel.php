@@ -123,8 +123,11 @@ class ProductAssignmentModel extends BaseModel
      */
     public function deleteAssignmentByOrderAndTechnician($bookingId, $technicianId)
     {
-        return $this->delete('pa_order_id = :booking_id AND pa_technician_id = :technician_id', 
-                            ['booking_id' => $bookingId, 'technician_id' => $technicianId]);
+        // Use direct SQL query to ensure we're explicitly doing a DELETE and not a soft delete
+        $sql = "DELETE FROM {$this->table} WHERE pa_order_id = :booking_id AND pa_technician_id = :technician_id";
+        $params = ['booking_id' => $bookingId, 'technician_id' => $technicianId];
+        
+        return $this->execute($sql, $params);
     }
     
     /**
