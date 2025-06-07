@@ -138,10 +138,10 @@ $router->map('POST', '/api/product-bookings', 'App\Controllers\ProductController
 $router->map('GET', '/api/user/product-bookings', 'App\Controllers\ProductController#getUserProductBookings', 'user_product_bookings_api');
 $router->map('GET', '/api/user/product-bookings/[i:id]', 'App\Controllers\ProductController#getUserProductBookingDetails', 'user_product_booking_details_api');
 
-// Admin Product Booking API Routes
+// Admin API Routes for Product Bookings
 $router->map('GET', '/api/admin/product-bookings', 'App\Controllers\ProductController#getAdminProductBookings', 'admin_product_bookings_api');
 $router->map('GET', '/api/admin/product-bookings/[i:id]', 'App\Controllers\ProductController#getAdminProductBookingDetails', 'admin_product_booking_details_api');
-$router->map('POST', '/api/admin/product-bookings/update', 'App\Controllers\ProductController#updateProductBooking', 'admin_update_product_booking_api');
+$router->map('POST', '/api/admin/product-bookings/update', 'App\Controllers\AdminController#updateProductBooking', 'admin_update_product_booking_api');
 $router->map('POST', '/api/admin/product-bookings/delete/[i:id]', 'App\Controllers\ProductController#deleteProductBooking', 'admin_delete_product_booking_api');
 
 // Warehouse Management API Routes

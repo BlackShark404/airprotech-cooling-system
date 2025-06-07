@@ -316,7 +316,11 @@ ob_start();
                                 <p><strong>Booking ID:</strong> <span id="view-id"></span></p>
                                 <p><strong>Quantity:</strong> <span id="view-quantity"></span></p>
                                 <p><strong>Unit Price:</strong> <span id="view-unit-price"></span></p>
+                                <p><strong>Price Type:</strong> <span id="view-price-type"></span></p>
                                 <p><strong>Total Amount:</strong> <span id="view-total-amount" class="fw-bold text-primary"></span></p>
+                                <p class="mt-3"><strong>SRP Price:</strong> <span id="view-srp-price"></span></p>
+                                <p><strong>Free Installation Price:</strong> <span id="view-free-install-price"></span></p>
+                                <p><strong>With Installation Price:</strong> <span id="view-with-install-price"></span></p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Status:</strong> <span id="view-status"></span></p>
@@ -371,6 +375,19 @@ ob_start();
                                 <option value="completed">Completed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-price-type" class="form-label">Price Type</label>
+                            <select id="edit-price-type" name="priceType" class="form-select">
+                                <option value="free_install">Free Installation</option>
+                                <option value="with_install">With Installation</option>
+                            </select>
+                            <div class="price-details mt-3">
+                                <p class="mb-1 text-muted small">SRP: <span id="edit-srp-price">₱0.00</span></p>
+                                <p class="mb-1 text-muted small">Free Install Price: <span id="edit-free-install-price">₱0.00</span></p>
+                                <p class="mb-1 text-muted small">With Install Price: <span id="edit-with-install-price">₱0.00</span></p>
+                                <p class="mt-2 fw-bold">Total Amount: <span id="edit-total-amount" class="text-primary">₱0.00</span></p>
+                            </div>
                         </div>
                     </div>
                     
@@ -691,7 +708,11 @@ function viewProductBooking(rowData) {
             $('#view-product-image').attr('src', data.prod_image ? '/' + data.prod_image : '/assets/images/product-placeholder.jpg');
             $('#view-quantity').text(data.pb_quantity);
             $('#view-unit-price').text(data.pb_unit_price ? '₱' + parseFloat(data.pb_unit_price).toFixed(2) : '-');
+            $('#view-price-type').text(data.pb_price_type ? data.pb_price_type.charAt(0).toUpperCase() + data.pb_price_type.slice(1) : '-');
             $('#view-total-amount').text(data.pb_total_amount ? '₱' + parseFloat(data.pb_total_amount).toFixed(2) : '-');
+            $('#view-srp-price').text(data.pb_srp_price ? '₱' + parseFloat(data.pb_srp_price).toFixed(2) : '-');
+            $('#view-free-install-price').text(data.pb_free_install_price ? '₱' + parseFloat(data.pb_free_install_price).toFixed(2) : '-');
+            $('#view-with-install-price').text(data.pb_with_install_price ? '₱' + parseFloat(data.pb_with_install_price).toFixed(2) : '-');
             $('#view-status').text(data.pb_status.charAt(0).toUpperCase() + data.pb_status.slice(1));
             $('#view-order-date').text(data.pb_order_date);
             $('#view-delivery-date').text(data.pb_preferred_date);
@@ -724,6 +745,12 @@ function viewProductBooking(rowData) {
                 techContainer.html('<p class="text-muted mb-0">No technicians assigned</p>');
             }
             
+            // Format price type for display
+            const priceTypeFormatted = data.pb_price_type ? 
+                (data.pb_price_type === 'free_install' ? 'Free Installation' : 'With Installation') : 
+                'Free Installation';
+            $('#view-price-type').text(priceTypeFormatted);
+            
             // Show the modal
             $('#viewProductBookingModal').modal('show');
         },
@@ -746,6 +773,7 @@ function editProductBooking(rowData) {
             // Populate the edit form
             $('#edit-id').val(data.pb_id);
             $('#edit-status').val(data.pb_status);
+            $('#edit-price-type').val(data.pb_price_type || 'free_install');
             
             // Set min date to current date
             const now = new Date();
@@ -773,6 +801,24 @@ function editProductBooking(rowData) {
                 });
             }
             
+            // Set price information
+            const quantity = parseInt(data.pb_quantity) || 1;
+            const srp = parseFloat(data.var_srp_price || 0).toFixed(2);
+            const freeInstallPrice = parseFloat(data.var_price_free_install || 0).toFixed(2);
+            const withInstallPrice = parseFloat(data.var_price_with_install || 0).toFixed(2);
+            
+            $('#edit-srp-price').text(`₱${srp}`);
+            $('#edit-free-install-price').text(`₱${freeInstallPrice}`);
+            $('#edit-with-install-price').text(`₱${withInstallPrice}`);
+            
+            // Calculate and update total amount based on current price type
+            updateTotalAmount(data);
+            
+            // Add event listener for price type changes
+            $('#edit-price-type').off('change').on('change', function() {
+                updateTotalAmount(data);
+            });
+            
             // Show the modal
             $('#editProductBookingModal').modal('show');
         },
@@ -780,6 +826,31 @@ function editProductBooking(rowData) {
             productBookingsManager.showErrorToast('Error', 'Failed to load product booking for editing');
         }
     });
+}
+
+// Helper function to update total amount based on price type
+function updateTotalAmount(data) {
+    const priceType = $('#edit-price-type').val();
+    const quantity = parseInt(data.pb_quantity) || 1;
+    let unitPrice = 0;
+    
+    if (priceType === 'free_install') {
+        unitPrice = parseFloat(data.var_price_free_install || 0);
+    } else {
+        unitPrice = parseFloat(data.var_price_with_install || 0);
+    }
+    
+    const totalAmount = (unitPrice * quantity).toFixed(2);
+    $('#edit-total-amount').text(`₱${totalAmount}`);
+    
+    // Highlight the selected price
+    if (priceType === 'free_install') {
+        $('#edit-free-install-price').addClass('fw-bold text-primary');
+        $('#edit-with-install-price').removeClass('fw-bold text-primary');
+    } else {
+        $('#edit-free-install-price').removeClass('fw-bold text-primary');
+        $('#edit-with-install-price').addClass('fw-bold text-primary');
+    }
 }
 
 // Add a technician to the list in the edit form
@@ -846,8 +917,17 @@ function addTechnicianBadge(techId, techName, notes = '') {
 function saveProductBooking() {
     const bookingId = $('#edit-id').val();
     const status = $('#edit-status').val();
+    const priceType = $('#edit-price-type').val();
     const preferredDate = $('#edit-delivery-date').val();
     const preferredTime = $('#edit-delivery-time').val();
+    
+    // Calculate unit price based on selected price type
+    let unitPrice = 0;
+    if (priceType === 'free_install') {
+        unitPrice = parseFloat($('#edit-free-install-price').text().replace('₱', ''));
+    } else {
+        unitPrice = parseFloat($('#edit-with-install-price').text().replace('₱', ''));
+    }
     
     // Get technician IDs and their notes
     const techniciansData = [];
@@ -873,10 +953,18 @@ function saveProductBooking() {
     const updateData = {
         bookingId: bookingId,
         status: status,
+        priceType: priceType,
+        unitPrice: unitPrice,
         preferredDate: preferredDate,
         preferredTime: preferredTime,
         technicians: techniciansData
     };
+    
+    // If we have description field, include it
+    const description = $('#edit-description').val();
+    if (description) {
+        updateData.description = description;
+    }
     
     // Send update request
     $.ajax({

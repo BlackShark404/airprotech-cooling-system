@@ -754,7 +754,6 @@ class ProductController extends BaseController
         $requiredFields = [
             'PB_VARIANT_ID' => 'Variant',
             'PB_QUANTITY' => 'Quantity',
-            'PB_UNIT_PRICE' => 'Unit Price',
             'PB_PREFERRED_DATE' => 'Preferred Date',
             'PB_PREFERRED_TIME' => 'Preferred Time',
             'PB_ADDRESS' => 'Address'
@@ -792,13 +791,19 @@ class ProductController extends BaseController
             $this->productBookingModel->beginTransaction();
             error_log("Started transaction for booking creation");
             
+            // Set default price type to free_install (admin will update later)
+            $priceType = 'free_install';
+            
+            // Set unit price to 0.00 - admin will update based on customer location and requirements
+            $unitPrice = 0.00;
+            
             // Create a complete booking data structure
             $bookingData = [
                 'PB_CUSTOMER_ID' => $userId,
                 'PB_VARIANT_ID' => $variantId,
                 'PB_QUANTITY' => $quantity,
-                'PB_UNIT_PRICE' => $data['PB_UNIT_PRICE'],
-                'PB_STATUS' => 'pending',
+                'PB_UNIT_PRICE' => $unitPrice,
+                'PB_PRICE_TYPE' => $priceType,
                 'PB_PREFERRED_DATE' => $data['PB_PREFERRED_DATE'],
                 'PB_PREFERRED_TIME' => $data['PB_PREFERRED_TIME'],
                 'PB_ADDRESS' => $data['PB_ADDRESS']
@@ -1113,6 +1118,20 @@ class ProductController extends BaseController
             
             if (!empty($data['preferredTime'])) {
                 $updateData['PB_PREFERRED_TIME'] = $data['preferredTime'];
+            }
+            
+            if (!empty($data['priceType'])) {
+                // Validate price type
+                if (!in_array($data['priceType'], ['free_install', 'with_install'])) {
+                    $this->productBookingModel->rollback();
+                    $this->jsonError('Invalid price type. Must be "free_install" or "with_install"', 400);
+                    return;
+                }
+                $updateData['PB_PRICE_TYPE'] = $data['priceType'];
+            }
+            
+            if (!empty($data['description'])) {
+                $updateData['PB_DESCRIPTION'] = $data['description'];
             }
             
             // Update the booking

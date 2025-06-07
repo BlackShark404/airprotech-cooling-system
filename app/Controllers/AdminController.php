@@ -7,6 +7,9 @@ use App\Models\AdminModel;
 use App\Models\ServiceRequestModel;
 use App\Models\ProductModel;
 use App\Models\ReportsModel;
+use App\Models\ProductBookingModel;
+use App\Models\ProductAssignmentModel;
+use App\Models\BookingAssignmentModel;
 
 class AdminController extends BaseController {
     protected $userModel;
@@ -14,6 +17,9 @@ class AdminController extends BaseController {
     protected $serviceModel;
     protected $productModel;
     protected $reportsModel;
+    protected $productBookingModel;
+    protected $bookingAssignmentModel;
+    protected $productAssignmentModel;
 
     public function __construct() {
         parent::__construct();
@@ -22,6 +28,11 @@ class AdminController extends BaseController {
         $this->serviceModel = new ServiceRequestModel();
         $this->productModel = new ProductModel();
         $this->reportsModel = new ReportsModel();
+        
+        // Initialize required models for product booking operations
+        $this->productBookingModel = new ProductBookingModel();
+        $this->bookingAssignmentModel = new BookingAssignmentModel();
+        $this->productAssignmentModel = new ProductAssignmentModel();
 
         // Ensure user is authenticated and is an admin
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
@@ -636,5 +647,137 @@ class AdminController extends BaseController {
         } else {
             $this->jsonError('Failed to update product assignment');
         }
+    }
+
+    /**
+     * Update product booking
+     */
+    public function updateProductBooking()
+    {
+        if (!$this->isAdmin()) {
+            $this->jsonError('Unauthorized access', 403);
+            return;
+        }
+
+        $data = $this->getJsonInput();
+        
+        if (empty($data) || empty($data['bookingId'])) {
+            $this->jsonError('Missing booking ID', 400);
+            return;
+        }
+
+        $bookingId = $data['bookingId'];
+        $updateData = [];
+
+        // Add fields to update if they are provided
+        if (!empty($data['status'])) {
+            $updateData['PB_STATUS'] = $data['status'];
+        }
+
+        if (!empty($data['priceType'])) {
+            $updateData['PB_PRICE_TYPE'] = $data['priceType'];
+        }
+        
+        if (!empty($data['unitPrice'])) {
+            $updateData['PB_UNIT_PRICE'] = $data['unitPrice'];
+        }
+
+        if (!empty($data['preferredDate'])) {
+            $updateData['PB_PREFERRED_DATE'] = $data['preferredDate'];
+        }
+
+        if (!empty($data['preferredTime'])) {
+            $updateData['PB_PREFERRED_TIME'] = $data['preferredTime'];
+        }
+
+        if (isset($data['description'])) {
+            $updateData['PB_DESCRIPTION'] = $data['description'];
+        }
+
+        if (empty($updateData)) {
+            $this->jsonError('No data to update', 400);
+            return;
+        }
+
+        try {
+            $this->productBookingModel->beginTransaction();
+
+            // Update booking
+            $success = $this->productBookingModel->updateBooking($bookingId, $updateData);
+            if (!$success) {
+                $this->productBookingModel->rollback();
+                $this->jsonError('Failed to update booking', 500);
+                return;
+            }
+
+            // Handle technician assignments if provided
+            if (!empty($data['technicians'])) {
+                // First, get current assignments
+                $currentAssignments = $this->productAssignmentModel->getAssignmentsByOrderId($bookingId);
+                $currentTechIds = array_column($currentAssignments, 'pa_technician_id');
+                
+                // Process new assignments
+                $newTechIds = array_column($data['technicians'], 'id');
+                
+                // Technicians to add (in new but not in current)
+                $techsToAdd = array_diff($newTechIds, $currentTechIds);
+                foreach ($techsToAdd as $techId) {
+                    $techData = array_filter($data['technicians'], function($tech) use ($techId) {
+                        return $tech['id'] == $techId;
+                    });
+                    $techData = reset($techData);
+                    
+                    $assignmentData = [
+                        'pa_order_id' => $bookingId,
+                        'pa_technician_id' => $techId,
+                        'pa_notes' => $techData['notes'] ?? ''
+                    ];
+                    
+                    $this->productAssignmentModel->createAssignment($assignmentData);
+                }
+                
+                // Technicians to remove (in current but not in new)
+                $techsToRemove = array_diff($currentTechIds, $newTechIds);
+                foreach ($techsToRemove as $techId) {
+                    $this->productAssignmentModel->deleteAssignmentByOrderAndTechnician($bookingId, $techId);
+                }
+                
+                // Update notes for existing techs
+                $techsToUpdate = array_intersect($currentTechIds, $newTechIds);
+                foreach ($techsToUpdate as $techId) {
+                    $techData = array_filter($data['technicians'], function($tech) use ($techId) {
+                        return $tech['id'] == $techId;
+                    });
+                    $techData = reset($techData);
+                    
+                    if (isset($techData['notes'])) {
+                        $assignmentData = [
+                            'pa_notes' => $techData['notes']
+                        ];
+                        
+                        $this->productAssignmentModel->updateAssignmentNotes($bookingId, $techId, $assignmentData);
+                    }
+                }
+            }
+
+            $this->productBookingModel->commit();
+            $this->jsonSuccess(['bookingId' => $bookingId], 'Product booking updated successfully');
+            
+        } catch (\Exception $e) {
+            $this->productBookingModel->rollback();
+            $this->jsonError('Error updating product booking: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Check if current user is an admin
+     */
+    private function isAdmin()
+    {
+        // Get the current user role from the session
+        $userRole = $_SESSION['user_role'] ?? null;
+        
+        // Check if user is an admin
+        return $userRole === 'admin';
     }
 }

@@ -18,6 +18,8 @@ class ProductBookingModel extends Model
                     ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
                     ua.UA_PROFILE_URL AS CUSTOMER_PROFILE_URL,
                     pv.VAR_CAPACITY,
+                    pv.VAR_PRICE_FREE_INSTALL,
+                    pv.VAR_PRICE_WITH_INSTALL,
                     p.PROD_NAME,
                     p.PROD_IMAGE
                 FROM {$this->table} pb
@@ -46,6 +48,8 @@ class ProductBookingModel extends Model
                         ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
                         ua.UA_PROFILE_URL AS CUSTOMER_PROFILE_URL,
                         pv.VAR_CAPACITY,
+                        pv.VAR_PRICE_FREE_INSTALL,
+                        pv.VAR_PRICE_WITH_INSTALL,
                         p.PROD_NAME,
                         p.PROD_IMAGE,
                         pb.PB_CUSTOMER_ID
@@ -84,6 +88,8 @@ class ProductBookingModel extends Model
         $sql = "SELECT 
                     pb.*,
                     pv.VAR_CAPACITY,
+                    pv.VAR_PRICE_FREE_INSTALL,
+                    pv.VAR_PRICE_WITH_INSTALL,
                     p.PROD_NAME,
                     p.PROD_IMAGE
                 FROM {$this->table} pb
@@ -106,18 +112,22 @@ class ProductBookingModel extends Model
                     PB_QUANTITY, 
                     PB_UNIT_PRICE, 
                     PB_STATUS, 
+                    PB_PRICE_TYPE,
                     PB_PREFERRED_DATE, 
                     PB_PREFERRED_TIME, 
-                    PB_ADDRESS
+                    PB_ADDRESS,
+                    PB_DESCRIPTION
                 ) VALUES (
                     :customer_id, 
                     :variant_id, 
                     :quantity, 
                     :unit_price, 
                     :status, 
+                    :price_type,
                     :preferred_date, 
                     :preferred_time, 
-                    :address
+                    :address,
+                    :description
                 )";
         
         $params = [
@@ -126,9 +136,11 @@ class ProductBookingModel extends Model
             ':quantity' => $data['PB_QUANTITY'],
             ':unit_price' => $data['PB_UNIT_PRICE'],
             ':status' => $data['PB_STATUS'] ?? 'pending',
+            ':price_type' => $data['PB_PRICE_TYPE'] ?? 'free_install',
             ':preferred_date' => $data['PB_PREFERRED_DATE'],
             ':preferred_time' => $data['PB_PREFERRED_TIME'],
-            ':address' => $data['PB_ADDRESS']
+            ':address' => $data['PB_ADDRESS'],
+            ':description' => $data['PB_DESCRIPTION'] ?? null
         ];
         
         $this->execute($sql, $params);
@@ -176,6 +188,11 @@ class ProductBookingModel extends Model
             $params[':status'] = $data['PB_STATUS'];
         }
         
+        if (isset($data['PB_PRICE_TYPE'])) {
+            $setClauses[] = "PB_PRICE_TYPE = :price_type";
+            $params[':price_type'] = $data['PB_PRICE_TYPE'];
+        }
+        
         if (isset($data['PB_PREFERRED_DATE'])) {
             $setClauses[] = "PB_PREFERRED_DATE = :preferred_date";
             $params[':preferred_date'] = $data['PB_PREFERRED_DATE'];
@@ -189,6 +206,11 @@ class ProductBookingModel extends Model
         if (isset($data['PB_ADDRESS'])) {
             $setClauses[] = "PB_ADDRESS = :address";
             $params[':address'] = $data['PB_ADDRESS'];
+        }
+        
+        if (isset($data['PB_DESCRIPTION'])) {
+            $setClauses[] = "PB_DESCRIPTION = :description";
+            $params[':description'] = $data['PB_DESCRIPTION'];
         }
 
         if (empty($setClauses)) {
@@ -298,6 +320,8 @@ class ProductBookingModel extends Model
                     ua.UA_PHONE_NUMBER AS CUSTOMER_PHONE,
                     ua.UA_PROFILE_URL AS CUSTOMER_PROFILE_URL,
                     pv.VAR_CAPACITY,
+                    pv.VAR_PRICE_FREE_INSTALL,
+                    pv.VAR_PRICE_WITH_INSTALL,
                     p.PROD_NAME,
                     p.PROD_IMAGE
                 FROM {$this->table} pb

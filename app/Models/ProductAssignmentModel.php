@@ -62,6 +62,23 @@ class ProductAssignmentModel extends BaseModel
                     ->bind(['booking_id' => $bookingId])
                     ->get();
     }
+    
+    /**
+     * Get all assignments for a specific product booking order
+     * 
+     * @param int $orderId The product booking order ID
+     * @return array The assignments for the product booking order
+     */
+    public function getAssignmentsByOrderId($orderId)
+    {
+        return $this->select('product_assignment.*, 
+                            CONCAT(user_account.ua_first_name, \' \', user_account.ua_last_name) as technician_name')
+                    ->join('technician', 'product_assignment.pa_technician_id', 'technician.te_account_id')
+                    ->join('user_account', 'technician.te_account_id', 'user_account.ua_id')
+                    ->where('product_assignment.pa_order_id = :order_id')
+                    ->bind(['order_id' => $orderId])
+                    ->get();
+    }
 
     /**
      * Create a new product assignment
@@ -95,5 +112,37 @@ class ProductAssignmentModel extends BaseModel
     public function deleteAssignment($id)
     {
         return $this->delete('pa_id = :id', ['id' => $id]);
+    }
+    
+    /**
+     * Delete a product assignment by booking ID and technician ID
+     * 
+     * @param int $bookingId The booking ID
+     * @param int $technicianId The technician ID
+     * @return bool Success or failure
+     */
+    public function deleteAssignmentByOrderAndTechnician($bookingId, $technicianId)
+    {
+        return $this->delete('pa_order_id = :booking_id AND pa_technician_id = :technician_id', 
+                            ['booking_id' => $bookingId, 'technician_id' => $technicianId]);
+    }
+    
+    /**
+     * Update notes for a specific assignment
+     * 
+     * @param int $bookingId The booking ID
+     * @param int $technicianId The technician ID
+     * @param array $data The data to update (should contain PA_NOTES)
+     * @return bool Success or failure
+     */
+    public function updateAssignmentNotes($bookingId, $technicianId, $data)
+    {
+        if (!isset($data['PA_NOTES'])) {
+            return false;
+        }
+        
+        $updateData = ['pa_notes' => $data['PA_NOTES']];
+        return $this->update($updateData, 'pa_order_id = :booking_id AND pa_technician_id = :technician_id', 
+                            ['booking_id' => $bookingId, 'technician_id' => $technicianId]);
     }
 } 

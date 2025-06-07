@@ -457,6 +457,11 @@
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="variants-tab" data-bs-toggle="tab" data-bs-target="#variants-content" type="button" role="tab" aria-controls="variants-content" aria-selected="false">
+                                        <i class="fas fa-cubes me-2"></i>Variants
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="features-tab" data-bs-toggle="tab" data-bs-target="#features-content" type="button" role="tab" aria-controls="features-content" aria-selected="false">
                                         <i class="fas fa-star me-2"></i>Features
                                     </button>
@@ -496,6 +501,29 @@
                                                 <label for="modal-description">Additional Instructions</label>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Variants Tab -->
+                                <div class="tab-pane fade" id="variants-content" role="tabpanel" aria-labelledby="variants-tab">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Capacity</th>
+                                                    <th>SRP</th>
+                                                    <th>15% Free Installation</th>
+                                                    <th>25% With Installation Fee</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="modal-variants-table">
+                                                <!-- Variants will be added dynamically -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <small>Note: Final pricing will be determined by the installation requirements and will be confirmed after booking submission.</small>
                                     </div>
                                 </div>
                                 
