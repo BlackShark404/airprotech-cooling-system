@@ -95,9 +95,12 @@ class InventoryModel extends Model
     {
         $sql = "SELECT 
                     i.*,
+                    p.PROD_ID,
                     p.PROD_NAME,
                     p.PROD_IMAGE,
+                    v.VAR_ID as var_id,
                     v.VAR_CAPACITY,
+                    w.WHOUSE_ID as whouse_id,
                     w.WHOUSE_NAME,
                     w.WHOUSE_RESTOCK_THRESHOLD
                 FROM {$this->table} i

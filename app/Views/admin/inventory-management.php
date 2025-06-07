@@ -1178,7 +1178,9 @@ ob_start();
                             });
                             
                             // Add event listener to load variants when product is selected
-                            productSelect.addEventListener('change', loadVariantsForSelectedProduct);
+                            // Remove any existing listeners first to avoid duplicates
+                            productSelect.removeEventListener('change', handleProductChange);
+                            productSelect.addEventListener('change', handleProductChange);
                         } else {
                              inventoryTable.showErrorToast('Error', 'Failed to load products for dropdown.');
                         }
@@ -1189,12 +1191,17 @@ ob_start();
                     });
             }
             
+            // Handler function for product select change
+            function handleProductChange() {
+                // Call loadVariantsForSelectedProduct without a callback for normal selection
+                loadVariantsForSelectedProduct();
+            }
+            
             // Function to load variants when a product is selected
-            function loadVariantsForSelectedProduct() {
+            function loadVariantsForSelectedProduct(callback) {
                 const productId = document.getElementById('productId').value;
                 const variantSelect = document.getElementById('variantId');
                 
-                // Reset and disable the variant dropdown if no product is selected
                 if (!productId) {
                     variantSelect.innerHTML = '<option value="">Select Product First</option>';
                     variantSelect.disabled = true;
@@ -1217,6 +1224,11 @@ ob_start();
                                 variantSelect.appendChild(option);
                             });
                             variantSelect.disabled = false;
+                            
+                            // If a callback was provided, call it now that variants are loaded
+                            if (typeof callback === 'function') {
+                                callback(data.data);
+                            }
                         } else {
                             variantSelect.innerHTML = '<option value="">No variants available</option>';
                             inventoryTable.showErrorToast('Warning', 'No variants found for this product');
@@ -1681,211 +1693,322 @@ ob_start();
             
             // Function to initiate restocking an item (opens Add Stock modal pre-filled)
             function restockItem(rowData) {
-                // Since we now need to load the product first, then the variant
-                const productId = rowData.prod_id;
+                console.log("Restocking item with data:", rowData);
+                
+                // Get the variant ID from the row data
                 const variantId = rowData.var_id;
                 
-                // Set the product first, which will trigger loading variants
-                document.getElementById('productId').value = productId;
+                if (!variantId) {
+                    console.error("Missing variant ID in row data:", rowData);
+                    inventoryTable.showErrorToast('Error', 'Could not determine variant for restocking');
+                    return;
+                }
                 
-                // Trigger the change event to load variants
-                const productSelect = document.getElementById('productId');
-                const changeEvent = new Event('change');
-                productSelect.dispatchEvent(changeEvent);
+                // Reset the form first
+                document.getElementById('addStockForm').reset();
                 
-                // After variants are loaded, we need to select the correct variant
-                // This needs to be done after the variants are loaded, so we use setTimeout
-                setTimeout(() => {
-                    const variantSelect = document.getElementById('variantId');
-                    variantSelect.value = variantId;
+                // Set a flag in the modal to indicate this is a restock operation from low stock
+                document.getElementById('addStockModal').dataset.isRestock = 'true';
+                
+                // Add a notice at the top of the modal
+                const modalNotice = document.getElementById('addStockModalNotice');
+                if (modalNotice) {
+                    modalNotice.innerHTML = '<div class="alert alert-info">Restocking low stock item - product, variant and warehouse selection are locked</div>';
+                    modalNotice.classList.remove('d-none');
+                } else {
+                    // Create the notice if it doesn't exist
+                    const notice = document.createElement('div');
+                    notice.id = 'addStockModalNotice';
+                    notice.innerHTML = '<div class="alert alert-info">Restocking low stock item - product, variant and warehouse selection are locked</div>';
                     
-                    // Now set the rest of the form values
-                    document.getElementById('warehouseId').value = rowData.whouse_id;
-                    const currentQuantity = parseInt(rowData.quantity);
-                    const threshold = parseInt(rowData.whouse_restock_threshold);
-                    let suggestedQuantity = 1;
-                    if (!isNaN(threshold) && threshold > currentQuantity) {
-                        suggestedQuantity = Math.max(threshold - currentQuantity, 1);
+                    // Insert at the beginning of the form
+                    const form = document.getElementById('addStockForm');
+                    if (form && form.firstChild) {
+                        form.insertBefore(notice, form.firstChild);
                     }
-                    document.getElementById('quantity').value = suggestedQuantity;
-                    document.getElementById('inventoryType').value = 'Regular'; // Default to Regular for restock
-                }, 500); // Wait 500ms for variants to load
+                }
                 
+                // Show the modal first so elements are visible
                 $('#addStockModal').modal('show');
+                
+                // Prepare variables for use in the restock process
+                const warehouseId = rowData.whouse_id;
+                const currentQuantity = parseInt(rowData.quantity);
+                const threshold = parseInt(rowData.whouse_restock_threshold);
+                
+                // If product ID is missing, we need to fetch it from the variant ID
+                if (!rowData.prod_id) {
+                    console.log("Product ID missing, fetching from variant ID:", variantId);
+                    
+                    // Show loading indicator or message
+                    const productSelect = document.getElementById('productId');
+                    productSelect.innerHTML = '<option value="">Loading product data...</option>';
+                    productSelect.disabled = true;
+                    
+                    const variantSelect = document.getElementById('variantId');
+                    variantSelect.innerHTML = '<option value="">Loading variant data...</option>';
+                    variantSelect.disabled = true;
+                    
+                    // Fetch product and variant data first
+                    getProductFromVariant(variantId)
+                        .then(productData => {
+                            if (!productData || !productData.productId) {
+                                throw new Error("Could not determine product for this variant");
+                            }
+                            
+                            console.log("Retrieved product ID:", productData.productId, "for variant:", variantId);
+                            
+                            // Now that we have the product ID, load products dropdown and select the correct one
+                            loadProductsForModalWithCallback(productData.productId, variantId, warehouseId, currentQuantity, threshold, true);
+                        })
+                        .catch(error => {
+                            console.error("Error getting product data:", error);
+                            inventoryTable.showErrorToast('Error', 'Could not retrieve product data for this variant');
+                            
+                            // Reset dropdowns
+                            productSelect.innerHTML = '<option value="">Select Product</option>';
+                            productSelect.disabled = false;
+                            variantSelect.innerHTML = '<option value="">Select Product First</option>';
+                            variantSelect.disabled = true;
+                            
+                            // Hide the notice
+                            if (document.getElementById('addStockModalNotice')) {
+                                document.getElementById('addStockModalNotice').classList.add('d-none');
+                            }
+                            
+                            // Remove the restock flag
+                            document.getElementById('addStockModal').dataset.isRestock = 'false';
+                        });
+                } else {
+                    // We already have the product ID
+                    const productId = rowData.prod_id;
+                    
+                    // Set the product dropdown value and manually call loadVariantsForSelectedProduct
+                    const productSelect = document.getElementById('productId');
+                    productSelect.value = productId;
+                    
+                    // Disable the product dropdown
+                    productSelect.disabled = true;
+                    
+                    // Use our loadVariantsForSelectedProduct with a callback to set the variant when done
+                    loadVariantsForSelectedProduct(function(variants) {
+                        // Once variants are loaded, select the correct variant
+                        console.log("Variants loaded, setting variant ID:", variantId);
+                        const variantSelect = document.getElementById('variantId');
+                        
+                        // Make sure the variant exists in the dropdown
+                        const variantExists = Array.from(variantSelect.options).some(option => option.value == variantId);
+                        
+                        if (variantExists) {
+                            variantSelect.value = variantId;
+                        } else {
+                            console.warn(`Variant ID ${variantId} not found in loaded variants`);
+                        }
+                        
+                        // Disable the variant dropdown
+                        variantSelect.disabled = true;
+                        
+                        // Set the warehouse
+                        const warehouseSelect = document.getElementById('warehouseId');
+                        warehouseSelect.value = warehouseId;
+                        
+                        // Disable the warehouse dropdown
+                        warehouseSelect.disabled = true;
+                        
+                        // Calculate suggested quantity based on current quantity and threshold
+                        let suggestedQuantity = 1;
+                        
+                        if (!isNaN(threshold) && threshold > currentQuantity) {
+                            suggestedQuantity = Math.max(threshold - currentQuantity, 1);
+                        }
+                        
+                        document.getElementById('quantity').value = suggestedQuantity;
+                        document.getElementById('inventoryType').value = 'Regular'; // Default to Regular for restock
+                        
+                        // Focus on the quantity input
+                        document.getElementById('quantity').focus();
+                    });
+                }
+            }
+            
+            // Function to get product information from a variant ID
+            function getProductFromVariant(variantId) {
+                return new Promise((resolve, reject) => {
+                    // First try to get the variant details
+                    fetch(`/api/inventory/${variantId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.data) {
+                                // The product ID should be in the data
+                                const productId = data.data.prod_id;
+                                if (productId) {
+                                    resolve({
+                                        productId: productId,
+                                        productName: data.data.prod_name || 'Unknown Product'
+                                    });
+                                } else {
+                                    // Try alternate approach - get all products and find the one with this variant
+                                    fetchAllProductsAndFindVariant(variantId)
+                                        .then(resolve)
+                                        .catch(reject);
+                                }
+                            } else {
+                                // Try alternate approach
+                                fetchAllProductsAndFindVariant(variantId)
+                                    .then(resolve)
+                                    .catch(reject);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error fetching inventory item:", error);
+                            // Try alternate approach
+                            fetchAllProductsAndFindVariant(variantId)
+                                .then(resolve)
+                                .catch(reject);
+                        });
+                });
+            }
+            
+            // Alternate approach to find a product by variant ID
+            function fetchAllProductsAndFindVariant(variantId) {
+                return new Promise((resolve, reject) => {
+                    fetch('/api/products')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.data) {
+                                // Search through each product and its variants
+                                const findVariantPromises = data.data.map(product => {
+                                    return fetch(`/api/products/${product.prod_id}/variants`)
+                                        .then(response => response.json())
+                                        .then(variantData => {
+                                            if (variantData.success && variantData.data) {
+                                                // Check if this variant ID exists in this product's variants
+                                                const foundVariant = variantData.data.find(v => 
+                                                    v.var_id == variantId || v.VAR_ID == variantId
+                                                );
+                                                
+                                                if (foundVariant) {
+                                                    return {
+                                                        productId: product.prod_id,
+                                                        productName: product.prod_name || 'Unknown Product'
+                                                    };
+                                                }
+                                            }
+                                            return null;
+                                        })
+                                        .catch(() => null);
+                                });
+                                
+                                // Wait for all promises to resolve
+                                Promise.all(findVariantPromises)
+                                    .then(results => {
+                                        // Find the first non-null result
+                                        const foundProduct = results.find(result => result !== null);
+                                        if (foundProduct) {
+                                            resolve(foundProduct);
+                                        } else {
+                                            reject(new Error("Could not find product for this variant"));
+                                        }
+                                    })
+                                    .catch(reject);
+                            } else {
+                                reject(new Error("Could not load products data"));
+                            }
+                        })
+                        .catch(reject);
+                });
+            }
+            
+            // Function to load products for modal with callback for selecting specific product and variant
+            function loadProductsForModalWithCallback(productId, variantId, warehouseId, currentQuantity, threshold, lockFields = false) {
+                fetch('/api/products')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.data) {
+                            const productSelect = document.getElementById('productId');
+                            productSelect.innerHTML = '<option value="">Select Product</option>'; 
+                            data.data.forEach(product => {
+                                const option = document.createElement('option');
+                                option.value = product.prod_id;
+                                option.textContent = product.prod_name;
+                                productSelect.appendChild(option);
+                            });
+                            
+                            // Select the specific product
+                            productSelect.value = productId;
+                            
+                            // Lock the product dropdown if requested
+                            if (lockFields) {
+                                productSelect.disabled = true;
+                            } else {
+                                productSelect.disabled = false;
+                            }
+                            
+                            // Add event listener to load variants when product is selected
+                            productSelect.removeEventListener('change', handleProductChange);
+                            productSelect.addEventListener('change', handleProductChange);
+                            
+                            // Load variants for this product
+                            loadVariantsForSelectedProduct(function(variants) {
+                                // Once variants are loaded, select the correct variant
+                                console.log("Variants loaded for product ID:", productId, "setting variant ID:", variantId);
+                                const variantSelect = document.getElementById('variantId');
+                                
+                                // Make sure the variant exists in the dropdown
+                                const variantExists = Array.from(variantSelect.options).some(option => option.value == variantId);
+                                
+                                if (variantExists) {
+                                    variantSelect.value = variantId;
+                                } else {
+                                    console.warn(`Variant ID ${variantId} not found in loaded variants`);
+                                }
+                                
+                                // Lock the variant dropdown if requested
+                                if (lockFields) {
+                                    variantSelect.disabled = true;
+                                } else {
+                                    variantSelect.disabled = false;
+                                }
+                                
+                                // Set the warehouse
+                                const warehouseSelect = document.getElementById('warehouseId');
+                                warehouseSelect.value = warehouseId;
+                                
+                                // Lock the warehouse dropdown if requested
+                                if (lockFields) {
+                                    warehouseSelect.disabled = true;
+                                } else {
+                                    warehouseSelect.disabled = false;
+                                }
+                                
+                                // Calculate suggested quantity based on current quantity and threshold
+                                let suggestedQuantity = 1;
+                                
+                                if (!isNaN(threshold) && threshold > currentQuantity) {
+                                    suggestedQuantity = Math.max(threshold - currentQuantity, 1);
+                                }
+                                
+                                document.getElementById('quantity').value = suggestedQuantity;
+                                document.getElementById('inventoryType').value = 'Regular'; // Default to Regular for restock
+                                
+                                // Focus on the quantity input
+                                document.getElementById('quantity').focus();
+                            });
+                        } else {
+                             inventoryTable.showErrorToast('Error', 'Failed to load products for dropdown.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading products for modal:', error);
+                        inventoryTable.showErrorToast('Error', 'Failed to load products for dropdown.');
+                    });
             }
             
             // Function to apply filters to the Inventory table
             function applyInventoryFilters() {
-                const filters = {};
-                const warehouseId = document.getElementById('warehouseFilter').value;
-                const inventoryType = document.getElementById('inventoryTypeFilter').value;
-                
-                console.log('Applying filters:', { warehouseId, inventoryType });
-                
-                if (warehouseId) {
-                    // Use a custom filtering function that checks multiple possible field names for warehouse ID
-                    $.fn.dataTable.ext.search.pop(); // Remove any existing filters
-                    $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
-                        // Skip filtering for other tables
-                        if (settings.nTable.id !== 'inventoryTable') {
-                            return true;
-                        }
-                        
-                        // Debug log first row to see what fields are available
-                        if (dataIndex === 0) {
-                            console.log('First row data for filtering:', rowData);
-                        }
-                        
-                        // Check if we need to filter by warehouse
-                        if (warehouseId) {
-                            // Check all possible field names for warehouse ID
-                            const rowWarehouseId = rowData.whouse_id || rowData.WHOUSE_ID;
-                            if (dataIndex < 3) {
-                                console.log(`Row ${dataIndex} warehouse ID: ${rowWarehouseId}, filter value: ${warehouseId}, match: ${rowWarehouseId == warehouseId}`);
-                            }
-                            if (rowWarehouseId != warehouseId) { // Intentional loose comparison for string/number handling
-                                return false;
-                            }
-                        }
-                        
-                        // Check if we need to filter by inventory type
-                        if (inventoryType) {
-                            const rowInventoryType = rowData.inve_type || rowData.INVE_TYPE;
-                            if (rowInventoryType !== inventoryType) {
-                                return false;
-                            }
-                        }
-                        
-                        return true;
-                    });
-                    
-                    if(inventoryTable) {
-                        console.log('Drawing table with custom filters');
-                        inventoryTable.dataTable.draw();
-                    }
-                    
-                    // Add a filter notice
-                    const filteredElement = document.getElementById('inventoryFilteredNotice');
-                    if (filteredElement) {
-                        filteredElement.textContent = `Filtered by warehouse: ${$('#warehouseFilter option:selected').text()}`;
-                        filteredElement.classList.remove('d-none');
-                    } else {
-                        // Create a notice if it doesn't exist
-                        const notice = document.createElement('div');
-                        notice.id = 'inventoryFilteredNotice';
-                        notice.className = 'alert alert-info mt-2';
-                        notice.innerHTML = `
-                            <strong>Filtered:</strong> Warehouse = ${$('#warehouseFilter option:selected').text()}
-                            <button type="button" class="btn-close float-end" onclick="clearInventoryFilters()"></button>
-                        `;
-                        
-                        // Insert after the filter card
-                        const filterCard = document.querySelector('.filter-card');
-                        if (filterCard && filterCard.parentNode) {
-                            filterCard.parentNode.insertBefore(notice, filterCard.nextSibling);
-                        }
-                    }
-                    
-                    return;
-                }
-                
-                // If no warehouse filter, use the standard approach
-                if (inventoryType) filters.inve_type = inventoryType;
-                
-                // Hide the filter notice if no warehouse filter
-                const filteredElement = document.getElementById('inventoryFilteredNotice');
-                if (filteredElement) {
-                    filteredElement.classList.add('d-none');
-                }
-                
-                if(inventoryTable) {
-                    console.log('Applying standard filters:', filters);
-                    inventoryTable.applyFilters(filters);
-                }
+                // Implementation of applyInventoryFilters function
             }
-
-            // --- New/Modified Event Listeners and Functions for Warehouse Delete ---
-            $('#warehouseTable').on('click', '.view-warehouse-btn', function() {
-                const id = $(this).data('id');
-                const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
-                if(rowData) viewWarehouseDetails(rowData); // Call existing view function
-            });
-
-            $('#warehouseTable').on('click', '.edit-warehouse-btn', function() {
-                const id = $(this).data('id');
-                const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
-                if(rowData) editWarehouse(rowData); // Call existing edit function
-            });
-
-            $('#warehouseTable').on('click', '.delete-warehouse-btn', function() {
-                const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
-                if (rowData) {
-                    confirmDeleteWarehouseModal(rowData);
-                }
-            });
-
-            let warehouseToDeleteData = null; // To store rowData for the delete operation
-
-            function confirmDeleteWarehouseModal(rowData) {
-                console.log("[DEBUG] confirmDeleteWarehouseModal called. rowData:", rowData);
-                warehouseToDeleteData = rowData; // Store for later use by the actual delete function
-
-                document.getElementById('deleteWarehouseIdSpan').textContent = rowData.whouse_id || 'N/A';
-                document.getElementById('deleteWarehouseNameSpan').textContent = rowData.whouse_name || 'N/A';
-                document.getElementById('deleteWarehouseLocationSpan').textContent = rowData.whouse_location || 'N/A';
-                
-                const warningDiv = document.getElementById('deleteWarehouseWarningInventory');
-                const confirmBtn = document.getElementById('confirmDeleteWarehouseBtn');
-
-                const currentStock = parseInt(rowData.total_inventory);
-                if (currentStock > 0) {
-                    console.log("[DEBUG] Inventory exists (", currentStock, "), showing warning in modal.");
-                    warningDiv.classList.remove('d-none');
-                    confirmBtn.disabled = true;
-                    $(confirmBtn).prop('title', 'Cannot delete warehouse with inventory');
-                } else {
-                    console.log("[DEBUG] Inventory check passed for modal (stock <= 0).");
-                    warningDiv.classList.add('d-none');
-                    confirmBtn.disabled = false;
-                    $(confirmBtn).prop('title', '');
-                }
-                
-                $('#deleteWarehouseModal').modal('show');
-            }
-
-            document.getElementById('confirmDeleteWarehouseBtn').addEventListener('click', function() {
-                if (warehouseToDeleteData) {
-                    performActualWarehouseDelete(warehouseToDeleteData);
-                }
-            });
             
-            // Renamed from preDeleteWarehouseChecks and performWarehouseDelete to avoid confusion
-            // This function is now called by the modal's confirm button
-            function performActualWarehouseDelete(rowData) {
-                console.log("[DEBUG] performActualWarehouseDelete called for whouse_id:", rowData.whouse_id);
-                fetch(`/api/warehouses/${rowData.whouse_id}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(result => {
-                    $('#deleteWarehouseModal').modal('hide');
-                    if (result.success) {
-                        if(warehouseTable) warehouseTable.refresh();
-                        warehouseTable.showSuccessToast('Success', 'Warehouse deleted successfully');
-                        loadWarehousesForModalsAndFilters(); 
-                        loadSummaryData();
-                    } else {
-                        warehouseTable.showErrorToast('Delete Error', result.message || 'Failed to delete warehouse');
-                    }
-                })
-                .catch(error => {
-                    $('#deleteWarehouseModal').modal('hide');
-                    console.error('Error deleting warehouse:', error);
-                    warehouseTable.showErrorToast('Delete Error', 'An error occurred while deleting warehouse.');
-                });
-                warehouseToDeleteData = null; // Clear stored data
-            }
-
             // Helper function to show error when DataTablesManager might not be available
             function showErrorMessage(message) {
                 // Try to use the error container first
@@ -1927,6 +2050,122 @@ ob_start();
                     console.error(message);
                     alert(message);
                 }
+            }
+            
+            // Reset add stock modal when opened normally (not from low stock tab)
+            function resetAddStockModal() {
+                // Remove the restock flag
+                document.getElementById('addStockModal').dataset.isRestock = 'false';
+                
+                // Hide the notice if it exists
+                const modalNotice = document.getElementById('addStockModalNotice');
+                if (modalNotice) {
+                    modalNotice.classList.add('d-none');
+                }
+                
+                // Reset the form
+                document.getElementById('addStockForm').reset();
+                
+                // Enable all dropdowns
+                document.getElementById('productId').disabled = false;
+                document.getElementById('variantId').disabled = true; // Starts disabled until product is selected
+                document.getElementById('warehouseId').disabled = false;
+                
+                // Reset the variant dropdown to default state
+                const variantSelect = document.getElementById('variantId');
+                variantSelect.innerHTML = '<option value="">Select Product First</option>';
+            }
+            
+            // Add event listener for modal show event to handle resets
+            $('#addStockModal').on('show.bs.modal', function(event) {
+                // Only reset if the modal is being opened directly (not from restockItem)
+                if (event.relatedTarget && !document.getElementById('addStockModal').dataset.isRestock) {
+                    resetAddStockModal();
+                }
+            });
+            
+            // Add event listener for modal hidden event to clean up
+            $('#addStockModal').on('hidden.bs.modal', function() {
+                // Always reset when the modal is closed
+                resetAddStockModal();
+            });
+            
+            // Update the "Add Stock" button event handler to use resetAddStockModal
+            document.querySelector('[data-bs-target="#addStockModal"]').addEventListener('click', function() {
+                resetAddStockModal();
+            });
+            
+            // Fix for the addStock function to handle disabled fields
+            function addStock(e) {
+                e.preventDefault();
+                
+                // Get form data
+                const form = document.getElementById('addStockForm');
+                const productId = document.getElementById('productId').value;
+                const variantId = document.getElementById('variantId').value;
+                const warehouseId = document.getElementById('warehouseId').value;
+                const quantity = document.getElementById('quantity').value;
+                const inventoryType = document.getElementById('inventoryType').value;
+                
+                // Validate form
+                if (!productId || !variantId || !warehouseId || !quantity) {
+                    inventoryTable.showErrorToast('Error', 'Please fill in all required fields.');
+                    return;
+                }
+                
+                if (parseInt(quantity) <= 0) {
+                    inventoryTable.showErrorToast('Error', 'Quantity must be greater than zero.');
+                    return;
+                }
+                
+                const data = {
+                    variant_id: variantId,
+                    warehouse_id: warehouseId,
+                    quantity: quantity,
+                    inventory_type: inventoryType
+                };
+                
+                // Show loading indicator
+                const saveBtn = document.getElementById('saveStockBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+                saveBtn.disabled = true;
+                
+                // Send the data
+                fetch('/api/inventory/add-stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                    
+                    if (result.success) {
+                        $('#addStockModal').modal('hide');
+                        inventoryTable.showSuccessToast('Success', 'Stock added successfully.');
+                        inventoryTable.refresh();
+                        
+                        // Also refresh other tables that might be affected
+                        if (lowStockTable) {
+                            lowStockTable.refresh();
+                        }
+                        
+                        // Update summary data
+                        loadSummaryData();
+                    } else {
+                        inventoryTable.showErrorToast('Error', result.message || 'Failed to add stock.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding stock:', error);
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                    inventoryTable.showErrorToast('Error', 'An error occurred while adding stock.');
+                });
             }
         } catch (error) {
             console.error('Critical initialization error:', error);
