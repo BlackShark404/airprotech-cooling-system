@@ -210,17 +210,19 @@ ob_start();
 ?>
 
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <h1 class="h3 mb-0">Product Management</h1>
-        <p class="text-muted">Manage products, features, specifications, and variants</p>
     
-        <div class="col-md-12 mb-3 text-end align-self-end">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0">Product Management</h1>
+            <p class="text-muted">Manage products, features, specifications, and variants</p>
+        </div>
+        <div class="col-auto">
             <button id="addProductBtn" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-1"></i> Add New Product
             </button>
         </div>
+    </div>
 
-        </div>  
 
     <!-- Products Table Card -->
     <div class="card">
