@@ -21,6 +21,18 @@ class UserController extends BaseController{
     }
 
     public function renderUserProducts() {
+        if (isset($_SESSION['user_id'])) {
+            $userId = $_SESSION['user_id'];
+            
+            // Get user data if not already in session
+            if (!isset($_SESSION['address'])) {
+                $user = $this->userModel->findById($userId);
+                if ($user && isset($user['ua_address'])) {
+                    $_SESSION['address'] = $user['ua_address'];
+                }
+            }
+        }
+        
         $this->render("user/products");
     }
 

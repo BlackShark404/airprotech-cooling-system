@@ -1100,8 +1100,14 @@ class ProductManager {
             this.modal.preferredTime.value = `${hours}:${minutes}`;
         }
 
-        // Clear the address and notes fields
-        if (this.modal.address) this.modal.address.value = '';
+        // Pre-populate the address field with the customer's address from session if available
+        if (this.modal.address) {
+            // Try to get user address from PHP session via a data attribute or similar
+            const userAddress = document.querySelector('body').dataset.userAddress || '';
+            this.modal.address.value = userAddress;
+        }
+
+        // Clear the notes field
         if (this.modal.optionalNotes) this.modal.optionalNotes.value = '';
 
         // Make sure quantity is reset to 1

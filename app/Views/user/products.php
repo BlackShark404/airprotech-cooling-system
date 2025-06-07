@@ -267,7 +267,7 @@
         }
     </style>
 </head>
-<body>
+<body data-user-address="<?= Session::get('address') ?? '' ?>">
     <!-- Top Bar -->
     <div class="top-bar py-2">
         <div class="container d-flex justify-content-between align-items-center">
