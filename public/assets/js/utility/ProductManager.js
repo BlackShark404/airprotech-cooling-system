@@ -990,9 +990,9 @@ class ProductManager {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${capacity}</td>
-                        <td>₱${srp.toFixed(2)}</td>
-                        <td>₱${parseFloat(freeInstallPrice).toFixed(2)}</td>
-                        <td>₱${parseFloat(withInstallPrice).toFixed(2)}</td>
+                        <td>₱${srp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>₱${parseFloat(freeInstallPrice).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>₱${parseFloat(withInstallPrice).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     `;
                     variantsTable.appendChild(row);
                 });
