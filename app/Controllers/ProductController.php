@@ -396,8 +396,9 @@ class ProductController extends BaseController
                     $fieldMappings = [
                         'VAR_CAPACITY' => ['var_capacity', 'VAR_CAPACITY'],
                         'VAR_SRP_PRICE' => ['var_srp_price', 'VAR_SRP_PRICE'],
-                        'VAR_PRICE_FREE_INSTALL' => ['var_price_free_install', 'VAR_PRICE_FREE_INSTALL'],
-                        'VAR_PRICE_WITH_INSTALL' => ['var_price_with_install', 'VAR_PRICE_WITH_INSTALL'],
+                        'VAR_DISCOUNT_FREE_INSTALL_PCT' => ['var_discount_free_install_pct', 'VAR_DISCOUNT_FREE_INSTALL_PCT'],
+                        'VAR_DISCOUNT_WITH_INSTALL_PCT' => ['var_discount_with_install_pct', 'VAR_DISCOUNT_WITH_INSTALL_PCT'],
+                        'VAR_INSTALLATION_FEE' => ['var_installation_fee', 'VAR_INSTALLATION_FEE'],
                         'VAR_POWER_CONSUMPTION' => ['var_power_consumption', 'VAR_POWER_CONSUMPTION']
                     ];
                     
@@ -622,8 +623,9 @@ class ProductController extends BaseController
                             'var_id' => 'VAR_ID',
                             'var_capacity' => 'VAR_CAPACITY',
                             'var_srp_price' => 'VAR_SRP_PRICE',
-                            'var_price_free_install' => 'VAR_PRICE_FREE_INSTALL',
-                            'var_price_with_install' => 'VAR_PRICE_WITH_INSTALL',
+                            'var_discount_free_install_pct' => 'VAR_DISCOUNT_FREE_INSTALL_PCT',
+                            'var_discount_with_install_pct' => 'VAR_DISCOUNT_WITH_INSTALL_PCT',
+                            'var_installation_fee' => 'VAR_INSTALLATION_FEE',
                             'var_power_consumption' => 'VAR_POWER_CONSUMPTION'
                         ];
                         

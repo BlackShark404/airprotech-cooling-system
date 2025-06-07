@@ -643,8 +643,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         variant.var_id,
                         variant.var_capacity,
                         variant.var_srp_price,
-                        variant.var_price_free_install,
-                        variant.var_price_with_install,
+                        variant.var_discount_free_install_pct,
+                        variant.var_discount_with_install_pct,
+                        variant.var_installation_fee,
                         variant.var_power_consumption
                     );
                 });
@@ -692,8 +693,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         variant.var_id,
                         variant.var_capacity,
                         variant.var_srp_price,
-                        variant.var_price_free_install,
-                        variant.var_price_with_install,
+                        variant.var_discount_free_install_pct,
+                        variant.var_discount_with_install_pct,
+                        variant.var_installation_fee,
                         variant.var_power_consumption,
                         true
                     );
@@ -887,7 +889,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addVariantRow();
     });
     
-    function addVariantRow(variantId = null, capacity = '', srpPrice = '', freeInstallPrice = '', withInstallPrice = '', powerConsumption = '', readOnly = false) {
+    function addVariantRow(variantId = null, capacity = '', srpPrice = '', discountFreeInstallPct = '', discountWithInstallPct = '', installationFee = '', powerConsumption = '', readOnly = false) {
         const variantRow = `
             <div class="variant-row card mb-3" ${variantId ? `data-id="${variantId}"` : ''}>
                 <div class="card-body">
@@ -916,13 +918,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     
                     <div class="row mb-2">
-                        <div class="col-md-6">
-                            <label class="form-label">Price with Free Installation (₱)</label>
-                            <input type="number" class="form-control variant-free-install-price" min="0" step="0.01" placeholder="e.g., 27000" value="${freeInstallPrice}" ${readOnly ? 'readonly' : ''}>
+                        <div class="col-md-4">
+                            <label class="form-label">Free Install Discount (%)</label>
+                            <input type="number" class="form-control variant-discount-free-install" min="0" max="100" step="0.01" placeholder="e.g., 15.00" value="${discountFreeInstallPct}" ${readOnly ? 'readonly' : ''}>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Price with Installation (₱)</label>
-                            <input type="number" class="form-control variant-with-install-price" min="0" step="0.01" placeholder="e.g., 30000" value="${withInstallPrice}" ${readOnly ? 'readonly' : ''}>
+                        <div class="col-md-4">
+                            <label class="form-label">With Install Discount (%)</label>
+                            <input type="number" class="form-control variant-discount-with-install" min="0" max="100" step="0.01" placeholder="e.g., 25.00" value="${discountWithInstallPct}" ${readOnly ? 'readonly' : ''}>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Installation Fee (₱)</label>
+                            <input type="number" class="form-control variant-installation-fee" min="0" step="0.01" placeholder="e.g., 1500" value="${installationFee}" ${readOnly ? 'readonly' : ''}>
                         </div>
                     </div>
                     
@@ -1009,8 +1015,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const variantId = $(this).data('id');
             const capacity = $(this).find('.variant-capacity').val();
             const srpPrice = $(this).find('.variant-srp-price').val();
-            const freeInstallPrice = $(this).find('.variant-free-install-price').val();
-            const withInstallPrice = $(this).find('.variant-with-install-price').val();
+            const discountFreeInstall = $(this).find('.variant-discount-free-install').val();
+            const discountWithInstall = $(this).find('.variant-discount-with-install').val();
+            const installationFee = $(this).find('.variant-installation-fee').val();
             const powerConsumption = $(this).find('.variant-power-consumption').val();
             
             if (capacity && srpPrice) {
@@ -1018,8 +1025,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     VAR_ID: variantId || null,
                     VAR_CAPACITY: capacity,
                     VAR_SRP_PRICE: srpPrice,
-                    VAR_PRICE_FREE_INSTALL: freeInstallPrice || null,
-                    VAR_PRICE_WITH_INSTALL: withInstallPrice || null,
+                    VAR_DISCOUNT_FREE_INSTALL_PCT: discountFreeInstall || 0,
+                    VAR_DISCOUNT_WITH_INSTALL_PCT: discountWithInstall || 0,
+                    VAR_INSTALLATION_FEE: installationFee || 0,
                     VAR_POWER_CONSUMPTION: powerConsumption || null
                 });
             }

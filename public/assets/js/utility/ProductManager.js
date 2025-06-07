@@ -407,36 +407,60 @@ class ProductManager {
     }
 
     /**
-     * Update total amount in the modal
+     * Update total amount based on selected variant and quantity
      */
     updateTotalAmount() {
-        if (!this.currentProduct || !this.modal.variantSelect || !this.modal.quantity || !this.modal.totalAmount) {
+        if (!this.modal.totalAmount || !this.modal.variantSelect || !this.modal.quantity) return;
+
+        const selectedVariantId = parseInt(this.modal.variantSelect.value);
+        if (!selectedVariantId || isNaN(selectedVariantId)) {
+            this.modal.totalAmount.textContent = '₱0.00';
             return;
         }
 
-        const selectedVariantId = parseInt(this.modal.variantSelect.value);
-        const quantity = parseInt(this.modal.quantity.value) || 1;
-
         // Find the selected variant
-        const selectedVariant = this.currentProduct.variants.find(v => {
-            const id = v.VAR_ID || v.var_id;
+        const variant = this.currentProduct.variants.find(v => {
+            const id = parseInt(v.VAR_ID || v.var_id);
             return id === selectedVariantId;
         });
 
-        if (selectedVariant) {
-            const price = parseFloat(selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || 0);
-            const availableQuantity = this.getAvailableQuantity(selectedVariant);
-
-            // Ensure quantity doesn't exceed available inventory
+        if (variant) {
+            // Get quantity and available inventory
+            const quantity = parseInt(this.modal.quantity.value) || 1;
+            const availableQuantity = this.getAvailableQuantity(variant);
             const validQuantity = Math.min(quantity, availableQuantity);
-            if (validQuantity !== quantity && this.modal.quantity) {
-                this.modal.quantity.value = validQuantity;
+
+            // Get the base SRP price
+            const srp = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00');
+
+            // Get discount percentages and installation fee
+            const discountFreeInstallPct = parseFloat(variant.VAR_DISCOUNT_FREE_INSTALL_PCT || variant.var_discount_free_install_pct || '0.00');
+            const discountWithInstallPct = parseFloat(variant.VAR_DISCOUNT_WITH_INSTALL_PCT || variant.var_discount_with_install_pct || '0.00');
+            const installationFee = parseFloat(variant.VAR_INSTALLATION_FEE || variant.var_installation_fee || '0.00');
+
+            // Get computed prices (or calculate if not provided)
+            let priceFreeInstall = variant.VAR_PRICE_FREE_INSTALL || variant.var_price_free_install;
+            let priceWithInstall = variant.VAR_PRICE_WITH_INSTALL || variant.var_price_with_install;
+
+            // If computed prices not provided, calculate them
+            if (!priceFreeInstall) {
+                priceFreeInstall = srp * (1 - discountFreeInstallPct / 100);
             }
 
-            const totalAmount = price * validQuantity;
-            this.modal.totalAmount.textContent = `₱${totalAmount.toFixed(2)}`;
+            if (!priceWithInstall) {
+                priceWithInstall = (srp * (1 - discountWithInstallPct / 100)) + installationFee;
+            }
 
-            // Disable increase button if at inventory limit
+            // Use the lowest price for the total (typically the with-install price)
+            const price = Math.min(parseFloat(priceFreeInstall), parseFloat(priceWithInstall));
+
+            // Calculate total
+            const total = price * validQuantity;
+
+            // Format to 2 decimal places and update display
+            this.modal.totalAmount.textContent = `₱${total.toFixed(2)}`;
+
+            // Update quantity buttons based on available inventory
             const increaseQtyBtn = document.getElementById('increase-quantity');
             if (increaseQtyBtn) {
                 increaseQtyBtn.disabled = validQuantity >= availableQuantity;
@@ -463,8 +487,30 @@ class ProductManager {
 
         if (!variant) return;
 
-        // Get the variant price and inventory
-        const price = variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00';
+        // Get the base SRP price
+        const srp = parseFloat(variant.VAR_SRP_PRICE || variant.var_srp_price || '0.00');
+
+        // Get discount percentages and installation fee
+        const discountFreeInstallPct = parseFloat(variant.VAR_DISCOUNT_FREE_INSTALL_PCT || variant.var_discount_free_install_pct || '0.00');
+        const discountWithInstallPct = parseFloat(variant.VAR_DISCOUNT_WITH_INSTALL_PCT || variant.var_discount_with_install_pct || '0.00');
+        const installationFee = parseFloat(variant.VAR_INSTALLATION_FEE || variant.var_installation_fee || '0.00');
+
+        // Get computed prices (or calculate if not provided)
+        let priceFreeInstall = variant.VAR_PRICE_FREE_INSTALL || variant.var_price_free_install;
+        let priceWithInstall = variant.VAR_PRICE_WITH_INSTALL || variant.var_price_with_install;
+
+        // If computed prices not provided, calculate them
+        if (!priceFreeInstall) {
+            priceFreeInstall = srp * (1 - discountFreeInstallPct / 100);
+        }
+
+        if (!priceWithInstall) {
+            priceWithInstall = (srp * (1 - discountWithInstallPct / 100)) + installationFee;
+        }
+
+        // Use the lowest price for display (typically the with-install price)
+        const price = Math.min(parseFloat(priceFreeInstall), parseFloat(priceWithInstall));
+
         const inventory = variant.INVENTORY_QUANTITY || 0;
 
         // Update the price display
@@ -1118,8 +1164,29 @@ class ProductManager {
             return;
         }
 
-        // Get price from selected variant
-        const unitPrice = parseFloat(selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || 0);
+        // Get the base SRP price
+        const srp = parseFloat(selectedVariant.VAR_SRP_PRICE || selectedVariant.var_srp_price || '0.00');
+
+        // Get discount percentages and installation fee
+        const discountFreeInstallPct = parseFloat(selectedVariant.VAR_DISCOUNT_FREE_INSTALL_PCT || selectedVariant.var_discount_free_install_pct || '0.00');
+        const discountWithInstallPct = parseFloat(selectedVariant.VAR_DISCOUNT_WITH_INSTALL_PCT || selectedVariant.var_discount_with_install_pct || '0.00');
+        const installationFee = parseFloat(selectedVariant.VAR_INSTALLATION_FEE || selectedVariant.var_installation_fee || '0.00');
+
+        // Get computed prices (or calculate if not provided)
+        let priceFreeInstall = selectedVariant.VAR_PRICE_FREE_INSTALL || selectedVariant.var_price_free_install;
+        let priceWithInstall = selectedVariant.VAR_PRICE_WITH_INSTALL || selectedVariant.var_price_with_install;
+
+        // If computed prices not provided, calculate them
+        if (!priceFreeInstall) {
+            priceFreeInstall = srp * (1 - discountFreeInstallPct / 100);
+        }
+
+        if (!priceWithInstall) {
+            priceWithInstall = (srp * (1 - discountWithInstallPct / 100)) + installationFee;
+        }
+
+        // Use the lowest price for the customer (typically the with-install price)
+        const unitPrice = Math.min(parseFloat(priceFreeInstall), parseFloat(priceWithInstall));
 
         try {
             console.log('Submitting booking with data:', {

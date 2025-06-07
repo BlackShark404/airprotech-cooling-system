@@ -22,16 +22,18 @@ class ProductVariantModel extends Model
 
     public function createVariant($data)
     {
-        $sql = "INSERT INTO {$this->table} (VAR_CAPACITY, VAR_SRP_PRICE, VAR_PRICE_FREE_INSTALL, 
-                VAR_PRICE_WITH_INSTALL, VAR_POWER_CONSUMPTION, PROD_ID)
-                VALUES (:capacity, :srp_price, :price_free_install, 
-                :price_with_install, :power_consumption, :product_id)";
+        $sql = "INSERT INTO {$this->table} (VAR_CAPACITY, VAR_SRP_PRICE, 
+                VAR_DISCOUNT_FREE_INSTALL_PCT, VAR_DISCOUNT_WITH_INSTALL_PCT, 
+                VAR_INSTALLATION_FEE, VAR_POWER_CONSUMPTION, PROD_ID)
+                VALUES (:capacity, :srp_price, :discount_free_install_pct, 
+                :discount_with_install_pct, :installation_fee, :power_consumption, :product_id)";
         
         $params = [
             ':capacity' => $data['VAR_CAPACITY'],
             ':srp_price' => $data['VAR_SRP_PRICE'],
-            ':price_free_install' => $data['VAR_PRICE_FREE_INSTALL'] ?? null,
-            ':price_with_install' => $data['VAR_PRICE_WITH_INSTALL'] ?? null,
+            ':discount_free_install_pct' => $data['VAR_DISCOUNT_FREE_INSTALL_PCT'] ?? 0.00,
+            ':discount_with_install_pct' => $data['VAR_DISCOUNT_WITH_INSTALL_PCT'] ?? 0.00,
+            ':installation_fee' => $data['VAR_INSTALLATION_FEE'] ?? 0.00,
             ':power_consumption' => $data['VAR_POWER_CONSUMPTION'] ?? null,
             ':product_id' => $data['PROD_ID']
         ];
@@ -55,14 +57,19 @@ class ProductVariantModel extends Model
             $params[':srp_price'] = $data['VAR_SRP_PRICE'];
         }
         
-        if (array_key_exists('VAR_PRICE_FREE_INSTALL', $data)) {
-            $setClauses[] = "VAR_PRICE_FREE_INSTALL = :price_free_install";
-            $params[':price_free_install'] = $data['VAR_PRICE_FREE_INSTALL'];
+        if (array_key_exists('VAR_DISCOUNT_FREE_INSTALL_PCT', $data)) {
+            $setClauses[] = "VAR_DISCOUNT_FREE_INSTALL_PCT = :discount_free_install_pct";
+            $params[':discount_free_install_pct'] = $data['VAR_DISCOUNT_FREE_INSTALL_PCT'];
         }
         
-        if (array_key_exists('VAR_PRICE_WITH_INSTALL', $data)) {
-            $setClauses[] = "VAR_PRICE_WITH_INSTALL = :price_with_install";
-            $params[':price_with_install'] = $data['VAR_PRICE_WITH_INSTALL'];
+        if (array_key_exists('VAR_DISCOUNT_WITH_INSTALL_PCT', $data)) {
+            $setClauses[] = "VAR_DISCOUNT_WITH_INSTALL_PCT = :discount_with_install_pct";
+            $params[':discount_with_install_pct'] = $data['VAR_DISCOUNT_WITH_INSTALL_PCT'];
+        }
+        
+        if (array_key_exists('VAR_INSTALLATION_FEE', $data)) {
+            $setClauses[] = "VAR_INSTALLATION_FEE = :installation_fee";
+            $params[':installation_fee'] = $data['VAR_INSTALLATION_FEE'];
         }
         
         if (array_key_exists('VAR_POWER_CONSUMPTION', $data)) {
