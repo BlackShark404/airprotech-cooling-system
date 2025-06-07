@@ -59,18 +59,6 @@ $additionalStyles = <<<HTML
         vertical-align: baseline;
         border-radius: 0.375rem;
     }
-    .badge-available {
-        background-color: #198754;
-        color: #fff;
-    }
-    .badge-out-of-stock {
-        background-color: #dc3545;
-        color: #fff;
-    }
-    .badge-discontinued {
-        background-color: #6c757d;
-        color: #fff;
-    }
     .modal-header {
         border-bottom: 1px solid #dee2e6;
         border-top-left-radius: calc(0.3rem - 1px);
@@ -232,16 +220,7 @@ ob_start();
         <div class="card-body">
             <h5 class="mb-3">Filters</h5>
             <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label for="statusFilter" class="form-label">Availability Status</label>
-                    <select id="statusFilter" class="form-select filter-dropdown">
-                        <option value="">All Statuses</option>
-                        <option value="Available">Available</option>
-                        <option value="Out of Stock">Out of Stock</option>
-                        <option value="Discontinued">Discontinued</option>
-                    </select>
-                </div>
-                <div class="col-md-9     mb-3 text-end align-self-end">
+                <div class="col-md-12 mb-3 text-end align-self-end">
                     <button id="addProductBtn" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-1"></i> Add New Product
                     </button>
@@ -261,7 +240,6 @@ ob_start();
                             <th width="100">Image</th>
                             <th width="200">Name</th>
                             <th>Description</th>
-                            <th width="120">Status</th>
                             <th width="120">Created At</th>
                             <th width="120">Updated At</th>
                             <th width="120">Actions</th>
@@ -314,15 +292,6 @@ ob_start();
                             <div class="mb-3">
                                 <label for="productDescription" class="form-label">Description</label>
                                 <textarea class="form-control" id="productDescription" name="productDescription" rows="3"></textarea>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="productStatus" class="form-label">Availability Status *</label>
-                                <select class="form-select" id="productStatus" name="productStatus" required>
-                                    <option value="Available">Available</option>
-                                    <option value="Out of Stock">Out of Stock</option>
-                                    <option value="Discontinued">Discontinued</option>
-                                </select>
                             </div>
                             
                             <div class="mb-3">
@@ -471,21 +440,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             },
             { 
-                data: 'prod_availability_status',
-                render: function(data, type, row) {
-                    // Check if product has inventory data
-                    if (row.inventory_count !== undefined) {
-                        let inventory = parseInt(row.inventory_count);
-                        let badgeClass = inventory > 0 ? 'badge-available' : 'badge-out-of-stock';
-                        let statusText = inventory > 0 ? 'In Stock' : 'Out of Stock';
-                        return '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
-                    } else {
-                        return '<span class="badge badge-secondary">Unknown</span>';
-                    }
-                },
-                width: '120px'
-            },
-            { 
                 data: 'prod_created_at',
                 render: function(data) {
                     return data ? new Date(data).toLocaleDateString() : 'N/A';
@@ -520,10 +474,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         ],
-        order: [[5, 'desc']], // Sort by Created At column by default
+        order: [[4, 'desc']], // Sort by Created At column by default
         columnDefs: [
-            { responsivePriority: 1, targets: [0, 2, 7] }, // These columns will be displayed first
-            { responsivePriority: 2, targets: 4 }           // Status column is next priority
+            { responsivePriority: 1, targets: [0, 2, 6] }, // These columns will be displayed first
         ]
     });
     
@@ -639,11 +592,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error:', error));
     }
     
-    // Filter products by status
-    $('#statusFilter').on('change', function() {
-        productsTable.column(4).search($(this).val()).draw();
-    });
-    
     // Add New Product Button
     $('#addProductBtn').on('click', function() {
         resetProductForm();
@@ -669,7 +617,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fill in product details
             $('#productName').val(product.prod_name);
             $('#productDescription').val(product.prod_description);
-            $('#productStatus').val(product.prod_availability_status);
             
             if (product.prod_image) {
                 $('#imagePreview').html(`<img src="/${product.prod_image}" class="preview-image" alt="Product Image">`);
@@ -718,7 +665,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             $('#productName').val(product.prod_name).prop('readonly', true);
             $('#productDescription').val(product.prod_description).prop('readonly', true);
-            $('#productStatus').val(product.prod_availability_status).prop('disabled', true);
             $('#productImage').prop('disabled', true);
             
             if (product.prod_image) {
@@ -808,8 +754,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset form controls to editable state
         $('#productName').prop('readonly', false);
         $('#productDescription').prop('readonly', false);
-        $('#productStatus').prop('disabled', false);
-        $('#productImage').prop('disabled', false);
         
         // Show save button again
         $('#saveProductBtn').show();
@@ -825,12 +769,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateProductForm() {
         if (!$('#productName').val()) {
             productsManager.showErrorToast('Validation Error', 'Please enter a product name');
-            $('#details-tab').tab('show');
-            return false;
-        }
-        
-        if (!$('#productStatus').val()) {
-            productsManager.showErrorToast('Validation Error', 'Please select an availability status');
             $('#details-tab').tab('show');
             return false;
         }
@@ -869,9 +807,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!$('#productName').val()) {
                 isValid = false;
                 errorMessage = 'Please enter a product name';
-            } else if (!$('#productStatus').val()) {
-                isValid = false;
-                errorMessage = 'Please select an availability status';
             } else if (!isEditMode && !$('#productImage').val() && !$('#imagePreview img').length) {
                 isValid = false;
                 errorMessage = 'Please select a product image';
@@ -1025,8 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add product details
         const productData = {
             PROD_NAME: $('#productName').val(),
-            PROD_DESCRIPTION: $('#productDescription').val(),
-            PROD_AVAILABILITY_STATUS: $('#productStatus').val()
+            PROD_DESCRIPTION: $('#productDescription').val()
         };
         
         formData.append('product', JSON.stringify(productData));
