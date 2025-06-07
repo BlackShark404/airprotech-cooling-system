@@ -313,14 +313,36 @@ class ProductManager {
         this.searchInput = document.getElementById(this.config.searchInputId);
 
         if (this.filterForm) {
-            // Handle form submission
+            // Prevent form submission and handle it instead through the input events
             this.filterForm.addEventListener('submit', (e) => {
                 e.preventDefault(); // Prevent page reload
-                this.applyFilters();
             });
 
-            // Optional: Handle input changes if you want live filtering
-            this.filterForm.addEventListener('change', () => this.applyFilters());
+            // Add input event listeners to automatically filter when input values change
+            const minPriceInput = this.filterForm.querySelector('[name="min-price"]');
+            const maxPriceInput = this.filterForm.querySelector('[name="max-price"]');
+            const availabilitySelect = this.filterForm.querySelector('[name="availability-status"]');
+
+            // Add input event for min price field
+            if (minPriceInput) {
+                minPriceInput.addEventListener('input', () => {
+                    this.applyFilters();
+                });
+            }
+
+            // Add input event for max price field
+            if (maxPriceInput) {
+                maxPriceInput.addEventListener('input', () => {
+                    this.applyFilters();
+                });
+            }
+
+            // Add change event for dropdown selects
+            if (availabilitySelect) {
+                availabilitySelect.addEventListener('change', () => {
+                    this.applyFilters();
+                });
+            }
 
             // Handle form reset
             this.filterForm.addEventListener('reset', () => {

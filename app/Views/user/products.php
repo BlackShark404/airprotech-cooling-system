@@ -161,23 +161,19 @@
         .horizontal-filters {
             display: flex;
             flex-wrap: wrap;
-            align-items: flex-end;
             gap: 1rem;
+            justify-content: space-between;
         }
         
         .horizontal-filters .filter-group {
-            flex: 1;
-            min-width: 200px;
+            flex: 0 0 auto;
+            margin-right: 20px;
         }
         
         .filter-buttons {
             display: flex;
             align-items: flex-end;
-        }
-        
-        .btn-filter {
-            background-color: var(--primary-color);
-            border: none;
+            margin-left: auto;
         }
         
         .btn-reset {
@@ -185,20 +181,26 @@
             border: 1px solid #dc3545;
             color: #dc3545;
             white-space: nowrap;
+            height: 38px;
+        }
+        
+        .btn-reset:hover {
+            background-color: #dc3545;
+            color: white;
         }
         
         /* Search Box */
         .search-box {
             position: relative;
-            margin-bottom: 2rem;
-            flex-grow: 2;
+            flex-grow: 1;
             min-width: 300px;
+            margin-right: 20px;
         }
         
         .search-box input {
-            border-radius: 50px;
+            border-radius: 8px;
             padding-left: 3rem;
-            height: 48px;
+            height: 38px;
             border: 1px solid #e5e5e5;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
         }
@@ -209,6 +211,7 @@
             top: 50%;
             transform: translateY(-50%);
             color: #6c757d;
+            z-index: 1;
         }
         
         .results-info {
@@ -221,20 +224,28 @@
         @media (max-width: 992px) {
             .horizontal-filters {
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 1rem;
             }
             
             .horizontal-filters .filter-group {
                 width: 100%;
+                min-width: 100%;
+            }
+            
+            .search-box {
+                width: 100%;
+                min-width: 100%;
             }
             
             .filter-buttons {
                 width: 100%;
                 margin-top: 1rem;
+                margin-left: 0;
+                justify-content: flex-end;
             }
             
             .btn-reset {
-                width: 100%;
+                width: auto;
             }
         }
     </style>
@@ -330,28 +341,27 @@
                 </div>
                 
                 <form id="product-filters">
-                    <div class="horizontal-filters">
+                    <div class="horizontal-filters align-items-end">
                         <!-- Search box -->
                         <div class="search-box">
-                            <i class="fas fa-search search-icon"></i>
-                            <input type="text" id="product-search" class="form-control" placeholder="Search products...">
+                            <label class="form-label">Search</label>
+                            <div class="position-relative">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="product-search" class="form-control" placeholder="Search products...">
+                            </div>
                         </div>
                         
                         <!-- Price Range Filter -->
-                        <div class="filter-group">
+                        <div class="filter-group me-3" style="flex: 0 0 auto; min-width: 320px;">
                             <label class="form-label">Price Range (₱)</label>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <input type="number" name="min-price" class="form-control" placeholder="Min" min="0" step="100">
-                                </div>
-                                <div class="col-6">
-                                    <input type="number" name="max-price" class="form-control" placeholder="Max" min="0" step="100">
-                                </div>
+                            <div class="d-flex gap-2">
+                                <input type="number" name="min-price" class="form-control" placeholder="Min" min="0" step="100" style="width: 150px;">
+                                <input type="number" name="max-price" class="form-control" placeholder="Max" min="0" step="100" style="width: 150px;">
                             </div>
                         </div>
                         
                         <!-- Stock Status Filter -->
-                        <div class="filter-group">
+                        <div class="filter-group" style="flex: 0 0 auto; min-width: 200px;">
                             <label for="availability-status" class="form-label">Availability</label>
                             <select id="availability-status" name="availability-status" class="form-select">
                                 <option value="">All</option>
@@ -363,9 +373,6 @@
                         
                         <!-- Filter Buttons -->
                         <div class="filter-buttons">
-                            <button type="submit" class="btn btn-filter btn-primary me-2">
-                                <i class="fas fa-filter me-1"></i>Apply Filters
-                            </button>
                             <button type="reset" class="btn btn-reset">
                                 <i class="fas fa-times me-1"></i>Clear
                             </button>
