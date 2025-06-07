@@ -62,9 +62,30 @@ class ProductManager {
             const variantsWithStock = allVariants.filter(v => (v.INVENTORY_QUANTITY || 0) > 0);
             const hasVariantsWithStock = variantsWithStock.length > 0;
 
-            // Display message indicating price will be determined upon booking
-            const priceDisplay = `<div class="product-price">Price to be determined</div>
-                                  <small class="text-muted">Final price determined after booking</small>`;
+            // Calculate price range from variants' SRP prices
+            let priceDisplay = '';
+            if (allVariants.length > 0) {
+                // Extract SRP prices from all variants
+                const prices = allVariants.map(v => parseFloat(v.VAR_SRP_PRICE || v.var_srp_price || 0));
+
+                // Find min and max prices
+                const minPrice = Math.min(...prices);
+                const maxPrice = Math.max(...prices);
+
+                if (minPrice === maxPrice) {
+                    // Single price point
+                    priceDisplay = `<div class="product-price">₱${minPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                  <small class="text-muted">SRP Price</small>`;
+                } else {
+                    // Price range
+                    priceDisplay = `<div class="product-price">₱${minPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - ₱${maxPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                  <small class="text-muted">SRP Price Range</small>`;
+                }
+            } else {
+                // Fallback for products with no variants
+                priceDisplay = `<div class="product-price">Price to be determined</div>
+                              <small class="text-muted">Final price determined after booking</small>`;
+            }
 
             // Show all capacity variants with appropriate badge colors
             let variantInfo = '';
