@@ -91,8 +91,6 @@ class AdminController extends BaseController {
             $_SESSION['profile_url'] = $adminUser['ua_profile_url'];
             $_SESSION['office_number'] = $adminUser['ad_office_no'] ?? null; // Ensure it handles null
         } else {
-            // Admin user not found with role details, critical error, perhaps log and redirect
-            // This might happen if DB is inconsistent or user_id in session is stale and not an admin anymore
             unset($_SESSION['user_id']); // Clear potentially problematic session
             unset($_SESSION['user_role']);
             // log_error("Admin user details not found for ID: " . $adminId);
@@ -116,7 +114,6 @@ class AdminController extends BaseController {
             return $this->jsonError('Invalid request method', 405);
         }
         
-        // Auth check already in constructor
         $adminId = $_SESSION['user_id'];
         $data = $this->getJsonInput();
         
@@ -150,8 +147,6 @@ class AdminController extends BaseController {
                 if ($adminExists) {
                     $adminResult = $this->adminModel->updateByAccountId($adminId, $adminUpdateData);
                 } else {
-                    // This case should ideally not happen if user is admin due to DB trigger
-                    // but as a fallback, create if not exists
                     $adminDataWithId = array_merge($adminUpdateData, ['ad_account_id' => $adminId]);
                     $adminResult = $this->adminModel->createAdmin($adminDataWithId); 
                 }
@@ -199,13 +194,12 @@ class AdminController extends BaseController {
             return $this->jsonError('New password and confirmation do not match', 400);
         }
 
-        if (strlen($data['new_password']) < 8) { // Example: Basic password strength check
+        if (strlen($data['new_password']) < 8) {
             return $this->jsonError('New password must be at least 8 characters long.', 400);
         }
         
         $adminUser = $this->userModel->findById($adminId);
         if (!$adminUser) {
-            // Should not happen if session is valid and user is admin
             return $this->jsonError('Admin user not found', 404);
         }
         
@@ -406,9 +400,7 @@ class AdminController extends BaseController {
         $this->render('admin/technician');
     }
     
-    /**
-     * API endpoint to get all technicians
-     */
+    // API endpoint to get all technicians
     public function getTechnicians()
     {
         $userModel = $this->loadModel('UserModel');
@@ -417,9 +409,7 @@ class AdminController extends BaseController {
         $this->jsonSuccess($technicians);
     }
     
-    /**
-     * API endpoint to get a specific technician's assignments
-     */
+    // API endpoint to get a specific technician's assignments
     public function getTechnicianAssignments($id)
     {
         $bookingAssignmentModel = $this->loadModel('BookingAssignmentModel');
@@ -448,9 +438,7 @@ class AdminController extends BaseController {
         }
     }
     
-    /**
-     * API endpoint to assign a service request to a technician
-     */
+    // API endpoint to assign a service request to a technician
     public function assignServiceRequest()
     {
         if (!$this->isPost()) {
@@ -483,9 +471,7 @@ class AdminController extends BaseController {
         }
     }
     
-    /**
-     * API endpoint to assign a product booking to a technician
-     */
+    // API endpoint to assign a product booking to a technician
     public function assignProductBooking()
     {
         if (!$this->isPost()) {
@@ -518,9 +504,7 @@ class AdminController extends BaseController {
         }
     }
     
-    /**
-     * API endpoint to get a specific technician's details
-     */
+    // API endpoint to get a specific technician's details
     public function getTechnician($id)
     {
         $userModel = $this->loadModel('UserModel');
@@ -533,9 +517,7 @@ class AdminController extends BaseController {
         $this->jsonSuccess($technician);
     }
     
-    /**
-     * API endpoint to update a technician's details
-     */
+    // API endpoint to update a technician's details
     public function updateTechnician($id)
     {
         if (!$this->isPost()) {
@@ -564,9 +546,7 @@ class AdminController extends BaseController {
         }
     }
     
-    /**
-     * API endpoint to update a service assignment status
-     */
+    // API endpoint to update a service assignment status
     public function updateServiceAssignment()
     {
         if (!$this->isPost()) {
@@ -608,9 +588,7 @@ class AdminController extends BaseController {
         }
     }
     
-    /**
-     * API endpoint to update a product assignment status
-     */
+    // API endpoint to update a product assignment status
     public function updateProductAssignment()
     {
         if (!$this->isPost()) {
@@ -652,9 +630,7 @@ class AdminController extends BaseController {
         }
     }
 
-    /**
-     * Update product booking
-     */
+    // Update product booking
     public function updateProductBooking()
     {
         if (!$this->isAdmin()) {
@@ -832,9 +808,7 @@ class AdminController extends BaseController {
         }
     }
 
-    /**
-     * Check if current user is an admin
-     */
+    // Check if current user is an admin
     private function isAdmin()
     {
         // Get the current user role from the session

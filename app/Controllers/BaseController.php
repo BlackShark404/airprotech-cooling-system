@@ -46,7 +46,6 @@ class BaseController
         $errorView = __DIR__ . "/../Views/error/$statusCode.php";
 
         if (file_exists($errorView)) {
-            // Avoid recursion: don't use getViewPath here
             extract(['message' => $message]);
             ob_start();
             include $errorView;
@@ -75,18 +74,14 @@ class BaseController
         }
     }
 
-    // ✅ Check if request is from Axios
+    // Check if request is from Axios
     protected function isAjax() {
         // For debugging purposes, accept all requests as AJAX
         // This makes our API endpoints work with fetch() and other modern AJAX methods
         return true;
-        
-        // Original implementation - only for XMLHttpRequest
-        // return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-        //     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
 
-    // ✅ Respond with JSON (generic)
+    // Respond with JSON (generic)
     protected function json($data = [], $statusCode = 200) {
         // Disable error reporting during JSON output to prevent PHP warnings/notices from breaking JSON
         $previousErrorReporting = error_reporting(0);
@@ -140,7 +135,7 @@ class BaseController
         exit;
     }
 
-    // ✅ Respond with JSON success (standardized)
+    // Respond with JSON success (standardized)
     protected function jsonSuccess($data = [], $message = 'Success', $statusCode = 200) {
         $this->json([
             'success' => true,
@@ -149,7 +144,7 @@ class BaseController
         ], $statusCode);
     }
 
-    // ✅ Respond with JSON error (standardized)
+    // Respond with JSON error (standardized)
     protected function jsonError($message = 'An error occurred', $statusCode = 400, $data = []) {
         $this->json([
             'success' => false,
@@ -158,12 +153,12 @@ class BaseController
         ], $statusCode);
     }
 
-    // ✅ Parse JSON from request body
+    // Parse JSON from request body
     protected function getJsonInput(): array {
         return json_decode(file_get_contents('php://input'), true) ?? [];
     }
 
-    // ✅ Input helpers
+    // Input helpers
     protected function request($key = null, $default = null) {
         $request = array_merge($_GET, $_POST);
         if ($key) {
@@ -199,12 +194,7 @@ class BaseController
         return $_SERVER['REQUEST_METHOD'] === 'OPTIONS';
     }
 
-    /**
-     * Check if user has the specified permission
-     * 
-     * @param string $permission Permission to check
-     * @return bool True if user has permission, false otherwise
-     */
+    // Check if user has the specified permission
     protected function checkPermission(string $permission): bool {
         // Get user role from session
         $role = $_SESSION['user_role'] ?? '';

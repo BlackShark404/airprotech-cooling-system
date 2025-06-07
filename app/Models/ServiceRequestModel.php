@@ -2,10 +2,6 @@
 
 namespace App\Models;
 
-// Assuming Model.php is in App\Models or autoloaded correctly.
-// The Model.php provided in the prompt is assumed to be used as the base class.
-// No direct use of PDO here as it's handled by the parent Model class.
-
 class ServiceRequestModel extends Model // Extends Model directly
 {
     protected $table = 'service_booking';
@@ -19,16 +15,7 @@ class ServiceRequestModel extends Model // Extends Model directly
     protected $createdAtColumn = 'sb_created_at';
     protected $updatedAtColumn = 'sb_updated_at';
 
-    // Constructor is inherited from Model.php
-
-    // --- Existing Methods (Reviewed and Confirmed) ---
-
-    /**
-     * Get service bookings for a specific customer.
-     * 
-     * @param int $customerId The customer ID (UA_ID).
-     * @return array Array of bookings.
-     */
+    // Get service bookings for a specific customer.
     public function getCustomerBookings($customerId)
     {
         $sql = "SELECT * FROM {$this->table} 
@@ -43,12 +30,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->query($sql, ['customerId' => $customerId]);
     }
     
-    /**
-     * Get a single service booking with customer and service type details.
-     * 
-     * @param int $bookingId The booking ID.
-     * @return array|null The booking with additional details or null if not found.
-     */
+    // Get a single service booking with customer and service type details.
     public function getBookingWithDetails($bookingId)
     {
         $sql = "SELECT 
@@ -72,16 +54,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->queryOne($sql, ['bookingId' => $bookingId]);
     }
     
-    /**
-     * Create a new service booking.
-     * 
-     * @param array $data Booking data. It's assumed that this data is pre-validated
-     *                    and safe for insertion, as no $fillable mechanism is used here.
-     *                    Required fields by DB: sb_customer_id, sb_service_type_id, 
-     *                                          sb_preferred_date, sb_preferred_time,
-     *                                          sb_address, sb_description.
-     * @return string|false The last inserted ID (sb_id) on success, or false on failure.
-     */
+    // Create a new service booking.
     public function createBooking($data)
     {
         if ($this->timestamps) {
@@ -103,14 +76,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->lastInsertId($this->table . '_' . $this->primaryKey . '_seq'); // Specify sequence name for PostgreSQL
     }
     
-    /**
-     * Update an existing service booking.
-     * 
-     * @param int $bookingId The ID of the booking to update.
-     * @param array $data An associative array of columns and their new values.
-     *                    Assumed to be pre-validated and safe.
-     * @return bool True if the update affected one or more rows, false otherwise.
-     */
+    // Update an existing service booking.
     public function updateBooking($bookingId, $data)
     {
         if (empty($data)) {
@@ -141,20 +107,12 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->execute($sql, $params) > 0;
     }
     
-    /**
-     * Update the status of a service booking.
-     * 
-     * @param int $bookingId The booking ID.
-     * @param string $status New status value (e.g., 'confirmed', 'completed').
-     * @return bool True if update affected one or more rows, false otherwise.
-     */
+    // Update the status of a service booking.
     public function updateBookingStatus($bookingId, $status)
     {
         // Basic validation for status, though DB constraint will also check
         $allowedStatuses = ['pending', 'confirmed', 'in-progress', 'completed', 'cancelled'];
         if (!in_array($status, $allowedStatuses)) {
-            // Handle invalid status, e.g., throw exception or return false
-            // error_log("Invalid booking status: " . $status);
             return false;
         }
 
@@ -179,13 +137,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->execute($sql, $params) > 0;
     }
 
-    /**
-     * Update the priority of a service booking.
-     * 
-     * @param int $bookingId The booking ID.
-     * @param string $priority New priority value (e.g., 'normal', 'urgent').
-     * @return bool True if update affected one or more rows, false otherwise.
-     */
+    // Update the priority of a service booking.
     public function updateBookingPriority($bookingId, $priority)
     {
         $allowedPriorities = ['normal', 'moderate', 'urgent'];
@@ -215,24 +167,14 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->execute($sql, $params) > 0;
     }
     
-    /**
-     * Cancel a service booking by setting its status to 'cancelled'.
-     * 
-     * @param int $bookingId The booking ID.
-     * @return bool True if status update was successful, false otherwise.
-     */
+    // Cancel a service booking by setting its status to 'cancelled'.
     public function cancelBooking($bookingId)
     {
         return $this->updateBookingStatus($bookingId, 'cancelled');
     }
     
-    /**
-     * Delete a service booking.
-     * Performs a soft delete if $useSoftDeletes is true, otherwise a hard delete.
-     * 
-     * @param int $bookingId The booking ID.
-     * @return bool True if delete/update affected one or more rows, false otherwise.
-     */
+    // Delete a service booking.
+    // Performs a soft delete if $useSoftDeletes is true, otherwise a hard delete.
     public function deleteBooking($bookingId)
     {
         if ($this->useSoftDeletes) {
@@ -265,14 +207,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         }
     }
 
-    // --- New Methods ---
-
-    /**
-     * Get a single service booking by its ID.
-     * 
-     * @param int $bookingId The booking ID.
-     * @return array|null The booking data as an associative array, or null if not found or soft-deleted.
-     */
+    // Get a single service booking by its ID.
     public function getBookingById($bookingId)
     {
         $sql = "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :bookingId";
@@ -282,12 +217,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->queryOne($sql, ['bookingId' => $bookingId]);
     }
 
-    /**
-     * Get all active (non-deleted) service bookings.
-     *
-     * @param array $orderBy Associative array for ordering (e.g., ['sb_preferred_date' => 'DESC']).
-     * @return array An array of booking records.
-     */
+    // Get all active (non-deleted) service bookings.
     public function getAllActiveBookings($orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         $sql = "SELECT * FROM {$this->table}";
@@ -317,22 +247,13 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->query($sql, $params);
     }
 
-    /**
-     * Get service bookings based on a set of criteria.
-     *
-     * @param array $criteria Associative array of filter conditions (e.g., ['sb_status' => 'pending']).
-     *                        For date ranges on 'sb_preferred_date', use: ['sb_preferred_date' => ['from' => 'YYYY-MM-DD', 'to' => 'YYYY-MM-DD']].
-     *                        For IN clauses, provide an array of values: ['sb_status' => ['pending', 'confirmed']].
-     * @param array $orderBy Associative array for ordering.
-     * @return array An array of matching booking records.
-     */
+    // Get service bookings based on a set of criteria.
     public function getBookingsByCriteria(array $criteria, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         $sql = "SELECT DISTINCT sb.* FROM {$this->table} sb";
         $whereClauses = [];
         $params = [];
 
-        // Add JOIN for technician filtering if needed
         $needTechnicianJoin = isset($criteria['technician_id']) || isset($criteria['has_technician']);
         if ($needTechnicianJoin) {
             $sql .= " LEFT JOIN booking_assignment ba ON sb.sb_id = ba.ba_booking_id";
@@ -345,7 +266,6 @@ class ServiceRequestModel extends Model // Extends Model directly
         $allowedFilterColumns = [
             'sb_customer_id', 'sb_service_type_id', 'sb_preferred_date', 
             'sb_status', 'sb_priority'
-            // Add other SB_ columns here if they should be filterable
         ];
 
         foreach ($criteria as $column => $value) {
@@ -366,8 +286,7 @@ class ServiceRequestModel extends Model // Extends Model directly
 
             $columnLower = strtolower($column);
             if (in_array($columnLower, $allowedFilterColumns)) {
-                // Use column name directly from $allowedFilterColumns to maintain case if necessary, or use $column
-                $actualColumn = $column; // Or map $columnLower to schema's exact case if needed
+                $actualColumn = $column;
                 
                 $paramKey = ":" . $columnLower . "_filt"; // e.g. :sb_status_filt
 
@@ -404,12 +323,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->query($sql, $params);
     }
 
-    /**
-     * Count service bookings, optionally filtered by criteria.
-     *
-     * @param array $criteria Associative array of filter conditions.
-     * @return int The number of matching bookings.
-     */
+    // Count service bookings, optionally filtered by criteria.
     public function countBookings(array $criteria = [])
     {
         $sql = "SELECT COUNT(DISTINCT sb.sb_id) FROM {$this->table} sb";
@@ -473,52 +387,26 @@ class ServiceRequestModel extends Model // Extends Model directly
         return (int) $this->queryScalar($sql, $params);
     }
 
-    /**
-     * Get bookings by a specific status.
-     *
-     * @param string $status The status to filter by (e.g., 'pending').
-     * @param array $orderBy Ordering criteria.
-     * @return array Array of bookings.
-     */
+    // Get bookings by a specific status.
     public function getBookingsByStatus($status, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         return $this->getBookingsByCriteria(['sb_status' => $status], $orderBy);
     }
 
-    /**
-     * Get bookings for a specific service type.
-     *
-     * @param int $serviceTypeId The ID of the service type.
-     * @param array $orderBy Ordering criteria.
-     * @return array Array of bookings.
-     */
+    // Get bookings for a specific service type.
     public function getBookingsByServiceType($serviceTypeId, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         return $this->getBookingsByCriteria(['sb_service_type_id' => $serviceTypeId], $orderBy);
     }
 
-    /**
-     * Get bookings within a specific date range (based on sb_preferred_date).
-     *
-     * @param string $startDate Start date (YYYY-MM-DD).
-     * @param string $endDate End date (YYYY-MM-DD).
-     * @param array $orderBy Ordering criteria.
-     * @return array Array of bookings.
-     */
+    // Get bookings within a specific date range (based on sb_preferred_date).
     public function getBookingsByDateRange($startDate, $endDate, $orderBy = ['sb_preferred_date' => 'DESC', 'sb_preferred_time' => 'DESC'])
     {
         $criteria = ['sb_preferred_date' => ['from' => $startDate, 'to' => $endDate]];
         return $this->getBookingsByCriteria($criteria, $orderBy);
     }
 
-    /**
-     * Check if a customer has an active, non-completed/cancelled booking at a specific date and time.
-     *
-     * @param int $customerId Customer ID (UA_ID).
-     * @param string $preferredDate Date (YYYY-MM-DD).
-     * @param string $preferredTime Time (HH:MM:SS or HH:MM).
-     * @return bool True if a conflicting booking exists, false otherwise.
-     */
+    // Check if a customer has an active, non-completed/cancelled booking at a specific date and time.
     public function hasConflictingBooking($customerId, $preferredDate, $preferredTime)
     {
         $sql = "SELECT COUNT(*) FROM {$this->table} 
@@ -540,14 +428,7 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->queryScalar($sql, $params) > 0;
     }
 
-    /**
-     * Get service bookings assigned to a specific technician.
-     *
-     * @param int $technicianId The technician's account ID (TE_ACCOUNT_ID which is UA_ID).
-     * @param array $filters Optional filters, e.g., ['assignment_status' => 'assigned', 'booking_status' => 'in-progress'].
-     * @param array $orderBy Ordering criteria for the bookings.
-     * @return array Array of service bookings.
-     */
+    // Get service bookings assigned to a specific technician.
     public function getBookingsForTechnician($technicianId, $filters = [], $orderBy = ['sb.sb_preferred_date' => 'ASC', 'sb.sb_preferred_time' => 'ASC'])
     {
         $sql = "SELECT sb.* 
@@ -591,14 +472,8 @@ class ServiceRequestModel extends Model // Extends Model directly
         return $this->query($sql, $params);
     }
 
-    /**
-     * Get service bookings that are not actively assigned to any technician.
-     * "Actively assigned" means an assignment exists with status 'assigned' or 'in-progress'.
-     *
-     * @param string $bookingStatus Filter by booking status (e.g., 'confirmed' bookings ready for assignment).
-     * @param array $orderBy Ordering criteria for the unassigned bookings.
-     * @return array Array of unassigned service bookings.
-     */
+    // Get service bookings that are not actively assigned to any technician.
+    // "Actively assigned" means an assignment exists with status 'assigned' or 'in-progress'.
     public function getUnassignedBookings($bookingStatus = 'confirmed', $orderBy = ['sb.sb_preferred_date' => 'ASC', 'sb.sb_preferred_time' => 'ASC'])
     {
         $sql = "SELECT sb.*

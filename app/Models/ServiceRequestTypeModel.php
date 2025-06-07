@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-// Assuming Model.php is in the same namespace or properly autoloaded
-
 class ServiceRequestTypeModel extends Model
 {
     protected $table = 'service_type';
@@ -14,11 +12,8 @@ class ServiceRequestTypeModel extends Model
     protected $createdAtColumn = 'st_created_at';
     protected $updatedAtColumn = 'st_updated_at';
 
-    /**
-     * Get all active service types
-     *
-     * @return array Array of active service types
-     */
+    
+    // Get all active service types
     public function getActiveServiceTypes()
     {
         $sql = "SELECT * FROM {$this->table} 
@@ -27,48 +22,28 @@ class ServiceRequestTypeModel extends Model
         return $this->query($sql, ['isActive' => true]);
     }
 
-    /**
-     * Get a service type by code
-     *
-     * @param string $code The service type code
-     * @return array|null The service type or null if not found
-     */
+    // Get a service type by code
     public function getServiceTypeByCode($code)
     {
         $sql = "SELECT * FROM {$this->table} WHERE st_code = :code";
         return $this->queryOne($sql, ['code' => $code]);
     }
 
-    /**
-     * Get a service type by its primary key (ID)
-     *
-     * @param int $id The service type ID
-     * @return array|null The service type or null if not found
-     */
+    // Get a service type by its primary key (ID)
     public function findById($id)
     {
         $sql = "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :id";
         return $this->queryOne($sql, ['id' => $id]);
      }
     
-    /**
-     * Get a service type by its primary key (ID) - alias for findById
-     * Used by ServiceRequestController
-     *
-     * @param int $id The service type ID
-     * @return array|null The service type or null if not found
-     */
+    // Get a service type by its primary key (ID) - alias for findById
+    // Used by ServiceRequestController
     public function getServiceTypeById($id)
     {
         return $this->findById($id);
     }
 
-    /**
-     * Create a new service type using all provided data.
-     *
-     * @param array $data Service type data. All keys will be treated as column names.
-     * @return int|false The ID of the newly created record, or false on failure.
-     */
+    // Create a new service type using all provided data.
     public function createServiceType(array $data)
     {
         $dataForPlaceholders = $data; // Data that will become "column = :value"
@@ -96,19 +71,12 @@ class ServiceRequestTypeModel extends Model
 
         // $formatted['filteredData'] contains values for placeholders derived from $dataForPlaceholders.
         if ($this->execute($sql, $formatted['filteredData']) > 0) {
-            // For PostgreSQL, sequence name is often table_primarykey_seq
             return $this->lastInsertId("{$this->table}_{$this->primaryKey}_seq");
         }
         return false;
     }
 
-    /**
-     * Update a service type using all provided data.
-     *
-     * @param int $typeId The service type ID
-     * @param array $data Updated service type data. All keys will be treated as column names.
-     * @return bool Success status (true if rows affected, false otherwise)
-     */
+    // Update a service type using all provided data.
     public function updateServiceType($typeId, array $data)
     {
         $dataForPlaceholders = $data; // Data for "SET column = :value"
@@ -124,13 +92,7 @@ class ServiceRequestTypeModel extends Model
         
         // If $dataForPlaceholders is empty AND $expressions is empty, then there's nothing to update.
         if (empty($dataForPlaceholders) && empty($expressions)) {
-            // No actual change to data, but some might consider this "successful" if the record exists.
-            // Or, if an update implies at least one field changes, return false.
-            // For now, let's consider it a success if no error, but no rows affected.
-            // The `execute` method returns rowCount, so `> 0` handles this.
-            // If you want to explicitly return false here:
-            // error_log("No data or expressions to update for service type ID: " . $typeId);
-            // return false;
+            
         }
         
         $formatted = $this->formatUpdateData($dataForPlaceholders, [], $expressions);
@@ -148,13 +110,7 @@ class ServiceRequestTypeModel extends Model
         return $this->execute($sql, $params) > 0;
     }
     
-    /**
-     * Toggle the active status of a service type
-     * 
-     * @param int $typeId The service type ID
-     * @param bool $isActive New active status
-     * @return bool Success status
-     */
+    // Toggle the active status of a service type
     public function toggleServiceTypeStatus($typeId, $isActive)
     {
         $dataToUpdate = ['st_is_active' => (bool) $isActive];
@@ -180,12 +136,7 @@ class ServiceRequestTypeModel extends Model
         return $this->execute($sql, $params) > 0;
     }
 
-    /**
-     * Delete a service type by its ID
-     *
-     * @param int $typeId The service type ID
-     * @return bool Success status
-     */
+    // Delete a service type by its ID
     public function deleteServiceType($typeId)
     {
         // Hard delete

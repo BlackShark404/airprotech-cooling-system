@@ -21,13 +21,7 @@ class AdminModel extends Model
     protected $timestamps = true; // Enable automatic timestamp management for created_at and updated_at
     protected $useSoftDeletes = false; // Admin table does not have a deleted_at column in the provided schema
 
-    /**
-     * Update admin record by account ID.
-     *
-     * @param int $accountId The user account ID (ua_id which is ad_account_id in admin table).
-     * @param array $data Data to update.
-     * @return bool True on success, false on failure.
-     */
+    // Update admin record by account ID.
     public function updateByAccountId($accountId, array $data)
     {
         if (empty($data)) {
@@ -57,26 +51,13 @@ class AdminModel extends Model
         return $this->execute($sql, $params);
     }
 
-    /**
-     * Find an admin record by account ID.
-     *
-     * @param int $accountId
-     * @return array|false
-     */
+    // Find an admin record by account ID.
     public function findByAccountId($accountId)
     {
         $sql = "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :account_id";
         return $this->queryOne($sql, ['account_id' => $accountId]);
     }
     
-    /**
-     * Create a new admin record.
-     * This is typically handled by a trigger in the DB (create_role_specific_record)
-     * but can be useful for direct creation or testing.
-     *
-     * @param array $data
-     * @return mixed The last insert ID or false on failure.
-     */
     public function createAdmin(array $data)
     {
         if (empty($data[$this->primaryKey])) {
@@ -102,11 +83,7 @@ class AdminModel extends Model
         return false;
     }
 
-    /**
-     * Get system-wide statistics for the admin dashboard/profile.
-     *
-     * @return array An array of statistics.
-     */
+    // Get system-wide statistics for the admin dashboard/profile.
     public function getSystemStatistics()
     {
         $stats = [];

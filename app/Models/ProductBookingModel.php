@@ -6,9 +6,7 @@ class ProductBookingModel extends Model
 {
     protected $table = 'PRODUCT_BOOKING';
 
-    /**
-     * Get all product bookings
-     */
+    // Get all product bookings
     public function getAllBookings()
     {
         $sql = "SELECT 
@@ -104,9 +102,7 @@ class ProductBookingModel extends Model
         return $this->query($sql, [':customer_id' => $customerId]);
     }
 
-    /**
-     * Create a new product booking
-     */
+    // Create a new product booking
     public function createBooking($data)
     {
         $sql = "INSERT INTO {$this->table} (
@@ -150,9 +146,7 @@ class ProductBookingModel extends Model
         return $this->lastInsertId('product_booking_pb_id_seq');
     }
 
-    /**
-     * Update a product booking status
-     */
+    // Update a product booking status
     public function updateBookingStatus($bookingId, $status)
     {
         $sql = "UPDATE {$this->table} SET 
@@ -168,9 +162,7 @@ class ProductBookingModel extends Model
         return $this->execute($sql, $params);
     }
 
-    /**
-     * Update an existing product booking
-     */
+    // Update an existing product booking
     public function updateBooking($bookingId, $data)
     {
         $setClauses = [];
@@ -227,9 +219,7 @@ class ProductBookingModel extends Model
         return $this->execute($sql, $params);
     }
 
-    /**
-     * Soft delete a product booking
-     */
+    // Soft delete a product booking
     public function deleteBooking($bookingId)
     {
         $sql = "UPDATE {$this->table} SET PB_DELETED_AT = CURRENT_TIMESTAMP 
@@ -237,9 +227,7 @@ class ProductBookingModel extends Model
         return $this->execute($sql, [':booking_id' => $bookingId]);
     }
 
-    /**
-     * Get booking summary statistics
-     */
+    // Get booking summary statistics
     public function getBookingSummary()
     {
         $sql = "SELECT 
@@ -255,9 +243,7 @@ class ProductBookingModel extends Model
         return $this->queryOne($sql);
     }
 
-    /**
-     * Get all bookings with filters
-     */
+    // Get all bookings with filters
     public function getFilteredBookings($filters = [])
     {
         $whereConditions = ["pb.PB_DELETED_AT IS NULL"];
@@ -344,9 +330,7 @@ class ProductBookingModel extends Model
         return $this->query($sql, $params);
     }
 
-    /**
-     * Get assigned technicians for a product booking
-     */
+    // Get assigned technicians for a product booking
     public function getAssignedTechnicians($bookingId)
     {
         $sql = "SELECT 
@@ -368,18 +352,14 @@ class ProductBookingModel extends Model
         return $this->query($sql, [':booking_id' => $bookingId]);
     }
 
-    /**
-     * Remove all technicians from a product booking
-     */
+    // Remove all technicians from a product booking
     public function removeAllTechnicians($bookingId)
     {
         $sql = "DELETE FROM PRODUCT_ASSIGNMENT WHERE PA_ORDER_ID = :booking_id";
         return $this->execute($sql, [':booking_id' => $bookingId]);
     }
 
-    /**
-     * Assign a technician to a product booking
-     */
+    // Assign a technician to a product booking
     public function assignTechnician($bookingId, $technicianId, $notes = '')
     {
         // Check if this technician is already assigned to this booking

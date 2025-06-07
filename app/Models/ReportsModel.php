@@ -9,11 +9,7 @@ class ReportsModel extends Model
         parent::__construct();
     }
     
-    /**
-     * Get service request statistics by status
-     * 
-     * @return array Array of stats by status
-     */
+    // Get service request statistics by status
     public function getServiceRequestsByStatus()
     {
         $sql = "SELECT 
@@ -32,11 +28,7 @@ class ReportsModel extends Model
         }
     }
     
-    /**
-     * Get service request statistics by type
-     * 
-     * @return array Array of stats by service type
-     */
+    // Get service request statistics by type
     public function getServiceRequestsByType()
     {
         $sql = "SELECT 
@@ -56,12 +48,7 @@ class ReportsModel extends Model
         }
     }
     
-    /**
-     * Get service requests count by month for a given year
-     * 
-     * @param int $year The year to get data for (defaults to current year)
-     * @return array Monthly counts
-     */
+    // Get service requests count by month for a given year
     public function getServiceRequestsByMonth($year = null)
     {
         if ($year === null) {
@@ -86,11 +73,7 @@ class ReportsModel extends Model
         }
     }
     
-    /**
-     * Get product booking statistics by status
-     * 
-     * @return array Array of stats by status
-     */
+    // Get product booking statistics by status
     public function getProductBookingsByStatus()
     {
         $sql = "SELECT 
@@ -109,12 +92,7 @@ class ReportsModel extends Model
         }
     }
     
-    /**
-     * Get product bookings count by month for a given year
-     * 
-     * @param int $year The year to get data for (defaults to current year)
-     * @return array Monthly counts
-     */
+    // Get product bookings count by month for a given year
     public function getProductBookingsByMonth($year = null)
     {
         if ($year === null) {
@@ -139,12 +117,7 @@ class ReportsModel extends Model
         }
     }
     
-    /**
-     * Get top selling products
-     * 
-     * @param int $limit Number of products to return
-     * @return array Top selling products
-     */
+    // Get top selling products
     public function getTopSellingProducts($limit = 5)
     {
         $sql = "SELECT 
@@ -166,11 +139,7 @@ class ReportsModel extends Model
         }
     }
     
-    /**
-     * Get technician performance statistics
-     * 
-     * @return array Technician performance stats
-     */
+    // Get technician performance statistics
     public function getTechnicianPerformance()
     {
         $sql = "SELECT 
@@ -211,12 +180,7 @@ class ReportsModel extends Model
         }
     }
     
-    /**
-     * Get revenue statistics by month
-     * 
-     * @param int $year The year to get data for (defaults to current year)
-     * @return array Monthly revenue stats
-     */
+    // Get revenue statistics by month
     public function getRevenueByMonth($year = null)
     {
         if ($year === null) {

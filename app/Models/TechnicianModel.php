@@ -12,14 +12,7 @@ class TechnicianModel extends Model
         'te_is_available'
     ];
     
-    /**
-     * Update a technician record
-     * 
-     * @param array $data Data to update
-     * @param string $where Where clause
-     * @param array $params Additional parameters for the where clause
-     * @return bool Success status
-     */
+    // Update a technician record
     public function update($data, $where, $params = [])
     {
         $formattedUpdate = $this->formatUpdateData($data);
@@ -34,11 +27,7 @@ class TechnicianModel extends Model
         return $this->execute($sql, $allParams) !== false;
     }
     
-    /**
-     * Get all available technicians
-     * 
-     * @return array List of available technicians
-     */
+    // Get all available technicians
     public function getAvailableTechnicians()
     {
         $sql = "SELECT t.*, 
@@ -53,12 +42,7 @@ class TechnicianModel extends Model
         return $this->query($sql);
     }
     
-    /**
-     * Create a new assignment for a technician
-     * 
-     * @param array $data Assignment data
-     * @return int|bool The ID of the new assignment or false on failure
-     */
+    // Create a new assignment for a technician
     public function createAssignment($data)
     {
         // Check if this is a service booking or product booking

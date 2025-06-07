@@ -18,14 +18,7 @@ class Model
         $this->pdo = Database::getInstance()->getConnection();
     }
     
-    /**
-     * Execute a query with support for PostgreSQL commands and formatting with newlines
-     * 
-     * @param string $sql The SQL query with optional newlines for better formatting
-     * @param array $params Parameters to bind to the query
-     * @param bool $fetchAll Whether to fetch all results or just one
-     * @return mixed Query results
-     */
+    // Execute a query with support for PostgreSQL commands and formatting with newlines
     public function query($sql, $params = [], $fetchAll = true)
     {
         try {
@@ -73,27 +66,14 @@ class Model
         }
     }
     
-    /**
-     * Get a single record
-     * 
-     * @param string $sql The SQL query with optional newlines for formatting
-     * @param array $params Parameters to bind to the query
-     * @return array|null Single result row or null if not found
-     */
+    // Get a single record
     public function queryOne($sql, $params = [])
     {
         $result = $this->query($sql, $params, false);
         return $result === false ? null : $result;
     }
     
-    /**
-     * Get a single scalar value from the first column of the first row
-     * 
-     * @param string $sql The SQL query with optional newlines for formatting
-     * @param array $params Parameters to bind to the query
-     * @param mixed $default Default value if no result is returned
-     * @return mixed Scalar value or default value if no result
-     */
+    // Get a single scalar value from the first column of the first row
     public function queryScalar($sql, $params = [], $default = null)
     {
         try {
@@ -135,15 +115,7 @@ class Model
         }
     }
     
-    /**
-     * Get the value of a specific column from the first row
-     * 
-     * @param string $sql The SQL query
-     * @param array $params Parameters to bind to the query
-     * @param string $column The column name to retrieve
-     * @param mixed $default Default value if not found
-     * @return mixed The column value or default
-     */
+    // Get the value of a specific column from the first row
     public function queryValue($sql, $params = [], $column = null, $default = null)
     {
         $row = $this->queryOne($sql, $params);
@@ -160,13 +132,7 @@ class Model
         return isset($row[$column]) ? $row[$column] : $default;
     }
     
-    /**
-     * Execute a query with no return value (INSERT, UPDATE, DELETE)
-     * 
-     * @param string $sql The SQL query with optional newlines for formatting
-     * @param array $params Parameters to bind to the query
-     * @return int Number of affected rows
-     */
+    // Execute a query with no return value (INSERT, UPDATE, DELETE)
     public function execute($sql, $params = [])
     {
         try {
@@ -203,12 +169,7 @@ class Model
         }
     }
     
-    /**
-     * Get the PDO parameter type for a value
-     * 
-     * @param mixed $value The value to determine type for
-     * @return int PDO parameter type
-     */
+    // Get the PDO parameter type for a value
     private function getParamType($value)
     {
         if (is_int($value)) {
@@ -221,28 +182,19 @@ class Model
         return PDO::PARAM_STR;
     }
     
-    /**
-     * Get the last inserted ID
-     * 
-     * @param string|null $sequenceName Name of the sequence (for PostgreSQL)
-     * @return string The last inserted ID
-     */
+    // Get the last inserted ID
     public function lastInsertId($sequenceName = null)
     {
         return $this->pdo->lastInsertId($sequenceName);
     }
     
-    /**
-     * Begin a transaction
-     */
+    // Begin a transaction
     public function beginTransaction()
     {
         return $this->pdo->beginTransaction();
     }
     
-    /**
-     * Commit a transaction
-     */
+    // Commit a transaction
     public function commit()
     {
         // Check if there's an active transaction before committing
@@ -252,9 +204,7 @@ class Model
         return true; // Return true if there's no active transaction
     }
     
-    /**
-     * Rollback a transaction
-     */
+    // Rollback a transaction
     public function rollback()
     {
         // Check if there's an active transaction before rolling back
@@ -264,14 +214,7 @@ class Model
         return true; // Return true if there's no active transaction
     }
 
-    /**
-     * Format columns and placeholders for INSERT statements
-     * 
-     * @param array $data Associative array of column => value pairs
-     * @param array $exclude Array of column names to exclude
-     * @param array $expressions Associative array of column => sql expression pairs
-     * @return array Associative array with 'columns' and 'placeholders' keys
-     */
+    // Format columns and placeholders for INSERT statements
     protected function formatInsertData(array $data, array $exclude = [], array $expressions = [])
     {
         // Filter out excluded columns
@@ -306,14 +249,7 @@ class Model
         ];
     }
 
-    /**
-     * Format SET clause for UPDATE statements
-     * 
-     * @param array $data Associative array of column => value pairs
-     * @param array $exclude Array of column names to exclude
-     * @param array $expressions Associative array of column => sql expression pairs
-     * @return array Associative array with 'updateClause' and 'filteredData' keys
-     */
+    // Format SET clause for UPDATE statements
     protected function formatUpdateData(array $data, array $exclude = [], array $expressions = [])
     {
         // Filter out excluded columns

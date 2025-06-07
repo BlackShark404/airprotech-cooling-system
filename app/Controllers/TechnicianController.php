@@ -18,9 +18,7 @@ class TechnicianController extends BaseController
         $this->userModel = $this->loadModel('UserModel');
     }
     
-    /**
-     * Render technician dashboard
-     */
+    // Render technician dashboard
     public function dashboard()
     {
         // Ensure user is logged in and is a technician
@@ -46,9 +44,7 @@ class TechnicianController extends BaseController
         ]);
     }
     
-    /**
-     * API endpoint to get all technicians
-     */
+    // API endpoint to get all technicians
     public function getAllTechnicians()
     {
         // Get all technicians with their user account information
@@ -57,9 +53,7 @@ class TechnicianController extends BaseController
         $this->jsonSuccess($technicians);
     }
     
-    /**
-     * API endpoint to get a specific technician's assignments
-     */
+    // API endpoint to get a specific technician's assignments
     public function getTechnicianAssignments($technicianId)
     {
         // Get service request assignments
@@ -74,9 +68,7 @@ class TechnicianController extends BaseController
         ]);
     }
     
-    /**
-     * API endpoint to update a service assignment status
-     */
+    // API endpoint to update a service assignment status
     public function updateServiceAssignment()
     {
         if (!$this->isPost()) {
@@ -117,9 +109,7 @@ class TechnicianController extends BaseController
         }
     }
     
-    /**
-     * API endpoint to update a product assignment status
-     */
+    // API endpoint to update a product assignment status
     public function updateProductAssignment()
     {
         if (!$this->isPost()) {

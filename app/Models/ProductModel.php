@@ -4,9 +4,7 @@ namespace App\Models;
 
 class ProductModel extends Model
 {
-    protected $table = 'PRODUCT'; // Corresponds to the PRODUCT table in the database
-
-    // Basic CRUD methods (can be expanded as needed)
+    protected $table = 'PRODUCT';
 
     public function getAllProducts()
     {
@@ -26,8 +24,6 @@ class ProductModel extends Model
         $requiredFields = ['PROD_IMAGE', 'PROD_NAME', 'PROD_DESCRIPTION'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field])) {
-                // Handle missing field error, perhaps throw an exception or return false
-                // For simplicity, returning false here
                 error_log("Product creation failed: Missing field {$field}");
                 return false;
             }
@@ -43,7 +39,7 @@ class ProductModel extends Model
         ];
         
         $this->execute($sql, $params);
-        return $this->lastInsertId('product_prod_id_seq'); // Adjust sequence name if different
+        return $this->lastInsertId('product_prod_id_seq');
     }
 
     public function updateProduct($productId, $data)
@@ -81,9 +77,6 @@ class ProductModel extends Model
         return $this->execute($sql, [':product_id' => $productId]);
     }
 
-    // Methods for Product Features, Specs, and Variants will be in their respective models
-    // However, you might want methods here to get a product with all its related data.
-
     public function getProductWithDetails($productId)
     {
         $product = $this->getProductById($productId);
@@ -102,9 +95,7 @@ class ProductModel extends Model
         return $product;
     }
     
-    /**
-     * Get summary statistics for products
-     */
+    // Get summary statistics for products
     public function getProductSummary()
     {
         // Get all products
@@ -130,10 +121,7 @@ class ProductModel extends Model
         ];
     }
 
-    /**
-     * Count the number of active (non-deleted) products
-     * @return int Number of active products
-     */
+    // Count the number of active (non-deleted) products
     public function countActiveProducts()
     {
         $sql = "SELECT COUNT(*) AS total FROM {$this->table} WHERE PROD_DELETED_AT IS NULL";

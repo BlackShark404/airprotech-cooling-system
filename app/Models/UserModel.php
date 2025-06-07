@@ -109,7 +109,6 @@ class UserModel extends Model
                 $roleTableAlias = 'te';
                 break;
             default:
-                // Maybe throw an exception or return just basic user details
                 return $this->findById($userId); 
         }
 
@@ -442,12 +441,8 @@ class UserModel extends Model
         return $this->execute($sql, $updateData['filteredData']);
     }
 
-    /**
-     * Get customer statistics for the user profile
-     * 
-     * @param int $userId The user ID
-     * @return array Customer statistics
-     */
+    
+    // Get customer statistics for the user profile
     public function getCustomerStatistics($userId)
     {
         // First check if the customer exists
@@ -527,11 +522,8 @@ class UserModel extends Model
         ];
     }
 
-    /**
-     * Get all technicians with their user account information
-     * 
-     * @return array Array of technicians with their user data
-     */
+    
+    // Get all technicians with their user account information
     public function getTechnicians()
     {
         // First get all technicians
@@ -578,12 +570,7 @@ class UserModel extends Model
         return $technicians;
     }
     
-    /**
-     * Get technician by ID with user account information
-     * 
-     * @param int $id Technician ID
-     * @return array|null Technician data or null if not found
-     */
+    // Get technician by ID with user account information
     public function getTechnicianById($id)
     {
         $sql = "SELECT user_account.*, technician.*
@@ -599,12 +586,8 @@ class UserModel extends Model
         ]);
     }
     
-    /**
-     * Get detailed technician information including assignment statistics
-     * 
-     * @param int $id Technician ID
-     * @return array|null Technician data with statistics or null if not found
-     */
+    
+    // Get detailed technician information including assignment statistics
     public function getTechnicianDetails($id)
     {
         // Get basic technician info

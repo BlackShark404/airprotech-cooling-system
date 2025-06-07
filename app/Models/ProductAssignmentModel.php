@@ -20,12 +20,7 @@ class ProductAssignmentModel extends BaseModel
         'pa_completed_at'
     ];
 
-    /**
-     * Get all product assignments for a specific technician
-     * 
-     * @param int $technicianId The technician ID
-     * @return array The product assignments for the technician
-     */
+    // Get all product assignments for a specific technician
     public function getAssignmentsByTechnician($technicianId)
     {
         return $this->select('product_assignment.*, product_booking.pb_variant_id, 
@@ -46,12 +41,7 @@ class ProductAssignmentModel extends BaseModel
                     ->get();
     }
 
-    /**
-     * Get all assignments for a specific product booking
-     * 
-     * @param int $bookingId The product booking ID
-     * @return array The assignments for the product booking
-     */
+    // Get all assignments for a specific product booking
     public function getAssignmentsByBooking($bookingId)
     {
         return $this->select('product_assignment.*, 
@@ -63,12 +53,7 @@ class ProductAssignmentModel extends BaseModel
                     ->get();
     }
     
-    /**
-     * Get all assignments for a specific product booking order
-     * 
-     * @param int $orderId The product booking order ID
-     * @return array The assignments for the product booking order
-     */
+    // Get all assignments for a specific product booking order
     public function getAssignmentsByOrderId($orderId)
     {
         return $this->select('product_assignment.*, 
@@ -80,64 +65,34 @@ class ProductAssignmentModel extends BaseModel
                     ->get();
     }
 
-    /**
-     * Create a new product assignment
-     * 
-     * @param array $data The assignment data
-     * @return int|bool The new assignment ID or false on failure
-     */
+    // Create a new product assignment
     public function createAssignment($data)
     {
         return $this->insert($data);
     }
 
-    /**
-     * Update a product assignment
-     * 
-     * @param int $id The assignment ID
-     * @param array $data The assignment data
-     * @return bool Success or failure
-     */
+    // Update a product assignment
     public function updateAssignment($id, $data)
     {
         return $this->update($data, 'pa_id = :id', ['id' => $id]);
     }
 
-    /**
-     * Delete a product assignment
-     * 
-     * @param int $id The assignment ID
-     * @return bool Success or failure
-     */
+    // Delete a product assignment
     public function deleteAssignment($id)
     {
         return $this->delete('pa_id = :id', ['id' => $id]);
     }
     
-    /**
-     * Delete a product assignment by booking ID and technician ID
-     * 
-     * @param int $bookingId The booking ID
-     * @param int $technicianId The technician ID
-     * @return bool Success or failure
-     */
+    // Delete a product assignment by booking ID and technician ID
     public function deleteAssignmentByOrderAndTechnician($bookingId, $technicianId)
     {
-        // Use direct SQL query to ensure we're explicitly doing a DELETE and not a soft delete
         $sql = "DELETE FROM {$this->table} WHERE pa_order_id = :booking_id AND pa_technician_id = :technician_id";
         $params = ['booking_id' => $bookingId, 'technician_id' => $technicianId];
         
         return $this->execute($sql, $params);
     }
     
-    /**
-     * Update notes for a specific assignment
-     * 
-     * @param int $bookingId The booking ID
-     * @param int $technicianId The technician ID
-     * @param array $data The data to update (should contain PA_NOTES)
-     * @return bool Success or failure
-     */
+    // Update notes for a specific assignment
     public function updateAssignmentNotes($bookingId, $technicianId, $data)
     {
         if (!isset($data['PA_NOTES'])) {

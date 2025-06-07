@@ -20,12 +20,7 @@ class BookingAssignmentModel extends Model
     protected $createdAtColumn = 'ba_assigned_at';
     protected $updatedAtColumn = null; // No updated_at column for this table
 
-    /**
-     * Get all assignments for a specific booking
-     * 
-     * @param int $bookingId The booking ID
-     * @return array Array of assignment records
-     */
+    // Get all assignments for a specific booking
     public function getAssignmentsForBooking($bookingId)
     {
         $sql = "SELECT * FROM {$this->table} 
@@ -35,13 +30,7 @@ class BookingAssignmentModel extends Model
         return $this->query($sql, ['bookingId' => $bookingId]);
     }
 
-    /**
-     * Get all assignments for a specific technician
-     * 
-     * @param int $technicianId The technician ID
-     * @param string|null $status Filter by assignment status
-     * @return array Array of assignment records
-     */
+    // Get all assignments for a specific technician
     public function getAssignmentsForTechnician($technicianId, $status = null)
     {
         $sql = "SELECT booking_assignment.*, 
@@ -69,12 +58,7 @@ class BookingAssignmentModel extends Model
         return $this->query($sql, $params);
     }
 
-    /**
-     * Add a new assignment
-     * 
-     * @param array $data Assignment data
-     * @return int|false The ID of the new assignment or false on failure
-     */
+    // Add a new assignment
     public function addAssignment($data)
     {
         // Ensure required fields are present
@@ -151,13 +135,7 @@ class BookingAssignmentModel extends Model
         }
     }
 
-    /**
-     * Update an assignment
-     * 
-     * @param int $assignmentId The assignment ID
-     * @param array $data The data to update
-     * @return bool Success status
-     */
+    // Update an assignment
     public function updateAssignment($assignmentId, $data)
     {
         if (empty($data)) {
@@ -167,7 +145,7 @@ class BookingAssignmentModel extends Model
         $formattedUpdate = $this->formatUpdateData($data);
         
         if (empty($formattedUpdate['updateClause'])) {
-            return true; // No effective update to make
+            return true;
         }
         
         $sql = "UPDATE {$this->table} 
@@ -180,13 +158,7 @@ class BookingAssignmentModel extends Model
         return $this->execute($sql, $params) > 0;
     }
 
-    /**
-     * Update assignment status
-     * 
-     * @param int $assignmentId The assignment ID
-     * @param string $status The new status
-     * @return bool Success status
-     */
+    // Update assignment status
     public function updateAssignmentStatus($assignmentId, $status)
     {
         $allowedStatuses = ['assigned', 'in-progress', 'completed', 'cancelled'];
@@ -204,13 +176,7 @@ class BookingAssignmentModel extends Model
         return $this->updateAssignment($assignmentId, $data);
     }
 
-    /**
-     * Remove an assignment between a booking and technician
-     * 
-     * @param int $bookingId The booking ID
-     * @param int $technicianId The technician ID
-     * @return bool Success status
-     */
+    // Remove an assignment between a booking and technician
     public function removeAssignment($bookingId, $technicianId)
     {
         $sql = "UPDATE {$this->table} 
@@ -227,13 +193,7 @@ class BookingAssignmentModel extends Model
         return $this->execute($sql, $params) > 0;
     }
 
-    /**
-     * Check if a technician is assigned to a booking
-     * 
-     * @param int $bookingId The booking ID
-     * @param int $technicianId The technician ID
-     * @return bool True if assigned, false otherwise
-     */
+    // Check if a technician is assigned to a booking
     public function isAssigned($bookingId, $technicianId)
     {
         $sql = "SELECT COUNT(*) FROM {$this->table} 
@@ -249,14 +209,7 @@ class BookingAssignmentModel extends Model
         return $this->queryScalar($sql, $params) > 0;
     }
 
-    /**
-     * Update notes for a specific assignment
-     * 
-     * @param int $bookingId The booking ID
-     * @param int $technicianId The technician ID
-     * @param string|null $notes The notes to update
-     * @return bool Success status
-     */
+    // Update notes for a specific assignment
     public function updateAssignmentNotes($bookingId, $technicianId, $notes)
     {
         $sql = "UPDATE {$this->table} 
@@ -271,9 +224,6 @@ class BookingAssignmentModel extends Model
             'technicianId' => $technicianId
         ];
         
-        // We expect this to affect one row if the assignment exists and is active.
-        // If no rows are affected, it could mean the assignment doesn't exist or isn't in a state to be updated.
-        // The controller should handle the logic of whether an assignment *should* exist.
         return $this->execute($sql, $params) >= 0; // Allow 0 if notes are unchanged
     }
 }

@@ -218,7 +218,6 @@ class InventoryController extends BaseController
         
         $data = $this->getJsonInput();
         
-        // Debug log the received data
         error_log("[DEBUG] moveStock data received: " . print_r($data, true));
         
         // Validate required fields

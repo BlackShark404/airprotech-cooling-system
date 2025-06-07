@@ -512,12 +512,7 @@ class InventoryModel extends Model
         }
     }
 
-    /**
-     * Get inventory data for multiple variants at once
-     * 
-     * @param array $variantIds Array of variant IDs
-     * @return array Inventory data for all variants
-     */
+    // Get inventory data for multiple variants at once
     public function getInventoryByVariantIds($variantIds)
     {
         if (empty($variantIds)) {
@@ -551,14 +546,8 @@ class InventoryModel extends Model
         return $this->query($sql, $params);
     }
 
-    /**
-     * Reduce stock from inventory for a specific variant
-     * Will distribute reduction across warehouses if needed
-     *
-     * @param int $variantId The variant ID to reduce stock for
-     * @param int $quantity The quantity to reduce
-     * @return bool True if successful, false otherwise
-     */
+    // Reduce stock from inventory for a specific variant
+    // Will distribute reduction across warehouses if needed
     public function reduceStock($variantId, $quantity)
     {
         // Ensure parameters are integers
@@ -690,13 +679,7 @@ class InventoryModel extends Model
         }
     }
 
-    /**
-     * Update inventory records to use new variant IDs after product update
-     * 
-     * @param int $oldVariantId The old variant ID
-     * @param int $newVariantId The new variant ID that replaces the old one
-     * @return bool True on success
-     */
+    // Update inventory records to use new variant IDs after product update
     public function updateVariantReferences($oldVariantId, $newVariantId)
     {
         $sql = "UPDATE {$this->table} SET 
