@@ -710,9 +710,9 @@ function viewProductBooking(rowData) {
             $('#view-unit-price').text(data.pb_unit_price ? '₱' + parseFloat(data.pb_unit_price).toFixed(2) : '-');
             $('#view-price-type').text(data.pb_price_type ? data.pb_price_type.charAt(0).toUpperCase() + data.pb_price_type.slice(1) : '-');
             $('#view-total-amount').text(data.pb_total_amount ? '₱' + parseFloat(data.pb_total_amount).toFixed(2) : '-');
-            $('#view-srp-price').text(data.pb_srp_price ? '₱' + parseFloat(data.pb_srp_price).toFixed(2) : '-');
-            $('#view-free-install-price').text(data.pb_free_install_price ? '₱' + parseFloat(data.pb_free_install_price).toFixed(2) : '-');
-            $('#view-with-install-price').text(data.pb_with_install_price ? '₱' + parseFloat(data.pb_with_install_price).toFixed(2) : '-');
+            $('#view-srp-price').text(data.var_srp_price ? '₱' + parseFloat(data.var_srp_price).toFixed(2) : '-');
+            $('#view-free-install-price').text(data.var_price_free_install ? '₱' + parseFloat(data.var_price_free_install).toFixed(2) : '-');
+            $('#view-with-install-price').text(data.var_price_with_install ? '₱' + parseFloat(data.var_price_with_install).toFixed(2) : '-');
             $('#view-status').text(data.pb_status.charAt(0).toUpperCase() + data.pb_status.slice(1));
             $('#view-order-date').text(data.pb_order_date);
             $('#view-delivery-date').text(data.pb_preferred_date);
