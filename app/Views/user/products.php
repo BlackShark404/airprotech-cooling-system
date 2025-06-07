@@ -205,6 +205,23 @@
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
         }
         
+        /* Form Elements Focus States */
+        .search-box input:focus, 
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            border-color: #86b7fe;
+        }
+        
+        /* Make select box match input styles */
+        .filter-group select {
+            border-radius: 8px;
+            height: 38px;
+            border: 1px solid #e5e5e5;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+        }
+        
         .search-box .search-icon {
             position: absolute;
             left: 1.2rem;
@@ -363,11 +380,10 @@
                         <!-- Stock Status Filter -->
                         <div class="filter-group" style="flex: 0 0 auto; min-width: 200px;">
                             <label for="availability-status" class="form-label">Availability</label>
-                            <select id="availability-status" name="availability-status" class="form-select">
+                            <select id="availability-status" name="availability-status" class="form-select form-control">
                                 <option value="">All</option>
                                 <option value="Available">Available</option>
                                 <option value="Out of Stock">Out of Stock</option>
-                                <option value="Discontinued">Discontinued</option>
                             </select>
                         </div>
                         
