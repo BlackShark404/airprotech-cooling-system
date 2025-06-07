@@ -10,6 +10,7 @@ use App\Models\ReportsModel;
 use App\Models\ProductBookingModel;
 use App\Models\ProductAssignmentModel;
 use App\Models\BookingAssignmentModel;
+use App\Models\InventoryModel;
 
 class AdminController extends BaseController {
     protected $userModel;
@@ -20,6 +21,7 @@ class AdminController extends BaseController {
     protected $productBookingModel;
     protected $bookingAssignmentModel;
     protected $productAssignmentModel;
+    protected $inventoryModel;
 
     public function __construct() {
         parent::__construct();
@@ -33,6 +35,7 @@ class AdminController extends BaseController {
         $this->productBookingModel = new ProductBookingModel();
         $this->bookingAssignmentModel = new BookingAssignmentModel();
         $this->productAssignmentModel = new ProductAssignmentModel();
+        $this->inventoryModel = new InventoryModel();
 
         // Ensure user is authenticated and is an admin
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
@@ -667,6 +670,14 @@ class AdminController extends BaseController {
         }
 
         $bookingId = $data['bookingId'];
+        
+        // Get the current booking to check status changes
+        $booking = $this->productBookingModel->getBookingById($bookingId);
+        if (!$booking) {
+            $this->jsonError('Booking not found', 404);
+            return;
+        }
+        
         $updateData = [];
 
         // Add fields to update if they are provided
@@ -701,6 +712,52 @@ class AdminController extends BaseController {
 
         try {
             $this->productBookingModel->beginTransaction();
+            
+            // Check if status is changing to confirmed
+            $statusChangingToConfirmed = false;
+            if (!empty($data['status']) && $data['status'] === 'confirmed') {
+                $currentStatus = isset($booking['PB_STATUS']) ? $booking['PB_STATUS'] : (isset($booking['pb_status']) ? $booking['pb_status'] : '');
+                error_log("Current booking status: {$currentStatus}, New status: {$data['status']}");
+                $statusChangingToConfirmed = ($currentStatus !== 'confirmed');
+                
+                // If status is changing to confirmed, need to check inventory first
+                if ($statusChangingToConfirmed) {
+                    // Get variant ID and quantity from the booking
+                    $variantId = null;
+                    if (isset($booking['PB_VARIANT_ID'])) {
+                        $variantId = $booking['PB_VARIANT_ID'];
+                    } elseif (isset($booking['pb_variant_id'])) {
+                        $variantId = $booking['pb_variant_id'];
+                    }
+                    
+                    $quantity = null;
+                    if (isset($booking['PB_QUANTITY'])) {
+                        $quantity = $booking['PB_QUANTITY'];
+                    } elseif (isset($booking['pb_quantity'])) {
+                        $quantity = $booking['pb_quantity'];
+                    }
+                    
+                    error_log("Attempting to reduce inventory - VariantID: {$variantId}, Quantity: {$quantity}");
+                    
+                    if (!$variantId || !$quantity) {
+                        $this->productBookingModel->rollback();
+                        $this->jsonError('Invalid booking data: missing variant or quantity', 500);
+                        return;
+                    }
+                    
+                    // Check if there's enough inventory and reduce it
+                    $inventoryReduced = $this->inventoryModel->reduceStock($variantId, $quantity);
+                    error_log("Inventory reduction result: " . ($inventoryReduced ? "Success" : "Failed"));
+                    
+                    if (!$inventoryReduced) {
+                        $this->productBookingModel->rollback();
+                        $this->jsonError('Insufficient inventory for this booking. Cannot confirm.', 400);
+                        return;
+                    }
+                    
+                    error_log("Inventory successfully reduced for variant {$variantId}, quantity {$quantity} on booking confirmation");
+                }
+            }
 
             // Update booking
             $success = $this->productBookingModel->updateBooking($bookingId, $updateData);
@@ -770,6 +827,7 @@ class AdminController extends BaseController {
             
         } catch (\Exception $e) {
             $this->productBookingModel->rollback();
+            error_log("Error updating product booking: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             $this->jsonError('Error updating product booking: ' . $e->getMessage(), 500);
         }
     }

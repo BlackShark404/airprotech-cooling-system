@@ -569,9 +569,12 @@ class InventoryModel extends Model
             return false;
         }
         
+        // Check if we're already in a transaction
+        $existingTransaction = $this->pdo->inTransaction();
+        
         // Start a transaction
         try {
-            if ($this->pdo->inTransaction()) {
+            if ($existingTransaction) {
                 error_log("[WARNING] Transaction already in progress, continuing with existing transaction");
             } else {
                 $this->beginTransaction();
@@ -601,7 +604,7 @@ class InventoryModel extends Model
             if ($totalAvailable < $quantity) {
                 error_log("[ERROR] Not enough inventory to reduce. Available: {$totalAvailable}, Requested: {$quantity}");
                 // Only rollback if we started the transaction
-                if (!isset($existingTransaction) || !$existingTransaction) {
+                if (!$existingTransaction) {
                     $this->rollback();
                     error_log("[DEBUG] Transaction rolled back due to insufficient inventory");
                 }
@@ -643,7 +646,7 @@ class InventoryModel extends Model
                 if (!$updateResult) {
                     error_log("[ERROR] Failed to update inventory ID {$inventoryId}");
                     // Only rollback if we started the transaction
-                    if (!isset($existingTransaction) || !$existingTransaction) {
+                    if (!$existingTransaction) {
                         $this->rollback();
                         error_log("[DEBUG] Transaction rolled back due to update failure");
                     }
@@ -658,7 +661,7 @@ class InventoryModel extends Model
             if ($remainingToReduce > 0) {
                 error_log("[ERROR] Could not reduce entire requested quantity. Remaining: {$remainingToReduce}");
                 // Only rollback if we started the transaction
-                if (!isset($existingTransaction) || !$existingTransaction) {
+                if (!$existingTransaction) {
                     $this->rollback();
                     error_log("[DEBUG] Transaction rolled back due to incomplete reduction");
                 }
@@ -666,7 +669,7 @@ class InventoryModel extends Model
             }
             
             // Only commit if we started the transaction
-            if (!isset($existingTransaction) || !$existingTransaction) {
+            if (!$existingTransaction) {
                 $this->commit();
                 error_log("[DEBUG] Transaction committed successfully");
             }
@@ -676,7 +679,7 @@ class InventoryModel extends Model
         } catch (\Exception $e) {
             error_log("[ERROR] Exception reducing inventory: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             // Only rollback if we started the transaction
-            if (!isset($existingTransaction) || !$existingTransaction) {
+            if (!$existingTransaction) {
                 $this->rollback();
                 error_log("[DEBUG] Transaction rolled back due to exception");
             }
