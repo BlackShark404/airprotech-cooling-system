@@ -730,14 +730,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     $('#deleteConfirmModal').modal('hide');
                     productsTable.ajax.reload();
-                    productsManager.showSuccessToast('Product deleted successfully');
+                    productsManager.showSuccessToast('Success', 'Product deleted successfully');
                 } else {
-                    productsManager.showErrorToast('Error: ' + data.message);
+                    productsManager.showErrorToast('Error', data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                productsManager.showErrorToast('An error occurred while deleting the product');
+                productsManager.showErrorToast('Error', 'An error occurred while deleting the product');
             });
     });
     
@@ -1050,14 +1050,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     $('#productModal').modal('hide');
                     productsTable.ajax.reload();
-                    productsManager.showSuccessToast(isEditMode ? 'Product updated successfully' : 'Product created successfully');
+                    productsManager.showSuccessToast('Success', isEditMode ? 'Product updated successfully' : 'Product created successfully');
                 } else {
-                    productsManager.showErrorToast('Error: ' + data.message);
+                    productsManager.showErrorToast('Error', data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                productsManager.showErrorToast('An error occurred while saving the product');
+                productsManager.showErrorToast('Error', 'An error occurred while saving the product');
             });
     });
     
