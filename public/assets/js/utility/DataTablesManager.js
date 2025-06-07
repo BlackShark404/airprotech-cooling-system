@@ -881,9 +881,9 @@ class DataTablesManager {
           return true;
         });
 
-        this.showInfoToast('Filters Applied', 'Table data has been filtered');
+        // No toast notifications for filters
       } else {
-        this.showInfoToast('Filters Removed', 'All filters have been cleared');
+        // No toast notifications for filters
       }
 
       // Redraw the table
