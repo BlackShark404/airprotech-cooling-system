@@ -106,10 +106,10 @@ class ProductBookingManager {
             const bookingDate = booking.PB_ORDER_DATE || booking.pb_order_date;
             const productName = booking.PROD_NAME || booking.prod_name || 'Unknown Product';
             const rawProductImage = booking.PROD_IMAGE || booking.prod_image || '/assets/images/product-placeholder.jpg';
-            
+
             // Fix image path by ensuring it has the correct prefix
             const productImage = this.fixImagePath(rawProductImage);
-            
+
             const variantCapacity = booking.VAR_CAPACITY || booking.var_capacity || 'N/A';
             const totalAmount = booking.PB_TOTAL_AMOUNT || booking.pb_total_amount || 0;
             const status = booking.PB_STATUS || booking.pb_status || 'pending';
@@ -125,7 +125,11 @@ class ProductBookingManager {
                                     <p class="text-muted mb-1">PB-${id} <span class="text-muted">${new Date(bookingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
                                     <h5 class="fw-bold mb-1">${productName}</h5>
                                     <p class="text-muted mb-0">Variant: ${variantCapacity}</p>
-                                    <p class="fw-bold text-dark mb-0">₱${parseFloat(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                    <p class="fw-bold text-dark mb-0">
+                                        ${totalAmount && parseFloat(totalAmount) !== 0
+                    ? '₱' + parseFloat(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                    : 'Price pending'}
+                                    </p>
                                 </div>
                                 <div class="text-end">
                                     <p class="text-muted mb-1">Preferred Date: ${new Date(preferredDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
@@ -147,12 +151,12 @@ class ProductBookingManager {
      */
     fixImagePath(path) {
         if (!path) return '/assets/images/product-placeholder.jpg';
-        
+
         // If path already starts with http/https or /, return as is
         if (path.startsWith('http') || path.startsWith('/')) {
             return path;
         }
-        
+
         // Otherwise, prepend /
         return '/' + path;
     }
@@ -645,12 +649,16 @@ class ProductBookingManager {
         }
 
         if (this.modal.unitPrice) {
-            this.modal.unitPrice.textContent = `₱${parseFloat(bookingData.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            this.modal.unitPrice.textContent = bookingData.unitPrice && parseFloat(bookingData.unitPrice) !== 0
+                ? `₱${parseFloat(bookingData.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : 'Price pending';
             this.modal.unitPrice.classList.add('fw-bold');
         }
 
         if (this.modal.totalAmount) {
-            this.modal.totalAmount.textContent = `₱${parseFloat(bookingData.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            this.modal.totalAmount.textContent = bookingData.totalAmount && parseFloat(bookingData.totalAmount) !== 0
+                ? `₱${parseFloat(bookingData.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : 'Price pending';
             this.modal.totalAmount.classList.add('fs-4');
             this.modal.totalAmount.classList.add('fw-bold');
             this.modal.totalAmount.classList.add('text-primary');
