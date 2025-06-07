@@ -81,7 +81,6 @@ class InventoryModel extends Model
                     i.*,
                     p.PROD_NAME,
                     p.PROD_IMAGE,
-                    p.PROD_AVAILABILITY_STATUS,
                     v.VAR_CAPACITY
                 FROM {$this->table} i
                 JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID

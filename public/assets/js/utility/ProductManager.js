@@ -380,8 +380,10 @@ class ProductManager {
 
         const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
         if (availabilityFilter && availabilityFilter.value !== '') {
-            filteredProducts = filteredProducts.filter(product => {
-                const status = product.PROD_AVAILABILITY_STATUS || product.prod_availability_status;
+            filteredProducts = filteredProducts.filter(p => {
+                // Use inventory count to determine availability
+                const inventoryCount = p.inventory_count || 0;
+                const status = inventoryCount > 0 ? 'Available' : 'Out of Stock';
                 return status === availabilityFilter.value;
             });
         }
@@ -473,7 +475,7 @@ class ProductManager {
         // Update availability status
         if (this.modal.availabilityStatus) {
             if (inventory > 0) {
-                this.modal.availabilityStatus.textContent = `In Stock (${inventory} units)`;
+                this.modal.availabilityStatus.textContent = 'In Stock';
                 this.modal.availabilityStatus.className = 'text-success fw-medium';
             } else {
                 this.modal.availabilityStatus.textContent = 'Out of Stock';
@@ -715,7 +717,9 @@ class ProductManager {
         const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
         if (availabilityFilter && availabilityFilter.value !== '') {
             filteredProducts = filteredProducts.filter(p => {
-                const status = p.PROD_AVAILABILITY_STATUS || p.prod_availability_status;
+                // Use inventory count to determine availability
+                const inventoryCount = p.inventory_count || 0;
+                const status = inventoryCount > 0 ? 'Available' : 'Out of Stock';
                 return status === availabilityFilter.value;
             });
         }
@@ -766,7 +770,9 @@ class ProductManager {
         const availabilityFilter = this.filterForm?.querySelector('[name="availability-status"]');
         if (availabilityFilter && availabilityFilter.value !== '') {
             filtered = filtered.filter(p => {
-                const status = p.PROD_AVAILABILITY_STATUS || p.prod_availability_status;
+                // Use inventory count to determine availability
+                const inventoryCount = p.inventory_count || 0;
+                const status = inventoryCount > 0 ? 'Available' : 'Out of Stock';
                 return status === availabilityFilter.value;
             });
         }
@@ -839,7 +845,11 @@ class ProductManager {
         const productId = product.PROD_ID || product.prod_id || 'N/A';
         const productImage = product.PROD_IMAGE || product.prod_image || '';
         const productDescription = product.PROD_DESCRIPTION || product.prod_description || '';
-        const availabilityStatus = product.PROD_AVAILABILITY_STATUS || product.prod_availability_status || 'Unknown';
+
+        // Determine availability based on inventory
+        const hasInventory = (product.inventory_count > 0) ||
+            (product.variants && Array.isArray(product.variants) &&
+                product.variants.some(v => (v.INVENTORY_QUANTITY || 0) > 0));
 
         // Update the modal title and product name
         if (this.modal.title) this.modal.title.textContent = `${productName}`;
@@ -867,12 +877,6 @@ class ProductManager {
                     (variant.VAR_SRP_PRICE !== undefined || variant.var_srp_price !== undefined);
             });
         }
-
-        // Check if any variants have inventory
-        const hasInventory = variants.some(variant => {
-            const inventory = variant.INVENTORY_QUANTITY || 0;
-            return inventory > 0;
-        });
 
         // Set availability status in modal
         if (this.modal.availabilityStatus) {

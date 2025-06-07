@@ -380,7 +380,6 @@ class InventoryController extends BaseController
                 p.PROD_NAME, 
                 p.PROD_DESCRIPTION,
                 p.PROD_IMAGE, 
-                p.PROD_AVAILABILITY_STATUS,
                 v.VAR_CAPACITY,
                 w.WHOUSE_NAME 
             FROM INVENTORY i
