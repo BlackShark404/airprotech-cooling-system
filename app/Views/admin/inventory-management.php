@@ -684,11 +684,7 @@ ob_start();
         if (warehouseFilter) warehouseFilter.value = '';
         if (inventoryTypeFilter) inventoryTypeFilter.value = '';
         
-        // Hide the filter notice
-        const filteredElement = document.getElementById('inventoryFilteredNotice');
-        if (filteredElement) {
-            filteredElement.classList.add('d-none');
-        }
+        // No filter notice element anymore
         
         // Clear custom filters if they exist
         if ($.fn.dataTable && $.fn.dataTable.ext && $.fn.dataTable.ext.search.length > 0) {
@@ -2006,7 +2002,60 @@ ob_start();
             
             // Function to apply filters to the Inventory table
             function applyInventoryFilters() {
-                // Implementation of applyInventoryFilters function
+                // Get filter values
+                const warehouseId = document.getElementById('warehouseFilter').value;
+                const inventoryType = document.getElementById('inventoryTypeFilter').value;
+                
+                // Prepare filters object
+                const filters = {};
+                
+                // Add warehouse filter if selected
+                if (warehouseId) {
+                    filters.whouse_id = warehouseId;
+                }
+                
+                // Add inventory type filter if selected
+                if (inventoryType) {
+                    filters.inve_type = inventoryType;
+                }
+                
+                // No filter notice element anymore
+                
+                // Apply filters using DataTablesManager if available
+                if (globalInventoryTable) {
+                    // Add custom filter function to DataTables
+                    $.fn.dataTable.ext.search.pop(); // Clear existing custom filter
+                    
+                    if (Object.keys(filters).length > 0) {
+                        $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
+                            // Skip filtering for other tables
+                            if (settings.nTable.id !== 'inventoryTable') {
+                                return true;
+                            }
+                            
+                            // Check warehouse filter
+                            if (warehouseId) {
+                                const rowWarehouseId = rowData.whouse_id || rowData.WHOUSE_ID;
+                                if (rowWarehouseId != warehouseId) {
+                                    return false;
+                                }
+                            }
+                            
+                            // Check inventory type filter
+                            if (inventoryType) {
+                                const rowInventoryType = rowData.inve_type || rowData.INVE_TYPE;
+                                if (rowInventoryType !== inventoryType) {
+                                    return false;
+                                }
+                            }
+                            
+                            return true;
+                        });
+                    }
+                    
+                    // Redraw the table
+                    globalInventoryTable.dataTable.draw();
+                }
             }
             
             // Helper function to show error when DataTablesManager might not be available
