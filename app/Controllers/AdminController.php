@@ -176,6 +176,15 @@ class AdminController extends BaseController {
             return $this->jsonError('An error occurred: ' . $e->getMessage(), 500);
         }
     }
+
+    private function hasUppercase(string $password): bool {
+        return preg_match('/[A-Z]/', $password) === 1;
+    }
+    
+    private function hasLowercase(string $password): bool {
+        return preg_match('/[a-z]/', $password) === 1;
+    }
+    
     
     public function updateAdminPassword() {
         if (!$this->isAjax()) {
@@ -191,11 +200,15 @@ class AdminController extends BaseController {
         }
         
         if ($data['new_password'] !== $data['confirm_password']) {
-            return $this->jsonError('New password and confirmation do not match', 400);
+            return $this->jsonError('Password and confirmation do not match', 400);
         }
 
         if (strlen($data['new_password']) < 8) {
-            return $this->jsonError('New password must be at least 8 characters long.', 400);
+            return $this->jsonError('Password must be at least 8 characters long.', 400);
+        }
+
+        if (!$this->hasUppercase($data['new_password']) || !$this->hasLowercase($data['new_password'])) {
+            return $this->jsonError('Password must contain both uppercase and lowercase letters.', 400);
         }
         
         $adminUser = $this->userModel->findById($adminId);

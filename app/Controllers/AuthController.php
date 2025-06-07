@@ -116,6 +116,14 @@ class AuthController extends BaseController
         );
     }
 
+    private function hasUppercase(string $password): bool {
+        return preg_match('/[A-Z]/', $password) === 1;
+    }
+    
+    private function hasLowercase(string $password): bool {
+        return preg_match('/[a-z]/', $password) === 1;
+    }
+
     public function registerAccount() 
     {
         $avatar = new AvatarGenerator();
@@ -154,6 +162,16 @@ class AuthController extends BaseController
         // Validate if passwords match
         if ($password != $confirmPassword) {
             return $this->jsonError('Passwords do not match');
+        }
+
+        // Validate password length
+        if (strlen($password) < 8) {
+            return $this->jsonError('Password must be at least 8 characters long.');
+        }
+
+        // Validate password strength (uppercase and lowercase)
+        if (!$this->hasUppercase($password) || !$this->hasLowercase($password)) {
+            return $this->jsonError('Password must contain both uppercase and lowercase letters.');
         }
 
         // Create the user
