@@ -23,7 +23,7 @@ class ProductModel extends Model
     public function createProduct($data)
     {
         // Ensure all required fields are present
-        $requiredFields = ['PROD_IMAGE', 'PROD_NAME', 'PROD_DESCRIPTION', 'PROD_AVAILABILITY_STATUS'];
+        $requiredFields = ['PROD_IMAGE', 'PROD_NAME', 'PROD_DESCRIPTION'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field])) {
                 // Handle missing field error, perhaps throw an exception or return false
@@ -33,14 +33,13 @@ class ProductModel extends Model
             }
         }
         
-        $sql = "INSERT INTO {$this->table} (PROD_IMAGE, PROD_NAME, PROD_DESCRIPTION, PROD_AVAILABILITY_STATUS, PROD_CREATED_AT, PROD_UPDATED_AT)
-                VALUES (:prod_image, :prod_name, :prod_description, :prod_availability_status, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        $sql = "INSERT INTO {$this->table} (PROD_IMAGE, PROD_NAME, PROD_DESCRIPTION, PROD_CREATED_AT, PROD_UPDATED_AT)
+                VALUES (:prod_image, :prod_name, :prod_description, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
         
         $params = [
             ':prod_image' => $data['PROD_IMAGE'],
             ':prod_name' => $data['PROD_NAME'],
             ':prod_description' => $data['PROD_DESCRIPTION'],
-            ':prod_availability_status' => $data['PROD_AVAILABILITY_STATUS'],
         ];
         
         $this->execute($sql, $params);
@@ -63,10 +62,6 @@ class ProductModel extends Model
         if (isset($data['PROD_DESCRIPTION'])) {
             $setClauses[] = "PROD_DESCRIPTION = :prod_description";
             $params[':prod_description'] = $data['PROD_DESCRIPTION'];
-        }
-        if (isset($data['PROD_AVAILABILITY_STATUS'])) {
-            $setClauses[] = "PROD_AVAILABILITY_STATUS = :prod_availability_status";
-            $params[':prod_availability_status'] = $data['PROD_AVAILABILITY_STATUS'];
         }
 
         if (empty($setClauses)) {
@@ -117,21 +112,11 @@ class ProductModel extends Model
         
         // Calculate summary statistics
         $totalProducts = count($products);
-        $availableProducts = 0;
-        $outOfStock = 0;
         $totalVariants = 0;
         
         $productVariantModel = new ProductVariantModel();
         
         foreach ($products as $product) {
-            if (isset($product['PROD_AVAILABILITY_STATUS'])) {
-                if ($product['PROD_AVAILABILITY_STATUS'] === 'Available') {
-                    $availableProducts++;
-                } elseif ($product['PROD_AVAILABILITY_STATUS'] === 'Out of Stock') {
-                    $outOfStock++;
-                }
-            }
-            
             // Get variants count for this product
             if (isset($product['PROD_ID'])) {
                 $variants = $productVariantModel->getVariantsByProductId($product['PROD_ID']);
@@ -141,8 +126,6 @@ class ProductModel extends Model
         
         return [
             'total_products' => $totalProducts,
-            'available_products' => $availableProducts,
-            'out_of_stock' => $outOfStock,
             'total_variants' => $totalVariants
         ];
     }

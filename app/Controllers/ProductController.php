@@ -120,11 +120,17 @@ class ProductController extends BaseController
                 return ($v['INVENTORY_QUANTITY'] ?? 0) > 0;
             })) > 0;
             
+            // Calculate total inventory count for the product
+            $product['inventory_count'] = array_reduce($variantsWithInventory, function($total, $variant) {
+                return $total + ($variant['INVENTORY_QUANTITY'] ?? 0);
+            }, 0);
+            
             $debug[] = [
                 'product_id' => $productId,
                 'variant_count' => count($variants),
                 'variants_with_inventory' => count($variantsWithInventory),
-                'has_inventory' => $product['HAS_INVENTORY']
+                'has_inventory' => $product['HAS_INVENTORY'],
+                'inventory_count' => $product['inventory_count']
             ];
         }
         
@@ -224,11 +230,6 @@ class ProductController extends BaseController
             $payload['product']['PROD_DESCRIPTION'] = $payload['product']['prod_description'];
             unset($payload['product']['prod_description']);
         }
-        
-        if (isset($payload['product']['prod_availability_status'])) {
-            $payload['product']['PROD_AVAILABILITY_STATUS'] = $payload['product']['prod_availability_status'];
-            unset($payload['product']['prod_availability_status']);
-        }
 
         // 2. Handle 'product_image' file upload
         if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] === UPLOAD_ERR_OK) {
@@ -305,10 +306,6 @@ class ProductController extends BaseController
         
         if (empty($payload['product']['PROD_NAME'])) {
             $missingFields[] = 'Name';
-        }
-        
-        if (empty($payload['product']['PROD_AVAILABILITY_STATUS'])) {
-            $missingFields[] = 'Availability Status';
         }
         
         if (empty($payload['product']['PROD_IMAGE'])) {
@@ -526,10 +523,6 @@ class ProductController extends BaseController
                 if (isset($productData['prod_description'])) {
                     $productData['PROD_DESCRIPTION'] = $productData['prod_description'];
                     unset($productData['prod_description']);
-                }
-                if (isset($productData['prod_availability_status'])) {
-                    $productData['PROD_AVAILABILITY_STATUS'] = $productData['prod_availability_status'];
-                    unset($productData['prod_availability_status']);
                 }
                 if (isset($productData['prod_image'])) {
                     $productData['PROD_IMAGE'] = $productData['prod_image'];

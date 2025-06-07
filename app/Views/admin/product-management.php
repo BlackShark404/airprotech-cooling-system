@@ -472,14 +472,16 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             { 
                 data: 'prod_availability_status',
-                render: function(data) {
-                    let badgeClass = 'badge-available';
-                    if (data === 'Out of Stock') {
-                        badgeClass = 'badge-out-of-stock';
-                    } else if (data === 'Discontinued') {
-                        badgeClass = 'badge-discontinued';
+                render: function(data, type, row) {
+                    // Check if product has inventory data
+                    if (row.inventory_count !== undefined) {
+                        let inventory = parseInt(row.inventory_count);
+                        let badgeClass = inventory > 0 ? 'badge-available' : 'badge-out-of-stock';
+                        let statusText = inventory > 0 ? 'In Stock' : 'Out of Stock';
+                        return '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
+                    } else {
+                        return '<span class="badge badge-secondary">Unknown</span>';
                     }
-                    return '<span class="badge ' + badgeClass + '">' + (data || 'N/A') + '</span>';
                 },
                 width: '120px'
             },
