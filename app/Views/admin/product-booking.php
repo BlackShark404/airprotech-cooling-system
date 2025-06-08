@@ -596,6 +596,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add technician to the edit form
     $('#add-technician-btn').on('click', addTechnicianToList);
     
+    // Date and time change events to validate technician assignments
+    $('#edit-delivery-date, #edit-delivery-time').on('change', validateTechnicianAssignments);
+    
     // Save product booking changes
     $('#saveProductBookingBtn').on('click', saveProductBooking);
     
@@ -875,17 +878,97 @@ function addTechnicianToList() {
         return;
     }
     
-    // Add to our tracking array
-    assignedTechnicians.push({
-        id: techId,
-        name: techName
+    // Check for scheduling conflicts
+    const bookingId = $('#edit-id').val();
+    const preferredDate = $('#edit-delivery-date').val();
+    const preferredTime = $('#edit-delivery-time').val();
+    
+    // Show loading indicator
+    const addBtn = $('#add-technician-btn');
+    const originalText = addBtn.text();
+    addBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+    
+    // Check for conflicts
+    checkTechnicianScheduleConflict(techId, bookingId, preferredDate, preferredTime, function(hasConflict, message) {
+        // Reset button state
+        addBtn.prop('disabled', false).text(originalText);
+        
+        if (hasConflict) {
+            productBookingsManager.showErrorToast('Scheduling Conflict', message);
+            
+            // Highlight the technician select to indicate the error source
+            techSelect.addClass('is-invalid border-danger');
+            setTimeout(() => {
+                techSelect.removeClass('is-invalid border-danger');
+            }, 3000);
+            return;
+        }
+        
+        // No conflict, proceed with adding technician
+        // Add to our tracking array
+        assignedTechnicians.push({
+            id: techId,
+            name: techName
+        });
+        
+        // Add badge to the UI
+        addTechnicianBadge(techId, techName);
+        
+        // Reset the select
+        techSelect.val('');
     });
-    
-    // Add badge to the UI
-    addTechnicianBadge(techId, techName);
-    
-    // Reset the select
-    techSelect.val('');
+}
+
+// Function to check for technician scheduling conflicts
+function checkTechnicianScheduleConflict(technicianId, bookingId, date, time, callback) {
+    $.ajax({
+        url: '/api/admin/technicians/schedule',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            technician_id: technicianId,
+            start_date: date,
+            end_date: date
+        }),
+        success: function(response) {
+            if (!response.data || !response.data.schedule) {
+                callback(false);
+                return;
+            }
+            
+            const schedule = response.data.schedule;
+            
+            // Convert booking time to a comparable format
+            const bookingTime = new Date(`${date}T${time}`);
+            const bookingHour = bookingTime.getHours();
+            
+            // Check each scheduled item for conflicts
+            for (let item of schedule) {
+                const itemDate = item.sb_preferred_date || item.pb_preferred_date;
+                const itemTime = item.sb_preferred_time || item.pb_preferred_time;
+                
+                if (itemDate === date) {
+                    // Parse the time string
+                    const [hours, minutes] = itemTime.split(':').map(Number);
+                    
+                    // Check if times are within 3 hours of each other
+                    if (Math.abs(bookingHour - hours) < 3) {
+                        const itemType = item.service_type || item.product_info || 'booking';
+                        const message = `${itemType} at ${itemTime} conflicts with the selected time`;
+                        callback(true, message);
+                        return;
+                    }
+                }
+            }
+            
+            // No conflicts found
+            callback(false);
+        },
+        error: function(xhr) {
+            const errorMsg = xhr.responseJSON?.message || 'Failed to check technician schedule';
+            callback(true, errorMsg);
+        }
+    });
 }
 
 // Create and add a technician badge to the UI
@@ -966,6 +1049,11 @@ function saveProductBooking() {
         updateData.description = description;
     }
     
+    // Show loading indicator
+    const saveBtn = $('#saveProductBookingBtn');
+    const originalText = saveBtn.text();
+    saveBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+    
     // Send update request
     $.ajax({
         url: '/api/admin/product-bookings/update',
@@ -978,8 +1066,26 @@ function saveProductBooking() {
             productBookingsManager.refresh();
         },
         error: function(xhr) {
+            saveBtn.prop('disabled', false).text(originalText);
+            
             const errorMsg = xhr.responseJSON?.message || 'Failed to update product booking';
-            productBookingsManager.showErrorToast('Error', errorMsg);
+            
+            // Check for scheduling conflict errors
+            if (errorMsg.includes('Scheduling conflict')) {
+                productBookingsManager.showErrorToast('Scheduling Conflict', errorMsg);
+                
+                // Highlight the technician select to indicate the error source
+                $('#technician-select').addClass('is-invalid border-danger');
+                setTimeout(() => {
+                    $('#technician-select').removeClass('is-invalid border-danger');
+                }, 3000);
+            } else {
+                productBookingsManager.showErrorToast('Error', errorMsg);
+            }
+        },
+        complete: function() {
+            // Reset button state
+            saveBtn.prop('disabled', false).text(originalText);
         }
     });
 }
@@ -1010,6 +1116,38 @@ function deleteProductBooking() {
             productBookingsManager.showErrorToast('Error', errorMsg);
         }
     });
+}
+
+// Validate technician assignments when date or time changes
+function validateTechnicianAssignments() {
+    const bookingId = $('#edit-id').val();
+    const preferredDate = $('#edit-delivery-date').val();
+    const preferredTime = $('#edit-delivery-time').val();
+    
+    // Skip validation if date or time is empty
+    if (!preferredDate || !preferredTime || assignedTechnicians.length === 0) {
+        return;
+    }
+    
+    // Show warning message
+    const warningHtml = `
+        <div class="alert alert-warning mt-3 mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Date or time has changed. Technician schedules should be verified for conflicts.
+        </div>
+    `;
+    
+    // Only add the warning if it's not already there
+    if ($('#technician-list .alert-warning').length === 0) {
+        $('#technician-list').prepend(warningHtml);
+        
+        // Remove the warning after 5 seconds
+        setTimeout(() => {
+            $('#technician-list .alert-warning').fadeOut(500, function() {
+                $(this).remove();
+            });
+        }, 5000);
+    }
 }
 </script>
 

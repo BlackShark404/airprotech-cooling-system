@@ -469,13 +469,19 @@ class AdminController extends BaseController {
         
         $bookingAssignmentModel = $this->loadModel('BookingAssignmentModel');
         
+        // Check for scheduling conflicts
+        $conflictCheck = $bookingAssignmentModel->hasSchedulingConflict($technicianId, $bookingId);
+        if ($conflictCheck['conflict']) {
+            $this->jsonError($conflictCheck['message']);
+        }
+        
         $data = [
             'ba_booking_id' => $bookingId,
             'ba_technician_id' => $technicianId,
             'ba_status' => 'assigned'
         ];
         
-        $result = $bookingAssignmentModel->createAssignment($data);
+        $result = $bookingAssignmentModel->addAssignment($data);
         
         if ($result) {
             $this->jsonSuccess(['message' => 'Service request assigned successfully']);
@@ -501,6 +507,12 @@ class AdminController extends BaseController {
         }
         
         $productAssignmentModel = $this->loadModel('ProductAssignmentModel');
+        
+        // Check for scheduling conflicts
+        $conflictCheck = $productAssignmentModel->hasSchedulingConflict($technicianId, $bookingId);
+        if ($conflictCheck['conflict']) {
+            $this->jsonError($conflictCheck['message']);
+        }
         
         $data = [
             'pa_order_id' => $bookingId,
@@ -772,6 +784,14 @@ class AdminController extends BaseController {
                     // Technicians to add (in new but not in current)
                     $techsToAdd = array_diff($newTechIds, $currentTechIds);
                     foreach ($techsToAdd as $techId) {
+                        // Check for scheduling conflicts before adding new technician
+                        $conflictCheck = $this->productAssignmentModel->hasSchedulingConflict($techId, $bookingId);
+                        if ($conflictCheck['conflict']) {
+                            $this->productBookingModel->rollback();
+                            $this->jsonError('Scheduling conflict: ' . $conflictCheck['message'] . ' for technician ID ' . $techId);
+                            return;
+                        }
+                        
                         $techData = array_filter($data['technicians'], function($tech) use ($techId) {
                             return $tech['id'] == $techId;
                         });
@@ -829,5 +849,37 @@ class AdminController extends BaseController {
         
         // Check if user is an admin
         return $userRole === 'admin';
+    }
+
+    // API endpoint to get a technician's schedule
+    public function getTechnicianSchedule()
+    {
+        if (!$this->isPost()) {
+            $this->jsonError('Invalid request method');
+        }
+        
+        $input = $this->getJsonInput();
+        
+        $technicianId = $input['technician_id'] ?? null;
+        $startDate = $input['start_date'] ?? date('Y-m-d');
+        $endDate = $input['end_date'] ?? date('Y-m-d', strtotime('+7 days'));
+        
+        if (!$technicianId) {
+            $this->jsonError('Missing required parameters');
+        }
+        
+        $technicianModel = $this->loadModel('TechnicianModel');
+        $schedule = $technicianModel->getTechnicianSchedule($technicianId, $startDate, $endDate);
+        
+        if (isset($schedule['error'])) {
+            $this->jsonError($schedule['error']);
+        }
+        
+        $this->jsonSuccess([
+            'technician_id' => $technicianId,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'schedule' => $schedule
+        ]);
     }
 }

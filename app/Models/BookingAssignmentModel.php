@@ -58,6 +58,87 @@ class BookingAssignmentModel extends Model
         return $this->query($sql, $params);
     }
 
+    // Check for scheduling conflicts for a technician
+    public function hasSchedulingConflict($technicianId, $bookingId)
+    {
+        // First, get the details of the booking we want to assign
+        $sql = "SELECT sb_preferred_date, sb_preferred_time FROM service_booking 
+                WHERE sb_id = :bookingId";
+        
+        $bookingDetails = $this->queryOne($sql, ['bookingId' => $bookingId]);
+        
+        if (!$bookingDetails) {
+            return ['conflict' => true, 'message' => 'Booking not found'];
+        }
+        
+        $bookingDate = $bookingDetails['sb_preferred_date'];
+        $bookingTime = $bookingDetails['sb_preferred_time'];
+        
+        // Define time buffer (3 hours before and after the booking time)
+        $timeBuffer = 3; // hours
+        
+        // Calculate buffer times
+        $bookingTimeObj = new \DateTime($bookingTime);
+        $startTimeObj = clone $bookingTimeObj;
+        $startTimeObj->modify("-{$timeBuffer} hours");
+        $endTimeObj = clone $bookingTimeObj;
+        $endTimeObj->modify("+{$timeBuffer} hours");
+        
+        $bufferStart = $startTimeObj->format('H:i:s');
+        $bufferEnd = $endTimeObj->format('H:i:s');
+        
+        // Check for conflicts with other service bookings
+        $sql = "SELECT ba.ba_id, sb.sb_preferred_date, sb.sb_preferred_time, st.st_name as service_type 
+                FROM {$this->table} ba
+                JOIN service_booking sb ON ba.ba_booking_id = sb.sb_id
+                JOIN service_type st ON sb.sb_service_type_id = st.st_id
+                WHERE ba.ba_technician_id = :technicianId
+                AND ba.ba_status IN ('assigned', 'in-progress')
+                AND sb.sb_preferred_date = :bookingDate
+                AND sb.sb_preferred_time BETWEEN :bufferStart AND :bufferEnd";
+        
+        $params = [
+            'technicianId' => $technicianId,
+            'bookingDate' => $bookingDate,
+            'bufferStart' => $bufferStart,
+            'bufferEnd' => $bufferEnd
+        ];
+        
+        $conflicts = $this->query($sql, $params);
+        
+        if (!empty($conflicts)) {
+            return [
+                'conflict' => true, 
+                'message' => 'Technician has a service booking conflict on this date and time',
+                'conflicts' => $conflicts
+            ];
+        }
+        
+        // Check for conflicts with product bookings
+        $sql = "SELECT pa.pa_id, pb.pb_preferred_date, pb.pb_preferred_time,
+                p.prod_name as product_name, pv.var_capacity as product_capacity
+                FROM product_assignment pa
+                JOIN product_booking pb ON pa.pa_order_id = pb.pb_id
+                JOIN product_variant pv ON pb.pb_variant_id = pv.var_id
+                JOIN product p ON pv.prod_id = p.prod_id
+                WHERE pa.pa_technician_id = :technicianId
+                AND pa.pa_status IN ('assigned', 'in-progress')
+                AND pb.pb_preferred_date = :bookingDate
+                AND pb.pb_preferred_time BETWEEN :bufferStart AND :bufferEnd";
+        
+        $productConflicts = $this->query($sql, $params);
+        
+        if (!empty($productConflicts)) {
+            return [
+                'conflict' => true, 
+                'message' => 'Technician has a product booking conflict on this date and time',
+                'conflicts' => $productConflicts
+            ];
+        }
+        
+        return ['conflict' => false];
+    }
+
     // Add a new assignment
     public function addAssignment($data)
     {

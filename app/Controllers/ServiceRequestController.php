@@ -706,15 +706,24 @@ class ServiceRequestController extends BaseController
                         error_log("Updating notes for technician: " . $techId);
                         $this->bookingAssignmentModel->updateAssignmentNotes($bookingId, $techId, $notes);
                     } else {
-                        // New technician, add assignment
+                        // New technician, check for scheduling conflicts first
+                        error_log("Checking scheduling conflicts for technician: " . $techId);
+                        $conflictCheck = $this->bookingAssignmentModel->hasSchedulingConflict($techId, $bookingId);
+                        
+                        if ($conflictCheck['conflict']) {
+                            error_log("Scheduling conflict detected: " . $conflictCheck['message']);
+                            throw new \Exception('Scheduling conflict: ' . $conflictCheck['message'] . ' for technician ID ' . $techId);
+                        }
+                        
+                        // No conflicts, add assignment
                         error_log("Adding technician: " . $techId . " with notes: " . $notes);
-                    $assignmentData = [
-                        'ba_booking_id' => $bookingId,
-                        'ba_technician_id' => $techId,
-                        'ba_status' => 'assigned',
+                        $assignmentData = [
+                            'ba_booking_id' => $bookingId,
+                            'ba_technician_id' => $techId,
+                            'ba_status' => 'assigned',
                             'ba_notes' => $notes, // Add notes here
-                        'ba_assigned_at' => date('Y-m-d H:i:s')
-                    ];
+                            'ba_assigned_at' => date('Y-m-d H:i:s')
+                        ];
                         $this->bookingAssignmentModel->addAssignment($assignmentData);
                     }
                 }

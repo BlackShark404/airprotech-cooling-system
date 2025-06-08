@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class ServiceRequestModel extends Model // Extends Model directly
+class ServiceRequestModel extends Model
 {
     protected $table = 'service_booking';
     protected $primaryKey = 'sb_id';
