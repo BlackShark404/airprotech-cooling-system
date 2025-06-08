@@ -8,6 +8,7 @@ use App\Models\ProductSpecModel;
 use App\Models\ProductVariantModel;
 use App\Models\ProductBookingModel;
 use App\Models\InventoryModel;
+use App\Models\WarehouseModel;
 
 class ProductController extends BaseController
 {
@@ -791,6 +792,23 @@ class ProductController extends BaseController
             $this->productBookingModel->beginTransaction();
             error_log("Started transaction for booking creation");
             
+            // Check if there is enough inventory (only regular type) before creating the booking
+            $inventoryEntries = $this->inventoryModel->getInventoryByVariantIds([$variantId]);
+            $totalAvailable = 0;
+            
+            foreach ($inventoryEntries as $entry) {
+                $entryQuantity = isset($entry['QUANTITY']) ? intval($entry['QUANTITY']) : intval($entry['quantity'] ?? 0);
+                $totalAvailable += $entryQuantity;
+            }
+            
+            error_log("Checking inventory for variant ID {$variantId}: Available = {$totalAvailable}, Requested = {$quantity}");
+            
+            if ($totalAvailable < $quantity) {
+                $this->productBookingModel->rollback();
+                $this->jsonError("Not enough stock available. Only {$totalAvailable} units in regular inventory.", 400);
+                return;
+            }
+            
             // Set default price type to free_install (admin will update later)
             $priceType = 'free_install';
             
@@ -826,6 +844,18 @@ class ProductController extends BaseController
             }
             
             error_log("Booking created with ID: " . $bookingId);
+            
+            // Reduce inventory stock (only from 'Regular' inventory type)
+            $stockReduced = $this->inventoryModel->reduceStock($variantId, $quantity);
+            
+            if (!$stockReduced) {
+                error_log("Failed to reduce inventory stock for variant ID {$variantId}");
+                $this->productBookingModel->rollback();
+                $this->jsonError('Failed to update inventory. Please try again.', 500);
+                return;
+            }
+            
+            error_log("Successfully reduced inventory for variant ID {$variantId} by {$quantity} units");
             
             // All operations successful, commit the transaction
             $commitResult = $this->productBookingModel->commit();
@@ -1070,60 +1100,71 @@ class ProductController extends BaseController
             return;
         }
         
+        // Ensure inventoryModel is initialized
+        if (!isset($this->inventoryModel)) {
+            $this->inventoryModel = new \App\Models\InventoryModel();
+            error_log("InventoryModel was not initialized, created a new instance");
+        }
+        
         // Start transaction for safe updates
         $this->productBookingModel->beginTransaction();
         
         try {
+            // Get current booking details
+            $currentStatus = isset($booking['PB_STATUS']) ? $booking['PB_STATUS'] : (isset($booking['pb_status']) ? $booking['pb_status'] : '');
+            $currentQuantity = isset($booking['PB_QUANTITY']) ? intval($booking['PB_QUANTITY']) : intval($booking['pb_quantity'] ?? 0);
+            $variantId = isset($booking['PB_VARIANT_ID']) ? intval($booking['PB_VARIANT_ID']) : intval($booking['pb_variant_id'] ?? 0);
+            
+            // Check if quantity is changing
+            $newQuantity = isset($data['quantity']) ? intval($data['quantity']) : $currentQuantity;
+            $quantityDifference = $newQuantity - $currentQuantity;
+            
             // Check if status is changing to confirmed
             $statusChangingToConfirmed = false;
-            if (!empty($data['status']) && $data['status'] === 'confirmed') {
-                $currentStatus = isset($booking['PB_STATUS']) ? $booking['PB_STATUS'] : (isset($booking['pb_status']) ? $booking['pb_status'] : '');
-                error_log("Current booking status: {$currentStatus}, New status: {$data['status']}");
-                $statusChangingToConfirmed = ($currentStatus !== 'confirmed');
+            $newStatus = !empty($data['status']) ? $data['status'] : $currentStatus;
+            
+            if ($newStatus === 'confirmed' && $currentStatus !== 'confirmed') {
+                $statusChangingToConfirmed = true;
+                error_log("Status changing from {$currentStatus} to confirmed");
                 
-                // If status is changing to confirmed, need to check inventory first
-                if ($statusChangingToConfirmed) {
-                    // Get variant ID and quantity from the booking
-                    $variantId = null;
-                    if (isset($booking['PB_VARIANT_ID'])) {
-                        $variantId = $booking['PB_VARIANT_ID'];
-                    } elseif (isset($booking['pb_variant_id'])) {
-                        $variantId = $booking['pb_variant_id'];
-                    }
-                    
-                    $quantity = null;
-                    if (isset($booking['PB_QUANTITY'])) {
-                        $quantity = $booking['PB_QUANTITY'];
-                    } elseif (isset($booking['pb_quantity'])) {
-                        $quantity = $booking['pb_quantity'];
-                    }
-                    
-                    error_log("Attempting to reduce inventory - VariantID: {$variantId}, Quantity: {$quantity}");
-                    
-                    if (!$variantId || !$quantity) {
-                        $this->productBookingModel->rollback();
-                        $this->jsonError('Invalid booking data: missing variant or quantity', 500);
-                        return;
-                    }
-                    
-                    // Ensure inventoryModel is initialized
-                    if (!isset($this->inventoryModel)) {
-                        $this->inventoryModel = new \App\Models\InventoryModel();
-                        error_log("InventoryModel was not initialized, created a new instance");
-                    }
-                    
-                    // Check if there's enough inventory and reduce it
-                    $inventoryReduced = $this->inventoryModel->reduceStock($variantId, $quantity);
-                    error_log("Inventory reduction result: " . ($inventoryReduced ? "Success" : "Failed"));
+                // If status is changing to confirmed, need to check inventory
+                if (!$variantId || $newQuantity <= 0) {
+                    $this->productBookingModel->rollback();
+                    $this->jsonError('Invalid booking data: missing variant or invalid quantity', 500);
+                    return;
+                }
+                
+                // Check if there's enough inventory and reduce it
+                $inventoryReduced = $this->inventoryModel->reduceStock($variantId, $newQuantity);
+                error_log("Inventory reduction result for confirmation: " . ($inventoryReduced ? "Success" : "Failed"));
+                
+                if (!$inventoryReduced) {
+                    $this->productBookingModel->rollback();
+                    $this->jsonError('Insufficient inventory for this booking. Cannot confirm.', 400);
+                    return;
+                }
+                
+                error_log("Inventory successfully reduced for variant {$variantId}, quantity {$newQuantity} on booking confirmation");
+            }
+            // Handle quantity change for already confirmed bookings
+            else if ($currentStatus === 'confirmed' && $quantityDifference != 0 && !$statusChangingToConfirmed) {
+                error_log("Quantity changing from {$currentQuantity} to {$newQuantity} (difference: {$quantityDifference})");
+                
+                if ($quantityDifference > 0) {
+                    // Need more inventory
+                    $additionalQuantity = $quantityDifference;
+                    $inventoryReduced = $this->inventoryModel->reduceStock($variantId, $additionalQuantity);
                     
                     if (!$inventoryReduced) {
                         $this->productBookingModel->rollback();
-                        $this->jsonError('Insufficient inventory for this booking. Cannot confirm.', 400);
+                        $this->jsonError("Cannot increase quantity. Only have inventory for {$currentQuantity} units.", 400);
                         return;
                     }
                     
-                    error_log("Inventory successfully reduced for variant {$variantId}, quantity {$quantity} on booking confirmation");
+                    error_log("Additional inventory of {$additionalQuantity} units reduced for variant {$variantId}");
                 }
+                // If quantity is decreasing, we would need to add the excess back to inventory
+                // This could be implemented in a future update if needed
             }
             
             // Prepare update data
@@ -1131,6 +1172,10 @@ class ProductController extends BaseController
             
             if (!empty($data['status'])) {
                 $updateData['PB_STATUS'] = $data['status'];
+            }
+            
+            if (isset($data['quantity']) && $data['quantity'] > 0) {
+                $updateData['PB_QUANTITY'] = $data['quantity'];
             }
             
             if (!empty($data['preferredDate'])) {
@@ -1203,13 +1248,64 @@ class ProductController extends BaseController
             return;
         }
         
-        // Delete the booking
-        $result = $this->productBookingModel->deleteBooking($id);
+        // Start transaction
+        $this->productBookingModel->beginTransaction();
         
-        if ($result) {
+        try {
+            // If booking was confirmed, we should add the inventory back
+            $status = isset($booking['PB_STATUS']) ? $booking['PB_STATUS'] : (isset($booking['pb_status']) ? $booking['pb_status'] : '');
+            
+            if ($status === 'confirmed') {
+                // Get variant ID and quantity
+                $variantId = isset($booking['PB_VARIANT_ID']) ? intval($booking['PB_VARIANT_ID']) : intval($booking['pb_variant_id'] ?? 0);
+                $quantity = isset($booking['PB_QUANTITY']) ? intval($booking['PB_QUANTITY']) : intval($booking['pb_quantity'] ?? 0);
+                
+                if ($variantId && $quantity > 0) {
+                    // Ensure inventoryModel is initialized
+                    if (!isset($this->inventoryModel)) {
+                        $this->inventoryModel = new \App\Models\InventoryModel();
+                    }
+                    
+                    error_log("Adding back inventory for deleted booking - VariantID: {$variantId}, Quantity: {$quantity}");
+                    
+                    // Add stock back to inventory as Regular type in the first warehouse
+                    // You might want to enhance this logic to determine which warehouse to add to
+                    $warehouseModel = new \App\Models\WarehouseModel();
+                    $warehouses = $warehouseModel->getAllWarehouses();
+                    
+                    if (!empty($warehouses)) {
+                        $warehouseId = isset($warehouses[0]['WHOUSE_ID']) ? $warehouses[0]['WHOUSE_ID'] : (isset($warehouses[0]['whouse_id']) ? $warehouses[0]['whouse_id'] : null);
+                        
+                        if ($warehouseId) {
+                            $stockAdded = $this->inventoryModel->addStock($variantId, $warehouseId, $quantity, 'Regular');
+                            error_log("Inventory restoration result: " . ($stockAdded ? "Success" : "Failed"));
+                            
+                            if (!$stockAdded) {
+                                error_log("Failed to restore inventory for variant {$variantId} with quantity {$quantity}");
+                                // Continue with deletion even if inventory restoration fails
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Delete the booking
+            $result = $this->productBookingModel->deleteBooking($id);
+            
+            if (!$result) {
+                $this->productBookingModel->rollback();
+                $this->jsonError('Failed to delete booking', 500);
+                return;
+            }
+            
+            // Commit transaction
+            $this->productBookingModel->commit();
             $this->jsonSuccess(null, 'Booking deleted successfully');
-        } else {
-            $this->jsonError('Failed to delete booking', 500);
+            
+        } catch (\Exception $e) {
+            $this->productBookingModel->rollback();
+            error_log("Error deleting booking: " . $e->getMessage());
+            $this->jsonError('An error occurred while deleting the booking', 500);
         }
     }
 

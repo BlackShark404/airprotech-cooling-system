@@ -575,15 +575,17 @@ class InventoryModel extends Model
             }
             
             // Get all inventory entries for this variant ordered by oldest first WITH row locks
+            // Only include 'Regular' inventory type
             $sql = "SELECT * FROM {$this->table} 
                     WHERE VAR_ID = :variant_id 
+                    AND INVE_TYPE = 'Regular'
                     AND QUANTITY > 0
                     AND INVE_DELETED_AT IS NULL
                     ORDER BY INVE_UPDATED_AT ASC
                     FOR UPDATE";
                     
             $inventoryEntries = $this->query($sql, [':variant_id' => $variantId]);
-            error_log("[DEBUG] Found " . count($inventoryEntries) . " inventory entries for variant {$variantId}");
+            error_log("[DEBUG] Found " . count($inventoryEntries) . " regular inventory entries for variant {$variantId}");
             
             // Check if we have enough total inventory
             $totalAvailable = 0;
@@ -592,10 +594,10 @@ class InventoryModel extends Model
                 $totalAvailable += $entryQuantity;
             }
             
-            error_log("[DEBUG] Total available inventory: {$totalAvailable}, Requested: {$quantity}");
+            error_log("[DEBUG] Total available regular inventory: {$totalAvailable}, Requested: {$quantity}");
             
             if ($totalAvailable < $quantity) {
-                error_log("[ERROR] Not enough inventory to reduce. Available: {$totalAvailable}, Requested: {$quantity}");
+                error_log("[ERROR] Not enough regular inventory to reduce. Available: {$totalAvailable}, Requested: {$quantity}");
                 // Only rollback if we started the transaction
                 if (!$existingTransaction) {
                     $this->rollback();
@@ -622,13 +624,14 @@ class InventoryModel extends Model
                 $reduceBy = min($currentQuantity, $remainingToReduce);
                 $newQuantity = $currentQuantity - $reduceBy;
                 
-                error_log("[DEBUG] Reducing inventory ID {$inventoryId} from {$currentQuantity} to {$newQuantity}");
+                error_log("[DEBUG] Reducing regular inventory ID {$inventoryId} from {$currentQuantity} to {$newQuantity}");
                 
                 // Update the inventory
                 $updateSql = "UPDATE {$this->table} SET 
                             QUANTITY = :quantity,
                             INVE_UPDATED_AT = CURRENT_TIMESTAMP
                             WHERE INVE_ID = :inventory_id 
+                            AND INVE_TYPE = 'Regular'
                             AND INVE_DELETED_AT IS NULL";
                 
                 $updateResult = $this->execute($updateSql, [
