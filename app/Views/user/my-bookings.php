@@ -298,6 +298,15 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Additional Instructions</h6>
+                        </div>
+                        <div class="card-body">
+                            <p id="modal-description" class="text-muted" style="white-space: pre-wrap;">No additional instructions provided</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

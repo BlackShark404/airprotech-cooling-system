@@ -34,7 +34,8 @@ class ProductBookingManager {
             bookingDate: null,
             preferredDate: null,
             preferredTime: null,
-            address: null
+            address: null,
+            description: null // Additional Instructions field
         };
 
         // Container for booking cards
@@ -79,6 +80,7 @@ class ProductBookingManager {
             this.modal.preferredDate = document.getElementById('modal-preferred-date');
             this.modal.preferredTime = document.getElementById('modal-preferred-time');
             this.modal.address = document.getElementById('modal-delivery-address');
+            this.modal.description = document.getElementById('modal-description');
 
             // Create Bootstrap modal instance
             this.bsModal = new bootstrap.Modal(this.modal.element);
@@ -585,6 +587,7 @@ class ProductBookingManager {
             preferredDate: booking.PB_PREFERRED_DATE || booking.pb_preferred_date,
             preferredTime: booking.PB_PREFERRED_TIME || booking.pb_preferred_time,
             address: booking.PB_ADDRESS || booking.pb_address,
+            description: booking.PB_DESCRIPTION || booking.pb_description,
             productName: booking.PROD_NAME || booking.prod_name,
             productImage: booking.PROD_IMAGE || booking.prod_image,
             variantCapacity: booking.VAR_CAPACITY || booking.var_capacity
@@ -717,6 +720,11 @@ class ProductBookingManager {
         if (this.modal.address) {
             this.modal.address.textContent = bookingData.address || 'N/A';
             this.modal.address.classList.add('text-muted');
+        }
+
+        if (this.modal.description) {
+            this.modal.description.textContent = bookingData.description || 'No additional instructions provided';
+            this.modal.description.classList.add('text-muted');
         }
     }
 }
