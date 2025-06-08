@@ -681,10 +681,6 @@ function validateBookingForm(form) {
         isValid = false;
         errorMessage = 'Please select a preferred time.';
         preferredTime.focus();
-    } else if (!serviceDescription.value.trim()) {
-        isValid = false;
-        errorMessage = 'Please provide a service description.';
-        serviceDescription.focus();
     } else if (!address.value.trim()) {
         isValid = false;
         errorMessage = 'Please provide a service address.';

@@ -446,8 +446,8 @@
                         
                         <!-- Service Description -->
                         <div class="mb-3">
-                            <label for="serviceDescription" class="form-label">Service Description <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="serviceDescription" name="serviceDescription" rows="3" placeholder="Please describe your service needs..." required></textarea>
+                            <label for="serviceDescription" class="form-label">Service Description</label>
+                            <textarea class="form-control" id="serviceDescription" name="serviceDescription" rows="3" placeholder="Please describe your service needs..."></textarea>
                         </div>
                         
                         <!-- Hidden user information for form submission -->
