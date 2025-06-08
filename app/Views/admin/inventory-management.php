@@ -925,11 +925,80 @@ ob_start();
                                 }
                             ]
                         });
+
+                        // Add event listeners for the warehouse action buttons
+                        $('#warehouseTable').on('click', '.view-warehouse-btn', function() {
+                            const id = $(this).data('id');
+                            const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
+                            if(rowData) viewWarehouseDetails(rowData);
+                        });
+                        
+                        $('#warehouseTable').on('click', '.edit-warehouse-btn', function() {
+                            const id = $(this).data('id');
+                            const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
+                            if(rowData) editWarehouse(rowData);
+                        });
+                        
+                        $('#warehouseTable').on('click', '.delete-warehouse-btn', function() {
+                            const id = $(this).data('id');
+                            const rowData = warehouseTable.dataTable.row($(this).closest('tr')).data();
+                            if(rowData) confirmDeleteWarehouse(rowData);
+                        });
                     } catch (error) {
                         console.error('Failed to initialize warehouse table:', error);
                         showErrorMessage('Failed to initialize warehouse table: ' + error.message);
                     }
                 }
+                
+                // Function to confirm warehouse deletion
+                function confirmDeleteWarehouse(rowData) {
+                    // Check if warehouse has inventory items
+                    if(rowData.total_inventory > 0) {
+                        warehouseTable.showErrorToast('Error', 'Cannot delete warehouse with existing inventory. Please move or remove all items first.');
+                        return;
+                    }
+                    
+                    // Populate the modal with warehouse data
+                    document.getElementById('deleteWarehouseIdSpan').textContent = rowData.whouse_id || 'N/A';
+                    document.getElementById('deleteWarehouseNameSpan').textContent = rowData.whouse_name || 'N/A';
+                    document.getElementById('deleteWarehouseLocationSpan').textContent = rowData.whouse_location || 'N/A';
+                    
+                    // Hide the inventory warning since we already checked
+                    document.getElementById('deleteWarehouseWarningInventory').classList.add('d-none');
+                    
+                    // Store the warehouse ID for the delete operation
+                    document.getElementById('confirmDeleteWarehouseBtn').setAttribute('data-warehouse-id', rowData.whouse_id);
+                    
+                    // Show the modal
+                    $('#deleteWarehouseModal').modal('show');
+                }
+                
+                // Event listener for the confirm delete warehouse button
+                document.getElementById('confirmDeleteWarehouseBtn').addEventListener('click', function() {
+                    const warehouseId = this.getAttribute('data-warehouse-id');
+                    if (!warehouseId) return;
+                    
+                    fetch(`/api/warehouses/${warehouseId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        $('#deleteWarehouseModal').modal('hide');
+                        if (result.success) {
+                            warehouseTable.refresh();
+                            warehouseTable.showSuccessToast('Success', 'Warehouse deleted successfully');
+                            loadWarehousesForModalsAndFilters(); // Reload warehouses in dropdowns
+                            loadSummaryData();
+                        } else {
+                            warehouseTable.showErrorToast('Error', result.message || 'Failed to delete warehouse');
+                        }
+                    })
+                    .catch(error => {
+                        $('#deleteWarehouseModal').modal('hide');
+                        console.error('Error deleting warehouse:', error);
+                        warehouseTable.showErrorToast('Error', 'An error occurred while deleting warehouse');
+                    });
+                });
                 
                 // Load low stock data
                 function initLowStockTable() {
