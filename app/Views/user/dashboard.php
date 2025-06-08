@@ -21,7 +21,7 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="contact-info">
                 <a href="tel:+1234567890" class="me-3 text-white text-decoration-none">
-                    <i class="fas fa-phone me-2"></i>09338525313
+                    <i class="fas fa-phone me-2"></i>0917 175 7258
                 </a>
                 <a href="mailto:airprotechaircon123@gmail.com" class="text-white text-decoration-none">
                     <i class="fas fa-envelope me-2"></i>airprotechaircon123@gmail.com
@@ -147,7 +147,7 @@
                             
                             <div class="mb-3">
                                 <label class="form-label small text-muted">Phone Number</label>
-                                <p class="mb-0 fw-medium">09338525313</p>
+                                <p class="mb-0 fw-medium">0917 175 7258</p>
                             </div>
                             
                             <div class="mb-3">

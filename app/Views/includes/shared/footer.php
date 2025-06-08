@@ -24,7 +24,7 @@
             <div class="col-md-3 mb-4">
                 <h4 class="h6 mb-3">Contact Info</h4>
                 <ul class="list-unstyled text-white-50">
-                    <li><i class="fas fa-phone text-primary me-2"></i>09338525313
+                    <li><i class="fas fa-phone text-primary me-2"></i>0917 175 7258
                     </li>
                     <li><i class="fas fa-envelope text-primary me-2"></i>airprotechaircon123@gmail.com</li>
                     <li><i class="fas fa-map-marker-alt text-primary me-2"></i> 123 Cooling Street, AC City</li>

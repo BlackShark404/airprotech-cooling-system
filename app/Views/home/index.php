@@ -23,9 +23,8 @@
                 </a>
             </div>
             <div class="social-links">
-                <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.facebook.com/airprotech.airconandrefrigerationservices" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://air-protechaircon.mystrikingly.com" class="text-white"><i class="fas fa-globe"></i></a>
             </div>
         </div>
     </div>
@@ -322,7 +321,7 @@
                             <h4 class="fw-bold mb-3">Visit Us</h4>
                             <p class="text-muted mb-3">Dra. Jumao-as Bldg, Dapitan, Cordova, Cebu, 6017 Philippines</p>
                             <iframe 
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.1073950775983!2d123.94673907476649!3d10.331093939863776!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a997df3946b2a9%3A0x83c949b128bbbd96!2sDra.%20Jumao-as%20Bldg%2C%20Dapitan%2C%20Cordova%2C%20Cebu%2C%206017%20Philippines!5e0!3m2!1sen!2sph!4v1714816005939!5m2!1sen!2sph" 
+                                src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d7851.256380527271!2d123.88249299999998!3d10.291512!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a99c07a0e9d211%3A0x785c27433a9ac479!2sM.%20Lhuillier%20-%20Duljo!5e0!3m2!1sen!2sus!4v1749376295170!5m2!1sen!2sus" 
                                 class="w-100 rounded shadow-sm" 
                                 style="height: 250px; border:0;" 
                                 allowfullscreen="" 
@@ -338,10 +337,10 @@
                             <i class="fas fa-phone fa-3x text-primary mb-3"></i>
                             <h4 class="fw-bold mb-3">Get in Touch</h4>
                             <p class="text-muted mb-3">Reach out to us for inquiries or to schedule a service.</p>
-                            <p class="mb-2"><strong>Phone:</strong> <a href="tel:09338525313" class="text-decoration-none text-primary">09338525313</a></p>
+                            <p class="mb-2"><strong>Phone:</strong> <a href="tel:0917 175 7258" class="text-decoration-none text-primary">0917 175 7258</a></p>
                             <p class="mb-2"><strong>Email:</strong> <a href="mailto:airprotechaircon123@gmail.com" class="text-decoration-none text-primary">airprotechaircon123@gmail.com</a></p>
                             <div class="social-links mt-4">
-                                <a href="#" class="text-primary me-3"><i class="fab fa-facebook-f fa-2x"></i></a>
+                                <a href="https://www.facebook.com/airprotech.airconandrefrigerationservices" class="text-primary me-3"><i class="fab fa-facebook-f fa-2x"></i></a>
                                 <a href="#" class="text-primary me-3"><i class="fab fa-twitter fa-2x"></i></a>
                                 <a href="#" class="text-primary"><i class="fab fa-instagram fa-2x"></i></a>
                             </div>
@@ -374,18 +373,17 @@
                 <div class="col-md-3 mb-4">
                     <h4 class="h6 mb-3">Contact Info</h4>
                     <ul class="list-unstyled text-white-50">
-                        <li><i class="fas fa-phone text-primary me-2"></i> 09338525313</li>
+                        <li><i class="fas fa-phone text-primary me-2"></i> 0917 175 7258</li>
                         <li><i class="fas fa-envelope text-primary me-2"></i> airprotechaircon123@gmail.com</li>
-                        <li><i class="fas fa-map-marker-alt text-primary me-2"></i> 123 Cooling Street, AC City</li>
+                        <li><i class="fas fa-map-marker-alt text-primary me-2"></i> Dra. Jumao-as Bldg, Dapitan, Cordova, Cebu, 6017 Philippines</li>
                     </ul>
                 </div>
                 <div class="col-md-3 mb-4">
                     <h4 class="h6 mb-3">Stay Updated</h4>
-                    <p class="text-white-50">Follow us on social media for the latest promotions and updates!</p>
+                    <p class="text-white-50">Follow us on Facebook or visit our website for the latest promotions and updates!</p>
                     <div class="social-links">
-                        <a href="#" class="text-white-50 me-3"><i class="fab fa-facebook-f fa-2x"></i></a>
-                        <a href="#" class="text-white-50 me-3"><i class="fab fa-twitter fa-2x"></i></a>
-                        <a href="#" class="text-white-50"><i class="fab fa-instagram fa-2x"></i></a>
+                        <a href="https://www.facebook.com/airprotech.airconandrefrigerationservices" class="text-white-50 me-3"><i class="fab fa-facebook-f fa-2x"></i></a>
+                        <a href="https://air-protechaircon.mystrikingly.com" class="text-white-50"><i class="fas fa-globe fa-2x"></i></a>
                     </div>
                 </div>
             </div>
