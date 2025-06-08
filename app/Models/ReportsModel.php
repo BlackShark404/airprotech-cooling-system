@@ -205,7 +205,7 @@ class ReportsModel extends Model
                     FROM service_booking
                     WHERE 
                         EXTRACT(YEAR FROM sb_created_at) = :year
-                        AND sb_status NOT IN ('pending', 'cancelled')
+                        AND sb_status = 'completed'
                         AND sb_deleted_at IS NULL
                     GROUP BY month
                 )
