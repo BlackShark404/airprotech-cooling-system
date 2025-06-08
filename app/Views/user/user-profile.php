@@ -26,8 +26,7 @@
             </div>
             <div class="social-links">
                 <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+                <a href="https://air-protechaircon.mystrikingly.com" class="text-white"><i class="fas fa-globe"></i></a>
             </div>
         </div>
     </div>

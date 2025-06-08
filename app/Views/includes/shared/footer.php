@@ -27,16 +27,15 @@
                     <li><i class="fas fa-phone text-primary me-2"></i>0917 175 7258
                     </li>
                     <li><i class="fas fa-envelope text-primary me-2"></i>airprotechaircon123@gmail.com</li>
-                    <li><i class="fas fa-map-marker-alt text-primary me-2"></i> 123 Cooling Street, AC City</li>
+                    <li><i class="fas fa-map-marker-alt text-primary me-2"></i> Dra. Jumao-as Bldg, Dapitan, Cordova, Cebu, 6017 Philippines</li>
                 </ul>
             </div>
             <div class="col-md-3 mb-4">
                 <h4 class="h6 mb-3">Stay Updated</h4>
-                <p class="text-white-50">Follow us on social media for the latest promotions and updates!</p>
+                <p class="text-white-50">Follow us on Facebook or visit our website for the latest promotions and updates!</p>
                 <div class="social-links">
                     <a href="#" class="text-white-50 me-3"><i class="fab fa-facebook-f fa-2x"></i></a>
-                    <a href="#" class="text-white-50 me-3"><i class="fab fa-twitter fa-2x"></i></a>
-                    <a href="#" class="text-white-50"><i class="fab fa-instagram fa-2x"></i></a>
+                    <a href="https://air-protechaircon.mystrikingly.com" class="text-white-50"><i class="fas fa-globe fa-2x"></i></a>
                 </div>
             </div>
         </div>
