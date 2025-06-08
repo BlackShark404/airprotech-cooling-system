@@ -127,11 +127,9 @@ class ProductBookingManager {
                                     <p class="text-muted mb-1">PB-${id} <span class="text-muted">${new Date(bookingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
                                     <h5 class="fw-bold mb-1">${productName}</h5>
                                     <p class="text-muted mb-0">Variant: ${variantCapacity}</p>
-                                    <p class="fw-bold text-dark mb-0">
-                                        ${totalAmount && parseFloat(totalAmount) !== 0
-                    ? '₱' + parseFloat(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                    : 'Price pending'}
-                                    </p>
+                                    ${status === 'completed' && totalAmount && parseFloat(totalAmount) !== 0 ?
+                    `<p class="fw-bold text-dark mb-0">₱${parseFloat(totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>` :
+                    ''}
                                 </div>
                                 <div class="text-end">
                                     <p class="text-muted mb-1">Preferred Date: ${new Date(preferredDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
@@ -652,14 +650,14 @@ class ProductBookingManager {
         }
 
         if (this.modal.unitPrice) {
-            this.modal.unitPrice.textContent = bookingData.unitPrice && parseFloat(bookingData.unitPrice) !== 0
+            this.modal.unitPrice.textContent = bookingData.status === 'completed' && bookingData.unitPrice && parseFloat(bookingData.unitPrice) !== 0
                 ? `₱${parseFloat(bookingData.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                 : 'Price pending';
             this.modal.unitPrice.classList.add('fw-bold');
         }
 
         if (this.modal.totalAmount) {
-            this.modal.totalAmount.textContent = bookingData.totalAmount && parseFloat(bookingData.totalAmount) !== 0
+            this.modal.totalAmount.textContent = bookingData.status === 'completed' && bookingData.totalAmount && parseFloat(bookingData.totalAmount) !== 0
                 ? `₱${parseFloat(bookingData.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                 : 'Price pending';
             this.modal.totalAmount.classList.add('fs-4');

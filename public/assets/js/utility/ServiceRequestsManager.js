@@ -88,11 +88,9 @@ class ServiceRequestsManager {
                                 <p class="text-muted mb-1">SRV-${service.SB_ID} <span class="text-muted">${new Date(service.SB_CREATED_AT).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></p>
                                 <h5 class="fw-bold mb-1">${service.ST_NAME}</h5>
                                 <p class="text-muted mb-0">Service: ${service.ST_DESCRIPTION || 'N/A'}</p>
-                                <p class="fw-bold text-dark mb-0">
-                                    ${service.SB_ESTIMATED_COST && parseFloat(service.SB_ESTIMATED_COST) !== 0
-                ? 'Cost: ₱' + parseFloat(service.SB_ESTIMATED_COST).toFixed(2)
-                : 'Cost pending'}
-                                </p>
+                                ${service.SB_STATUS === 'completed' && service.SB_ESTIMATED_COST && parseFloat(service.SB_ESTIMATED_COST) !== 0
+                ? `<p class="fw-bold text-dark mb-0">Cost: ₱${parseFloat(service.SB_ESTIMATED_COST).toFixed(2)}</p>`
+                : ''}
                             </div>
                             <div class="text-end">
                                 <p class="text-muted mb-1">Requested on: ${new Date(service.SB_CREATED_AT).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
@@ -703,7 +701,7 @@ class ServiceRequestsManager {
 
         if (this.modal.estimatedCost) {
             this.modal.estimatedCost.textContent =
-                service.SB_ESTIMATED_COST && parseFloat(service.SB_ESTIMATED_COST) !== 0
+                service.SB_STATUS === 'completed' && service.SB_ESTIMATED_COST && parseFloat(service.SB_ESTIMATED_COST) !== 0
                     ? `₱${parseFloat(service.SB_ESTIMATED_COST).toFixed(2)}`
                     : 'Estimate pending';
         }
