@@ -274,6 +274,28 @@ class BookingAssignmentModel extends Model
         return $this->execute($sql, $params) > 0;
     }
 
+    // Delete an assignment between a booking and technician (completely removes the record)
+    public function deleteAssignment($bookingId, $technicianId)
+    {
+        $sql = "DELETE FROM {$this->table}
+                WHERE ba_booking_id = :bookingId 
+                AND ba_technician_id = :technicianId";
+                
+        $params = [
+            'bookingId' => $bookingId,
+            'technicianId' => $technicianId
+        ];
+        
+        return $this->execute($sql, $params) > 0;
+    }
+    
+    // Remove all technicians from a booking (deletes the records)
+    public function removeAllTechnicians($bookingId)
+    {
+        $sql = "DELETE FROM {$this->table} WHERE ba_booking_id = :bookingId";
+        return $this->execute($sql, [':bookingId' => $bookingId]);
+    }
+
     // Check if a technician is assigned to a booking
     public function isAssigned($bookingId, $technicianId)
     {

@@ -689,43 +689,32 @@ class ServiceRequestController extends BaseController
                     $techToAddUpdate[$techData['id']] = $techData['notes'];
                 }
                 
-                $techIdsToRemove = array_diff($currentTechIds, $newTechIds);
+                // Remove all current technician assignments and add new ones
+                // This is the same approach used in ProductBookingModel
+                error_log("Removing all current technician assignments");
+                $this->bookingAssignmentModel->removeAllTechnicians($bookingId);
                 
-                error_log("Technicians to remove: " . json_encode($techIdsToRemove));
-                
-                // Remove assignments for technicians no longer assigned
-                foreach ($techIdsToRemove as $techId) {
-                    error_log("Removing technician: " . $techId);
-                    $this->bookingAssignmentModel->removeAssignment($bookingId, $techId);
-                }
-                
-                // Add new assignments or update existing ones
+                // Add all technician assignments from the input
                 foreach ($techToAddUpdate as $techId => $notes) {
-                    if (in_array($techId, $currentTechIds)) {
-                        // Technician already assigned, update notes
-                        error_log("Updating notes for technician: " . $techId);
-                        $this->bookingAssignmentModel->updateAssignmentNotes($bookingId, $techId, $notes);
-                    } else {
-                        // New technician, check for scheduling conflicts first
-                        error_log("Checking scheduling conflicts for technician: " . $techId);
-                        $conflictCheck = $this->bookingAssignmentModel->hasSchedulingConflict($techId, $bookingId);
-                        
-                        if ($conflictCheck['conflict']) {
-                            error_log("Scheduling conflict detected: " . $conflictCheck['message']);
-                            throw new \Exception('Scheduling conflict: ' . $conflictCheck['message'] . ' for technician ID ' . $techId);
-                        }
-                        
-                        // No conflicts, add assignment
-                        error_log("Adding technician: " . $techId . " with notes: " . $notes);
-                        $assignmentData = [
-                            'ba_booking_id' => $bookingId,
-                            'ba_technician_id' => $techId,
-                            'ba_status' => 'assigned',
-                            'ba_notes' => $notes, // Add notes here
-                            'ba_assigned_at' => date('Y-m-d H:i:s')
-                        ];
-                        $this->bookingAssignmentModel->addAssignment($assignmentData);
+                    // Check for scheduling conflicts first
+                    error_log("Checking scheduling conflicts for technician: " . $techId);
+                    $conflictCheck = $this->bookingAssignmentModel->hasSchedulingConflict($techId, $bookingId);
+                    
+                    if ($conflictCheck['conflict']) {
+                        error_log("Scheduling conflict detected: " . $conflictCheck['message']);
+                        throw new \Exception('Scheduling conflict: ' . $conflictCheck['message'] . ' for technician ID ' . $techId);
                     }
+                    
+                    // No conflicts, add assignment
+                    error_log("Adding technician: " . $techId . " with notes: " . $notes);
+                    $assignmentData = [
+                        'ba_booking_id' => $bookingId,
+                        'ba_technician_id' => $techId,
+                        'ba_status' => 'assigned',
+                        'ba_notes' => $notes, // Add notes here
+                        'ba_assigned_at' => date('Y-m-d H:i:s')
+                    ];
+                    $this->bookingAssignmentModel->addAssignment($assignmentData);
                 }
             }
             
