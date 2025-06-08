@@ -464,3 +464,52 @@ AFTER INSERT OR UPDATE OF PA_STATUS OR DELETE
 ON PRODUCT_ASSIGNMENT
 FOR EACH ROW
 EXECUTE FUNCTION update_product_booking_status();
+
+-- --------------------------------------
+-- 5. Warehouse Capacity Management Trigger
+-- --------------------------------------
+
+-- Trigger to check if adding inventory would exceed warehouse capacity
+CREATE OR REPLACE FUNCTION check_warehouse_capacity()
+RETURNS TRIGGER AS $$
+DECLARE
+    current_inventory    INT;
+    warehouse_capacity   INT;
+    warehouse_name       VARCHAR(100);
+    final_quantity       INT;
+BEGIN
+    -- Get the warehouse capacity
+    SELECT WHOUSE_STORAGE_CAPACITY, WHOUSE_NAME INTO warehouse_capacity, warehouse_name
+    FROM WAREHOUSE 
+    WHERE WHOUSE_ID = NEW.WHOUSE_ID AND WHOUSE_DELETED_AT IS NULL;
+    
+    -- If warehouse doesn't have a defined capacity, allow the operation
+    IF warehouse_capacity IS NULL OR warehouse_capacity <= 0 THEN
+        RETURN NEW;
+    END IF;
+
+    -- Calculate current inventory in this warehouse
+    SELECT COALESCE(SUM(QUANTITY), 0) INTO current_inventory
+    FROM INVENTORY
+    WHERE WHOUSE_ID = NEW.WHOUSE_ID AND INVE_DELETED_AT IS NULL
+    AND INVE_ID != NEW.INVE_ID; -- Exclude this record for updates
+    
+    -- Calculate final quantity after this operation
+    final_quantity := current_inventory + NEW.QUANTITY;
+    
+    -- Check if this would exceed capacity
+    IF final_quantity > warehouse_capacity THEN
+        RAISE EXCEPTION 'Cannot add % items to warehouse "%" (ID: %). This would exceed the warehouse capacity of % items. Current inventory: % items.', 
+                        NEW.QUANTITY, warehouse_name, NEW.WHOUSE_ID, warehouse_capacity, current_inventory;
+    END IF;
+
+    -- If all is well, allow the operation
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger on the INVENTORY table
+CREATE TRIGGER trg_check_warehouse_capacity
+BEFORE INSERT OR UPDATE OF QUANTITY, WHOUSE_ID ON INVENTORY
+FOR EACH ROW
+EXECUTE FUNCTION check_warehouse_capacity();

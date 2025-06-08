@@ -164,48 +164,85 @@ class InventoryController extends BaseController
             $this->jsonError('Warehouse not found', 404);
             return;
         }
-        
-        // Add stock
-        $inventoryType = $data['inventory_type'] ?? 'Regular';
-        $result = $this->inventoryModel->addStock(
-            $variantId, 
-            $warehouseId, 
-            $quantity,
-            $inventoryType
-        );
-        
-        if ($result) {
-            // Check if this item was previously in low stock and now isn't
-            $warehouseRestockThreshold = isset($warehouse['WHOUSE_RESTOCK_THRESHOLD']) ? 
-                intval($warehouse['WHOUSE_RESTOCK_THRESHOLD']) : 
-                (isset($warehouse['whouse_restock_threshold']) ? intval($warehouse['whouse_restock_threshold']) : 0);
+
+        try {
+            // Add stock
+            $inventoryType = $data['inventory_type'] ?? 'Regular';
+            $result = $this->inventoryModel->addStock(
+                $variantId, 
+                $warehouseId, 
+                $quantity,
+                $inventoryType
+            );
             
-            // Get the updated inventory quantity
-            $updatedInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($variantId, $warehouseId);
-            
-            $updatedQuantity = 0;
-            if ($updatedInventory) {
-                if (isset($updatedInventory['QUANTITY'])) {
-                    $updatedQuantity = intval($updatedInventory['QUANTITY']);
-                } elseif (isset($updatedInventory['quantity'])) {
-                    $updatedQuantity = intval($updatedInventory['quantity']);
+            if ($result) {
+                // Check if this item was previously in low stock and now isn't
+                $warehouseRestockThreshold = isset($warehouse['WHOUSE_RESTOCK_THRESHOLD']) ? 
+                    intval($warehouse['WHOUSE_RESTOCK_THRESHOLD']) : 
+                    (isset($warehouse['whouse_restock_threshold']) ? intval($warehouse['whouse_restock_threshold']) : 0);
+                
+                // Get the updated inventory quantity
+                $updatedInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($variantId, $warehouseId);
+                
+                $updatedQuantity = 0;
+                if ($updatedInventory) {
+                    if (isset($updatedInventory['QUANTITY'])) {
+                        $updatedQuantity = intval($updatedInventory['QUANTITY']);
+                    } elseif (isset($updatedInventory['quantity'])) {
+                        $updatedQuantity = intval($updatedInventory['quantity']);
+                    }
                 }
+                
+                $this->jsonSuccess([
+                    'product_id' => $productId,
+                    'product_name' => $product['PROD_NAME'] ?? $product['prod_name'],
+                    'variant_id' => $variantId,
+                    'variant_capacity' => $variant['VAR_CAPACITY'] ?? $variant['var_capacity'],
+                    'warehouse_id' => $warehouseId,
+                    'warehouse_name' => $warehouse['WHOUSE_NAME'] ?? $warehouse['whouse_name'],
+                    'added_quantity' => $quantity,
+                    'current_quantity' => $updatedQuantity,
+                    'threshold' => $warehouseRestockThreshold,
+                    'is_low_stock' => ($updatedQuantity <= $warehouseRestockThreshold)
+                ], 'Stock added successfully');
+            } else {
+                $this->jsonError('Failed to add stock', 500);
             }
+        } catch (\Exception $e) {
+            error_log("[ERROR] Exception in addStock: " . $e->getMessage());
             
-            $this->jsonSuccess([
-                'product_id' => $productId,
-                'product_name' => $product['PROD_NAME'] ?? $product['prod_name'],
-                'variant_id' => $variantId,
-                'variant_capacity' => $variant['VAR_CAPACITY'] ?? $variant['var_capacity'],
-                'warehouse_id' => $warehouseId,
-                'warehouse_name' => $warehouse['WHOUSE_NAME'] ?? $warehouse['whouse_name'],
-                'added_quantity' => $quantity,
-                'current_quantity' => $updatedQuantity,
-                'threshold' => $warehouseRestockThreshold,
-                'is_low_stock' => ($updatedQuantity <= $warehouseRestockThreshold)
-            ], 'Stock added successfully');
-        } else {
-            $this->jsonError('Failed to add stock', 500);
+            // Check if this is a warehouse capacity error
+            if (stripos($e->getMessage(), 'exceed the warehouse capacity') !== false) {
+                // Parse the capacity error message to extract key information
+                $errorMsg = $e->getMessage();
+                
+                // Use regex to extract the important numbers
+                $matches = [];
+                if (preg_match('/Cannot add (\d+) items to warehouse "([^"]+)" \(ID: (\d+)\). This would exceed the warehouse capacity of (\d+) items. Current inventory: (\d+) items/', $errorMsg, $matches)) {
+                    list(, $requestedQuantity, $warehouseName, $warehouseId, $capacity, $currentInventory) = $matches;
+                    
+                    // Calculate available space
+                    $availableSpace = $capacity - $currentInventory;
+                    
+                    // Format a more user-friendly message
+                    $friendlyMessage = "Warehouse Capacity Limit Reached!\n\n" .
+                                      "You're trying to add $requestedQuantity items to \"$warehouseName\", " .
+                                      "but this would exceed its capacity.\n\n" .
+                                      "• Warehouse capacity: $capacity items\n" .
+                                      "• Current inventory: $currentInventory items\n" .
+                                      "• Available space: $availableSpace items\n\n" .
+                                      "Please reduce the quantity or use a different warehouse.";
+                    
+                    // Pass the user-friendly message to the client
+                    $this->jsonError($friendlyMessage, 400);
+                } else {
+                    // Fallback to a simplified message if regex fails
+                    $this->jsonError("Cannot add items to this warehouse as it would exceed its capacity. Please reduce the quantity or choose a different warehouse.", 400);
+                }
+            } else {
+                // Generic error for other exceptions
+                $this->jsonError('Failed to add stock: ' . $e->getMessage(), 500);
+            }
         }
     }
 
@@ -285,37 +322,74 @@ class InventoryController extends BaseController
             return;
         }
         
-        // Move stock
-        $result = $this->inventoryModel->moveStock(
-            $sourceInventoryId,
-            $targetWarehouseId,
-            $quantity
-        );
-        
-        if ($result) {
-            // Get updated quantities for both warehouses to return to client
-            $updatedSource = $this->inventoryModel->getInventoryById($sourceInventoryId);
-            $sourceQty = isset($updatedSource['QUANTITY']) ? $updatedSource['QUANTITY'] : 
-                        (isset($updatedSource['quantity']) ? $updatedSource['quantity'] : 0);
+        try {
+            // Move stock
+            $result = $this->inventoryModel->moveStock(
+                $sourceInventoryId,
+                $targetWarehouseId,
+                $quantity
+            );
             
-            // Get the variant ID from source inventory
-            $variantId = isset($sourceInventory['VAR_ID']) ? $sourceInventory['VAR_ID'] : 
+            if ($result) {
+                // Get updated quantities for both warehouses to return to client
+                $updatedSource = $this->inventoryModel->getInventoryById($sourceInventoryId);
+                $sourceQty = isset($updatedSource['QUANTITY']) ? $updatedSource['QUANTITY'] : 
+                            (isset($updatedSource['quantity']) ? $updatedSource['quantity'] : 0);
+                            
+                // Try to get the target inventory record
+                $varId = isset($sourceInventory['VAR_ID']) ? $sourceInventory['VAR_ID'] : 
                         (isset($sourceInventory['var_id']) ? $sourceInventory['var_id'] : null);
+                        
+                $inventoryType = isset($sourceInventory['INVE_TYPE']) ? $sourceInventory['INVE_TYPE'] : 
+                                (isset($sourceInventory['inve_type']) ? $sourceInventory['inve_type'] : 'Regular');
+                                
+                $targetInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($varId, $targetWarehouseId, $inventoryType);
+                $targetQty = $targetInventory ? (isset($targetInventory['QUANTITY']) ? $targetInventory['QUANTITY'] : 
+                            (isset($targetInventory['quantity']) ? $targetInventory['quantity'] : 0)) : 0;
+                
+                $this->jsonSuccess([
+                    'source_remaining' => $sourceQty,
+                    'target_quantity' => $targetQty,
+                    'moved_quantity' => $quantity
+                ], 'Stock moved successfully');
+            } else {
+                $this->jsonError('Failed to move stock', 500);
+            }
+        } catch (\Exception $e) {
+            error_log("[ERROR] Exception in moveStock: " . $e->getMessage());
             
-            // Try to find the target inventory record
-            $targetInventory = $this->inventoryModel->getInventoryByProductAndWarehouse($variantId, $targetWarehouseId);
-            $targetQty = isset($targetInventory['QUANTITY']) ? $targetInventory['QUANTITY'] : 
-                        (isset($targetInventory['quantity']) ? $targetInventory['quantity'] : 0);
-            
-            $this->jsonSuccess([
-                'source_inventory_id' => $sourceInventoryId,
-                'target_warehouse_id' => $targetWarehouseId,
-                'moved_quantity' => $quantity,
-                'source_remaining' => $sourceQty,
-                'target_quantity' => $targetQty
-            ], 'Stock moved successfully');
-        } else {
-            $this->jsonError('Failed to move stock. Transaction could not be completed.', 500);
+            // Check if this is a warehouse capacity error
+            if (stripos($e->getMessage(), 'exceed the warehouse capacity') !== false) {
+                // Parse the capacity error message to extract key information
+                $errorMsg = $e->getMessage();
+                
+                // Use regex to extract the important numbers
+                $matches = [];
+                if (preg_match('/Cannot add (\d+) items to warehouse "([^"]+)" \(ID: (\d+)\). This would exceed the warehouse capacity of (\d+) items. Current inventory: (\d+) items/', $errorMsg, $matches)) {
+                    list(, $requestedQuantity, $warehouseName, $warehouseId, $capacity, $currentInventory) = $matches;
+                    
+                    // Calculate available space
+                    $availableSpace = $capacity - $currentInventory;
+                    
+                    // Format a more user-friendly message
+                    $friendlyMessage = "Warehouse Capacity Limit Reached!\n\n" .
+                                      "You're trying to move $requestedQuantity items to \"$warehouseName\", " .
+                                      "but this would exceed its capacity.\n\n" .
+                                      "• Warehouse capacity: $capacity items\n" .
+                                      "• Current inventory: $currentInventory items\n" .
+                                      "• Available space: $availableSpace items\n\n" .
+                                      "Please reduce the quantity or choose a different target warehouse.";
+                    
+                    // Pass the user-friendly message to the client
+                    $this->jsonError($friendlyMessage, 400);
+                } else {
+                    // Fallback to a simplified message if regex fails
+                    $this->jsonError("Cannot move items to this warehouse as it would exceed its capacity. Please reduce the quantity or choose a different warehouse.", 400);
+                }
+            } else {
+                // Generic error for other exceptions
+                $this->jsonError('Failed to move stock: ' . $e->getMessage(), 500);
+            }
         }
     }
 

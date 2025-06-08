@@ -270,40 +270,60 @@ class InventoryModel extends Model
 
     public function addStock($variantId, $warehouseId, $quantity, $inventoryType = 'Regular')
     {
-        // First check if there's an existing inventory record with the same inventory type
-        $existingInventory = $this->getInventoryByProductAndWarehouse($variantId, $warehouseId, $inventoryType);
-        
-        if ($existingInventory) {
-            // Ensure QUANTITY key exists (handle both uppercase and lowercase)
-            $currentQuantity = 0;
-            if (isset($existingInventory['QUANTITY'])) {
-                $currentQuantity = $existingInventory['QUANTITY'];
-            } elseif (isset($existingInventory['quantity'])) {
-                $currentQuantity = $existingInventory['quantity'];
-            }
+        try {
+            // First check if there's an existing inventory record with the same inventory type
+            $existingInventory = $this->getInventoryByProductAndWarehouse($variantId, $warehouseId, $inventoryType);
+            
+            if ($existingInventory) {
+                // Ensure QUANTITY key exists (handle both uppercase and lowercase)
+                $currentQuantity = 0;
+                if (isset($existingInventory['QUANTITY'])) {
+                    $currentQuantity = $existingInventory['QUANTITY'];
+                } elseif (isset($existingInventory['quantity'])) {
+                    $currentQuantity = $existingInventory['quantity'];
+                }
 
-            // Ensure INVE_ID key exists (handle both uppercase and lowercase)
-            $inventoryId = null;
-            if (isset($existingInventory['INVE_ID'])) {
-                $inventoryId = $existingInventory['INVE_ID'];
-            } elseif (isset($existingInventory['inve_id'])) {
-                $inventoryId = $existingInventory['inve_id'];
+                // Ensure INVE_ID key exists (handle both uppercase and lowercase)
+                $inventoryId = null;
+                if (isset($existingInventory['INVE_ID'])) {
+                    $inventoryId = $existingInventory['INVE_ID'];
+                } elseif (isset($existingInventory['inve_id'])) {
+                    $inventoryId = $existingInventory['inve_id'];
+                } else {
+                    error_log("[ERROR] Inventory record exists but ID is missing: " . print_r($existingInventory, true));
+                    return false;
+                }
+                
+                // Update existing inventory
+                $newQuantity = $currentQuantity + $quantity;
+                return $this->updateInventoryQuantity($inventoryId, $newQuantity);
             } else {
-                error_log("[ERROR] Inventory record exists but ID is missing: " . print_r($existingInventory, true));
-                return false;
+                // Create new inventory record
+                return $this->createInventory([
+                    'VAR_ID' => $variantId,
+                    'WHOUSE_ID' => $warehouseId,
+                    'INVE_TYPE' => $inventoryType,
+                    'QUANTITY' => $quantity
+                ]);
+            }
+        } catch (\PDOException $e) {
+            // Check if this is a warehouse capacity exception from our trigger
+            $errorMessage = $e->getMessage();
+            if (stripos($errorMessage, 'exceed the warehouse capacity') !== false) {
+                // Extract the custom message from our trigger
+                $matches = [];
+                if (preg_match('/ERROR:(.+)$/', $errorMessage, $matches)) {
+                    error_log("[INFO] Warehouse capacity exceeded: " . trim($matches[1]));
+                    throw new \Exception(trim($matches[1]));
+                } else {
+                    error_log("[INFO] Warehouse capacity exceeded but couldn't extract message: " . $errorMessage);
+                    throw new \Exception("Cannot add inventory - warehouse capacity would be exceeded.");
+                }
             }
             
-            // Update existing inventory
-            $newQuantity = $currentQuantity + $quantity;
-            return $this->updateInventoryQuantity($inventoryId, $newQuantity);
-        } else {
-            // Create new inventory record
-            return $this->createInventory([
-                'VAR_ID' => $variantId,
-                'WHOUSE_ID' => $warehouseId,
-                'INVE_TYPE' => $inventoryType,
-                'QUANTITY' => $quantity
-            ]);
+            // For any other database errors, log and rethrow
+            error_log("[ERROR] Database error in addStock: " . $errorMessage);
+            throw $e;
         }
     }
 
@@ -505,6 +525,26 @@ class InventoryModel extends Model
             error_log("[DEBUG] moveStock in Model - Transaction committed: " . ($commitResult ? 'Success' : 'Failed'));
             
             return true;
+        } catch (\PDOException $e) {
+            // Check if this is a warehouse capacity exception from our trigger
+            $errorMessage = $e->getMessage();
+            if (stripos($errorMessage, 'exceed the warehouse capacity') !== false) {
+                $this->rollback();
+                error_log("[INFO] moveStock in Model - Warehouse capacity exceeded: " . $errorMessage);
+                
+                // Extract the custom message from our trigger
+                $matches = [];
+                if (preg_match('/ERROR:(.+)$/', $errorMessage, $matches)) {
+                    throw new \Exception(trim($matches[1]));
+                } else {
+                    throw new \Exception("Cannot move stock - warehouse capacity would be exceeded.");
+                }
+            }
+            
+            // For other database errors, rollback and rethrow
+            $this->rollback();
+            error_log("[ERROR] moveStock in Model - Database error, transaction rolled back: " . $errorMessage);
+            throw $e;
         } catch (Exception $e) {
             $this->rollback();
             error_log("[ERROR] Error moving stock: " . $e->getMessage() . "\n" . $e->getTraceAsString());

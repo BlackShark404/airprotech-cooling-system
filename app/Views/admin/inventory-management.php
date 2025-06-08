@@ -84,6 +84,23 @@ $additionalStyles = <<<HTML
         color: #6c757d;
     }
     
+    /* Custom error message styling */
+    .warehouse-capacity-error {
+        font-size: 14px;
+        line-height: 1.5;
+        color: #ffffff;
+    }
+    
+    .warehouse-capacity-error ul {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding-left: 20px;
+    }
+    
+    .warehouse-capacity-error strong {
+        font-weight: 600;
+    }
+    
     /* Table styling */
     #inventoryTable, #warehouseTable, #lowStockTable {
         border-collapse: separate;
@@ -1361,70 +1378,161 @@ ob_start();
                     });
             }
             
+            // Function to check if adding inventory exceeds warehouse capacity
+            function checkWarehouseCapacity(warehouseId, quantity) {
+                return new Promise((resolve, reject) => {
+                    // Get current warehouse details and inventory
+                    fetch(`/api/warehouses/${warehouseId}`)
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success && result.data) {
+                                const warehouse = result.data;
+                                
+                                // If warehouse doesn't have a capacity limit, always allow
+                                if (!warehouse.WHOUSE_STORAGE_CAPACITY && !warehouse.whouse_storage_capacity) {
+                                    resolve({
+                                        canAdd: true
+                                    });
+                                    return;
+                                }
+                                
+                                // Get capacity (handle both upper and lowercase keys)
+                                const capacity = parseInt(warehouse.WHOUSE_STORAGE_CAPACITY || warehouse.whouse_storage_capacity || 0);
+                                
+                                // Get current stock total (handle both upper and lowercase keys)
+                                const currentStock = parseInt(warehouse.TOTAL_INVENTORY || warehouse.total_inventory || 0);
+                                
+                                // Check if adding would exceed capacity
+                                if (capacity > 0 && (currentStock + parseInt(quantity)) > capacity) {
+                                    resolve({
+                                        canAdd: false,
+                                        currentStock: currentStock,
+                                        capacity: capacity,
+                                        availableSpace: Math.max(0, capacity - currentStock),
+                                        warehouseName: warehouse.WHOUSE_NAME || warehouse.whouse_name || `ID: ${warehouseId}`
+                                    });
+                                } else {
+                                    resolve({
+                                        canAdd: true,
+                                        currentStock: currentStock,
+                                        capacity: capacity,
+                                        availableSpace: capacity > 0 ? Math.max(0, capacity - currentStock) : 'unlimited',
+                                        warehouseName: warehouse.WHOUSE_NAME || warehouse.whouse_name || `ID: ${warehouseId}`
+                                    });
+                                }
+                            } else {
+                                // If we can't get warehouse data, let the server handle it
+                                resolve({ canAdd: true });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking warehouse capacity:', error);
+                            // If we can't check, let the server handle it
+                            resolve({ canAdd: true });
+                        });
+                });
+            }
+
             // Function to add stock
-            function addStock() {
+            function addStock(e) {
+                if (e) e.preventDefault();
+                
                 const form = document.getElementById('addStockForm');
                 if (!form.checkValidity()) {
                     form.reportValidity();
                     return;
                 }
-                const data = {
-                    variant_id: document.getElementById('variantId').value,
-                    warehouse_id: document.getElementById('warehouseId').value,
-                    quantity: parseInt(document.getElementById('quantity').value),
-                    inventory_type: document.getElementById('inventoryType').value
-                };
-                
-                fetch('/api/inventory/add-stock', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                })
-                .then(response => {
-                    // Check if the response is valid JSON
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json();
-                    } else {
-                        // If not JSON, get the text and throw an error with the text content
-                        return response.text().then(text => {
-                            console.error("Non-JSON response:", text);
-                            throw new Error('Error adding stock: ' + (text.substring(0, 100) + '...'));
-                        });
-                    }
-                })
-                .then(result => {
-                    if (result.success) {
-                        $('#addStockModal').modal('hide');
-                        
-                        // Refresh the relevant tables
-                        if(inventoryTable) inventoryTable.refresh();
-                        
-                        // Check if the item might have moved out of low stock based on the response
-                        if (result.data && result.data.is_low_stock === false) {
-                            console.log("Item no longer in low stock after update");
+
+                const variantId = document.getElementById('variantId').value;
+                const warehouseId = document.getElementById('warehouseId').value;
+                const quantity = document.getElementById('quantity').value;
+                const inventoryType = document.getElementById('inventoryType').value;
+
+                // First check warehouse capacity
+                checkWarehouseCapacity(warehouseId, quantity)
+                    .then(capacityCheck => {
+                        if (!capacityCheck.canAdd) {
+                            // Show a specific error about the capacity limit
+                            inventoryTable.showErrorToast('Warehouse Capacity Limit', 
+                                `Cannot add ${quantity} items to warehouse "${capacityCheck.warehouseName}". ` +
+                                `This would exceed its capacity of ${capacityCheck.capacity} items. ` + 
+                                `Current inventory: ${capacityCheck.currentStock} items. ` + 
+                                `Available space: ${capacityCheck.availableSpace} items.`
+                            );
+                            return; // Stop the process
                         }
                         
-                        // Always refresh low stock table
-                        if(lowStockTable) lowStockTable.refresh();
-                        
-                        inventoryTable.showSuccessToast('Success', 'Stock added successfully');
-                        form.reset();
-                        
-                        // Reset and disable the variant dropdown
-                        const variantSelect = document.getElementById('variantId');
-                        variantSelect.innerHTML = '<option value="">Select Product First</option>';
-                        variantSelect.disabled = true;
-                        
-                        loadSummaryData();
-                    } else {
-                        inventoryTable.showErrorToast('Error', result.message || 'Failed to add stock');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error adding stock:', error);
-                    inventoryTable.showErrorToast('Error', error.message || 'An error occurred while adding stock');
-                });
+                        // If capacity is OK, proceed with adding stock
+                        const data = {
+                            variant_id: variantId,
+                            warehouse_id: warehouseId,
+                            quantity: quantity,
+                            inventory_type: inventoryType
+                        };
+
+                        fetch('/api/inventory/add-stock', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                $('#addStockModal').modal('hide');
+                                inventoryTable.refresh();
+                                inventoryTable.showSuccessToast('Success', 'Stock added successfully');
+                                
+                                // Clear form for next use
+                                document.getElementById('productId').value = '';
+                                document.getElementById('variantId').value = '';
+                                document.getElementById('warehouseId').value = '';
+                                document.getElementById('quantity').value = '';
+                                document.getElementById('inventoryType').value = 'Regular';
+                                
+                                // Refresh low stock table and warehouse table if they exist
+                                if (lowStockTable) lowStockTable.refresh();
+                                if (warehouseTable) warehouseTable.refresh();
+                                
+                                // Update summary counts
+                                loadSummaryData();
+                            } else {
+                                // Check for specific capacity error from backend
+                                if (result.message && result.message.includes('Warehouse Capacity Limit Reached')) {
+                                    // Format the multi-line error message to display nicely in the toast
+                                    const errorMsg = result.message.replace(/\n/g, '<br>');
+                                    
+                                    // Create a custom styled error message with better formatting
+                                    const formattedErrorHTML = `
+                                        <div class="warehouse-capacity-error">
+                                            ${errorMsg}
+                                        </div>
+                                    `;
+                                    
+                                    // Show the formatted error message
+                                    inventoryTable.showErrorToast('Warehouse Capacity Error', formattedErrorHTML);
+                                } else {
+                                    inventoryTable.showErrorToast('Error', result.message || 'Failed to add stock');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error adding stock:', error);
+                            
+                            // Try to extract PostgreSQL exception message about warehouse capacity
+                            const errorMessage = error.message || '';
+                            if (errorMessage.includes('exceed the warehouse capacity')) {
+                                inventoryTable.showErrorToast('Warehouse Capacity Error', errorMessage);
+                            } else {
+                                inventoryTable.showErrorToast('Error', 'An error occurred while adding stock');
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error in capacity check:', error);
+                        inventoryTable.showErrorToast('Error', 'Failed to check warehouse capacity');
+                    });
             }
             
             // Function to add warehouse
@@ -1719,7 +1827,23 @@ ob_start();
                         if (lowStockTable) lowStockTable.refresh();
                         loadSummaryData();
                     } else {
-                        inventoryTable.showErrorToast('Error', result.message || 'Failed to move stock');
+                        // Check for specific capacity error from backend
+                        if (result.message && result.message.includes('Warehouse Capacity Limit Reached')) {
+                            // Format the multi-line error message to display nicely in the toast
+                            const errorMsg = result.message.replace(/\n/g, '<br>');
+                            
+                            // Create a custom styled error message with better formatting
+                            const formattedErrorHTML = `
+                                <div class="warehouse-capacity-error">
+                                    ${errorMsg}
+                                </div>
+                            `;
+                            
+                            // Show the formatted error message
+                            inventoryTable.showErrorToast('Warehouse Capacity Error', formattedErrorHTML);
+                        } else {
+                            inventoryTable.showErrorToast('Error', result.message || 'Failed to move stock');
+                        }
                     }
                 })
                 .catch(error => {
@@ -2212,79 +2336,6 @@ ob_start();
             document.querySelector('[data-bs-target="#addStockModal"]').addEventListener('click', function() {
                 resetAddStockModal();
             });
-            
-            // Fix for the addStock function to handle disabled fields
-            function addStock(e) {
-                e.preventDefault();
-                
-                // Get form data
-                const form = document.getElementById('addStockForm');
-                const productId = document.getElementById('productId').value;
-                const variantId = document.getElementById('variantId').value;
-                const warehouseId = document.getElementById('warehouseId').value;
-                const quantity = document.getElementById('quantity').value;
-                const inventoryType = document.getElementById('inventoryType').value;
-                
-                // Validate form
-                if (!productId || !variantId || !warehouseId || !quantity) {
-                    inventoryTable.showErrorToast('Error', 'Please fill in all required fields.');
-                    return;
-                }
-                
-                if (parseInt(quantity) <= 0) {
-                    inventoryTable.showErrorToast('Error', 'Quantity must be greater than zero.');
-                    return;
-                }
-                
-                const data = {
-                    variant_id: variantId,
-                    warehouse_id: warehouseId,
-                    quantity: quantity,
-                    inventory_type: inventoryType
-                };
-                
-                // Show loading indicator
-                const saveBtn = document.getElementById('saveStockBtn');
-                const originalText = saveBtn.innerHTML;
-                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-                saveBtn.disabled = true;
-                
-                // Send the data
-                fetch('/api/inventory/add-stock', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                })
-                .then(response => response.json())
-                .then(result => {
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
-                    
-                    if (result.success) {
-                        $('#addStockModal').modal('hide');
-                        inventoryTable.showSuccessToast('Success', 'Stock added successfully.');
-                        inventoryTable.refresh();
-                        
-                        // Also refresh other tables that might be affected
-                        if (lowStockTable) {
-                            lowStockTable.refresh();
-                        }
-                        
-                        // Update summary data
-                        loadSummaryData();
-                    } else {
-                        inventoryTable.showErrorToast('Error', result.message || 'Failed to add stock.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error adding stock:', error);
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
-                    inventoryTable.showErrorToast('Error', 'An error occurred while adding stock.');
-                });
-            }
         } catch (error) {
             console.error('Critical initialization error:', error);
             showErrorMessage('Failed to initialize the inventory management system: ' + error.message);
