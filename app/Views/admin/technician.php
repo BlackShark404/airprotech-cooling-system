@@ -770,31 +770,51 @@ function applyFilters() {
     const filters = {};
     
     const availability = $('#availabilityFilter').val();
-    const assignmentType = $('#assignmentTypeFilter').val();
-    const assignmentStatus = $('#assignmentStatusFilter').val();
     
-    if (availability) filters.is_available = availability;
-    if (assignmentType) filters.assignment_type = assignmentType;
-    if (assignmentStatus) filters.assignment_status = assignmentStatus;
+    // Convert string values to numeric values for availability
+    if (availability === 'available') {
+        filters.te_is_available = 1;
+    } else if (availability === 'unavailable') {
+        filters.te_is_available = 0;
+    }
     
-    // Update the AJAX URL with filter parameters
-    $.ajax({
-        url: '/api/admin/technicians',
-        method: 'GET',
-        data: filters,
-        success: function(response) {
-            techniciansManager.refresh(response.data);
-        },
-        error: function(xhr) {
-            showErrorToast('Failed to apply filters');
-        }
-    });
+    // Apply custom filtering directly to the DataTable
+    $.fn.dataTable.ext.search.pop(); // Remove any existing filters
+    
+    if (availability) {
+        // Add custom filter function to DataTables
+        $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
+            // Only filter our technicians table
+            if (settings.nTable.id !== 'techniciansTable') {
+                return true;
+            }
+            
+            // Check availability
+            if (availability === 'available' && rowData.te_is_available != 1) {
+                return false;
+            }
+            if (availability === 'unavailable' && rowData.te_is_available != 0) {
+                return false;
+            }
+            
+            return true;
+        });
+    }
+    
+    // Redraw the table with filters applied
+    techniciansManager.dataTable.draw();
 }
 
 // Reset all filters
 function resetFilters() {
-    $('#availabilityFilter, #assignmentTypeFilter, #assignmentStatusFilter').val('');
-    techniciansManager.refresh();
+    // Reset filter select
+    $('#availabilityFilter').val('');
+    
+    // Clear custom filters from DataTables
+    $.fn.dataTable.ext.search.pop();
+    
+    // Redraw the table without filters
+    techniciansManager.dataTable.draw();
 }
 
 // Show toast notification - success
