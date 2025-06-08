@@ -646,7 +646,13 @@ function loadTechnicians() {
             response.data.forEach(tech => {
                 const techName = `${tech.ua_first_name} ${tech.ua_last_name}`;
                 techSelect.append(`<option value="${tech.te_account_id}">${techName}</option>`);
-                editTechSelect.append(`<option value="${tech.te_account_id}" data-name="${techName}">${techName}</option>`);
+                
+                // For the edit dropdown, check if technician is available
+                const isAvailable = tech.te_is_available == 1;
+                const displayName = isAvailable ? techName : `${techName} (Unavailable)`;
+                
+                // Add to dropdown with disabled attribute if unavailable
+                editTechSelect.append(`<option value="${tech.te_account_id}" data-name="${techName}" ${!isAvailable ? 'disabled' : ''}>${displayName}</option>`);
             });
         },
         error: function(xhr) {

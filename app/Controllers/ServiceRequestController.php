@@ -776,7 +776,7 @@ class ServiceRequestController extends BaseController
         
         try {
             // This requires a join between technician and user_account tables
-            $sql = "SELECT t.te_account_id, u.ua_first_name, u.ua_last_name, u.ua_email, u.ua_phone_number, u.ua_profile_url 
+            $sql = "SELECT t.te_account_id, t.te_is_available, u.ua_first_name, u.ua_last_name, u.ua_email, u.ua_phone_number, u.ua_profile_url 
                     FROM technician t 
                     JOIN user_account u ON t.te_account_id = u.ua_id 
                     WHERE u.ua_is_active = true AND u.ua_role_id = (SELECT ur_id FROM user_role WHERE ur_name = 'technician')
