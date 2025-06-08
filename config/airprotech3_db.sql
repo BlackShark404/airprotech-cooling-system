@@ -332,3 +332,135 @@ CREATE TRIGGER create_role_record_after_user_insert
 AFTER INSERT ON USER_ACCOUNT
 FOR EACH ROW
 EXECUTE FUNCTION create_role_specific_record();
+
+CREATE OR REPLACE FUNCTION update_service_booking_status()
+RETURNS TRIGGER AS $$
+DECLARE
+    total_assignments   INT;
+    completed_count     INT;
+    in_progress_count   INT;
+    assigned_count      INT;
+    cancelled_count     INT;
+BEGIN
+    -- Count per-status and total assignments
+    SELECT 
+        COUNT(*) INTO total_assignments
+    FROM BOOKING_ASSIGNMENT
+    WHERE BA_BOOKING_ID = NEW.BA_BOOKING_ID;
+
+    SELECT 
+        COUNT(*) INTO completed_count
+    FROM BOOKING_ASSIGNMENT
+    WHERE BA_BOOKING_ID = NEW.BA_BOOKING_ID AND BA_STATUS = 'completed';
+
+    SELECT 
+        COUNT(*) INTO in_progress_count
+    FROM BOOKING_ASSIGNMENT
+    WHERE BA_BOOKING_ID = NEW.BA_BOOKING_ID AND BA_STATUS = 'in-progress';
+
+    SELECT 
+        COUNT(*) INTO assigned_count
+    FROM BOOKING_ASSIGNMENT
+    WHERE BA_BOOKING_ID = NEW.BA_BOOKING_ID AND BA_STATUS = 'assigned';
+
+    SELECT 
+        COUNT(*) INTO cancelled_count
+    FROM BOOKING_ASSIGNMENT
+    WHERE BA_BOOKING_ID = NEW.BA_BOOKING_ID AND BA_STATUS = 'cancelled';
+
+    -- Decide SERVICE_BOOKING status
+    IF total_assignments = completed_count AND total_assignments > 0 THEN
+        UPDATE SERVICE_BOOKING SET SB_STATUS = 'completed', SB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE SB_ID = NEW.BA_BOOKING_ID;
+
+    ELSIF in_progress_count > 0 THEN
+        UPDATE SERVICE_BOOKING SET SB_STATUS = 'in-progress', SB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE SB_ID = NEW.BA_BOOKING_ID;
+
+    ELSIF assigned_count > 0 THEN
+        UPDATE SERVICE_BOOKING SET SB_STATUS = 'confirmed', SB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE SB_ID = NEW.BA_BOOKING_ID;
+
+    ELSIF total_assignments = cancelled_count AND total_assignments > 0 THEN
+        UPDATE SERVICE_BOOKING SET SB_STATUS = 'cancelled', SB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE SB_ID = NEW.BA_BOOKING_ID;
+
+    ELSE
+        UPDATE SERVICE_BOOKING SET SB_STATUS = 'pending', SB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE SB_ID = NEW.BA_BOOKING_ID;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION update_product_booking_status()
+RETURNS TRIGGER AS $$
+DECLARE
+    total_assignments   INT;
+    completed_count     INT;
+    in_progress_count   INT;
+    assigned_count      INT;
+    cancelled_count     INT;
+BEGIN
+    -- Count total and per-status assignments
+    SELECT COUNT(*) INTO total_assignments
+    FROM PRODUCT_ASSIGNMENT
+    WHERE PA_ORDER_ID = NEW.PA_ORDER_ID;
+
+    SELECT COUNT(*) INTO completed_count
+    FROM PRODUCT_ASSIGNMENT
+    WHERE PA_ORDER_ID = NEW.PA_ORDER_ID AND PA_STATUS = 'completed';
+
+    SELECT COUNT(*) INTO in_progress_count
+    FROM PRODUCT_ASSIGNMENT
+    WHERE PA_ORDER_ID = NEW.PA_ORDER_ID AND PA_STATUS = 'in-progress';
+
+    SELECT COUNT(*) INTO assigned_count
+    FROM PRODUCT_ASSIGNMENT
+    WHERE PA_ORDER_ID = NEW.PA_ORDER_ID AND PA_STATUS = 'assigned';
+
+    SELECT COUNT(*) INTO cancelled_count
+    FROM PRODUCT_ASSIGNMENT
+    WHERE PA_ORDER_ID = NEW.PA_ORDER_ID AND PA_STATUS = 'cancelled';
+
+    -- Determine and update PB_STATUS in PRODUCT_BOOKING
+    IF total_assignments = completed_count AND total_assignments > 0 THEN
+        UPDATE PRODUCT_BOOKING SET PB_STATUS = 'completed', PB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE PB_ID = NEW.PA_ORDER_ID;
+
+    ELSIF in_progress_count > 0 THEN
+        UPDATE PRODUCT_BOOKING SET PB_STATUS = 'in-progress', PB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE PB_ID = NEW.PA_ORDER_ID;
+
+    ELSIF assigned_count > 0 THEN
+        UPDATE PRODUCT_BOOKING SET PB_STATUS = 'confirmed', PB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE PB_ID = NEW.PA_ORDER_ID;
+
+    ELSIF total_assignments = cancelled_count AND total_assignments > 0 THEN
+        UPDATE PRODUCT_BOOKING SET PB_STATUS = 'cancelled', PB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE PB_ID = NEW.PA_ORDER_ID;
+
+    ELSE
+        UPDATE PRODUCT_BOOKING SET PB_STATUS = 'pending', PB_UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE PB_ID = NEW.PA_ORDER_ID;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER trg_update_service_booking_status
+AFTER INSERT OR UPDATE OF BA_STATUS OR DELETE
+ON BOOKING_ASSIGNMENT
+FOR EACH ROW
+EXECUTE FUNCTION update_service_booking_status();
+
+
+CREATE TRIGGER trg_update_product_booking_status
+AFTER INSERT OR UPDATE OF PA_STATUS OR DELETE
+ON PRODUCT_ASSIGNMENT
+FOR EACH ROW
+EXECUTE FUNCTION update_product_booking_status();
