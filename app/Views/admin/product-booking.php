@@ -283,7 +283,7 @@ ob_start();
 
 <!-- View Product Booking Modal -->
 <div class="modal fade" id="viewProductBookingModal" tabindex="-1" role="dialog" aria-labelledby="viewProductBookingModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg" role="document" style="max-width: 900px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="viewProductBookingModalLabel">Product Booking Details</h5>
@@ -697,54 +697,73 @@ function resetFilters() {
     productBookingsManager.refresh();
 }
 
-// View product booking details
+// Function to view product booking details
 function viewProductBooking(rowData) {
-    // Load detailed product booking data
+    // Fetch detailed product booking data
     $.ajax({
         url: `/api/admin/product-bookings/${rowData.pb_id}`,
         method: 'GET',
         success: function(response) {
             const data = response.data;
             
-            // Populate the view modal
+            // Set basic booking information
             $('#view-id').text(data.pb_id);
-            $('#view-customer').text(data.customer_name);
-            $('#view-customer-email span').text(data.customer_email || '');
-            $('#view-customer-phone span').text(data.customer_phone || '');
-            $('#view-customer-avatar').attr('src', data.customer_profile_url || '/assets/images/user-profile/default-profile.png');
+            $('#view-status').html(`<span class="badge badge-${data.pb_status}">${capitalizeFirstLetter(data.pb_status)}</span>`);
+            
+            // Set customer information
+            $('#view-customer').text(`${data.customer_name}`);
+            $('#view-customer-email span').text(data.customer_email);
+            $('#view-customer-phone span').text(data.customer_phone);
+            
+            // Set customer avatar
+            if (data.customer_profile_url) {
+                $('#view-customer-avatar').attr('src', data.customer_profile_url);
+            } else {
+                $('#view-customer-avatar').attr('src', '/assets/images/user-profile/default-profile.png');
+            }
+            
+            // Set product information
             $('#view-product-name').text(data.prod_name);
             $('#view-product-variant').text(data.var_capacity);
-            $('#view-product-image').attr('src', data.prod_image ? '/' + data.prod_image : '/assets/images/product-placeholder.jpg');
-            $('#view-quantity').text(data.pb_quantity);
-            $('#view-unit-price').text(data.pb_unit_price ? '₱' + parseFloat(data.pb_unit_price).toFixed(2) : '-');
-            $('#view-price-type').text(data.pb_price_type ? data.pb_price_type.charAt(0).toUpperCase() + data.pb_price_type.slice(1) : '-');
-            $('#view-total-amount').text(data.pb_total_amount ? '₱' + parseFloat(data.pb_total_amount).toFixed(2) : '-');
-            $('#view-srp-price').text(data.var_srp_price ? '₱' + parseFloat(data.var_srp_price).toFixed(2) : '-');
-            $('#view-free-install-price').text(data.var_price_free_install ? '₱' + parseFloat(data.var_price_free_install).toFixed(2) : '-');
-            $('#view-with-install-price').text(data.var_price_with_install ? '₱' + parseFloat(data.var_price_with_install).toFixed(2) : '-');
-            $('#view-status').text(data.pb_status.charAt(0).toUpperCase() + data.pb_status.slice(1));
-            $('#view-order-date').text(data.pb_order_date);
-            $('#view-delivery-date').text(data.pb_preferred_date);
-            $('#view-delivery-time').text(data.pb_preferred_time);
-            $('#view-address').text(data.pb_address);
-            $('#view-description').text(data.pb_description || '');
             
-            // Display assigned technicians
+            // Set product image
+            if (data.prod_image) {
+                $('#view-product-image').attr('src', data.prod_image).show();
+            } else {
+                $('#view-product-image').hide();
+            }
+            
+            // Set booking details
+            $('#view-quantity').text(data.pb_quantity);
+            
+            // Format currency values with thousand separators
+            $('#view-unit-price').text(formatCurrency(data.pb_unit_price));
+            $('#view-total-amount').text(formatCurrency(data.pb_total_amount));
+            $('#view-srp-price').text(formatCurrency(data.var_srp_price));
+            $('#view-free-install-price').text(formatCurrency(data.var_price_free_install));
+            $('#view-with-install-price').text(formatCurrency(data.var_price_with_install));
+            
+            // Format dates and times
+            $('#view-order-date').text(formatDate(data.pb_order_date) + ' ' + formatTime12Hour(data.pb_order_date.split(' ')[1]));
+            $('#view-delivery-date').text(formatDate(data.pb_preferred_date));
+            $('#view-delivery-time').text(formatTime12Hour(data.pb_preferred_time));
+            
+            // Set address and description
+            $('#view-address').text(data.pb_address);
+            $('#view-description').text(data.pb_description || 'No additional instructions provided');
+            
+            // Set technicians
             const techContainer = $('#view-technicians');
-            techContainer.empty();
             
             if (data.technicians && data.technicians.length > 0) {
                 const techHtml = data.technicians.map(tech => {
-                    const profileImg = tech.profile_url || '/assets/images/user-profile/default-profile.png';
-                    console.log('Technician data:', tech); // Debug log in browser console
+                    const profileUrl = tech.profile_url || '/assets/images/user-profile/default-profile.png';
                     return `
-                        <div class="d-flex align-items-center mb-3 p-3 bg-white rounded border">
-                            <img src="${profileImg}" alt="${tech.name}" class="rounded-circle me-3" width="48" height="48" style="border: 1px solid #eee;">
+                        <div class="technician-chip mb-2">
+                            <img src="${profileUrl}" alt="${tech.name}">
                             <div>
-                                <div class="fw-bold fs-5">${tech.name}</div>
-                                ${tech.email ? `<div class="text-muted mt-1"><i class="fas fa-envelope me-1"></i>${tech.email}</div>` : ''}
-                                ${tech.phone ? `<div class="text-muted"><i class="fas fa-phone me-1"></i>${tech.phone}</div>` : ''}
-                                ${tech.notes ? `<div class="text-muted mt-2 border-top pt-2">${tech.notes}</div>` : ''}
+                                <div class="fw-bold">${tech.name}</div>
+                                <div class="text-muted small">${tech.notes || 'No notes'}</div>
                             </div>
                         </div>
                     `;
@@ -769,6 +788,30 @@ function viewProductBooking(rowData) {
             alert('Failed to load product booking details');
         }
     });
+}
+
+// Helper function to format currency with thousand separators
+function formatCurrency(value) {
+    // Parse the value to float and fix to 2 decimal places
+    const num = parseFloat(value || 0).toFixed(2);
+    // Format with thousand separators
+    return '₱' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Return original if invalid
+    
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Helper function to capitalize the first letter of a string
+function capitalizeFirstLetter(string) {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // Edit product booking
@@ -811,15 +854,15 @@ function editProductBooking(rowData) {
                 });
             }
             
-            // Set price information
+            // Set price information with thousand separator formatting
             const quantity = parseInt(data.pb_quantity) || 1;
-            const srp = parseFloat(data.var_srp_price || 0).toFixed(2);
-            const freeInstallPrice = parseFloat(data.var_price_free_install || 0).toFixed(2);
-            const withInstallPrice = parseFloat(data.var_price_with_install || 0).toFixed(2);
+            const srp = parseFloat(data.var_srp_price || 0);
+            const freeInstallPrice = parseFloat(data.var_price_free_install || 0);
+            const withInstallPrice = parseFloat(data.var_price_with_install || 0);
             
-            $('#edit-srp-price').text(`₱${srp}`);
-            $('#edit-free-install-price').text(`₱${freeInstallPrice}`);
-            $('#edit-with-install-price').text(`₱${withInstallPrice}`);
+            $('#edit-srp-price').text(formatCurrency(srp));
+            $('#edit-free-install-price').text(formatCurrency(freeInstallPrice));
+            $('#edit-with-install-price').text(formatCurrency(withInstallPrice));
             
             // Calculate and update total amount based on current price type
             updateTotalAmount(data);
@@ -850,8 +893,8 @@ function updateTotalAmount(data) {
         unitPrice = parseFloat(data.var_price_with_install || 0);
     }
     
-    const totalAmount = (unitPrice * quantity).toFixed(2);
-    $('#edit-total-amount').text(`₱${totalAmount}`);
+    const totalAmount = unitPrice * quantity;
+    $('#edit-total-amount').text(formatCurrency(totalAmount));
     
     // Highlight the selected price
     if (priceType === 'free_install') {
