@@ -810,9 +810,8 @@ class ProductController extends BaseController
                 'PB_ADDRESS' => $data['PB_ADDRESS']
             ];
             
-            if (!empty($data['PB_DESCRIPTION'])) {
-                $bookingData['PB_DESCRIPTION'] = $data['PB_DESCRIPTION'];
-            }
+            // Handle description field - use default text if empty
+            $bookingData['PB_DESCRIPTION'] = !empty($data['PB_DESCRIPTION']) ? $data['PB_DESCRIPTION'] : 'No additional instructions provided';
             
             error_log("Creating booking with data: " . json_encode($bookingData));
             
