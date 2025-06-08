@@ -194,7 +194,7 @@ class ReportsModel extends Model
                     FROM product_booking
                     WHERE 
                         EXTRACT(YEAR FROM pb_order_date) = :year
-                        AND pb_status NOT IN ('pending', 'cancelled')
+                        AND pb_status = 'completed'
                         AND pb_deleted_at IS NULL
                     GROUP BY month
                 ),
