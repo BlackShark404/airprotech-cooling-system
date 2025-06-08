@@ -136,7 +136,6 @@ class ServiceRequestController extends BaseController
             'serviceSelect',
             'preferredDate',
             'preferredTime',
-            'serviceDescription',
             'fullName',
             'emailAddress',
             'address'
@@ -163,7 +162,7 @@ class ServiceRequestController extends BaseController
             'sb_preferred_date' => $input['preferredDate'],
             'sb_preferred_time' => $input['preferredTime'],
             'sb_address' => $input['address'],
-            'sb_description' => $input['serviceDescription'],
+            'sb_description' => !empty($input['serviceDescription']) ? $input['serviceDescription'] : 'No description provided',
             'sb_status' => 'pending'
         ];
         
@@ -172,7 +171,7 @@ class ServiceRequestController extends BaseController
         
         if ($success) {
             $this->jsonSuccess(
-                ['status' => 'pending', 'redirect_url' => '/user/my-bookings'],
+                ['status' => 'pending'],
                 'Your service request has been submitted successfully. We will contact you soon.'
             );
         } else {
