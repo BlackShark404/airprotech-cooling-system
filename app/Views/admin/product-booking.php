@@ -370,6 +370,7 @@ ob_start();
             <div class="modal-body">
                 <form id="editProductBookingForm">
                     <input type="hidden" id="edit-id" name="bookingId">
+                    <input type="hidden" id="edit-unit-price" name="unitPrice">
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -505,10 +506,16 @@ document.addEventListener('DOMContentLoaded', function() {
             { data: 'prod_name', title: 'Product' },
             { data: 'pb_quantity', title: 'Quantity' },
             { data: 'pb_total_amount', title: 'Total Amount', render: function(data) {
-                return data ? '₱' + parseFloat(data).toFixed(2) : '-';
+                return data ? '₱' + parseFloat(data).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-';
             }},
             { data: 'pb_preferred_date', title: 'Delivery Date' },
-            { data: 'pb_preferred_time', title: 'Delivery Time' },
+            { 
+                data: 'pb_preferred_time', 
+                title: 'Delivery Time',
+                render: function(data) {
+                    return formatTime12Hour(data);
+                }
+            },
             {
                 data: 'technicians',
                 title: 'Technicians',
@@ -902,6 +909,9 @@ function updateTotalAmount(data) {
     const totalAmount = unitPrice * quantity;
     $('#edit-total-amount').text(formatCurrency(totalAmount));
     
+    // Update unit price for the booking
+    $('#edit-unit-price').val(unitPrice);
+    
     // Highlight the selected price
     if (priceType === 'free_install') {
         $('#edit-free-install-price').addClass('fw-bold text-primary');
@@ -1079,13 +1089,8 @@ function saveProductBooking() {
     const preferredDate = $('#edit-delivery-date').val();
     const preferredTime = $('#edit-delivery-time').val();
     
-    // Calculate unit price based on selected price type
-    let unitPrice = 0;
-    if (priceType === 'free_install') {
-        unitPrice = parseFloat($('#edit-free-install-price').text().replace('₱', ''));
-    } else {
-        unitPrice = parseFloat($('#edit-with-install-price').text().replace('₱', ''));
-    }
+    // Get unit price from the hidden field (set by updateTotalAmount function)
+    const unitPrice = parseFloat($('#edit-unit-price').val() || 0);
     
     // Get technician IDs and their notes
     const techniciansData = [];

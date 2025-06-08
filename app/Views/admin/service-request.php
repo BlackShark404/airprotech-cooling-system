@@ -513,7 +513,13 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             { data: 'service_name', title: 'Service Type' },
             { data: 'sb_preferred_date', title: 'Date' },
-            { data: 'sb_preferred_time', title: 'Time' },
+            { 
+                data: 'sb_preferred_time', 
+                title: 'Time',
+                render: function(data) {
+                    return formatTime12Hour(data);
+                }
+            },
             {
                 data: 'technicians',
                 title: 'Technicians',
@@ -739,7 +745,7 @@ function viewServiceRequest(rowData) {
             $('#view-customer-avatar').attr('src', data.customer_profile_url || '/assets/images/user-profile/default-profile.png');
             $('#view-service-type').text(data.service_name);
             $('#view-date').text(data.sb_preferred_date);
-            $('#view-time').text(data.sb_preferred_time);
+            $('#view-time').text(formatTime12Hour(data.sb_preferred_time));
             $('#view-status').text(data.sb_status.charAt(0).toUpperCase() + data.sb_status.slice(1));
             $('#view-priority').text(data.sb_priority.charAt(0).toUpperCase() + data.sb_priority.slice(1));
             $('#view-cost').text(data.sb_estimated_cost ? '₱' + parseFloat(data.sb_estimated_cost).toFixed(2) : '-');
