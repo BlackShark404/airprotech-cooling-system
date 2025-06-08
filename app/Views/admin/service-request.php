@@ -902,6 +902,9 @@ function addTechnicianToList() {
 
 // Function to check for technician scheduling conflicts
 function checkTechnicianScheduleConflict(technicianId, bookingId, date, time, callback) {
+    // Get technician name
+    const technicianName = $('#technician-select option[value="' + technicianId + '"]').text();
+
     $.ajax({
         url: '/api/admin/technicians/schedule',
         method: 'POST',
@@ -923,6 +926,9 @@ function checkTechnicianScheduleConflict(technicianId, bookingId, date, time, ca
             const bookingTime = new Date(`${date}T${time}`);
             const bookingHour = bookingTime.getHours();
             
+            // Format selected time in 12-hour format with AM/PM
+            const selectedTimeFormatted = formatTime12Hour(time);
+            
             // Check each scheduled item for conflicts
             for (let item of schedule) {
                 const itemDate = item.sb_preferred_date || item.pb_preferred_date;
@@ -935,7 +941,11 @@ function checkTechnicianScheduleConflict(technicianId, bookingId, date, time, ca
                     // Check if times are within 3 hours of each other
                     if (Math.abs(bookingHour - hours) < 3) {
                         const itemType = item.service_type || item.product_info || 'booking';
-                        const message = `${itemType} at ${itemTime} conflicts with the selected time`;
+                        
+                        // Format conflict time in 12-hour format with AM/PM
+                        const conflictTimeFormatted = formatTime12Hour(itemTime);
+                        
+                        const message = `${technicianName} already has a ${itemType} at ${conflictTimeFormatted} which conflicts with the selected time (${selectedTimeFormatted})`;
                         callback(true, message);
                         return;
                     }
@@ -950,6 +960,15 @@ function checkTechnicianScheduleConflict(technicianId, bookingId, date, time, ca
             callback(true, errorMsg);
         }
     });
+}
+
+// Helper function to format time in 12-hour format
+function formatTime12Hour(timeString) {
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+    return `${hour12}:${minutes} ${ampm}`;
 }
 
 // Create and add a technician badge to the UI
@@ -1039,7 +1058,7 @@ function saveServiceRequest() {
             
             // Check for scheduling conflict errors
             if (errorMsg.includes('Scheduling conflict')) {
-                serviceRequestsManager.showErrorToast('Scheduling Conflict', errorMsg);
+                serviceRequestsManager.showErrorToast('Technician Scheduling Conflict', errorMsg);
                 
                 // Highlight the technician select to indicate the error source
                 $('#technician-select').addClass('is-invalid border-danger');
