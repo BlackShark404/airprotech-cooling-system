@@ -339,6 +339,12 @@ ob_start();
                 </div>
                 <div class="row mt-3">
                     <div class="col-12">
+                        <p><strong>Additional Instructions:</strong></p>
+                        <p id="view-description" class="border p-2 bg-light"></p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
                         <p><strong>Assigned Technicians:</strong></p>
                         <div id="view-technicians" class="border p-2 bg-light">
                             <!-- Technicians will be listed here -->
@@ -721,6 +727,7 @@ function viewProductBooking(rowData) {
             $('#view-delivery-date').text(data.pb_preferred_date);
             $('#view-delivery-time').text(data.pb_preferred_time);
             $('#view-address').text(data.pb_address);
+            $('#view-description').text(data.pb_description || '');
             
             // Display assigned technicians
             const techContainer = $('#view-technicians');
