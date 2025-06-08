@@ -126,6 +126,14 @@ class UserManagementController extends BaseController
     }
     
 
+    private function hasUppercase(string $password): bool {
+        return preg_match('/[A-Z]/', $password) === 1;
+    }
+    
+    private function hasLowercase(string $password): bool {
+        return preg_match('/[a-z]/', $password) === 1;
+    }
+
     // API Endpoint: Create a new user
 
     public function createUser()
@@ -151,6 +159,18 @@ class UserManagementController extends BaseController
         // Check if email already exists
         if ($this->userModel->emailExists($data['email'])) {
             $this->jsonError('Email address already in use', 400);
+        }
+
+        $password = $data['password'];
+
+        // Validate password length
+        if (strlen($password) < 8) {
+            return $this->jsonError('Password must be at least 8 characters long.');
+        }
+
+        // Validate password strength (uppercase and lowercase)
+        if (!$this->hasUppercase($password) || !$this->hasLowercase($password)) {
+            return $this->jsonError('Password must contain both uppercase and lowercase letters.');
         }
 
         $profileUrl = $avatar->generate($data['first_name'] . ' ' . $data['last_name']);
