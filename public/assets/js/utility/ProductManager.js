@@ -1134,17 +1134,18 @@ class ProductManager {
 
         // If the product has inventory data, calculate from that
         if (this.currentProduct && this.currentProduct.inventory) {
-            console.log('Using product inventory data');
+            console.log('Using product inventory data (only counting Regular inventory type)');
             let total = 0;
             this.currentProduct.inventory.forEach(inv => {
                 const invVariantId = inv.VAR_ID || inv.var_id;
-                if (invVariantId === variantId) {
+                const invType = inv.INVE_TYPE || inv.inve_type || '';
+                if (invVariantId === variantId && invType === 'Regular') {
                     const quantity = parseInt(inv.QUANTITY || inv.quantity || 0);
                     total += quantity;
                 }
             });
 
-            console.log('Calculated total from inventory:', total);
+            console.log('Calculated total from regular inventory:', total);
             return total;
         }
 

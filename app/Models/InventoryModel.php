@@ -540,6 +540,7 @@ class InventoryModel extends Model
                 JOIN PRODUCT_VARIANT v ON i.VAR_ID = v.VAR_ID
                 JOIN WAREHOUSE w ON i.WHOUSE_ID = w.WHOUSE_ID
                 WHERE i.VAR_ID IN ({$placeholderString})
+                AND i.INVE_TYPE = 'Regular'
                 AND i.INVE_DELETED_AT IS NULL
                 AND i.QUANTITY > 0"; // Only include items with quantity > 0
         
