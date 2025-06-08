@@ -792,23 +792,6 @@ class ProductController extends BaseController
             $this->productBookingModel->beginTransaction();
             error_log("Started transaction for booking creation");
             
-            // Check if there is enough inventory (only regular type) before creating the booking
-            $inventoryEntries = $this->inventoryModel->getInventoryByVariantIds([$variantId]);
-            $totalAvailable = 0;
-            
-            foreach ($inventoryEntries as $entry) {
-                $entryQuantity = isset($entry['QUANTITY']) ? intval($entry['QUANTITY']) : intval($entry['quantity'] ?? 0);
-                $totalAvailable += $entryQuantity;
-            }
-            
-            error_log("Checking inventory for variant ID {$variantId}: Available = {$totalAvailable}, Requested = {$quantity}");
-            
-            if ($totalAvailable < $quantity) {
-                $this->productBookingModel->rollback();
-                $this->jsonError("Not enough stock available. Only {$totalAvailable} units in regular inventory.", 400);
-                return;
-            }
-            
             // Set default price type to free_install (admin will update later)
             $priceType = 'free_install';
             
@@ -844,18 +827,6 @@ class ProductController extends BaseController
             }
             
             error_log("Booking created with ID: " . $bookingId);
-            
-            // Reduce inventory stock (only from 'Regular' inventory type)
-            $stockReduced = $this->inventoryModel->reduceStock($variantId, $quantity);
-            
-            if (!$stockReduced) {
-                error_log("Failed to reduce inventory stock for variant ID {$variantId}");
-                $this->productBookingModel->rollback();
-                $this->jsonError('Failed to update inventory. Please try again.', 500);
-                return;
-            }
-            
-            error_log("Successfully reduced inventory for variant ID {$variantId} by {$quantity} units");
             
             // All operations successful, commit the transaction
             $commitResult = $this->productBookingModel->commit();
