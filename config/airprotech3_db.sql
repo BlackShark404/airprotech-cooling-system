@@ -243,7 +243,7 @@ CREATE TABLE PRODUCT_BOOKING (
     CONSTRAINT FK_BOOKING_VARIANT FOREIGN KEY (PB_VARIANT_ID)
         REFERENCES PRODUCT_VARIANT(VAR_ID) ON DELETE RESTRICT ON UPDATE CASCADE,
         
-    CONSTRAINT CK_BOOKING_STATUS CHECK (PB_STATUS IN ('pending', 'confirmed', 'completed', 'cancelled'))
+    CONSTRAINT CK_BOOKING_STATUS CHECK (PB_STATUS IN ('pending', 'confirmed', 'in-progress', 'completed', 'cancelled'))
 );
 
 
@@ -466,9 +466,8 @@ FOR EACH ROW
 EXECUTE FUNCTION update_product_booking_status();
 
 -- --------------------------------------
--- 5. Warehouse Capacity Management Trigger
+-- 3. Warehouse Capacity Management Trigger
 -- --------------------------------------
-
 -- Trigger to check if adding inventory would exceed warehouse capacity
 CREATE OR REPLACE FUNCTION check_warehouse_capacity()
 RETURNS TRIGGER AS $$
